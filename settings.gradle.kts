@@ -24,4 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "CMS"
 include(":app")
- 
+include(":app:cmsadmin")
