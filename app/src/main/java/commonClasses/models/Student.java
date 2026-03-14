@@ -1,4 +1,4 @@
-package commonClasses;
+package commonClasses.models;
 
 public class Student {
     int rollno;
