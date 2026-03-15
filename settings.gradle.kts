@@ -27,3 +27,4 @@ include(":app")
 include(":app:cmsteacher")
 
 include(":app:cmsadmin")
+include(":app:cmsstudent")
