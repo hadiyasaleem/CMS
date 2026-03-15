@@ -12,7 +12,6 @@
             <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/app/cmsadmin" />
             <option value="$PROJECT_DIR$/app/cmsstudent" />
-            <option value="$PROJECT_DIR$/app/cmsadmin" />
             <option value="$PROJECT_DIR$/app/cmsteacher" />
           </set>
         </option>
