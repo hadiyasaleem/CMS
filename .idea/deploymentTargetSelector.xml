@@ -2,7 +2,7 @@
 <project version="4">
   <component name="deploymentTargetSelector">
     <selectionStates>
-      <SelectionState runConfigName="app.cmsteacher">
+      <SelectionState runConfigName="app.cmsstudent">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
       <SelectionState runConfigName="app">
@@ -11,7 +11,7 @@
       <SelectionState runConfigName="app.cmsadmin">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="app.cmsstudent">
+      <SelectionState runConfigName="app.cmsteacher">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>
