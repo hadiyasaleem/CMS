@@ -36,10 +36,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.mbd.cmsteacher" />
+                  <option name="mobileSdkAppId" value="1:386866496953:android:4ca82cdb4b07ef64b06268" />
+                  <option name="projectId" value="cms-mbd" />
+                  <option name="projectNumber" value="386866496953" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

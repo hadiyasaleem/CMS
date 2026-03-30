@@ -1,9 +1,168 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.CMS" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    res/values/themes.xml  — FIXED
+    Fixes applied:
+    1. All TextAppearance styles now extend TextAppearance.MaterialComponents.*
+       parents so the "TextAppearance.CMS not found" chain error is resolved.
+    2. stateListAnimator removed from Widget.CMS.Button.Primary — this is an
+       android: framework attribute and causes "attr/stateListAnimator not found"
+       when placed inside a MaterialComponents Widget style.
+    3. Added Theme.CMS and Theme.CMS.Splash aliases for AndroidManifest use.
+-->
+<resources>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         BASE APPLICATION THEME
+         ══════════════════════════════════════════════════════════════════ -->
+    <style name="Base.Theme.CMS" parent="Theme.MaterialComponents.Light.NoActionBar">
+
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryVariant">@color/primary_container</item>
+        <item name="colorOnPrimary">@color/on_primary</item>
+
+        <item name="colorSecondary">@color/secondary</item>
+        <item name="colorSecondaryVariant">@color/secondary_container</item>
+        <item name="colorOnSecondary">@color/on_secondary</item>
+
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/on_surface</item>
+
+        <item name="android:colorBackground">@color/background</item>
+        <item name="colorOnBackground">@color/on_background</item>
+
+        <item name="colorError">@color/error</item>
+        <item name="colorOnError">@color/on_error</item>
+
+        <item name="android:statusBarColor">@color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">@color/surface</item>
+
+        <item name="android:fontFamily">@font/public_sans</item>
+        <item name="android:textColor">@color/on_surface</item>
+
+        <item name="colorControlHighlight">#1F000A1E</item>
+
+        <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.CMS.Small</item>
+        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.CMS.Medium</item>
+        <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.CMS.Large</item>
+
     </style>
 
+    <!--
+        Theme.CMS — use this in AndroidManifest:
+        android:theme="@style/Theme.CMS"
+    -->
     <style name="Theme.CMS" parent="Base.Theme.CMS" />
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         SPLASH ACTIVITY THEME
+         Use in AndroidManifest for SplashActivity:
+         android:theme="@style/Theme.CMS.Splash"
+         ══════════════════════════════════════════════════════════════════ -->
+    <style name="Base.Theme.CMS.Splash" parent="Base.Theme.CMS">
+        <item name="android:windowBackground">@color/surface</item>
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:statusBarColor">@color/transparent</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+    </style>
+
+    <style name="Theme.CMS.Splash" parent="Base.Theme.CMS.Splash" />
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         SHAPE APPEARANCES
+         ══════════════════════════════════════════════════════════════════ -->
+    <style name="ShapeAppearance.CMS.Small"
+        parent="ShapeAppearance.MaterialComponents.SmallComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">2dp</item>
+    </style>
+
+    <style name="ShapeAppearance.CMS.Medium"
+        parent="ShapeAppearance.MaterialComponents.MediumComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">4dp</item>
+    </style>
+
+    <style name="ShapeAppearance.CMS.Large"
+        parent="ShapeAppearance.MaterialComponents.LargeComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">8dp</item>
+    </style>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         BUTTON STYLE
+         FIX: stateListAnimator removed — it is an android: framework
+         attribute that cannot be set inside a MaterialComponents Widget
+         style; doing so causes "attr/stateListAnimator not found".
+         To disable elevation animation on a specific button, add
+         android:stateListAnimator="@null" directly on that view in XML.
+         ══════════════════════════════════════════════════════════════════ -->
+    <style name="Widget.CMS.Button.Primary"
+        parent="Widget.MaterialComponents.Button">
+        <item name="backgroundTint">@color/primary</item>
+        <item name="android:textColor">@color/on_primary</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:fontFamily">@font/public_sans_semibold</item>
+        <item name="android:letterSpacing">0.02</item>
+        <item name="cornerRadius">6dp</item>
+        <item name="android:paddingTop">16dp</item>
+        <item name="android:paddingBottom">16dp</item>
+        <item name="elevation">4dp</item>
+    </style>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         TEXT APPEARANCES
+         FIX: every TextAppearance.CMS.* style MUST declare a
+         TextAppearance.MaterialComponents.* parent.  Without a valid
+         parent the resource linker cannot resolve the style chain and
+         throws "style/TextAppearance.CMS not found".
+         ══════════════════════════════════════════════════════════════════ -->
+
+    <!-- Eyebrow / chip label — spaced caps, small -->
+    <style name="TextAppearance.CMS.Eyebrow"
+        parent="TextAppearance.MaterialComponents.Caption">
+        <item name="android:fontFamily">@font/public_sans_semibold</item>
+        <item name="android:textSize">10sp</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.2</item>
+        <item name="android:textColor">@color/on_surface_variant</item>
+    </style>
+
+    <!-- Footer micro-label -->
+    <style name="TextAppearance.CMS.Footer"
+        parent="TextAppearance.MaterialComponents.Overline">
+        <item name="android:fontFamily">@font/public_sans_semibold</item>
+        <item name="android:textSize">9sp</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.2</item>
+        <item name="android:textColor">@color/on_surface_variant</item>
+    </style>
+
+    <!-- Headline serif — college name -->
+    <style name="TextAppearance.CMS.Headline"
+        parent="TextAppearance.MaterialComponents.Headline4">
+        <item name="android:fontFamily">@font/newsreader_bold</item>
+        <item name="android:textSize">30sp</item>
+        <item name="android:textColor">@color/primary</item>
+        <item name="android:lineSpacingMultiplier">1.15</item>
+    </style>
+
+    <!-- Body default -->
+    <style name="TextAppearance.CMS.Body"
+        parent="TextAppearance.MaterialComponents.Body1">
+        <item name="android:fontFamily">@font/public_sans</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/on_surface</item>
+    </style>
+
+    <!-- Tagline italic serif -->
+    <style name="TextAppearance.CMS.Tagline"
+        parent="TextAppearance.MaterialComponents.Subtitle1">
+        <item name="android:fontFamily">@font/newsreader_italic</item>
+        <item name="android:textSize">17sp</item>
+        <item name="android:textColor">@color/on_surface_variant</item>
+    </style>
+
 </resources>
