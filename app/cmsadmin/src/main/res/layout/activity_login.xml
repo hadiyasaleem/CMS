@@ -1,10 +1,412 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+    res/layout/activity_login.xml
+    Package: com.mbd.cmsstudent
+    Matches the HTML login page:
+    ✔ Top bar: bank icon + "THE ACADEMIC LEDGER" bold uppercase
+    ✔ Left panel: dark navy gradient bg, college name, red divider, description text
+    ✔ Right panel (main on mobile): "Security Portal" eyebrow, "Admin Login" headline,
+      Email + Password underline inputs, "Forgot Password?", LOGIN button
+    ✔ Disclaimer text + footer
+    On mobile: left panel is hidden, only right panel shown (matches md:hidden behavior)
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".LoginActivity">
+    android:orientation="vertical"
+    android:background="@color/surface">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <!-- ══════════════════════════════════════════════════════════════════
+         FIXED TOP APP BAR
+         bank icon | "THE ACADEMIC LEDGER" bold uppercase tracking
+         ══════════════════════════════════════════════════════════════════ -->
+    <LinearLayout
+        android:id="@+id/topBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingTop="44dp"
+        android:paddingBottom="14dp"
+        android:background="@color/white"
+        android:elevation="2dp">
+
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:src="@drawable/ic_account_balance"
+            android:contentDescription="College logo"
+            android:layout_marginEnd="10dp"
+            app:tint="@color/primary" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="THE ACADEMIC LEDGER"
+            android:textSize="15sp"
+            android:fontFamily="@font/newsreader_bold"
+            android:textColor="@color/primary"
+            android:textAllCaps="true"
+            android:letterSpacing="0.18" />
+
+    </LinearLayout>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         SCROLLABLE BODY
+         ══════════════════════════════════════════════════════════════════ -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true"
+        android:overScrollMode="never"
+        android:background="@color/surface">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- ── CARD CONTAINER (white card, shadow, rounded) ───────── -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="12dp"
+                app:cardBackgroundColor="@color/white"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="20dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <!-- ── LEFT PANEL (navy gradient) ──────────────────────
+                         Shown as a top banner on mobile
+                         (matches the sidebar on tablet/desktop)
+                         ─────────────────────────────────────────────────── -->
+                    <LinearLayout
+                        android:id="@+id/leftPanel"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:background="@drawable/bg_navy_gradient"
+                        android:padding="28dp">
+
+                        <!-- College name -->
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Govt Graduate College,\nMandi Bahauddin"
+                            android:textSize="24sp"
+                            android:fontFamily="@font/newsreader_bold"
+                            android:textColor="@color/on_primary"
+                            android:lineSpacingMultiplier="1.15"
+                            android:layout_marginBottom="14dp" />
+
+                        <!-- Red accent divider (h-1 w-12 bg-secondary) -->
+                        <View
+                            android:layout_width="48dp"
+                            android:layout_height="4dp"
+                            android:background="@color/secondary"
+                            android:layout_marginBottom="14dp" />
+
+                        <!-- Description -->
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Accessing the central administrative vault of the Institutional Registry. Authorized access only."
+                            android:textSize="13sp"
+                            android:fontFamily="@font/public_sans"
+                            android:textColor="@color/on_primary_container"
+                            android:lineSpacingMultiplier="1.5"
+                            android:layout_marginBottom="20dp" />
+
+                        <!-- Version label -->
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="CENTRAL LEDGER SYSTEM v4.2.0"
+                            android:textSize="9sp"
+                            android:fontFamily="@font/public_sans_semibold"
+                            android:textColor="@color/on_primary_container"
+                            android:textAllCaps="true"
+                            android:letterSpacing="0.2" />
+
+                    </LinearLayout>
+
+                    <!-- ── RIGHT PANEL (login form) ────────────────────── -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingStart="28dp"
+                        android:paddingEnd="28dp"
+                        android:paddingTop="32dp"
+                        android:paddingBottom="28dp">
+
+                        <!-- Eyebrow: "Security Portal" -->
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="SECURITY PORTAL"
+                            android:textSize="10sp"
+                            android:fontFamily="@font/public_sans_semibold"
+                            android:textColor="@color/on_tertiary_fixed_variant"
+                            android:textAllCaps="true"
+                            android:letterSpacing="0.22"
+                            android:layout_marginBottom="6dp" />
+
+                        <!-- Headline: "Admin Login" -->
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Admin Login"
+                            android:textSize="34sp"
+                            android:fontFamily="@font/newsreader_bold"
+                            android:textColor="@color/primary"
+                            android:layout_marginBottom="36dp" />
+
+                        <!-- ── EMAIL FIELD ─────────────────────────────── -->
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="EMAIL ADDRESS"
+                            android:textSize="10sp"
+                            android:fontFamily="@font/public_sans_semibold"
+                            android:textColor="@color/on_surface_variant"
+                            android:textAllCaps="true"
+                            android:letterSpacing="0.15"
+                            android:layout_marginBottom="4dp" />
+
+                        <!-- Underline-only EditText (border-b style) -->
+                        <EditText
+                            android:id="@+id/etEmail"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:hint="admin@ggcmbd.edu.pk"
+                            android:inputType="textEmailAddress"
+                            android:textSize="15sp"
+                            android:fontFamily="@font/public_sans"
+                            android:textColor="@color/on_surface"
+                            android:background="@drawable/bg_input_underline"
+                            android:paddingTop="12dp"
+                            android:paddingBottom="12dp"
+                            android:paddingStart="0dp"
+                            android:paddingEnd="0dp"
+                            android:imeOptions="actionNext"
+                            android:maxLines="1"
+                            android:layout_marginBottom="28dp" />
+
+                        <!-- ── PASSWORD FIELD ──────────────────────────── -->
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="PASSWORD"
+                            android:textSize="10sp"
+                            android:fontFamily="@font/public_sans_semibold"
+                            android:textColor="@color/on_surface_variant"
+                            android:textAllCaps="true"
+                            android:letterSpacing="0.15"
+                            android:layout_marginBottom="4dp" />
+
+                        <!-- Password underline input with toggle icon -->
+                        <FrameLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="20dp">
+
+                            <EditText
+                                android:id="@+id/etPassword"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:hint="••••••••••••"
+                                android:inputType="textPassword"
+                                android:textSize="15sp"
+                                android:fontFamily="@font/public_sans"
+                                android:textColor="@color/on_surface"
+                                android:background="@drawable/bg_input_underline"
+                                android:paddingTop="12dp"
+                                android:paddingBottom="12dp"
+                                android:paddingStart="0dp"
+                                android:paddingEnd="40dp"
+                                android:imeOptions="actionDone"
+                                android:maxLines="1" />
+
+                            <!-- Eye toggle icon -->
+                            <ImageView
+                                android:id="@+id/ivPasswordToggle"
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:layout_gravity="end|center_vertical"
+                                android:src="@drawable/ic_visibility_off"
+                                android:contentDescription="Toggle password visibility"
+                                android:padding="2dp"
+                                android:clickable="true"
+                                android:focusable="true"
+                                app:tint="@color/outline" />
+                        </FrameLayout>
+
+                        <!-- ── FORGOT PASSWORD ─────────────────────────── -->
+                        <TextView
+                            android:id="@+id/tvForgotPassword"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Forgot Password?"
+                            android:textSize="12sp"
+                            android:fontFamily="@font/public_sans_semibold"
+                            android:textColor="@color/on_surface"
+                            android:paddingBottom="2dp"
+                            android:background="@drawable/bg_underline_gold"
+                            android:layout_marginBottom="28dp" />
+
+                        <!-- ── ERROR MESSAGE (hidden by default) ────────── -->
+                        <TextView
+                            android:id="@+id/tvError"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text=""
+                            android:textSize="12sp"
+                            android:fontFamily="@font/public_sans"
+                            android:textColor="@color/error"
+                            android:visibility="gone"
+                            android:layout_marginBottom="12dp" />
+
+                        <!-- ── LOGIN BUTTON ────────────────────────────── -->
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnLogin"
+                            android:layout_width="match_parent"
+                            android:layout_height="56dp"
+                            android:text="LOGIN"
+                            android:textSize="13sp"
+                            android:fontFamily="@font/public_sans_semibold"
+                            android:textColor="@color/on_primary"
+                            android:letterSpacing="0.18"
+                            android:stateListAnimator="@null"
+                            app:backgroundTint="@color/primary"
+                            app:cornerRadius="4dp"
+                            android:layout_marginBottom="8dp" />
+
+                        <!-- ── LOADING INDICATOR (hidden by default) ────── -->
+                        <ProgressBar
+                            android:id="@+id/progressLogin"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:layout_gravity="center_horizontal"
+                            android:indeterminate="true"
+                            android:indeterminateTint="@color/primary"
+                            android:visibility="gone"
+                            android:layout_marginTop="8dp" />
+
+                        <!-- ── DISCLAIMER ──────────────────────────────── -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:background="@color/surface_container_high"
+                            android:layout_marginTop="28dp"
+                            android:layout_marginBottom="16dp" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="By proceeding, you acknowledge that all activities are logged under the National Cyber Security Framework. Unauthorized access attempts will be investigated."
+                            android:textSize="11sp"
+                            android:fontFamily="@font/public_sans"
+                            android:textColor="@color/on_surface_variant"
+                            android:lineSpacingMultiplier="1.5" />
+
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- ── FOOTER ─────────────────────────────────────────────── -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="24dp"
+                android:background="@color/surface_container_low">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="THE ACADEMIC LEDGER"
+                    android:textSize="10sp"
+                    android:fontFamily="@font/public_sans_semibold"
+                    android:textColor="@color/primary"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.2"
+                    android:layout_marginBottom="4dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="© 2024 Institutional Registry. Authorized Personnel Only."
+                    android:textSize="10sp"
+                    android:fontFamily="@font/public_sans"
+                    android:textColor="@color/on_surface_variant"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.1"
+                    android:gravity="center"
+                    android:layout_marginBottom="12dp" />
+
+                <!-- Footer links row -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center">
+
+                    <TextView
+                        android:id="@+id/tvSecurityPolicy"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Security Policy"
+                        android:textSize="10sp"
+                        android:fontFamily="@font/public_sans_semibold"
+                        android:textColor="@color/on_surface_variant"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.1"
+                        android:layout_marginEnd="16dp" />
+
+                    <TextView
+                        android:id="@+id/tvTermsOfAccess"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Terms of Access"
+                        android:textSize="10sp"
+                        android:fontFamily="@font/public_sans_semibold"
+                        android:textColor="@color/on_surface_variant"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.1"
+                        android:layout_marginEnd="16dp" />
+
+                    <TextView
+                        android:id="@+id/tvTechSupport"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Technical Support"
+                        android:textSize="10sp"
+                        android:fontFamily="@font/public_sans_semibold"
+                        android:textColor="@color/on_surface_variant"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.1" />
+
+                </LinearLayout>
+            </LinearLayout>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</LinearLayout>
