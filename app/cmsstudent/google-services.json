@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "386866496953",
+    "project_id": "cms-mbd",
+    "storage_bucket": "cms-mbd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:386866496953:android:1f45c54eb70ce8ddb06268",
+        "android_client_info": {
+          "package_name": "com.mbd.cmsadmin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCFJwlYJdWrmASq-GN-BYwCF-kTSHuqEsM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:386866496953:android:18da984878c2397db06268",
+        "android_client_info": {
+          "package_name": "com.mbd.cmsstudent"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCFJwlYJdWrmASq-GN-BYwCF-kTSHuqEsM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:386866496953:android:4ca82cdb4b07ef64b06268",
+        "android_client_info": {
+          "package_name": "com.mbd.cmsteacher"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCFJwlYJdWrmASq-GN-BYwCF-kTSHuqEsM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
