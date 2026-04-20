@@ -1,3 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    res/values/strings.xml
+    All user-visible strings for "CMS Admin" splash screen
+    Centralised here for easy localisation (Urdu / English)
+-->
 <resources>
-    <string name="app_name">CMS Admin</string>
+
+    <!-- App -->
+    <string name="app_name">CMS ADMIN</string>
+    <string name="app_version">v2.0.4-LTS</string>
+
+    <!-- College identity -->
+    <string name="college_name">Govt Graduate College,\nMandi Bahauddin</string>
+    <string name="college_tagline">Empowering Academic Excellence</string>
+    <string name="ledger_eyebrow">CMS Admin</string>
+
+    <!-- Top bar -->
+    <string name="top_bar_title">CMS Admin</string>
+
+    <!-- Admin control section -->
+    <string name="label_admin_control">Admin Control Center</string>
+    <string name="btn_login_admin">Login as Admin</string>
+    <string name="btn_request_access">Request Access Credentials</string>
+
+    <!-- Status labels -->
+    <string name="status_initializing">INITIALIZING SECURE PORTAL\u2026</string>
+    <string name="status_ready">PORTAL READY</string>
+    <string name="status_authenticating">AUTHENTICATING\u2026</string>
+    <string name="status_redirecting">REDIRECTING TO HOME\u2026</string>
+
+    <!-- Footer -->
+    <string name="footer_auth_only">AUTHENTICATED ACCESS ONLY</string>
+    <string name="footer_copyright">© 2024 Institutional Ledger</string>
+    <string name="footer_copyright_full">© 2024 Institutional Ledger Systems</string>
+
+    <!-- Content descriptions (accessibility) -->
+    <string name="cd_college_seal">College seal icon</string>
+    <string name="cd_verified_shield">Verified / secure access icon</string>
+    <string name="cd_logo">The Academic Ledger logo</string>
+    <string name="cd_live_indicator">Live system indicator</string>
+
+    <!-- Toast / error messages -->
+    <string name="msg_request_access">Please contact the institution administrator for credentials.</string>
+    <string name="msg_session_expired">Your session has expired. Please log in again.</string>
+    <string name="msg_auth_error">Authentication check failed. Please try again.</string>
+    <string name="msg_no_internet">No internet connection. Please check your network and try again.</string>
+
 </resources>
