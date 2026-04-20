@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animation-list xmlns:android="http://schemas.android.com/apk/res/android"
+    android:oneshot="false">
+
+    <!-- Frame 1: fully opaque -->
+    <item android:duration="700">
+        <shape android:shape="oval">
+            <solid android:color="#FF10B981" />
+        </shape>
+    </item>
+
+    <!-- Frame 2: semi-transparent (pulse out) -->
+    <item android:duration="700">
+        <shape android:shape="oval">
+            <solid android:color="#5510B981" />
+        </shape>
+    </item>
+
+</animation-list>
