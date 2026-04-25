@@ -165,4 +165,40 @@
         <item name="android:textColor">@color/on_surface_variant</item>
     </style>
 
+    <style name="AcademicBottomNav" parent="Widget.MaterialComponents.BottomNavigationView">
+        <item name="backgroundTint">@color/surface</item>
+        <item name="elevation">8dp</item>
+        <item name="itemIconTint">@color/bottom_nav_item_color</item>
+        <item name="itemTextColor">@color/bottom_nav_item_color</item>
+        <item name="itemTextAppearanceActive">@style/BottomNavLabel</item>
+        <item name="itemTextAppearanceInactive">@style/BottomNavLabel</item>
+        <item name="itemPaddingTop">8dp</item>
+        <item name="itemPaddingBottom">4dp</item>
+    </style>
+
+    <!-- Uppercase spaced label identical to the HTML design -->
+    <style name="BottomNavLabel" parent="TextAppearance.MaterialComponents.Caption">
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.12</item>
+        <item name="android:textSize">10sp</item>
+        <item name="fontFamily">@font/public_sans</item>
+        <item name="android:fontFamily">@font/public_sans</item>
+    </style>
+
+    <style name="BottomNavActiveIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">@color/secondary_container</item>
+        <item name="shapeAppearance">@style/BottomNavIndicatorShape</item>
+        <item name="android:width">48dp</item>
+        <item name="android:height">4dp</item>
+    </style>
+
+    <style name="BottomNavIndicatorShape" parent="ShapeAppearance.Material3.Corner.Full">
+        <item name="cornerSize">50%</item>
+    </style>
+    <style name="AcademicActionBar" parent="Widget.AppCompat.ActionBar">
+        <item name="background">@color/surface_container_lowest</item>
+        <item name="elevation">4dp</item>
+        <item name="displayOptions">showCustom</item>
+    </style>
+
 </resources>
