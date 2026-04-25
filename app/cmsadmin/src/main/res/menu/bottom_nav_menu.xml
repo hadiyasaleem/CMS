@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    res/menu/bottom_nav_menu.xml
+    Defines the four tabs that map to the four fragments:
+      Home · Attendance · Exams · Others
+-->
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/nav_home"
+        android:icon="@drawable/ic_home"
+        android:title="@string/nav_home" />
+
+    <item
+        android:id="@+id/nav_attendance"
+        android:icon="@drawable/ic_attendance"
+        android:title="@string/nav_attendance" />
+
+    <item
+        android:id="@+id/nav_exams"
+        android:icon="@drawable/ic_exams"
+        android:title="@string/nav_exams" />
+
+    <item
+        android:id="@+id/nav_others"
+        android:icon="@drawable/ic_more"
+        android:title="@string/nav_others" />
+
+</menu>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    custom_actionbar.xml
+    Inflated as the ActionBar's custom view in MainActivity.
+    Matches the design: avatar  |  "The Academic Ledger"  |  🔔
+-->
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingStart="4dp"
+    android:paddingEnd="4dp">
+
+    <!-- Left: Avatar + Title group -->
+    <LinearLayout
+        android:id="@+id/actionbar_left"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_alignParentStart="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <!-- Circular admin avatar -->
+        <de.hdodenhof.circleimageview.CircleImageView android:id="@+id/actionbar_avatar"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_admin_placeholder"
+            app:civ_border_width="1.5dp"
+            app:civ_border_color="@color/outline_variant"
+            xmlns:app="http://schemas.android.com/apk/res-auto" />
+
+        <!-- App title -->
+        <TextView
+            android:id="@+id/actionbar_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:text="@string/app_name"
+            android:textStyle="italic|bold"
+            android:textSize="20sp"
+            android:textColor="@color/primary"
+            android:fontFamily="@font/newsreader_regular" />
+
+    </LinearLayout>
+
+    <!-- Right: Notification bell -->
+    <ImageButton
+        android:id="@+id/actionbar_notifications"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/notifications"
+        android:src="@drawable/ic_notifications"
+        app:tint="@color/primary" />
+
+</RelativeLayout>

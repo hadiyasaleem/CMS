@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    bg_underline_amber.xml
+    Transparent background with a 2dp amber (#F7BD48) bottom border.
+    Applied to the "VIEW ARCHIVES" TextView to reproduce the
+    border-b-2 border-tertiary-fixed-dim effect from the HTML design.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Transparent fill -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@android:color/transparent" />
+        </shape>
+    </item>
+
+    <!-- Bottom border only (2dp) -->
+    <item android:top="999dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#F7BD48" />
+        </shape>
+    </item>
+
+</layer-list>

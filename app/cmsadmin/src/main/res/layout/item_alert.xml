@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    item_alert.xml
+    One row in the "Recent Academic Alerts" RecyclerView.
+    Layout:
+        [numbered badge]  |  title
+                             body
+                             meta (timestamp · source)
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingBottom="20dp"
+    android:gravity="top">
+
+    <!-- Numbered square badge -->
+    <TextView
+        android:id="@+id/tv_alert_number"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:gravity="center"
+        android:text="01"
+        android:textSize="16sp"
+        android:textColor="@color/secondary"
+        android:fontFamily="@font/newsreader_bold"
+        android:textStyle="bold"
+        android:background="@color/surface_container_high"
+        android:layout_marginEnd="16dp"
+         />
+
+    <!-- Text block -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_alert_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Alert Title"
+            android:textSize="16sp"
+            android:textColor="@color/on_surface"
+            android:fontFamily="@font/newsreader_bold_italic"
+            android:textStyle="bold"
+            android:paddingBottom="4dp" />
+
+        <TextView
+            android:id="@+id/tv_alert_body"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Alert body text goes here and wraps to multiple lines."
+            android:textSize="13sp"
+            android:lineSpacingMultiplier="1.4"
+            android:textColor="@color/on_surface_variant"
+            android:fontFamily="@font/public_sans"
+            android:paddingBottom="6dp" />
+
+        <TextView
+            android:id="@+id/tv_alert_meta"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="POSTED 2 HOURS AGO • REGISTRAR OFFICE"
+            android:textSize="10sp"
+            android:letterSpacing="0.12"
+            android:textColor="@color/outline"
+            android:fontFamily="@font/public_sans"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+</LinearLayout>
