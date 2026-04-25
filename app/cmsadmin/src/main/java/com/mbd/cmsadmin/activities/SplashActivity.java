@@ -1,4 +1,4 @@
-package com.mbd.cmsadmin;
+package com.mbd.cmsadmin.activities;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -10,10 +10,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.mbd.cmsadmin.R;
 
 /**
  * SplashActivity — Entry point of "The Academic Ledger"
@@ -56,6 +60,11 @@ public class SplashActivity extends AppCompatActivity {
         );
 
         setContentView(R.layout.activity_splash);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.splashRoot), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
 
         // Bind views
         btnLoginAdmin   = findViewById(R.id.btnLoginAdmin);
@@ -164,7 +173,7 @@ public class SplashActivity extends AppCompatActivity {
     // ────────────────────────────────────────────────────────────────────────
     /** Navigate to the main admin home screen and clear the back stack. */
     private void navigateToHome() {
-        Intent intent = new Intent(SplashActivity.this, HomeActivity.class);
+        Intent intent = new Intent(SplashActivity.this, Main.class);
         // Clear back stack so pressing Back from Home doesn't return to Splash
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
