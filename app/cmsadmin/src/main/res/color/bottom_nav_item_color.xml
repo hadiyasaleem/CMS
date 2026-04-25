@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    res/color/bottom_nav_item_color.xml
+    Active item  → secondary  (#b22b1d — crimson red, matches the design)
+    Inactive item → on_surface_variant (#44474e — muted grey)
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:color="@color/secondary"
+        android:state_checked="true" />
+    <item
+        android:color="@color/on_surface_variant" />
+</selector>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    ic_admin_placeholder.xml
+    Circular person silhouette used as the default/placeholder avatar
+    in the ActionBar when no profile photo is available.
+    ViewBox: 0 0 24 24
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="40dp"
+    android:height="40dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Circle background -->
+    <path
+        android:fillColor="#002147"
+        android:pathData="M12,2A10,10 0,1 0,12 22A10,10 0,1 0,12 2z" />
+
+    <!-- Head -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,7c1.66,0 3,1.34 3,3s-1.34,3 -3,3 -3,-1.34 -3,-3S10.34,7 12,7z" />
+
+    <!-- Shoulders -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,15c-2.67,0 -8,1.34 -8,4v1h16v-1C20,16.34 14.67,15 12,15z" />
+
+</vector>
