@@ -3,26 +3,11 @@
     res/layout/item_subject_card.xml
     Reusable card for a single subject in the Exam Status Report ledger.
 
-    Matches the HTML subject cards:
-      ✔ Red left border (4dp) when fully submitted, grey when pending
-      ✔ Subject code eyebrow (e.g. CS601)
-      ✔ Subject name (large Newsreader bold)
-      ✔ Professor name (italic)
-      ✔ Mid-term Exam status: "Submitted" (green badge + download icon)
-                               OR "Pending Submission" (red icon + label)
-      ✔ Sessional Marks status: same pattern
-
-    Usage in activity_exam_report.xml:
-        <include layout="@layout/item_subject_card" android:id="@+id/cardCs601" ... />
-
-    After inflating with <include>, get the root view and call
-    SubjectCardHelper.populate(view, subject) to fill in the data,
-    or set each view's text/visibility manually in the activity.
-
     IDs exposed:
       tvSubjectCode, tvSubjectName, tvProfessor,
-      tvMidtermLabel, ivMidtermStatus, tvMidtermBadge, btnDownloadMidterm,
-      tvSessionalLabel, ivSessionalStatus, tvSessionalBadge
+      tvMidtermBadge, btnDownloadMidterm, rowMidtermPending,
+      tvSessionalBadge, rowSessionalPending,
+      viewLeftBorder
 -->
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -33,14 +18,14 @@
     android:background="@color/surface_container_lowest"
     android:elevation="1dp">
 
-    <!-- ── Red / grey left border strip ──────────────────────────────── -->
+    <!-- Red / grey left border strip -->
     <View
         android:id="@+id/viewLeftBorder"
         android:layout_width="4dp"
         android:layout_height="match_parent"
         android:background="@color/secondary" />
 
-    <!-- ── Card body ──────────────────────────────────────────────────── -->
+    <!-- Card body -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -83,7 +68,7 @@
             android:textColor="@color/on_surface_variant"
             android:layout_marginBottom="16dp" />
 
-        <!-- ── Status columns row ──────────────────────────────────────── -->
+        <!-- Status columns row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -108,7 +93,6 @@
                     android:letterSpacing="0.15"
                     android:layout_marginBottom="6dp" />
 
-                <!-- Status row: badge + optional download icon -->
                 <LinearLayout
                     android:id="@+id/rowMidtermStatus"
                     android:layout_width="wrap_content"
@@ -116,7 +100,7 @@
                     android:orientation="horizontal"
                     android:gravity="center_vertical">
 
-                    <!-- Green "Submitted" badge -->
+                    <!-- "Submitted" badge -->
                     <TextView
                         android:id="@+id/tvMidtermBadge"
                         android:layout_width="wrap_content"
@@ -144,7 +128,7 @@
                         android:visibility="visible"
                         app:tint="@color/primary" />
 
-                    <!-- Pending indicator (hide when submitted) -->
+                    <!-- Pending indicator (shown when not submitted) -->
                     <LinearLayout
                         android:id="@+id/rowMidtermPending"
                         android:layout_width="wrap_content"
@@ -192,7 +176,6 @@
                     android:letterSpacing="0.15"
                     android:layout_marginBottom="6dp" />
 
-                <!-- Status row -->
                 <LinearLayout
                     android:id="@+id/rowSessionalStatus"
                     android:layout_width="wrap_content"
@@ -200,7 +183,7 @@
                     android:orientation="horizontal"
                     android:gravity="center_vertical">
 
-                    <!-- Green "Submitted" badge -->
+                    <!-- "Submitted" badge -->
                     <TextView
                         android:id="@+id/tvSessionalBadge"
                         android:layout_width="wrap_content"

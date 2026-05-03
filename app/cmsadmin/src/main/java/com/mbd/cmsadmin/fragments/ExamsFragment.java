@@ -60,7 +60,7 @@ public class ExamsFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_exam, container, false);
+        return inflater.inflate(R.layout.fragment_exams, container, false);
     }
 
     // ─────────────────────────────────────────────────────────────────────

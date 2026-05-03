@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Material Symbol: admin_panel_settings — used in Manage Admins tile -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="@android:color/black"
+        android:pathData="M17,11c0.34,0 0.67,0.03 1,0.08V6.27L10,3 2,6.27v5c0,4.64 3.41,9 8,10.07 0.54,-0.12 1.05,-0.3 1.55,-0.52C10.55,19.94 10,18.56 10,17c0,-3.31 2.69,-6 7,-6z"/>
+    <path
+        android:fillColor="@android:color/black"
+        android:pathData="M17,13c-2.21,0 -4,1.79 -4,4s1.79,4 4,4 4,-1.79 4,-4S19.21,13 17,13zM17,14.38c0.62,0 1.12,0.5 1.12,1.12S17.62,16.62 17,16.62s-1.12,-0.5 -1.12,-1.12S16.38,14.38 17,14.38zM17,20.75c-1.04,0 -1.97,-0.46 -2.61,-1.18 0.01,-0.86 1.74,-1.32 2.61,-1.32s2.6,0.46 2.61,1.32C19.97,20.29 19.04,20.75 17,20.75z"/>
+</vector>

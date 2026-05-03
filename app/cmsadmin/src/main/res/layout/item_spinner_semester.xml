@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    item_spinner_semester.xml
+    Spinner item layout for Semester and Session dropdowns
+    in TimeTableManagementActivity.
+    Matches the underline-input style of the HTML design.
+-->
+<TextView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:textSize="15sp"
+    android:fontFamily="@font/public_sans"
+    android:textColor="#FF1A1C1C"
+    android:paddingTop="12dp"
+    android:paddingBottom="12dp"
+    android:paddingStart="4dp"
+    android:paddingEnd="4dp" />

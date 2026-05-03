@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    res/layout/activity_exam_report.xml
-    Matches: HTML "Exams Status Report" screen (Screen 2)
+    res/layout/activity_exams_report.xml
+    Exams Status Report — Screen 2
 
     Structure:
       • Sticky top app bar (back arrow + brand)
@@ -11,7 +11,6 @@
           - Important dates card
           - Subject ledger cards × 4  (CS601–CS604)
           - "Missing an entry?" CTA banner
-      • Fixed bottom nav bar
 -->
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -40,7 +39,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- Back button -->
         <ImageView
             android:id="@+id/btnBack"
             android:layout_width="36dp"
@@ -53,7 +51,6 @@
             android:layout_marginEnd="8dp"
             app:tint="@color/primary" />
 
-        <!-- Bank icon -->
         <ImageView
             android:layout_width="20dp"
             android:layout_height="20dp"
@@ -62,7 +59,6 @@
             android:layout_marginEnd="8dp"
             app:tint="@color/primary" />
 
-        <!-- Brand title -->
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -72,7 +68,6 @@
             android:fontFamily="@font/newsreader_bold_italic"
             android:textColor="@color/primary" />
 
-        <!-- Profile avatar -->
         <ImageView
             android:layout_width="34dp"
             android:layout_height="34dp"
@@ -114,7 +109,6 @@
                 android:paddingTop="24dp"
                 android:paddingBottom="20dp">
 
-                <!-- Eyebrow -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -126,7 +120,6 @@
                     android:letterSpacing="0.2"
                     android:layout_marginBottom="8dp" />
 
-                <!-- Headline -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -247,7 +240,7 @@
             </LinearLayout>
 
             <!-- ─────────────────────────────────────────────────────
-                 SUBMISSION SUMMARY CARD (dark navy)
+                 SUBMISSION SUMMARY CARD
                  ───────────────────────────────────────────────────── -->
             <LinearLayout
                 android:layout_width="match_parent"
@@ -268,7 +261,7 @@
                     android:textColor="@color/on_primary"
                     android:layout_marginBottom="20dp" />
 
-                <!-- Total Subjects row -->
+                <!-- Total Subjects -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -283,8 +276,7 @@
                         android:text="Total Subjects"
                         android:textSize="12sp"
                         android:fontFamily="@font/public_sans"
-                        android:textColor="#B3FFFFFF"
-                        android:layout_marginBottom="0dp" />
+                        android:textColor="#B3FFFFFF" />
 
                     <TextView
                         android:id="@+id/tvTotalSubjects"
@@ -296,14 +288,13 @@
                         android:textColor="@color/on_primary" />
                 </LinearLayout>
 
-                <!-- Divider -->
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
                     android:background="#1AFFFFFF"
                     android:layout_marginBottom="12dp" />
 
-                <!-- Exams Submitted row -->
+                <!-- Exams Submitted -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -330,14 +321,13 @@
                         android:textColor="@color/on_primary" />
                 </LinearLayout>
 
-                <!-- Divider -->
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
                     android:background="#1AFFFFFF"
                     android:layout_marginBottom="12dp" />
 
-                <!-- Pending row (gold/amber colour) -->
+                <!-- Pending Submissions -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -518,12 +508,8 @@
                 android:layout_marginStart="24dp"
                 android:layout_marginBottom="8dp" />
 
-            <!-- ═══════════════════════════════════════════════════════
-                 SUBJECT CARD 1 — CS601 Database Management Systems
-                 Status: Mid-term SUBMITTED | Sessional SUBMITTED
-                 ═══════════════════════════════════════════════════════ -->
-            <include
-                layout="@layout/item_subject_card"
+            <!-- Subject cards CS601–CS604 -->
+            <include layout="@layout/item_subject_card"
                 android:id="@+id/cardCs601"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -531,12 +517,7 @@
                 android:layout_marginEnd="16dp"
                 android:layout_marginBottom="10dp" />
 
-            <!-- ═══════════════════════════════════════════════════════
-                 SUBJECT CARD 2 — CS602 Software Engineering
-                 Status: Mid-term SUBMITTED | Sessional PENDING
-                 ═══════════════════════════════════════════════════════ -->
-            <include
-                layout="@layout/item_subject_card"
+            <include layout="@layout/item_subject_card"
                 android:id="@+id/cardCs602"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -544,12 +525,7 @@
                 android:layout_marginEnd="16dp"
                 android:layout_marginBottom="10dp" />
 
-            <!-- ═══════════════════════════════════════════════════════
-                 SUBJECT CARD 3 — CS603 Artificial Intelligence
-                 Status: Mid-term PENDING | Sessional SUBMITTED
-                 ═══════════════════════════════════════════════════════ -->
-            <include
-                layout="@layout/item_subject_card"
+            <include layout="@layout/item_subject_card"
                 android:id="@+id/cardCs603"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -557,12 +533,7 @@
                 android:layout_marginEnd="16dp"
                 android:layout_marginBottom="10dp" />
 
-            <!-- ═══════════════════════════════════════════════════════
-                 SUBJECT CARD 4 — CS604 Theory of Computation
-                 Status: Mid-term SUBMITTED | Sessional SUBMITTED
-                 ═══════════════════════════════════════════════════════ -->
-            <include
-                layout="@layout/item_subject_card"
+            <include layout="@layout/item_subject_card"
                 android:id="@+id/cardCs604"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

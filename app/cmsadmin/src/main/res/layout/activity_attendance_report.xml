@@ -1,10 +1,579 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+    activity_attendance_report.xml
+    AttendanceReportActivity — the detailed attendance ledger (Images 2 & 3).
+
+    Sections:
+      1.  Archive label + department title + subtitle
+      2.  Morning / Evening shift toggle
+      3.  Date picker + Daily/Weekly/Monthly/Full Semester tabs
+      4.  Export + Print action row
+      5.  Horizontally-scrollable attendance table  (RecyclerView inside HorizontalScrollView)
+      6.  Insights bento:
+            a.  Avg. Attendance card  (dark navy)
+            b.  Absence Warning card
+            c.  Perfect Attendance card
+-->
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".activities.AttendanceReportActivity">
+    android:background="@color/surface"
+    android:fillViewport="true">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingBottom="48dp">
+
+        <!-- ═══════════════════════════════════════
+             § 1  HEADER
+             ═══════════════════════════════════════ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="20dp">
+
+            <!-- Archive label -->
+            <TextView
+                android:id="@+id/tv_archive_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ARCHIVE RECORD 2023-IV"
+                android:textSize="10sp"
+                android:letterSpacing="0.2"
+                android:textColor="@color/secondary"
+                android:fontFamily="@font/public_sans"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Department name (large) -->
+            <TextView
+                android:id="@+id/tv_dept_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Department of\nTheoretical Physics"
+                android:textSize="32sp"
+                android:lineSpacingMultiplier="1.05"
+                android:textColor="@color/primary"
+                android:fontFamily="@font/newsreader_bold"
+                android:textStyle="bold"
+                android:layout_marginBottom="10dp" />
+
+            <!-- Subtitle -->
+            <TextView
+                android:id="@+id/tv_subtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Detailed Ledger of Attendance: Semester VI (Quantum Mechanics &amp; Fluid Dynamics)"
+                android:textSize="14sp"
+                android:lineSpacingMultiplier="1.4"
+                android:textColor="@color/on_surface_variant"
+                android:fontFamily="@font/public_sans"
+                android:layout_marginBottom="16dp" />
+
+            <!-- ── Shift Toggle (Morning / Evening) ─── -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:background="@color/surface_container_low"
+                android:padding="4dp">
+
+                <TextView
+                    android:id="@+id/btn_morning"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Morning"
+                    android:textSize="13sp"
+                    android:textColor="@color/on_primary"
+                    android:fontFamily="@font/public_sans"
+                    android:textStyle="bold"
+                    android:background="@color/primary"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="20dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <TextView
+                    android:id="@+id/btn_evening"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Evening"
+                    android:textSize="13sp"
+                    android:textColor="@color/on_surface_variant"
+                    android:fontFamily="@font/public_sans"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="20dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- ═══════════════════════════════════════
+             § 2  FILTER BAR  (date + period tabs)
+             ═══════════════════════════════════════ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="16dp">
+
+            <!-- Date picker row -->
+            <LinearLayout
+                android:id="@+id/date_picker_row"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@color/surface_container_lowest"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                android:layout_marginBottom="12dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_edit_calendar"
+                    android:contentDescription="@null"
+                    android:layout_marginEnd="8dp"
+                    app:tint="@color/secondary" />
+
+                <TextView
+                    android:id="@+id/tv_selected_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="October 12, 2023"
+                    android:textSize="13sp"
+                    android:textColor="@color/primary"
+                    android:fontFamily="@font/public_sans"
+                    android:textStyle="bold" />
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_expand_more"
+                    android:contentDescription="@null"
+                    android:layout_marginStart="4dp"
+                    app:tint="@color/outline" />
+
+            </LinearLayout>
+
+            <!-- Period tab strip: Daily · Weekly · Monthly · Full Semester -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:background="@color/surface_container_low"
+                android:padding="4dp">
+
+                <TextView
+                    android:id="@+id/tab_daily"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="DAILY"
+                    android:textSize="9sp"
+                    android:letterSpacing="0.12"
+                    android:textColor="@color/on_surface_variant"
+                    android:fontFamily="@font/public_sans"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground" />
+
+                <TextView
+                    android:id="@+id/tab_weekly"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="WEEKLY"
+                    android:textSize="9sp"
+                    android:letterSpacing="0.12"
+                    android:textColor="@color/on_surface_variant"
+                    android:fontFamily="@font/public_sans"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground" />
+
+                <TextView
+                    android:id="@+id/tab_monthly"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="MONTHLY"
+                    android:textSize="9sp"
+                    android:letterSpacing="0.12"
+                    android:textColor="@color/secondary"
+                    android:fontFamily="@font/public_sans"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
+                    android:background="@color/surface_container_lowest"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground" />
+
+                <TextView
+                    android:id="@+id/tab_full_semester"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="FULL\nSEMESTER"
+                    android:textSize="9sp"
+                    android:letterSpacing="0.12"
+                    android:textColor="@color/on_surface_variant"
+                    android:fontFamily="@font/public_sans"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:paddingTop="6dp"
+                    android:paddingBottom="6dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- ═══════════════════════════════════════
+             § 3  EXPORT / PRINT ROW
+             ═══════════════════════════════════════ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="16dp"
+            android:gravity="center_vertical">
+
+            <!-- Export Ledger -->
+            <LinearLayout
+                android:id="@+id/btn_export"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="0dp"
+                android:paddingEnd="20dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                android:background="@drawable/bg_underline_amber"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@drawable/ic_download"
+                    android:contentDescription="@null"
+                    android:layout_marginEnd="6dp"
+                    app:tint="@color/primary" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Export Ledger"
+                    android:textSize="13sp"
+                    android:textColor="@color/primary"
+                    android:fontFamily="@font/public_sans"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+            <!-- Spacer -->
+            <View android:layout_width="16dp" android:layout_height="1dp" />
+
+            <!-- Print -->
+            <ImageView
+                android:id="@+id/btn_print"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="@drawable/ic_print"
+                android:contentDescription="Print"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                app:tint="@color/on_surface_variant" />
+
+        </LinearLayout>
+
+        <!-- ═══════════════════════════════════════
+             § 4  ATTENDANCE TABLE
+             HorizontalScrollView → table header + RecyclerView
+             ═══════════════════════════════════════ -->
+        <androidx.cardview.widget.CardView
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="3dp"
+            app:cardBackgroundColor="@color/surface_container_lowest">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <!-- Table column header row (scrolls horizontally with content) -->
+                <HorizontalScrollView
+                    android:id="@+id/hsv_table_header"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:scrollbars="none"
+                    android:overScrollMode="never">
+
+                    <LinearLayout
+                        android:id="@+id/table_header_row"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:background="@color/surface_container_low"
+                        android:paddingTop="12dp"
+                        android:paddingBottom="12dp">
+
+                        <!-- Fixed: Student Identification -->
+                        <TextView
+                            android:layout_width="160dp"
+                            android:layout_height="wrap_content"
+                            android:text="STUDENT\nIDENTIFICATION"
+                            android:textSize="9sp"
+                            android:letterSpacing="0.12"
+                            android:textColor="@color/on_surface_variant"
+                            android:fontFamily="@font/public_sans"
+                            android:textStyle="bold"
+                            android:paddingStart="16dp"
+                            android:paddingEnd="8dp" />
+
+                        <!-- Date columns injected programmatically here -->
+                        <LinearLayout
+                            android:id="@+id/header_date_columns"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal" />
+
+                        <!-- Summary % -->
+                        <TextView
+                            android:layout_width="72dp"
+                            android:layout_height="wrap_content"
+                            android:text="SUMMARY\n(%)"
+                            android:textSize="9sp"
+                            android:letterSpacing="0.12"
+                            android:textColor="@color/secondary"
+                            android:fontFamily="@font/public_sans"
+                            android:textStyle="bold"
+                            android:gravity="end"
+                            android:paddingEnd="16dp" />
+
+                    </LinearLayout>
+                </HorizontalScrollView>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/outline_variant" />
+
+                <!-- Student rows in a second, synchronised HorizontalScrollView -->
+                <HorizontalScrollView
+                    android:id="@+id/hsv_table_body"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:scrollbars="none"
+                    android:overScrollMode="never">
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rv_attendance"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:nestedScrollingEnabled="false" />
+
+                </HorizontalScrollView>
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- ═══════════════════════════════════════
+             § 5  INSIGHTS BENTO GRID (3 cards)
+             ═══════════════════════════════════════ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="20dp">
+
+            <!-- Card A: Avg Attendance (dark navy) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/primary"
+                android:padding="24dp"
+                android:layout_marginBottom="12dp">
+
+                <ImageView
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:src="@drawable/ic_analytics"
+                    android:contentDescription="@null"
+                    android:layout_marginBottom="8dp"
+                    app:tint="@color/on_primary" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="AVG. ATTENDANCE"
+                    android:textSize="9sp"
+                    android:letterSpacing="0.15"
+                    android:textColor="@color/on_primary"
+                    android:fontFamily="@font/public_sans"
+                    android:textStyle="bold"
+                    android:alpha="0.6" />
+
+                <TextView
+                    android:id="@+id/tv_avg_attendance"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="88.4%"
+                    android:textSize="38sp"
+                    android:textColor="@color/on_primary"
+                    android:fontFamily="@font/newsreader_bold"
+                    android:textStyle="bold"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="12dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Overall institutional standard maintained for the current physics cohort."
+                    android:textSize="12sp"
+                    android:lineSpacingMultiplier="1.4"
+                    android:textColor="@color/on_primary"
+                    android:fontFamily="@font/public_sans"
+                    android:alpha="0.75" />
+
+            </LinearLayout>
+
+            <!-- Card B: Absence Warning -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/surface_container_high"
+                android:padding="24dp"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="ABSENCE WARNING"
+                    android:textSize="9sp"
+                    android:letterSpacing="0.15"
+                    android:textColor="@color/on_surface_variant"
+                    android:fontFamily="@font/public_sans"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="16dp" />
+
+                <!-- Warning rows injected by AttendanceReportActivity or keep static -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_absence_warnings"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false" />
+
+            </LinearLayout>
+
+            <!-- Card C: Perfect Attendance -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@color/surface_container_lowest"
+                android:padding="24dp"
+                android:layout_marginBottom="12dp">
+
+                <ImageView
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:src="@drawable/ic_star"
+                    android:contentDescription="@null"
+                    android:layout_marginBottom="8dp"
+                    app:tint="@color/tertiary_fixed_dim" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="PERFECT ATTENDANCE"
+                    android:textSize="9sp"
+                    android:letterSpacing="0.15"
+                    android:textColor="@color/on_surface_variant"
+                    android:fontFamily="@font/public_sans"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="6dp" />
+
+                <TextView
+                    android:id="@+id/tv_perfect_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="14 Students"
+                    android:textSize="24sp"
+                    android:textColor="@color/primary"
+                    android:fontFamily="@font/newsreader_regular"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp" />
+
+                <TextView
+                    android:id="@+id/btn_view_honors"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="VIEW HONORS LIST"
+                    android:textSize="10sp"
+                    android:letterSpacing="0.1"
+                    android:textColor="@color/secondary"
+                    android:fontFamily="@font/public_sans"
+                    android:textStyle="bold"
+                    android:background="@drawable/bg_underline_amber"
+                    android:paddingBottom="2dp"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

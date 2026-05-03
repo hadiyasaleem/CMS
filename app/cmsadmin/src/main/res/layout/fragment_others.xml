@@ -1,14 +1,691 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<!--
+    fragment_others.xml
+    OthersFragment — Administrative Utilities
+    One utility tile per row (full-width), matching the HTML design exactly.
+    Bottom nav is NOT included here — it lives in activity_main.xml.
+-->
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".fragments.OthersFragment">
+    android:background="@color/surface"
+    android:fillViewport="true"
+    android:overScrollMode="never">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
-</FrameLayout>
+        <!-- ══════════════════════════════════════════════════════════
+             HERO SECTION
+             ══════════════════════════════════════════════════════════ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="20dp">
+
+            <!-- Red left border (border-l-4 border-secondary) -->
+            <View
+                android:layout_width="4dp"
+                android:layout_height="match_parent"
+                android:background="@color/secondary"
+                android:layout_marginEnd="16dp" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <!-- Eyebrow -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="GOVERNMENT GRADUATE COLLEGE, MANDI BAHAUDDIN"
+                    android:textSize="9sp"
+                    android:fontFamily="@font/public_sans_semibold"
+                    android:textColor="@color/on_tertiary_fixed_variant"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.16"
+                    android:layout_marginBottom="6dp" />
+
+                <!-- Headline -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Administrative\nUtilities"
+                    android:textSize="40sp"
+                    android:fontFamily="@font/newsreader_bold"
+                    android:textColor="@color/primary"
+                    android:lineSpacingMultiplier="1.05"
+                    android:layout_marginBottom="10dp" />
+
+                <!-- Italic description -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="A secure digital environment for the governance and oversight of the institution's primary academic functions."
+                    android:textSize="13sp"
+                    android:fontFamily="@font/newsreader_italic"
+                    android:textColor="@color/on_surface_variant"
+                    android:lineSpacingMultiplier="1.45" />
+
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ══════════════════════════════════════════════════════════
+             UTILITY TILES — one per row
+             ══════════════════════════════════════════════════════════ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@color/surface_container_low">
+
+            <!-- ── Tile 1: Approve Student Requests ─────────────────── -->
+            <LinearLayout
+                android:id="@+id/tile_approve_requests"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@color/surface_container_lowest"
+                android:padding="20dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:src="@drawable/ic_how_to_reg"
+                    android:contentDescription="Approve"
+                    android:layout_marginEnd="20dp"
+                    app:tint="@color/secondary" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Approve Student Requests"
+                        android:textSize="17sp"
+                        android:fontFamily="@font/newsreader_bold"
+                        android:textColor="@color/on_surface"
+                        android:layout_marginBottom="3dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Process enrollment, clearance, and certificate applications."
+                        android:textSize="12sp"
+                        android:fontFamily="@font/public_sans"
+                        android:textColor="@color/on_surface_variant"
+                        android:lineSpacingMultiplier="1.35" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <View android:layout_width="match_parent" android:layout_height="1dp"
+                android:background="@color/surface_container" />
+
+            <!-- ── Tile 2: Manage Admins ─────────────────────────────── -->
+            <LinearLayout
+                android:id="@+id/tile_manage_admins"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@color/surface_container_lowest"
+                android:padding="20dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:src="@drawable/ic_admin_panel_settings"
+                    android:contentDescription="Admins"
+                    android:layout_marginEnd="20dp"
+                    app:tint="@color/secondary" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Manage Admins"
+                        android:textSize="17sp"
+                        android:fontFamily="@font/newsreader_bold"
+                        android:textColor="@color/on_surface"
+                        android:layout_marginBottom="3dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Configure roles and permissions for system administrators."
+                        android:textSize="12sp"
+                        android:fontFamily="@font/public_sans"
+                        android:textColor="@color/on_surface_variant"
+                        android:lineSpacingMultiplier="1.35" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <View android:layout_width="match_parent" android:layout_height="1dp"
+                android:background="@color/surface_container" />
+
+            <!-- ── Tile 3: Manage Teachers ───────────────────────────── -->
+            <LinearLayout
+                android:id="@+id/tile_manage_teachers"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@color/surface_container_lowest"
+                android:padding="20dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:src="@drawable/ic_school"
+                    android:contentDescription="Teachers"
+                    android:layout_marginEnd="20dp"
+                    app:tint="@color/secondary" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Manage Teachers"
+                        android:textSize="17sp"
+                        android:fontFamily="@font/newsreader_bold"
+                        android:textColor="@color/on_surface"
+                        android:layout_marginBottom="3dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Oversee faculty profiles, assignments, and performance."
+                        android:textSize="12sp"
+                        android:fontFamily="@font/public_sans"
+                        android:textColor="@color/on_surface_variant"
+                        android:lineSpacingMultiplier="1.35" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <View android:layout_width="match_parent" android:layout_height="1dp"
+                android:background="@color/surface_container" />
+
+            <!-- ── Tile 4: Manage Time Table ─────────────────────────── -->
+            <LinearLayout
+                android:id="@+id/tile_manage_timetable"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@color/surface_container_lowest"
+                android:padding="20dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:src="@drawable/ic_calendar"
+                    android:contentDescription="Timetable"
+                    android:layout_marginEnd="20dp"
+                    app:tint="@color/secondary" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Manage Time Table"
+                        android:textSize="17sp"
+                        android:fontFamily="@font/newsreader_bold"
+                        android:textColor="@color/on_surface"
+                        android:layout_marginBottom="3dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Organize academic schedules and lecture hall allocations."
+                        android:textSize="12sp"
+                        android:fontFamily="@font/public_sans"
+                        android:textColor="@color/on_surface_variant"
+                        android:lineSpacingMultiplier="1.35" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <View android:layout_width="match_parent" android:layout_height="1dp"
+                android:background="@color/surface_container" />
+
+            <!-- ── Tile 5: Manage Notifications ─────────────────────── -->
+            <LinearLayout
+                android:id="@+id/tile_manage_notifications"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@color/surface_container_lowest"
+                android:padding="20dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:src="@drawable/ic_campaign"
+                    android:contentDescription="Notifications"
+                    android:layout_marginEnd="20dp"
+                    app:tint="@color/secondary" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Manage Notifications"
+                        android:textSize="17sp"
+                        android:fontFamily="@font/newsreader_bold"
+                        android:textColor="@color/on_surface"
+                        android:layout_marginBottom="3dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Broadcast official notices to students and faculty members."
+                        android:textSize="12sp"
+                        android:fontFamily="@font/public_sans"
+                        android:textColor="@color/on_surface_variant"
+                        android:lineSpacingMultiplier="1.35" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <View android:layout_width="match_parent" android:layout_height="1dp"
+                android:background="@color/surface_container" />
+
+            <!-- ── Tile 6: Add Downloads ─────────────────────────────── -->
+            <LinearLayout
+                android:id="@+id/tile_add_downloads"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@color/surface_container_lowest"
+                android:padding="20dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:src="@drawable/ic_upload_file"
+                    android:contentDescription="Downloads"
+                    android:layout_marginEnd="20dp"
+                    app:tint="@color/secondary" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Add Downloads"
+                        android:textSize="17sp"
+                        android:fontFamily="@font/newsreader_bold"
+                        android:textColor="@color/on_surface"
+                        android:layout_marginBottom="3dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Upload forms, syllabi, and official institutional documents."
+                        android:textSize="12sp"
+                        android:fontFamily="@font/public_sans"
+                        android:textColor="@color/on_surface_variant"
+                        android:lineSpacingMultiplier="1.35" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <View android:layout_width="match_parent" android:layout_height="1dp"
+                android:background="@color/surface_container" />
+
+            <!-- ── Tile 7: Manage Departments ───────────────────────── -->
+            <LinearLayout
+                android:id="@+id/tile_manage_departments"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@color/surface_container_lowest"
+                android:padding="20dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:src="@drawable/ic_account_balance"
+                    android:contentDescription="Departments"
+                    android:layout_marginEnd="20dp"
+                    app:tint="@color/secondary" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Manage Departments"
+                        android:textSize="17sp"
+                        android:fontFamily="@font/newsreader_bold"
+                        android:textColor="@color/on_surface"
+                        android:layout_marginBottom="3dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Configure organizational units and academic subdivisions."
+                        android:textSize="12sp"
+                        android:fontFamily="@font/public_sans"
+                        android:textColor="@color/on_surface_variant"
+                        android:lineSpacingMultiplier="1.35" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <View android:layout_width="match_parent" android:layout_height="1dp"
+                android:background="@color/surface_container" />
+
+            <!-- ── Tile 8: Audit Logs ────────────────────────────────── -->
+            <LinearLayout
+                android:id="@+id/tile_audit_logs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@color/surface_container_lowest"
+                android:padding="20dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:src="@drawable/ic_history_edu"
+                    android:contentDescription="Audit"
+                    android:layout_marginEnd="20dp"
+                    app:tint="@color/secondary" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Audit Logs"
+                        android:textSize="17sp"
+                        android:fontFamily="@font/newsreader_bold"
+                        android:textColor="@color/on_surface"
+                        android:layout_marginBottom="3dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Review chronological records of all system administrative actions."
+                        android:textSize="12sp"
+                        android:fontFamily="@font/public_sans"
+                        android:textColor="@color/on_surface_variant"
+                        android:lineSpacingMultiplier="1.35" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <View android:layout_width="match_parent" android:layout_height="1dp"
+                android:background="@color/surface_container" />
+
+            <!-- ── Tile 9: Leave Management ──────────────────────────── -->
+            <LinearLayout
+                android:id="@+id/tile_leave_management"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@color/surface_container_lowest"
+                android:padding="20dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:src="@drawable/ic_event_busy"
+                    android:contentDescription="Leave"
+                    android:layout_marginEnd="20dp"
+                    app:tint="@color/secondary" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Leave Management"
+                        android:textSize="17sp"
+                        android:fontFamily="@font/newsreader_bold"
+                        android:textColor="@color/on_surface"
+                        android:layout_marginBottom="3dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Approve and track faculty and staff leave requests."
+                        android:textSize="12sp"
+                        android:fontFamily="@font/public_sans"
+                        android:textColor="@color/on_surface_variant"
+                        android:lineSpacingMultiplier="1.35" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <View android:layout_width="match_parent" android:layout_height="1dp"
+                android:background="@color/surface_container" />
+
+            <!-- ── Tile 10: System Settings (with arrow →) ──────────── -->
+            <LinearLayout
+                android:id="@+id/tile_system_settings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@color/surface_container_lowest"
+                android:padding="20dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:src="@drawable/ic_settings_suggest"
+                    android:contentDescription="Settings"
+                    android:layout_marginEnd="20dp"
+                    app:tint="@color/secondary" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="System Settings"
+                        android:textSize="17sp"
+                        android:fontFamily="@font/newsreader_bold"
+                        android:textColor="@color/on_surface"
+                        android:layout_marginBottom="3dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="General ledger configuration, security protocols, and server diagnostics."
+                        android:textSize="12sp"
+                        android:fontFamily="@font/public_sans"
+                        android:textColor="@color/on_surface_variant"
+                        android:lineSpacingMultiplier="1.35" />
+                </LinearLayout>
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_arrow_forward"
+                    android:contentDescription="Navigate"
+                    android:layout_marginStart="8dp"
+                    app:tint="@color/on_surface_variant" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- ══════════════════════════════════════════════════════════
+             GOVERNANCE STANDARDS SECTION
+             ══════════════════════════════════════════════════════════ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:paddingTop="32dp"
+            android:paddingBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Governance Standards"
+                android:textSize="28sp"
+                android:fontFamily="@font/newsreader_bold"
+                android:textColor="@color/primary"
+                android:layout_marginBottom="12dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="The Administrative Utilities suite operates under strict compliance with the provincial higher education regulatory framework. Every action performed within this ledger is immutable and logged for institutional transparency."
+                android:textSize="13sp"
+                android:fontFamily="@font/public_sans"
+                android:textColor="@color/on_surface_variant"
+                android:lineSpacingMultiplier="1.55"
+                android:layout_marginBottom="16dp" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="REGULATORY V.24"
+                    android:textSize="9sp"
+                    android:fontFamily="@font/public_sans_semibold"
+                    android:textColor="@color/on_tertiary_fixed_variant"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.15"
+                    android:background="@color/surface_container_high"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
+                    android:layout_marginEnd="8dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="ENCRYPTED SESSION"
+                    android:textSize="9sp"
+                    android:fontFamily="@font/public_sans_semibold"
+                    android:textColor="@color/on_tertiary_fixed_variant"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.15"
+                    android:background="@color/surface_container_high"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Quote banner -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@color/primary_container"
+            android:layout_marginStart="24dp"
+            android:layout_marginEnd="24dp"
+            android:layout_marginBottom="24dp"
+            android:padding="24dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Preserving the integrity of the ledger is the primary duty of the chancellor's office."
+                android:textSize="15sp"
+                android:fontFamily="@font/newsreader_italic"
+                android:textColor="@color/on_primary"
+                android:lineSpacingMultiplier="1.45" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

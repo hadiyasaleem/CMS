@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    bg_timetable_empty_cell.xml
+    Dashed border cell background for "Free Slot", "Lab Session", etc.
+    Matches HTML: border border-dashed border-outline-variant/50
+    Note: Android doesn't support dashed stroke on shape directly in layer-list
+    without API 28+ DashPathEffect — we use a solid muted stroke instead.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <solid android:color="#F0F0F0" />
+
+    <stroke
+        android:width="1dp"
+        android:color="#80C4C6CF" />
+
+</shape>

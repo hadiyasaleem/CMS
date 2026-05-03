@@ -15,27 +15,16 @@ import com.mbd.cmsadmin.R;
 import com.mbd.cmsadmin.fragments.ExamsFragment;
 
 /**
- * ExamReportActivity — Exams Status Report (Screen 2)
+ * ExamsReportActivity — Exams Status Report (Screen 2)
  *
  * Displays the full ledger of subjects with their mid-term exam and
  * sessional-marks submission statuses for a given department + semester.
  *
  * Receives via Intent extras:
- *   - {@link ExamFragment#EXTRA_DEPARTMENT} — e.g. "Computer Science"
- *   - {@link ExamFragment#EXTRA_SEMESTER}   — e.g. 6
+ *   - {@link ExamsFragment#EXTRA_DEPARTMENT} — e.g. "Computer Science"
+ *   - {@link ExamsFragment#EXTRA_SEMESTER}   — e.g. 6
  *
- * Layout: activity_exam_report.xml
- *
- * Sections:
- *   1. Top bar (back arrow + brand title)
- *   2. Hero header with department chip, semester chip, active session badge
- *   3. Left aside — Submission summary card + Important dates
- *   4. Right section — Subject ledger cards (4 subjects shown for CS Sem 6)
- *   5. Bottom CTA — "Missing an entry? → Inquiry Portal"
- *
- * In a real implementation, the subject list would be fetched from Firestore
- * via a repository/ViewModel. For now it is static demo data matching the
- * HTML design exactly (CS601–CS604).
+ * Layout: activity_exams_report.xml
  */
 public class ExamsReportActivity extends AppCompatActivity {
 
@@ -46,7 +35,7 @@ public class ExamsReportActivity extends AppCompatActivity {
     private TextView tvSubmitted;
     private TextView tvPending;
 
-    // ── Data received from ExamFragment ──────────────────────────────────
+    // ── Data received from ExamsFragment ─────────────────────────────────
     private String department;
     private int    semester;
 
@@ -91,62 +80,37 @@ public class ExamsReportActivity extends AppCompatActivity {
      * In production these numbers come from Firestore.
      */
     private void populateHeader() {
-        if (tvDepartmentChip != null) {
-            tvDepartmentChip.setText(department.toUpperCase());
-        }
-        if (tvSemesterChip != null) {
-            tvSemesterChip.setText("SEMESTER " + semester);
-        }
-
-        // Static summary (would be dynamic in production)
-        if (tvTotalSubjects != null)  tvTotalSubjects.setText("06");
-        if (tvSubmitted     != null)  tvSubmitted.setText("04");
-        if (tvPending       != null)  tvPending.setText("02");
+        if (tvDepartmentChip != null) tvDepartmentChip.setText(department.toUpperCase());
+        if (tvSemesterChip   != null) tvSemesterChip.setText("SEMESTER " + semester);
+        if (tvTotalSubjects  != null) tvTotalSubjects.setText("06");
+        if (tvSubmitted      != null) tvSubmitted.setText("04");
+        if (tvPending        != null) tvPending.setText("02");
     }
 
     // ─────────────────────────────────────────────────────────────────────
     private void setListeners() {
-        // Back / up navigation
         View btnBack = findViewById(R.id.btnBack);
         if (btnBack != null) {
             btnBack.setOnClickListener(v -> onBackPressed());
         }
 
-        // Inquiry portal CTA
         View btnInquiry = findViewById(R.id.btnInquiryPortal);
         if (btnInquiry != null) {
-            btnInquiry.setOnClickListener(v -> {
-                // TODO: navigate to InquiryPortalActivity or open a form
-                Toast.makeText(this,
-                        "Inquiry portal coming soon.",
-                        Toast.LENGTH_SHORT).show();
-            });
+            btnInquiry.setOnClickListener(v ->
+                    Toast.makeText(this, "Inquiry portal coming soon.", Toast.LENGTH_SHORT).show());
         }
 
-        // Download buttons (CS601)
-        View dl601 = findViewById(R.id.btnDownload601);
-        if (dl601 != null) {
-            dl601.setOnClickListener(v -> onDownloadClicked("CS601"));
-        }
-
-        // Download buttons (CS602)
-        View dl602 = findViewById(R.id.btnDownload602);
-        if (dl602 != null) {
-            dl602.setOnClickListener(v -> onDownloadClicked("CS602"));
-        }
-
-        // Download buttons (CS604)
-        View dl604 = findViewById(R.id.btnDownload604);
-        if (dl604 != null) {
-            dl604.setOnClickListener(v -> onDownloadClicked("CS604"));
-        }
+//        View dl601 = findViewById(R.id.btnDownload601);
+//        if (dl601 != null) dl601.setOnClickListener(v -> onDownloadClicked("CS601"));
+//
+//        View dl602 = findViewById(R.id.btnDownload602);
+//        if (dl602 != null) dl602.setOnClickListener(v -> onDownloadClicked("CS602"));
+//
+//        View dl604 = findViewById(R.id.btnDownload604);
+//        if (dl604 != null) dl604.setOnClickListener(v -> onDownloadClicked("CS604"));
     }
 
     // ─────────────────────────────────────────────────────────────────────
-    /**
-     * Handle download button tap for a subject paper.
-     * Replace with real Firestore Storage download in production.
-     */
     private void onDownloadClicked(String subjectCode) {
         Toast.makeText(this,
                 "Downloading " + subjectCode + " mid-term paper…",
@@ -159,7 +123,6 @@ public class ExamsReportActivity extends AppCompatActivity {
         super.onBackPressed();
         overridePendingTransition(
                 android.R.anim.slide_in_left,
-                android.R.anim.slide_out_right
-        );
+                android.R.anim.slide_out_right);
     }
 }

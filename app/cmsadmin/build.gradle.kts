@@ -40,6 +40,7 @@ dependencies {
     implementation(libs.activity)
     implementation(libs.constraintlayout)
     implementation(libs.firebase.auth)
+    implementation(libs.gridlayout)
     implementation(libs.circleimageview)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)

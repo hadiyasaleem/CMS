@@ -9,6 +9,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CMS">
         <activity
+            android:name=".activities.TimeTableManagementActivity"
+            android:exported="false" />
+        <activity
             android:name=".activities.AttendanceReportActivity"
             android:exported="false" />
         <activity

@@ -37,7 +37,6 @@
             android:paddingTop="28dp"
             android:paddingBottom="24dp">
 
-            <!-- Eyebrow label -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -49,7 +48,6 @@
                 android:letterSpacing="0.22"
                 android:layout_marginBottom="10dp" />
 
-            <!-- Main headline -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -59,7 +57,6 @@
                 android:textColor="@color/primary"
                 android:lineSpacingMultiplier="1.05" />
 
-            <!-- Italic red accent line -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -69,7 +66,6 @@
                 android:textColor="@color/secondary"
                 android:layout_marginBottom="14dp" />
 
-            <!-- Sub-description -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -96,13 +92,6 @@
             android:paddingEnd="20dp"
             android:paddingTop="20dp"
             android:paddingBottom="20dp">
-
-            <!-- Red left border via View pinned left -->
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@color/surface_container_lowest"
-                android:visibility="gone" />
 
             <!-- Department header row -->
             <LinearLayout
@@ -145,22 +134,15 @@
                     android:textSize="26sp" />
             </LinearLayout>
 
-            <!-- Red left border accent -->
-            <View
-                android:layout_width="4dp"
-                android:layout_height="0dp"
-                android:background="@color/secondary"
-                android:visibility="gone" />
-
-            <!-- 2-column grid of semester buttons -->
-            <GridLayout
+            <!-- ✅ FIX: androidx.gridlayout.widget.GridLayout so that
+                 app:layout_columnWeight resolves correctly -->
+            <androidx.gridlayout.widget.GridLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:columnCount="2"
-                android:rowCount="4"
-                android:useDefaultMargins="false">
+                app:columnCount="2"
+                app:rowCount="4"
+                app:useDefaultMargins="false">
 
-                <!-- Semester 1 -->
                 <Button
                     android:id="@+id/btnCsSem1"
                     style="@style/Widget.CMS.SemesterButton"
@@ -168,10 +150,8 @@
                     android:layout_height="wrap_content"
                     app:layout_columnWeight="1"
                     android:layout_margin="4dp"
-                    android:tag="1"
                     android:text="Semester 1" />
 
-                <!-- Semester 2 -->
                 <Button
                     android:id="@+id/btnCsSem2"
                     style="@style/Widget.CMS.SemesterButton"
@@ -181,7 +161,6 @@
                     android:layout_margin="4dp"
                     android:text="Semester 2" />
 
-                <!-- Semester 3 -->
                 <Button
                     android:id="@+id/btnCsSem3"
                     style="@style/Widget.CMS.SemesterButton"
@@ -191,7 +170,6 @@
                     android:layout_margin="4dp"
                     android:text="Semester 3" />
 
-                <!-- Semester 4 -->
                 <Button
                     android:id="@+id/btnCsSem4"
                     style="@style/Widget.CMS.SemesterButton"
@@ -201,7 +179,6 @@
                     android:layout_margin="4dp"
                     android:text="Semester 4" />
 
-                <!-- Semester 5 -->
                 <Button
                     android:id="@+id/btnCsSem5"
                     style="@style/Widget.CMS.SemesterButton"
@@ -211,7 +188,6 @@
                     android:layout_margin="4dp"
                     android:text="Semester 5" />
 
-                <!-- Semester 6 -->
                 <Button
                     android:id="@+id/btnCsSem6"
                     style="@style/Widget.CMS.SemesterButton"
@@ -221,7 +197,6 @@
                     android:layout_margin="4dp"
                     android:text="Semester 6" />
 
-                <!-- Semester 7 -->
                 <Button
                     android:id="@+id/btnCsSem7"
                     style="@style/Widget.CMS.SemesterButton"
@@ -231,7 +206,6 @@
                     android:layout_margin="4dp"
                     android:text="Semester 7" />
 
-                <!-- Semester 8 -->
                 <Button
                     android:id="@+id/btnCsSem8"
                     style="@style/Widget.CMS.SemesterButton"
@@ -241,11 +215,8 @@
                     android:layout_margin="4dp"
                     android:text="Semester 8" />
 
-            </GridLayout>
+            </androidx.gridlayout.widget.GridLayout>
         </LinearLayout>
-
-        <!-- Left red border accent for CS card (drawn as separate view overlaid) -->
-        <!-- NOTE: Use a FrameLayout wrapper in production for true left border -->
 
         <!-- ═══════════════════════════════════════════════════════════
              MATHEMATICS CARD — Expandable dropdown
@@ -263,7 +234,6 @@
             android:paddingTop="20dp"
             android:paddingBottom="20dp">
 
-            <!-- Header -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -303,7 +273,7 @@
                     android:textColor="@color/outline_variant" />
             </LinearLayout>
 
-            <!-- Expandable semester selector -->
+            <!-- Expandable semester selector trigger -->
             <LinearLayout
                 android:id="@+id/mathSemesterHeader"
                 android:layout_width="match_parent"
@@ -334,12 +304,12 @@
                     android:rotation="0" />
             </LinearLayout>
 
-            <!-- Math semester grid (hidden by default) -->
-            <GridLayout
+            <!-- ✅ FIX: androidx.gridlayout.widget.GridLayout -->
+            <androidx.gridlayout.widget.GridLayout
                 android:id="@+id/mathSemesterGrid"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:columnCount="4"
+                app:columnCount="4"
                 android:background="@color/surface_container_lowest"
                 android:padding="8dp"
                 android:visibility="gone">
@@ -416,7 +386,7 @@
                     android:layout_margin="3dp"
                     android:text="S8" />
 
-            </GridLayout>
+            </androidx.gridlayout.widget.GridLayout>
         </LinearLayout>
 
         <!-- ═══════════════════════════════════════════════════════════
@@ -474,7 +444,6 @@
                     app:tint="@color/outline_variant" />
             </LinearLayout>
 
-            <!-- View Semester Modules button -->
             <LinearLayout
                 android:id="@+id/btnEnglishModules"
                 android:layout_width="match_parent"
@@ -557,10 +526,9 @@
                     android:layout_height="24dp"
                     android:src="@drawable/ic_architecture"
                     android:contentDescription="Physics department"
-                    android:tint="@color/outline_variant" />
+                    app:tint="@color/outline_variant" />
             </LinearLayout>
 
-            <!-- Horizontal scrollable SEM buttons -->
             <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -609,7 +577,6 @@
 
         <!-- ═══════════════════════════════════════════════════════════
              CTA DARK BANNER
-             "Need specific examination accommodation?"
              ═══════════════════════════════════════════════════════════ -->
         <LinearLayout
             android:layout_width="match_parent"
