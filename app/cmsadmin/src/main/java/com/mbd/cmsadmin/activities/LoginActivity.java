@@ -1,4 +1,4 @@
-package com.mbd.cmsadmin;
+package com.mbd.cmsadmin.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -14,11 +14,15 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthInvalidUserException;
+import com.mbd.cmsadmin.R;
 
 /**
  * LoginActivity — Firebase email/password authentication
@@ -56,11 +60,16 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
 
         // If already logged in, skip straight to Home
         mAuth = FirebaseAuth.getInstance();
         if (mAuth.getCurrentUser() != null) {
-            goToHome();
+            goToMain();
             return;
         }
 
@@ -137,7 +146,7 @@ public class LoginActivity extends AppCompatActivity {
 
                     if (task.isSuccessful()) {
                         // ── SUCCESS ──────────────────────────────────────
-                        goToHome();
+                        goToMain();
 
                     } else {
                         // ── FAILURE — show specific message ───────────────
@@ -241,8 +250,8 @@ public class LoginActivity extends AppCompatActivity {
 
     // ─────────────────────────────────────────────────────────────────────
     /** Navigate to HomeActivity and clear back stack. */
-    private void goToHome() {
-        Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
+    private void goToMain() {
+        Intent intent = new Intent(LoginActivity.this, Main.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);

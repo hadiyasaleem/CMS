@@ -1,4 +1,4 @@
-package commonclasses.models;
+package commonClasses.models;
 
 import java.util.HashMap;
 

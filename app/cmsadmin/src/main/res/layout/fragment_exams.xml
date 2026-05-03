@@ -1,0 +1,659 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    res/layout/fragment_exam.xml
+    Matches: HTML "Departmental Examination Registry Selection" screen
+    Mobile-first single-column layout with:
+      • Hero section
+      • Computer Science bento card (8 semester buttons, 2-col grid)
+      • Mathematics card (expandable dropdown)
+      • English card (modules button)
+      • Physics card (horizontal scrollable tabs)
+      • CTA dark banner
+-->
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/surface"
+    android:overScrollMode="never"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingBottom="88dp">
+
+        <!-- ═══════════════════════════════════════════════════════════
+             HERO SECTION
+             ═══════════════════════════════════════════════════════════ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:paddingTop="28dp"
+            android:paddingBottom="24dp">
+
+            <!-- Eyebrow label -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="OFFICIAL RECORDS OFFICE"
+                android:textSize="10sp"
+                android:fontFamily="@font/public_sans_semibold"
+                android:textColor="@color/on_tertiary_fixed_variant"
+                android:textAllCaps="true"
+                android:letterSpacing="0.22"
+                android:layout_marginBottom="10dp" />
+
+            <!-- Main headline -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Departmental Examination"
+                android:textSize="34sp"
+                android:fontFamily="@font/newsreader_bold"
+                android:textColor="@color/primary"
+                android:lineSpacingMultiplier="1.05" />
+
+            <!-- Italic red accent line -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Registry Selection."
+                android:textSize="34sp"
+                android:fontFamily="@font/newsreader_bold_italic"
+                android:textColor="@color/secondary"
+                android:layout_marginBottom="14dp" />
+
+            <!-- Sub-description -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Access the official ledger of examinations. Please select the appropriate department and subsequent semester to view schedules, seating arrangements, and historical results."
+                android:textSize="13sp"
+                android:fontFamily="@font/public_sans"
+                android:textColor="@color/on_surface_variant"
+                android:lineSpacingMultiplier="1.55" />
+
+        </LinearLayout>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             COMPUTER SCIENCE CARD — Primary focus (red left border)
+             ═══════════════════════════════════════════════════════════ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@color/surface_container_lowest"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="12dp"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="20dp">
+
+            <!-- Red left border via View pinned left -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/surface_container_lowest"
+                android:visibility="gone" />
+
+            <!-- Department header row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Computer Science"
+                        android:textSize="22sp"
+                        android:fontFamily="@font/newsreader_bold"
+                        android:textColor="@color/primary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="School of Engineering &amp; Applied Sciences"
+                        android:textSize="12sp"
+                        android:fontFamily="@font/public_sans"
+                        android:textColor="@color/on_surface_variant"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="computer"
+                    android:fontFamily="sans-serif"
+                    android:textColor="@color/outline_variant"
+                    android:textSize="26sp" />
+            </LinearLayout>
+
+            <!-- Red left border accent -->
+            <View
+                android:layout_width="4dp"
+                android:layout_height="0dp"
+                android:background="@color/secondary"
+                android:visibility="gone" />
+
+            <!-- 2-column grid of semester buttons -->
+            <GridLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:columnCount="2"
+                android:rowCount="4"
+                android:useDefaultMargins="false">
+
+                <!-- Semester 1 -->
+                <Button
+                    android:id="@+id/btnCsSem1"
+                    style="@style/Widget.CMS.SemesterButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:tag="1"
+                    android:text="Semester 1" />
+
+                <!-- Semester 2 -->
+                <Button
+                    android:id="@+id/btnCsSem2"
+                    style="@style/Widget.CMS.SemesterButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:text="Semester 2" />
+
+                <!-- Semester 3 -->
+                <Button
+                    android:id="@+id/btnCsSem3"
+                    style="@style/Widget.CMS.SemesterButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:text="Semester 3" />
+
+                <!-- Semester 4 -->
+                <Button
+                    android:id="@+id/btnCsSem4"
+                    style="@style/Widget.CMS.SemesterButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:text="Semester 4" />
+
+                <!-- Semester 5 -->
+                <Button
+                    android:id="@+id/btnCsSem5"
+                    style="@style/Widget.CMS.SemesterButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:text="Semester 5" />
+
+                <!-- Semester 6 -->
+                <Button
+                    android:id="@+id/btnCsSem6"
+                    style="@style/Widget.CMS.SemesterButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:text="Semester 6" />
+
+                <!-- Semester 7 -->
+                <Button
+                    android:id="@+id/btnCsSem7"
+                    style="@style/Widget.CMS.SemesterButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:text="Semester 7" />
+
+                <!-- Semester 8 -->
+                <Button
+                    android:id="@+id/btnCsSem8"
+                    style="@style/Widget.CMS.SemesterButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_columnWeight="1"
+                    android:layout_margin="4dp"
+                    android:text="Semester 8" />
+
+            </GridLayout>
+        </LinearLayout>
+
+        <!-- Left red border accent for CS card (drawn as separate view overlaid) -->
+        <!-- NOTE: Use a FrameLayout wrapper in production for true left border -->
+
+        <!-- ═══════════════════════════════════════════════════════════
+             MATHEMATICS CARD — Expandable dropdown
+             ═══════════════════════════════════════════════════════════ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@color/surface_container_low"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="12dp"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="20dp">
+
+            <!-- Header -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Mathematics"
+                        android:textSize="20sp"
+                        android:fontFamily="@font/newsreader_bold"
+                        android:textColor="@color/primary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Faculty of Science"
+                        android:textSize="12sp"
+                        android:fontFamily="@font/public_sans"
+                        android:textColor="@color/on_surface_variant"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="∑"
+                    android:textSize="26sp"
+                    android:textColor="@color/outline_variant" />
+            </LinearLayout>
+
+            <!-- Expandable semester selector -->
+            <LinearLayout
+                android:id="@+id/mathSemesterHeader"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@color/surface_container_lowest"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Select Semester"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/newsreader_bold"
+                    android:textColor="@color/on_surface" />
+
+                <ImageView
+                    android:id="@+id/ivMathExpand"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_expand_more"
+                    android:contentDescription="Expand"
+                    android:rotation="0" />
+            </LinearLayout>
+
+            <!-- Math semester grid (hidden by default) -->
+            <GridLayout
+                android:id="@+id/mathSemesterGrid"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:columnCount="4"
+                android:background="@color/surface_container_lowest"
+                android:padding="8dp"
+                android:visibility="gone">
+
+                <Button
+                    android:id="@+id/btnMathS1"
+                    style="@style/Widget.CMS.SemesterButtonCompact"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_columnWeight="1"
+                    android:layout_margin="3dp"
+                    android:text="S1" />
+
+                <Button
+                    android:id="@+id/btnMathS2"
+                    style="@style/Widget.CMS.SemesterButtonCompact"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_columnWeight="1"
+                    android:layout_margin="3dp"
+                    android:text="S2" />
+
+                <Button
+                    android:id="@+id/btnMathS3"
+                    style="@style/Widget.CMS.SemesterButtonCompact"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_columnWeight="1"
+                    android:layout_margin="3dp"
+                    android:text="S3" />
+
+                <Button
+                    android:id="@+id/btnMathS4"
+                    style="@style/Widget.CMS.SemesterButtonCompact"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_columnWeight="1"
+                    android:layout_margin="3dp"
+                    android:text="S4" />
+
+                <Button
+                    android:id="@+id/btnMathS5"
+                    style="@style/Widget.CMS.SemesterButtonCompact"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_columnWeight="1"
+                    android:layout_margin="3dp"
+                    android:text="S5" />
+
+                <Button
+                    android:id="@+id/btnMathS6"
+                    style="@style/Widget.CMS.SemesterButtonCompact"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_columnWeight="1"
+                    android:layout_margin="3dp"
+                    android:text="S6" />
+
+                <Button
+                    android:id="@+id/btnMathS7"
+                    style="@style/Widget.CMS.SemesterButtonCompact"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_columnWeight="1"
+                    android:layout_margin="3dp"
+                    android:text="S7" />
+
+                <Button
+                    android:id="@+id/btnMathS8"
+                    style="@style/Widget.CMS.SemesterButtonCompact"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_columnWeight="1"
+                    android:layout_margin="3dp"
+                    android:text="S8" />
+
+            </GridLayout>
+        </LinearLayout>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             ENGLISH CARD — Single CTA button
+             ═══════════════════════════════════════════════════════════ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@color/surface_container_low"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="12dp"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="20dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="English"
+                        android:textSize="20sp"
+                        android:fontFamily="@font/newsreader_bold"
+                        android:textColor="@color/primary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Faculty of Humanities"
+                        android:textSize="12sp"
+                        android:fontFamily="@font/public_sans"
+                        android:textColor="@color/on_surface_variant"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_menu_book"
+                    android:contentDescription="English department"
+                    app:tint="@color/outline_variant" />
+            </LinearLayout>
+
+            <!-- View Semester Modules button -->
+            <LinearLayout
+                android:id="@+id/btnEnglishModules"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@color/surface_container_lowest"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="View Semester Modules"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/newsreader_bold"
+                    android:textColor="@color/on_surface" />
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_arrow_forward"
+                    android:contentDescription="Navigate"
+                    app:tint="@color/on_surface" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             PHYSICS CARD — Horizontal scrollable semester tabs
+             ═══════════════════════════════════════════════════════════ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@color/surface_container_lowest"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="24dp"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="20dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Physics"
+                        android:textSize="20sp"
+                        android:fontFamily="@font/newsreader_bold"
+                        android:textColor="@color/primary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Faculty of Science"
+                        android:textSize="12sp"
+                        android:fontFamily="@font/public_sans"
+                        android:textColor="@color/on_surface_variant"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_architecture"
+                    android:contentDescription="Physics department"
+                    android:tint="@color/outline_variant" />
+            </LinearLayout>
+
+            <!-- Horizontal scrollable SEM buttons -->
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="none"
+                android:overScrollMode="never">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/btnPhySem1"
+                        style="@style/Widget.CMS.SemesterTabButton"
+                        android:layout_width="100dp"
+                        android:layout_height="52dp"
+                        android:layout_marginEnd="6dp"
+                        android:text="SEM I" />
+
+                    <Button
+                        android:id="@+id/btnPhySem2"
+                        style="@style/Widget.CMS.SemesterTabButton"
+                        android:layout_width="100dp"
+                        android:layout_height="52dp"
+                        android:layout_marginEnd="6dp"
+                        android:text="SEM II" />
+
+                    <Button
+                        android:id="@+id/btnPhySem3"
+                        style="@style/Widget.CMS.SemesterTabButton"
+                        android:layout_width="100dp"
+                        android:layout_height="52dp"
+                        android:layout_marginEnd="6dp"
+                        android:text="SEM III" />
+
+                    <Button
+                        android:id="@+id/btnPhySem4"
+                        style="@style/Widget.CMS.SemesterTabButton"
+                        android:layout_width="100dp"
+                        android:layout_height="52dp"
+                        android:text="SEM IV" />
+
+                </LinearLayout>
+            </HorizontalScrollView>
+        </LinearLayout>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             CTA DARK BANNER
+             "Need specific examination accommodation?"
+             ═══════════════════════════════════════════════════════════ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@color/primary"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:padding="24dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Need specific examination accommodation?"
+                android:textSize="22sp"
+                android:fontFamily="@font/newsreader_bold"
+                android:textColor="@color/on_primary"
+                android:lineSpacingMultiplier="1.1"
+                android:layout_marginBottom="12dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Applications for special academic considerations and accessibility requirements must be filed 14 days prior to the commencement of the examination period."
+                android:textSize="13sp"
+                android:fontFamily="@font/public_sans"
+                android:textColor="@color/on_primary_container"
+                android:lineSpacingMultiplier="1.5"
+                android:layout_marginBottom="20dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnFileApplication"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:text="FILE APPLICATION"
+                android:textSize="11sp"
+                android:fontFamily="@font/public_sans_semibold"
+                android:textColor="@color/on_secondary"
+                android:letterSpacing="0.12"
+                app:backgroundTint="@color/secondary"
+                app:cornerRadius="4dp"
+                android:stateListAnimator="@null" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

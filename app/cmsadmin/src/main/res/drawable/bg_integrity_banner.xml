@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    bg_integrity_banner.xml
+    Amber fill (#FFDEA6) with a 4dp left border in on-tertiary-fixed-variant (#5D4200).
+    Used by the Academic Integrity Notice LinearLayout.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Full amber background -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#FFDEA6" />
+            <corners android:radius="2dp" />
+        </shape>
+    </item>
+
+    <!-- Left border stripe (4dp wide) -->
+    <item android:right="999dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#5D4200" />
+            <corners android:topLeftRadius="2dp" android:bottomLeftRadius="2dp" />
+        </shape>
+    </item>
+
+</layer-list>
