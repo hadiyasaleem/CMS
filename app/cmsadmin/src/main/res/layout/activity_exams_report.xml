@@ -1,0 +1,630 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    res/layout/activity_exam_report.xml
+    Matches: HTML "Exams Status Report" screen (Screen 2)
+
+    Structure:
+      • Sticky top app bar (back arrow + brand)
+      • NestedScrollView body:
+          - Hero: eyebrow / headline / dept + semester + session chips
+          - Submission summary card (dark navy)
+          - Important dates card
+          - Subject ledger cards × 4  (CS601–CS604)
+          - "Missing an entry?" CTA banner
+      • Fixed bottom nav bar
+-->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/examReportRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background">
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         TOP APP BAR
+         ═══════════════════════════════════════════════════════════════ -->
+    <LinearLayout
+        android:id="@+id/topBar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="20dp"
+        android:paddingTop="44dp"
+        android:paddingBottom="14dp"
+        android:background="@color/surface_container_lowest"
+        android:elevation="2dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Back button -->
+        <ImageView
+            android:id="@+id/btnBack"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@drawable/ic_arrow_back"
+            android:contentDescription="Back"
+            android:padding="4dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginEnd="8dp"
+            app:tint="@color/primary" />
+
+        <!-- Bank icon -->
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_account_balance"
+            android:contentDescription="Logo"
+            android:layout_marginEnd="8dp"
+            app:tint="@color/primary" />
+
+        <!-- Brand title -->
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="The Academic Ledger"
+            android:textSize="16sp"
+            android:fontFamily="@font/newsreader_bold_italic"
+            android:textColor="@color/primary" />
+
+        <!-- Profile avatar -->
+        <ImageView
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:src="@mipmap/ic_launcher_round"
+            android:contentDescription="Admin profile"
+            android:scaleType="centerCrop" />
+
+    </LinearLayout>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         SCROLLABLE BODY
+         ═══════════════════════════════════════════════════════════════ -->
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scrollBody"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:overScrollMode="never"
+        android:fillViewport="true"
+        app:layout_constraintTop_toBottomOf="@id/topBar"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="88dp">
+
+            <!-- ─────────────────────────────────────────────────────
+                 HERO SECTION
+                 ───────────────────────────────────────────────────── -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingStart="24dp"
+                android:paddingEnd="24dp"
+                android:paddingTop="24dp"
+                android:paddingBottom="20dp">
+
+                <!-- Eyebrow -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="OFFICIAL RECORD / SESSION 2023-24"
+                    android:textSize="10sp"
+                    android:fontFamily="@font/public_sans_semibold"
+                    android:textColor="@color/on_tertiary_fixed_variant"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.2"
+                    android:layout_marginBottom="8dp" />
+
+                <!-- Headline -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Exams Status"
+                    android:textSize="36sp"
+                    android:fontFamily="@font/newsreader_bold"
+                    android:textColor="@color/on_surface"
+                    android:lineSpacingMultiplier="1.0" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Report"
+                    android:textSize="36sp"
+                    android:fontFamily="@font/newsreader_italic"
+                    android:textColor="@color/primary"
+                    android:layout_marginBottom="16dp" />
+
+                <!-- Chips row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <!-- Department chip -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:background="@color/surface_container_high"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:layout_marginEnd="8dp">
+
+                        <ImageView
+                            android:layout_width="14dp"
+                            android:layout_height="14dp"
+                            android:src="@drawable/ic_school"
+                            android:contentDescription="Department"
+                            android:layout_marginEnd="6dp"
+                            app:tint="@color/on_surface" />
+
+                        <TextView
+                            android:id="@+id/tvDepartmentChip"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="COMPUTER SCIENCE"
+                            android:textSize="10sp"
+                            android:fontFamily="@font/public_sans_semibold"
+                            android:textColor="@color/on_surface"
+                            android:textAllCaps="true"
+                            android:letterSpacing="0.1" />
+                    </LinearLayout>
+
+                    <!-- Semester chip -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:background="@color/surface_container_high"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:layout_marginEnd="8dp">
+
+                        <ImageView
+                            android:layout_width="14dp"
+                            android:layout_height="14dp"
+                            android:src="@drawable/ic_calendar"
+                            android:contentDescription="Semester"
+                            android:layout_marginEnd="6dp"
+                            app:tint="@color/on_surface" />
+
+                        <TextView
+                            android:id="@+id/tvSemesterChip"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="SEMESTER 6"
+                            android:textSize="10sp"
+                            android:fontFamily="@font/public_sans_semibold"
+                            android:textColor="@color/on_surface"
+                            android:textAllCaps="true"
+                            android:letterSpacing="0.1" />
+                    </LinearLayout>
+
+                    <!-- Active session badge -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:background="@color/secondary_fixed"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp">
+
+                        <ImageView
+                            android:layout_width="14dp"
+                            android:layout_height="14dp"
+                            android:src="@drawable/ic_verified_user"
+                            android:contentDescription="Active"
+                            android:layout_marginEnd="6dp"
+                            app:tint="@color/on_secondary_fixed" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="ACTIVE SESSION"
+                            android:textSize="10sp"
+                            android:fontFamily="@font/public_sans_semibold"
+                            android:textColor="@color/on_secondary_fixed"
+                            android:textAllCaps="true"
+                            android:letterSpacing="0.1" />
+                    </LinearLayout>
+
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- ─────────────────────────────────────────────────────
+                 SUBMISSION SUMMARY CARD (dark navy)
+                 ───────────────────────────────────────────────────── -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/primary_container"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="12dp"
+                android:padding="24dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Submission Summary"
+                    android:textSize="20sp"
+                    android:fontFamily="@font/newsreader_bold_italic"
+                    android:textColor="@color/on_primary"
+                    android:layout_marginBottom="20dp" />
+
+                <!-- Total Subjects row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="12dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Total Subjects"
+                        android:textSize="12sp"
+                        android:fontFamily="@font/public_sans"
+                        android:textColor="#B3FFFFFF"
+                        android:layout_marginBottom="0dp" />
+
+                    <TextView
+                        android:id="@+id/tvTotalSubjects"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="06"
+                        android:textSize="28sp"
+                        android:fontFamily="@font/newsreader_bold"
+                        android:textColor="@color/on_primary" />
+                </LinearLayout>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#1AFFFFFF"
+                    android:layout_marginBottom="12dp" />
+
+                <!-- Exams Submitted row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="12dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Exams Submitted"
+                        android:textSize="12sp"
+                        android:fontFamily="@font/public_sans"
+                        android:textColor="#B3FFFFFF" />
+
+                    <TextView
+                        android:id="@+id/tvExamsSubmitted"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="04"
+                        android:textSize="28sp"
+                        android:fontFamily="@font/newsreader_bold"
+                        android:textColor="@color/on_primary" />
+                </LinearLayout>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#1AFFFFFF"
+                    android:layout_marginBottom="12dp" />
+
+                <!-- Pending row (gold/amber colour) -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Pending Submissions"
+                        android:textSize="12sp"
+                        android:fontFamily="@font/public_sans"
+                        android:textColor="@color/tertiary_fixed_dim" />
+
+                    <TextView
+                        android:id="@+id/tvPendingSubmissions"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="02"
+                        android:textSize="28sp"
+                        android:fontFamily="@font/newsreader_bold"
+                        android:textColor="@color/tertiary_fixed_dim" />
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- ─────────────────────────────────────────────────────
+                 IMPORTANT DATES CARD
+                 ───────────────────────────────────────────────────── -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/surface_container_low"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="16dp"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Important Dates"
+                    android:textSize="17sp"
+                    android:fontFamily="@font/newsreader_bold"
+                    android:textColor="@color/on_surface"
+                    android:layout_marginBottom="16dp" />
+
+                <!-- Date item 1 — Final Thesis Submission (active) -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="16dp">
+
+                    <LinearLayout
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:background="@color/surface_container_highest"
+                        android:layout_marginEnd="14dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="OCT"
+                            android:textSize="9sp"
+                            android:fontFamily="@font/public_sans_semibold"
+                            android:textColor="@color/on_surface"
+                            android:textAllCaps="true" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="14"
+                            android:textSize="18sp"
+                            android:fontFamily="@font/newsreader_bold"
+                            android:textColor="@color/on_surface" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Final Thesis Submission"
+                            android:textSize="13sp"
+                            android:fontFamily="@font/public_sans_semibold"
+                            android:textColor="@color/on_surface" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Submission Window Closes"
+                            android:textSize="11sp"
+                            android:fontFamily="@font/public_sans"
+                            android:textColor="@color/on_surface_variant" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Date item 2 — Mid-term (completed, dimmed) -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:alpha="0.45">
+
+                    <LinearLayout
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:background="@color/surface_container_highest"
+                        android:layout_marginEnd="14dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="SEP"
+                            android:textSize="9sp"
+                            android:fontFamily="@font/public_sans_semibold"
+                            android:textColor="@color/on_surface"
+                            android:textAllCaps="true" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="28"
+                            android:textSize="18sp"
+                            android:fontFamily="@font/newsreader_bold"
+                            android:textColor="@color/on_surface" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Mid-term Evaluations"
+                            android:textSize="13sp"
+                            android:fontFamily="@font/public_sans_semibold"
+                            android:textColor="@color/on_surface" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Completed &amp; Archived"
+                            android:textSize="11sp"
+                            android:fontFamily="@font/public_sans"
+                            android:textColor="@color/on_surface_variant" />
+                    </LinearLayout>
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- ─────────────────────────────────────────────────────
+                 SECTION DIVIDER LABEL
+                 ───────────────────────────────────────────────────── -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SUBJECT LEDGER"
+                android:textSize="10sp"
+                android:fontFamily="@font/public_sans_semibold"
+                android:textColor="@color/outline"
+                android:textAllCaps="true"
+                android:letterSpacing="0.2"
+                android:layout_marginStart="24dp"
+                android:layout_marginBottom="8dp" />
+
+            <!-- ═══════════════════════════════════════════════════════
+                 SUBJECT CARD 1 — CS601 Database Management Systems
+                 Status: Mid-term SUBMITTED | Sessional SUBMITTED
+                 ═══════════════════════════════════════════════════════ -->
+            <include
+                layout="@layout/item_subject_card"
+                android:id="@+id/cardCs601"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="10dp" />
+
+            <!-- ═══════════════════════════════════════════════════════
+                 SUBJECT CARD 2 — CS602 Software Engineering
+                 Status: Mid-term SUBMITTED | Sessional PENDING
+                 ═══════════════════════════════════════════════════════ -->
+            <include
+                layout="@layout/item_subject_card"
+                android:id="@+id/cardCs602"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="10dp" />
+
+            <!-- ═══════════════════════════════════════════════════════
+                 SUBJECT CARD 3 — CS603 Artificial Intelligence
+                 Status: Mid-term PENDING | Sessional SUBMITTED
+                 ═══════════════════════════════════════════════════════ -->
+            <include
+                layout="@layout/item_subject_card"
+                android:id="@+id/cardCs603"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="10dp" />
+
+            <!-- ═══════════════════════════════════════════════════════
+                 SUBJECT CARD 4 — CS604 Theory of Computation
+                 Status: Mid-term SUBMITTED | Sessional SUBMITTED
+                 ═══════════════════════════════════════════════════════ -->
+            <include
+                layout="@layout/item_subject_card"
+                android:id="@+id/cardCs604"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="20dp" />
+
+            <!-- ─────────────────────────────────────────────────────
+                 "MISSING AN ENTRY?" CTA BANNER
+                 ───────────────────────────────────────────────────── -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:padding="2dp"
+                android:background="@drawable/bg_gradient_border">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@color/surface_container_lowest"
+                    android:padding="24dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Missing an entry?"
+                        android:textSize="24sp"
+                        android:fontFamily="@font/newsreader_bold"
+                        android:textColor="@color/on_surface"
+                        android:layout_marginBottom="8dp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Request an audit of your submitted exams if the status has not updated within 48 hours."
+                        android:textSize="13sp"
+                        android:fontFamily="@font/public_sans"
+                        android:textColor="@color/on_surface_variant"
+                        android:lineSpacingMultiplier="1.5"
+                        android:layout_marginBottom="20dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnInquiryPortal"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:text="INQUIRY PORTAL"
+                        android:textSize="11sp"
+                        android:fontFamily="@font/public_sans_semibold"
+                        android:textColor="@color/on_primary"
+                        android:letterSpacing="0.15"
+                        app:backgroundTint="@color/primary"
+                        app:cornerRadius="4dp"
+                        android:stateListAnimator="@null" />
+
+                </LinearLayout>
+            </LinearLayout>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
