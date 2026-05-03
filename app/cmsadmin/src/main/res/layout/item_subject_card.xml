@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    res/layout/item_subject_card.xml
+    Reusable card for a single subject in the Exam Status Report ledger.
+
+    Matches the HTML subject cards:
+      ✔ Red left border (4dp) when fully submitted, grey when pending
+      ✔ Subject code eyebrow (e.g. CS601)
+      ✔ Subject name (large Newsreader bold)
+      ✔ Professor name (italic)
+      ✔ Mid-term Exam status: "Submitted" (green badge + download icon)
+                               OR "Pending Submission" (red icon + label)
+      ✔ Sessional Marks status: same pattern
+
+    Usage in activity_exam_report.xml:
+        <include layout="@layout/item_subject_card" android:id="@+id/cardCs601" ... />
+
+    After inflating with <include>, get the root view and call
+    SubjectCardHelper.populate(view, subject) to fill in the data,
+    or set each view's text/visibility manually in the activity.
+
+    IDs exposed:
+      tvSubjectCode, tvSubjectName, tvProfessor,
+      tvMidtermLabel, ivMidtermStatus, tvMidtermBadge, btnDownloadMidterm,
+      tvSessionalLabel, ivSessionalStatus, tvSessionalBadge
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:background="@color/surface_container_lowest"
+    android:elevation="1dp">
+
+    <!-- ── Red / grey left border strip ──────────────────────────────── -->
+    <View
+        android:id="@+id/viewLeftBorder"
+        android:layout_width="4dp"
+        android:layout_height="match_parent"
+        android:background="@color/secondary" />
+
+    <!-- ── Card body ──────────────────────────────────────────────────── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Subject code eyebrow -->
+        <TextView
+            android:id="@+id/tvSubjectCode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="CS601"
+            android:textSize="9sp"
+            android:fontFamily="@font/public_sans_semibold"
+            android:textColor="@color/on_tertiary_fixed_variant"
+            android:textAllCaps="true"
+            android:letterSpacing="0.25"
+            android:layout_marginBottom="4dp" />
+
+        <!-- Subject name -->
+        <TextView
+            android:id="@+id/tvSubjectName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Database Management Systems"
+            android:textSize="20sp"
+            android:fontFamily="@font/newsreader_bold"
+            android:textColor="@color/on_surface"
+            android:lineSpacingMultiplier="1.05"
+            android:layout_marginBottom="4dp" />
+
+        <!-- Professor name -->
+        <TextView
+            android:id="@+id/tvProfessor"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Dr. Alistair Vance"
+            android:textSize="12sp"
+            android:fontFamily="@font/newsreader_italic"
+            android:textColor="@color/on_surface_variant"
+            android:layout_marginBottom="16dp" />
+
+        <!-- ── Status columns row ──────────────────────────────────────── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <!-- Mid-term Exam column -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="MID-TERM EXAM"
+                    android:textSize="9sp"
+                    android:fontFamily="@font/public_sans_semibold"
+                    android:textColor="@color/on_surface_variant"
+                    android:alpha="0.65"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.15"
+                    android:layout_marginBottom="6dp" />
+
+                <!-- Status row: badge + optional download icon -->
+                <LinearLayout
+                    android:id="@+id/rowMidtermStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <!-- Green "Submitted" badge -->
+                    <TextView
+                        android:id="@+id/tvMidtermBadge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Submitted"
+                        android:textSize="11sp"
+                        android:fontFamily="@font/public_sans_semibold"
+                        android:textColor="#1A5F1A"
+                        android:background="@drawable/bg_badge_submitted"
+                        android:paddingStart="8dp"
+                        android:paddingEnd="8dp"
+                        android:paddingTop="3dp"
+                        android:paddingBottom="3dp"
+                        android:layout_marginEnd="8dp" />
+
+                    <!-- Download icon (visible when submitted) -->
+                    <ImageView
+                        android:id="@+id/btnDownloadMidterm"
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_download"
+                        android:contentDescription="Download paper"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:visibility="visible"
+                        app:tint="@color/primary" />
+
+                    <!-- Pending indicator (hide when submitted) -->
+                    <LinearLayout
+                        android:id="@+id/rowMidtermPending"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:visibility="gone">
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/ic_priority_high"
+                            android:contentDescription="Pending"
+                            android:layout_marginEnd="4dp"
+                            app:tint="@color/secondary" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Pending Submission"
+                            android:textSize="11sp"
+                            android:fontFamily="@font/public_sans_semibold"
+                            android:textColor="@color/secondary" />
+                    </LinearLayout>
+
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Sessional Marks column -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="SESSIONAL MARKS"
+                    android:textSize="9sp"
+                    android:fontFamily="@font/public_sans_semibold"
+                    android:textColor="@color/on_surface_variant"
+                    android:alpha="0.65"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.15"
+                    android:layout_marginBottom="6dp" />
+
+                <!-- Status row -->
+                <LinearLayout
+                    android:id="@+id/rowSessionalStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <!-- Green "Submitted" badge -->
+                    <TextView
+                        android:id="@+id/tvSessionalBadge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Submitted"
+                        android:textSize="11sp"
+                        android:fontFamily="@font/public_sans_semibold"
+                        android:textColor="#1A5F1A"
+                        android:background="@drawable/bg_badge_submitted"
+                        android:paddingStart="8dp"
+                        android:paddingEnd="8dp"
+                        android:paddingTop="3dp"
+                        android:paddingBottom="3dp" />
+
+                    <!-- Pending indicator -->
+                    <LinearLayout
+                        android:id="@+id/rowSessionalPending"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:visibility="gone">
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/ic_schedule"
+                            android:contentDescription="Pending"
+                            android:layout_marginEnd="4dp"
+                            app:tint="@color/secondary" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Pending"
+                            android:textSize="11sp"
+                            android:fontFamily="@font/public_sans_semibold"
+                            android:textColor="@color/secondary" />
+                    </LinearLayout>
+
+                </LinearLayout>
+            </LinearLayout>
+
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

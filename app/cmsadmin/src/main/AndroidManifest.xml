@@ -9,6 +9,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CMS">
         <activity
+            android:name=".activities.AttendanceReportActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activities.ExamsReportActivity"
+            android:exported="false" />
+        <activity
             android:name=".activities.LoginActivity"
             android:exported="false" />
         <activity
