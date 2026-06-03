@@ -60,9 +60,9 @@
                 android:layout_width="22dp"
                 android:layout_height="22dp"
                 android:src="@drawable/ic_account_balance"
-                android:tint="@color/primary"
                 android:contentDescription="College logo"
-                android:layout_marginEnd="9dp" />
+                android:layout_marginEnd="9dp"
+                app:tint="@color/primary" />
 
             <!-- Italic bold serif — "CMS Teacher" -->
             <TextView
@@ -118,9 +118,9 @@
                     android:id="@+id/sealIcon"
                     android:layout_width="88dp"
                     android:layout_height="88dp"
-                    android:src="@drawable/ic_school"
-                    android:tint="@color/primary"
-                    android:contentDescription="College seal icon" />
+                    android:src="@drawable/ic_account_balance"
+                    android:contentDescription="College seal icon"
+                    app:tint="@color/primary" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
@@ -352,10 +352,10 @@
                     android:layout_width="15dp"
                     android:layout_height="15dp"
                     android:src="@drawable/ic_verified_user"
-                    android:tint="@color/primary"
                     android:alpha="0.55"
                     android:contentDescription="Verified shield"
-                    android:layout_marginEnd="6dp" />
+                    android:layout_marginEnd="6dp"
+                    app:tint="@color/primary" />
 
                 <TextView
                     android:layout_width="wrap_content"
