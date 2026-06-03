@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <!-- 66% opaque surface — closest native approximation to bg-surface/40 blur -->
+    <solid android:color="@color/topbar_scrim" />
+
+</shape>
