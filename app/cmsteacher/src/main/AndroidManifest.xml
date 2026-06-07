@@ -9,6 +9,15 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CMS">
         <activity
+            android:name=".ForgetPasswordActivity"
+            android:exported="false" />
+        <activity
+            android:name=".LoginActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Main"
+            android:exported="false" />
+        <activity
             android:name=".SplashActivity"
             android:exported="true">
             <intent-filter>

@@ -1,5 +1,85 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <!-- ── Core Brand ─────────────────────────────────────────────────────── -->
+    <color name="primary">#000A1E</color>               <!-- Deep navy — main brand color -->
+    <color name="primary_container">#002147</color>     <!-- Darker navy container -->
+    <color name="on_primary">#FFFFFF</color>
+    <color name="on_primary_container">#708AB5</color>
+    <color name="primary_fixed">#D6E3FF</color>
+    <color name="primary_fixed_dim">#AEC7F6</color>
+    <color name="on_primary_fixed">#001B3D</color>
+    <color name="on_primary_fixed_variant">#2D476F</color>
+    <color name="inverse_primary">#AEC7F6</color>
+
+    <!-- ── Secondary (Red accent) ────────────────────────────────────────── -->
+    <color name="secondary">#B22B1D</color>
+    <color name="secondary_container">#FE624E</color>   <!-- Progress bar accent -->
+    <color name="on_secondary">#FFFFFF</color>
+    <color name="on_secondary_container">#650000</color>
+    <color name="secondary_fixed">#FFDAD4</color>
+    <color name="secondary_fixed_dim">#FFB4A8</color>
+    <color name="on_secondary_fixed">#410000</color>
+    <color name="on_secondary_fixed_variant">#8F0F07</color>
+
+    <!-- ── Tertiary (Gold / amber) ───────────────────────────────────────── -->
+    <color name="tertiary">#120A00</color>
+    <color name="tertiary_container">#2E1F00</color>
+    <color name="on_tertiary">#FFFFFF</color>
+    <color name="on_tertiary_container">#B18000</color>
+    <color name="tertiary_fixed">#FFDEA6</color>
+    <color name="tertiary_fixed_dim">#F7BD48</color>    <!-- Gold divider lines -->
+    <color name="on_tertiary_fixed">#271900</color>
+    <color name="on_tertiary_fixed_variant">#5D4200</color>  <!-- Eyebrow label -->
+
+    <!-- ── Surface / Background ──────────────────────────────────────────── -->
+    <color name="surface">#F9F9F9</color>
+    <color name="surface_bright">#F9F9F9</color>
+    <color name="surface_dim">#DADADA</color>
+    <color name="background">#F9F9F9</color>
+    <color name="on_background">#1A1C1C</color>
+    <color name="on_surface">#1A1C1C</color>
+    <color name="inverse_surface">#2F3131</color>
+    <color name="inverse_on_surface">#F1F1F1</color>
+    <color name="surface_tint">#465F88</color>
+
+    <!-- Surface containers (lightest → highest) -->
+    <color name="surface_container_lowest">#FFFFFF</color>
+    <color name="surface_container_low">#F3F3F3</color>
+    <color name="surface_container">#EEEEEE</color>
+    <color name="surface_container_high">#E8E8E8</color>   <!-- Chip background -->
+    <color name="surface_container_highest">#E2E2E2</color> <!-- Progress bg track -->
+
+    <!-- ── Outline ────────────────────────────────────────────────────────── -->
+    <color name="outline">#74777F</color>
+    <color name="outline_variant">#C4C6CF</color>
+    <color name="on_surface_variant">#44474E</color>
+
+    <!-- Surface variant (used for card backgrounds, dividers) -->
+    <color name="surface_variant">#E2E2E2</color>
+
+    <!-- ── Error ──────────────────────────────────────────────────────────── -->
+    <color name="error">#BA1A1A</color>
+    <color name="error_container">#FFDAD6</color>
+    <color name="on_error">#FFFFFF</color>
+    <color name="on_error_container">#93000A</color>
+
+    <!-- ── Utility ────────────────────────────────────────────────────────── -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="transparent">#00000000</color>
+
+    <!-- Live dot (emerald green) -->
+    <color name="live_dot">#10B981</color>
+
+    <!-- Seal card shadow tint -->
+    <color name="shadow_primary">#1A000A1E</color>      <!-- 10% opacity primary -->
+
+    <!-- Top bar scrim (40% white) -->
+    <color name="topbar_scrim">#66F9F9F9</color>
+
 </resources>
