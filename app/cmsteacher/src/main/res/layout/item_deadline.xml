@@ -32,9 +32,9 @@
         android:layout_marginStart="16dp"
         android:layout_marginTop="18dp"
         android:layout_marginEnd="14dp"
-        android:src="@drawable/ic_priority_high"
+        android:src="@drawable/ic_high_priority"
         android:contentDescription="@null"
-        app:tint="@color/secondary" />
+         />
 
     <!-- Text block -->
     <LinearLayout
