@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    bg_circle_navy.xml
+    Solid navy circle used as the credential recovery icon badge background.
+    Matches the HTML: w-16 h-16 rounded-full bg-scholar-navy
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+
+    <solid android:color="@color/primary_container" />
+
+</shape>
