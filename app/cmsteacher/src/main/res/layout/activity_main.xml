@@ -1,10 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+    activity_main.xml — CMS Teacher
+    Structure:
+        ┌─────────────────────────┐
+        │   FrameLayout           │  ← hosts the five fragments
+        │   (fragment_container)  │
+        ├─────────────────────────┤
+        │  BottomNavigationView   │  ← Home · Attendance · Exams · Schedule · Menu
+        └─────────────────────────┘
+-->
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Main">
+    android:background="@color/surface">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <!-- ═══════════════════════════════════════════════════════
+         Fragment Container — fills all space above the nav bar
+         ═══════════════════════════════════════════════════════ -->
+    <FrameLayout
+        android:id="@+id/fragment_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
+    <!-- ═══════════════════════════════════════════════════════
+         Bottom Navigation — 5 tabs, pinned to bottom
+         ═══════════════════════════════════════════════════════ -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_navigation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="@color/surface"
+        app:elevation="8dp"
+        app:itemIconTint="@color/bottom_nav_item_color"
+        app:itemTextColor="@color/bottom_nav_item_color"
+        app:labelVisibilityMode="labeled"
+        app:menu="@menu/bottom_nav_menu"
+        app:itemActiveIndicatorStyle="@style/BottomNavActiveIndicator" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
