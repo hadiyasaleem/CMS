@@ -211,7 +211,7 @@ public class HomeFragment extends Fragment {
                 "Batch 2024 • Architecture",
                 "DUE IN 4 HOURS",
                 DeadlineItem.URGENCY_HIGH,
-                R.drawable.ic_priority_high));
+                R.drawable.ic_high_priority));
 
         deadlines.add(new DeadlineItem(
                 "Faculty Meeting",
