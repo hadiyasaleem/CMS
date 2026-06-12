@@ -349,7 +349,7 @@
         android:paddingEnd="16dp"
         android:paddingTop="12dp"
         android:paddingBottom="80dp"
-        android:background="@color/surface_glass"
+        android:background="@color/surface"
         android:elevation="16dp"
         app:layout_anchor="@id/main"
         app:layout_anchorGravity="bottom"
