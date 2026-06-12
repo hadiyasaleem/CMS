@@ -9,6 +9,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CMS">
         <activity
+            android:name=".SessionalMarksEntryActivity"
+            android:exported="false" />
+        <activity
             android:name=".ForgetPasswordActivity"
             android:exported="false" />
         <activity
