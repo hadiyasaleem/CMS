@@ -81,5 +81,6 @@
 
     <!-- Top bar scrim (40% white) -->
     <color name="topbar_scrim">#66F9F9F9</color>
+    <color name="accent_gold">#B18000</color>
 
 </resources>
