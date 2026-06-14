@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    item_menu_resource_row.xml
+    Reusable row for the "Institutional Resources" list in MenuFragment.
+    Matches HTML: glass-panel hover:bg-white rounded-lg p-4
+                  flex items-center justify-between
+                  [gold icon] [label]  ............  [chevron]
+
+    NOTE: This is included multiple times via <include> in fragment_menu.xml.
+    Each instance's icon (src) and label (text) should be set programmatically
+    in MenuFragment.onViewCreated() using findViewById on the included root's
+    children (R.id.iv_resource_icon / R.id.tv_resource_label), since <include>
+    does not support per-instance attribute overrides for custom children.
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:background="@color/surface_container_lowest"
+    android:elevation="1dp"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="16dp"
+    android:paddingBottom="16dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground">
+
+    <!-- Leading gold icon -->
+    <ImageView
+        android:id="@+id/iv_resource_icon"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:src="@drawable/ic_badge"
+        android:contentDescription="@null"
+        android:layout_marginEnd="16dp"
+        app:tint="@color/accent_gold" />
+
+    <!-- Label -->
+    <TextView
+        android:id="@+id/tv_resource_label"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Resource Label"
+        android:textSize="14sp"
+        android:fontFamily="@font/public_sans_semibold"
+        android:textColor="@color/primary" />
+
+    <!-- Trailing chevron -->
+    <ImageView
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:src="@drawable/ic_chevron_right"
+        android:contentDescription="@null"
+        app:tint="@color/outline_variant" />
+
+</LinearLayout>
