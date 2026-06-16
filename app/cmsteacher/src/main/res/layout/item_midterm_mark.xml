@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    item_midterm_mark.xml
+    Single student row in the MidtermMarkEntryActivity RecyclerView.
+
+    Layout (horizontal, 3 sections):
+      [avatar | name + meta]   [roll number]   [EditText score / 100]
+
+    Matches the HTML row structure:
+      col-span-5: avatar + name + yearAndDept
+      col-span-3: roll number
+      col-span-4: number input + "/ 100"
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="16dp"
+    android:paddingBottom="16dp">
+
+    <!-- ── Student identity (avatar + name + meta) ──────────────────── -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="2.5"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/iv_student_avatar"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:src="@drawable/ic_teacher_placeholder"
+            app:civ_border_width="1.5dp"
+            app:civ_border_color="@color/outline_variant"
+            android:layout_marginEnd="12dp" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_student_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Student Name"
+                android:textSize="15sp"
+                android:fontFamily="@font/newsreader_bold"
+                android:textColor="@color/primary"
+                android:layout_marginBottom="2dp" />
+
+            <TextView
+                android:id="@+id/tv_student_meta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Senior Year • CS"
+                android:textSize="11sp"
+                android:fontFamily="@font/public_sans"
+                android:textColor="@color/on_surface_variant" />
+
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- ── Roll number ───────────────────────────────────────────────── -->
+    <TextView
+        android:id="@+id/tv_student_roll"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1.5"
+        android:text="2024-CS-001"
+        android:textSize="12sp"
+        android:fontFamily="@font/public_sans"
+        android:textColor="@color/on_surface_variant"
+        android:layout_marginStart="8dp" />
+
+    <!-- ── Score input + "/ 100" ─────────────────────────────────────── -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1.5"
+        android:orientation="horizontal"
+        android:gravity="end|center_vertical"
+        android:layout_marginStart="8dp">
+
+        <EditText
+            android:id="@+id/et_marks"
+            android:layout_width="72dp"
+            android:layout_height="44dp"
+            android:inputType="number"
+            android:maxLength="3"
+            android:hint="--"
+            android:gravity="center"
+            android:textSize="16sp"
+            android:fontFamily="@font/newsreader_bold"
+            android:textColor="@color/primary"
+            android:background="@drawable/bg_midterm_input"
+            android:paddingTop="0dp"
+            android:paddingBottom="0dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="/ 100"
+            android:textSize="12sp"
+            android:fontFamily="@font/public_sans"
+            android:textColor="@color/on_surface_variant"
+            android:layout_marginStart="6dp" />
+
+    </LinearLayout>
+
+</LinearLayout>

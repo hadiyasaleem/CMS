@@ -1,5 +1,6 @@
 package com.mbd.cmsteacher.fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,7 +16,9 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.button.MaterialButton;
+import com.mbd.cmsteacher.MidtermMarkEntryActivity;
 import com.mbd.cmsteacher.R;
+import com.mbd.cmsteacher.SessionalMarkEntryActivity;
 
 /**
  * ExamsFragment — Exam Management / Mark Entry Selection Screen
@@ -177,7 +180,20 @@ public class ExamsFragment extends Fragment {
             // TODO: navigate to SubjectListActivity / SubjectListFragment,
             //       passing year, semester, dept, and selectedAssessment as extras.
             String msg = selectedAssessment + " · " + year + " · " + semester;
-            Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show();
+//            Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show();
+            if (selectedAssessment.equals(TYPE_MIDTERM)) {
+                Intent intent = new Intent(requireContext(), MidtermMarkEntryActivity.class);
+                intent.putExtra(MidtermMarkEntryActivity.EXTRA_YEAR, year);
+                intent.putExtra(MidtermMarkEntryActivity.EXTRA_SEMESTER, semester);
+                intent.putExtra(MidtermMarkEntryActivity.EXTRA_DEPARTMENT, "CS&E");
+                startActivity(intent);
+            } else if (selectedAssessment.equals(TYPE_SESSIONAL)) {
+                Intent intent = new Intent(requireContext(), SessionalMarkEntryActivity.class);
+                intent.putExtra(SessionalMarkEntryActivity.EXTRA_YEAR, year);
+                intent.putExtra(SessionalMarkEntryActivity.EXTRA_SEMESTER, semester);
+                intent.putExtra(SessionalMarkEntryActivity.EXTRA_DEPARTMENT, "CS&E");
+                startActivity(intent);
+            }
         });
     }
 
