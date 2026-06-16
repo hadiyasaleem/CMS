@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    res/menu/menu_mark_attendance.xml
+    Toolbar menu for MarkAttendanceActivity.
+    Currently only shows the notification bell (as in HTML ref 2 top bar).
+    Extend here if you add overflow options (e.g. export, history).
+-->
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_notifications"
+        android:icon="@drawable/ic_notifications"
+        android:title="Notifications"
+        android:orderInCategory="1"
+        app:iconTint="@color/scholar_navy"
+        app:showAsAction="always" />
+
+</menu>

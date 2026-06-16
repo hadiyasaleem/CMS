@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    bg_semester_btn_active.xml
+    Active state background for a semester selector button.
+    Fill = tertiary_fixed (#FFDEA6 / faint gold), border = tertiary_fixed_dim (#F7BD48),
+    2dp stroke, 8dp corner.
+    Applied programmatically in AttendanceFragment.applySemesterSelection().
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/tertiary_fixed" />
+    <stroke
+        android:width="2dp"
+        android:color="@color/tertiary_fixed_dim" />
+    <corners android:radius="8dp" />
+</shape>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    bg_card_dept_navy.xml
+    Left-border stripe for the inactive (navy) department card.
+    Use as background of the 4dp-wide stripe View inside card_urban_planning.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/scholar_navy" />
+</shape>

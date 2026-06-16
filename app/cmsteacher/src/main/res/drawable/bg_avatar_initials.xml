@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    bg_avatar_initials.xml
+    Rounded square background for the student initials avatar.
+    Base fill = primary_fixed (#D6E3FF).
+    Cycle backgroundTint in the adapter:
+      index % 4 == 0  → primary_fixed    (#D6E3FF)  text: scholar_navy
+      index % 4 == 1  → secondary_fixed  (#FFDAD4)  text: secondary
+      index % 4 == 2  → tertiary_fixed   (#FFDEA6)  text: accent_gold
+      index % 4 == 3  → surface_container_highest (#E2E2E2) text: on_surface_variant
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/primary_fixed" />
+    <corners android:radius="8dp" />
+</shape>

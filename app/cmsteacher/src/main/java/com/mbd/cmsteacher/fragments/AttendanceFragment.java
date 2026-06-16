@@ -1,66 +1,214 @@
 package com.mbd.cmsteacher.fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+
+import com.google.android.material.button.MaterialButton;
+import com.mbd.cmsteacher.MarkAttendanceActivity;
 import com.mbd.cmsteacher.R;
 
 /**
- * A simple {@link Fragment} subclass.
- * Use the {@link AttendanceFragment#newInstance} factory method to
- * create an instance of this fragment.
+ * AttendanceFragment — Attendance Registry Screen
+ * ─────────────────────────────────────────────────────────────────────────
+ * Matches the HTML "Attendance Registry | Academic Faculty" reference.
+ *
+ * Sections:
+ *   § 1  Hero header: "Attendance Registry" + gold rule + session eyebrow
+ *   § 2  Assigned Departments — two course cards (Architecture & Urban Planning)
+ *   § 3  Academic Period — 8 semester selector buttons
+ *   § 4  "MARK DAILY ATTENDANCE" primary CTA → launches MarkAttendanceActivity
+ *   § 5  Faculty Integrity Standards card (90% compliance ring, audit summary)
+ *
+ * State:
+ *   selectedDepartment — index of the tapped course card (0 or 1)
+ *   selectedSemester   — 1–8, default 4
+ *
+ * Navigation:
+ *   CTA button → MarkAttendanceActivity
+ *     extras: EXTRA_DEPARTMENT, EXTRA_SEMESTER
+ * ─────────────────────────────────────────────────────────────────────────
  */
 public class AttendanceFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+    // ── Intent extras (forwarded to MarkAttendanceActivity) ──────────────
+    public static final String EXTRA_DEPARTMENT = "extra_department";
+    public static final String EXTRA_SEMESTER   = "extra_semester";
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    // ── Department constants ──────────────────────────────────────────────
+    private static final int DEPT_ARCHITECTURE   = 0;
+    private static final int DEPT_URBAN_PLANNING = 1;
 
-    public AttendanceFragment() {
-        // Required empty public constructor
+    // ── Views — Department cards ──────────────────────────────────────────
+    private View cardArchitecture;
+    private View cardUrbanPlanning;
+
+    // ── Views — Semester buttons ──────────────────────────────────────────
+    private MaterialButton[] semesterButtons = new MaterialButton[8];
+
+    // ── Views — CTA ───────────────────────────────────────────────────────
+    private MaterialButton btnMarkAttendance;
+
+    // ── State ─────────────────────────────────────────────────────────────
+    private int selectedDepartment = DEPT_ARCHITECTURE;  // default: first card
+    private int selectedSemester   = 4;                  // default: semester 4
+
+    // ─────────────────────────────────────────────────────────────────────
+    public AttendanceFragment() { /* required empty constructor */ }
+
+    public static AttendanceFragment newInstance() {
+        return new AttendanceFragment();
+    }
+
+    // ── Lifecycle ─────────────────────────────────────────────────────────
+
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_attendance, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        bindViews(view);
+        setupDepartmentCards();
+        setupSemesterButtons();
+        setupCtaButton();
+
+        // Apply default visual selections
+        applyDepartmentSelection(selectedDepartment);
+        applySemesterSelection(selectedSemester);
+    }
+
+    // ── View binding ──────────────────────────────────────────────────────
+
+    private void bindViews(View root) {
+        cardArchitecture  = root.findViewById(R.id.card_architecture);
+        cardUrbanPlanning = root.findViewById(R.id.card_urban_planning);
+
+        semesterButtons[0] = root.findViewById(R.id.btn_sem_1);
+        semesterButtons[1] = root.findViewById(R.id.btn_sem_2);
+        semesterButtons[2] = root.findViewById(R.id.btn_sem_3);
+        semesterButtons[3] = root.findViewById(R.id.btn_sem_4);
+        semesterButtons[4] = root.findViewById(R.id.btn_sem_5);
+        semesterButtons[5] = root.findViewById(R.id.btn_sem_6);
+        semesterButtons[6] = root.findViewById(R.id.btn_sem_7);
+        semesterButtons[7] = root.findViewById(R.id.btn_sem_8);
+
+        btnMarkAttendance = root.findViewById(R.id.btn_mark_attendance);
+    }
+
+    // ── Department cards ──────────────────────────────────────────────────
+
+    private void setupDepartmentCards() {
+        cardArchitecture.setOnClickListener(v -> {
+            selectedDepartment = DEPT_ARCHITECTURE;
+            applyDepartmentSelection(selectedDepartment);
+        });
+
+        cardUrbanPlanning.setOnClickListener(v -> {
+            selectedDepartment = DEPT_URBAN_PLANNING;
+            applyDepartmentSelection(selectedDepartment);
+        });
     }
 
     /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment AttendanceFragment.
+     * Highlights the selected card with a gold left border tint;
+     * the deselected card reverts to the navy tint.
      */
-    // TODO: Rename and change types and number of parameters
-    public static AttendanceFragment newInstance(String param1, String param2) {
-        AttendanceFragment fragment = new AttendanceFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+    private void applyDepartmentSelection(int dept) {
+        // Use elevation delta as a simple active/inactive indicator
+        // (border tints are defined in the layout via background drawables)
+        if (dept == DEPT_ARCHITECTURE) {
+            cardArchitecture.setSelected(true);
+            cardUrbanPlanning.setSelected(false);
+        } else {
+            cardArchitecture.setSelected(false);
+            cardUrbanPlanning.setSelected(true);
         }
     }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_attendance, container, false);
+    // ── Semester buttons ──────────────────────────────────────────────────
+
+    private void setupSemesterButtons() {
+        for (int i = 0; i < semesterButtons.length; i++) {
+            final int semesterNumber = i + 1;
+            semesterButtons[i].setOnClickListener(v -> {
+                selectedSemester = semesterNumber;
+                applySemesterSelection(selectedSemester);
+            });
+        }
+    }
+
+    /**
+     * Gives the active semester button a gold border + faint gold bg;
+     * all others get the default outline style.
+     */
+    private void applySemesterSelection(int semester) {
+        for (int i = 0; i < semesterButtons.length; i++) {
+            MaterialButton btn = semesterButtons[i];
+            if (i + 1 == semester) {
+                // Active state — gold border
+                btn.setBackgroundTintList(
+                        requireContext().getColorStateList(R.color.tertiary_fixed));
+                btn.setTextColor(
+                        requireContext().getColor(R.color.primary));
+                btn.setStrokeColor(
+                        requireContext().getColorStateList(R.color.tertiary_fixed_dim));
+                btn.setStrokeWidth(dpToPx(2));
+            } else {
+                // Inactive state
+                btn.setBackgroundTintList(
+                        requireContext().getColorStateList(R.color.surface_container_low));
+                btn.setTextColor(
+                        requireContext().getColor(R.color.primary));
+                btn.setStrokeColor(
+                        requireContext().getColorStateList(R.color.outline_variant));
+                btn.setStrokeWidth(dpToPx(1));
+            }
+        }
+    }
+
+    // ── CTA button ────────────────────────────────────────────────────────
+
+    private void setupCtaButton() {
+        btnMarkAttendance.setOnClickListener(v -> launchMarkAttendance());
+    }
+
+    private void launchMarkAttendance() {
+        String deptName = (selectedDepartment == DEPT_ARCHITECTURE)
+                ? "Architecture & Design"
+                : "Urban Planning";
+
+        String courseName = (selectedDepartment == DEPT_ARCHITECTURE)
+                ? "Advanced Architecture III"
+                : "Sustainable Urbanism";
+
+        Intent intent = new Intent(requireContext(), MarkAttendanceActivity.class);
+        intent.putExtra(MarkAttendanceActivity.EXTRA_DEPARTMENT,  deptName);
+        intent.putExtra(MarkAttendanceActivity.EXTRA_COURSE,      courseName);
+        intent.putExtra(MarkAttendanceActivity.EXTRA_SEMESTER,    selectedSemester);
+        startActivity(intent);
+        requireActivity().overridePendingTransition(
+                android.R.anim.slide_in_left,
+                android.R.anim.fade_out);
+    }
+
+    // ── Utility ───────────────────────────────────────────────────────────
+
+    private int dpToPx(int dp) {
+        float density = getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
     }
 }

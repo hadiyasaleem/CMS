@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    selector_segment_btn.xml
+    Background selector for each RadioButton inside the segmented control.
+
+    checked   → scholar_navy pill  (mirrors HTML: bg #002147, text white)
+    unchecked → transparent        (shows the container bg through)
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- CHECKED / selected state -->
+    <item android:state_checked="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/scholar_navy" />
+            <corners android:radius="100dp" />
+        </shape>
+    </item>
+
+    <!-- PRESSED (unchecked) — subtle feedback -->
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/surface_container_high" />
+            <corners android:radius="100dp" />
+        </shape>
+    </item>
+
+    <!-- DEFAULT unchecked -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@android:color/transparent" />
+            <corners android:radius="100dp" />
+        </shape>
+    </item>
+
+</selector>

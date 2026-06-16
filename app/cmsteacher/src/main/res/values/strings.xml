@@ -7,4 +7,76 @@
     <string name="menu_departmental_news">Departmental News</string>
     <string name="menu_resource_library">Resource Library</string>
     <string name="menu_college_handbook">College Handbook</string>
+
+    <!-- ── AttendanceFragment ─────────────────────────────────────── -->
+    <string name="attendance_registry_title">Attendance Registry</string>
+    <string name="session_label">SESSION 2024  •  SEMESTER VIEW</string>
+    <string name="assigned_departments">Assigned Departments</string>
+    <string name="select_active_module">SELECT ACTIVE MODULE</string>
+    <string name="academic_period">Academic Period</string>
+
+    <!-- Department cards -->
+    <string name="dept_label">DEPARTMENT</string>
+    <string name="course_label">COURSE</string>
+    <string name="dept_architecture">Architecture &amp; Design</string>
+    <string name="course_architecture">Advanced Architecture III</string>
+    <string name="dept_urban_planning">Urban Planning</string>
+    <string name="course_urban_planning">Sustainable Urbanism</string>
+
+    <!-- CTA -->
+    <string name="btn_mark_daily_attendance">MARK DAILY ATTENDANCE</string>
+
+    <!-- Faculty Integrity card -->
+    <string name="faculty_integrity_header">FACULTY INTEGRITY STANDARDS</string>
+    <string name="faculty_audit_title">Faculty Audit Summary</string>
+    <string name="faculty_audit_body">Your registry data is cross-referenced with the Central Academic Ledger. Maintaining an accuracy rate above 85%\u00A0is essential for Semester Certification and Faculty Standing.</string>
+    <string name="last_sync_label">LAST SYNC</string>
+    <string name="status_label">STATUS</string>
+    <string name="last_sync_value">Today, 08:30\u202FAM</string>
+    <string name="sync_status_verified">Verified Registry</string>
+    <string name="compliance_caption">COMPLIANCE</string>
+
+    <!-- ── MarkAttendanceActivity ─────────────────────────────────── -->
+    <string name="title_mark_attendance">MARK ATTENDANCE</string>
+    <string name="current_module_label">CURRENT MODULE</string>
+    <string name="session_capacity_label">SESSION CAPACITY</string>
+    <string name="session_capacity_value">%d Students</string>
+    <string name="btn_mark_all_present">Mark All Present</string>
+    <string name="search_hint">Search by name or roll number…</string>
+    <string name="filter">Filter</string>
+
+    <!-- Student row -->
+    <string name="roll_no_prefix">Roll No: %s</string>
+    <string name="status_present">Present</string>
+    <string name="status_absent">Absent</string>
+    <string name="status_leave">Leave</string>
+
+    <!-- Summary strip -->
+    <string name="summary_present">PRESENT</string>
+    <string name="summary_absent">ABSENT</string>
+    <string name="summary_leave">LEAVE</string>
+
+    <!-- Submit button states -->
+    <string name="btn_submit_attendance">SUBMIT ATTENDANCE REGISTRY</string>
+    <string name="btn_processing">PROCESSING REGISTRY\u2026</string>
+    <string name="btn_submitted">REGISTRY SUBMITTED</string>
+
+    <!-- Toast -->
+    <string name="toast_all_present">ALL STUDENTS MARKED PRESENT</string>
+
+    <!-- Navigation labels -->
+    <string name="nav_home">Home</string>
+    <string name="nav_attendance">Attendance</string>
+    <string name="nav_exams">Exams</string>
+    <string name="nav_schedule">Schedule</string>
+    <string name="nav_menu">Menu</string>
+
+    <!-- Content descriptions (accessibility) -->
+    <string name="cd_back">Go back</string>
+    <string name="cd_notifications">Notifications</string>
+    <string name="cd_profile_photo">Teacher profile photo</string>
+    <string name="cd_student_avatar">Student initials avatar</string>
+    <string name="cd_compliance_ring">Faculty compliance ring showing %1$.0f%% accuracy</string>
+    <string name="cd_architecture_icon">Architecture icon</string>
+    <string name="cd_city_icon">Urban Planning icon</string>
 </resources>
