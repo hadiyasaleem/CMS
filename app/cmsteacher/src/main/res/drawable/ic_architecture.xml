@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ic_architecture.xml — compass/ruler icon for Architecture dept card -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="@color/accent_gold">
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M2.5,19h19v2h-19zM7.16,14.47l2.94,0.79 8.46,-8.46 -2.12,-2.12zM22.49,6.34l-1.06,-1.06c-0.39,-0.39 -1.02,-0.39 -1.41,0l-1.06,1.06 2.12,2.12 1.41,-1.41C22.88,6.66 22.88,6.73 22.49,6.34zM5,15.91V18h2.09l5.18,-5.18 -2.09,-2.09z"/>
+</vector>

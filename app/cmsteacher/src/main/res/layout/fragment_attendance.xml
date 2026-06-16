@@ -1,14 +1,637 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+    fragment_attendance.xml
+    ══════════════════════════════════════════════════════════════════════
+    Layout for AttendanceFragment — "Attendance Registry" screen.
+    Mirrors HTML reference 1:
+      § Hero header  (title + gold divider + session eyebrow)
+      § Assigned Departments (two course cards side-by-side on tablet,
+                               stacked on phone)
+      § Academic Period  (8 semester picker buttons in a grid)
+      § CTA  ("MARK DAILY ATTENDANCE")
+      § Faculty Integrity Standards card (compliance ring + audit info)
+    ══════════════════════════════════════════════════════════════════════
+    Color tokens:
+      scholar_navy   #002147
+      accent_gold    #B18000   (border / accent)
+      tertiary_fixed_dim  #F7BD48  (active semester bg)
+      surface_glass  rgba(249,249,249,0.7)
+      on_surface_variant  #44474d
+    ══════════════════════════════════════════════════════════════════════
+-->
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".fragments.AttendanceFragment">
+    android:background="@color/background"
+    android:fillViewport="true"
+    android:clipToPadding="false"
+    android:paddingBottom="100dp">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="28dp">
 
-</FrameLayout>
+        <!-- ═══════════════════════════════════════════════════════════
+             § 1  HERO HEADER
+             ═══════════════════════════════════════════════════════════ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:layout_marginBottom="32dp">
+
+            <!-- Title -->
+            <TextView
+                android:id="@+id/tv_registry_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Attendance Registry"
+                android:fontFamily="@font/newsreader_bold"
+                android:textSize="36sp"
+                android:textColor="@color/scholar_navy"
+                android:letterSpacing="-0.02"
+                android:gravity="center"
+                android:lineSpacingMultiplier="1.1"/>
+
+            <!-- Session eyebrow -->
+            <TextView
+                android:id="@+id/tv_session_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="SESSION 2024  •  SEMESTER VIEW"
+                android:fontFamily="@font/public_sans_semibold"
+                android:textSize="10sp"
+                android:textColor="@color/accent_gold"
+                android:letterSpacing="0.15"
+                android:gravity="center"/>
+
+            <!-- Gold divider rule -->
+            <View
+                android:layout_width="96dp"
+                android:layout_height="1dp"
+                android:layout_marginTop="20dp"
+                android:background="@color/accent_gold"/>
+
+        </LinearLayout>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             § 2  ASSIGNED DEPARTMENTS
+             ═══════════════════════════════════════════════════════════ -->
+
+        <!-- Section heading row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Assigned Departments"
+                android:fontFamily="@font/newsreader_bold"
+                android:textSize="20sp"
+                android:textColor="@color/scholar_navy"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SELECT ACTIVE MODULE"
+                android:fontFamily="@font/public_sans_semibold"
+                android:textSize="9sp"
+                android:textColor="@color/on_surface_variant"
+                android:letterSpacing="0.12"/>
+        </LinearLayout>
+
+        <!-- Card 1 — Architecture & Design (gold left border = active) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_architecture"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:clickable="true"
+            android:focusable="true"
+            app:cardBackgroundColor="@color/surface"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/outline_variant"
+            app:strokeWidth="1dp">
+
+            <!-- Gold left border stripe -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <View
+                    android:id="@+id/stripe_architecture"
+                    android:layout_width="4dp"
+                    android:layout_height="match_parent"
+                    android:background="@color/accent_gold"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <!-- Department label + icon row -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="12dp">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="DEPARTMENT"
+                                android:fontFamily="@font/public_sans_semibold"
+                                android:textSize="9sp"
+                                android:textColor="@color/accent_gold"
+                                android:letterSpacing="0.12"
+                                android:layout_marginBottom="4dp"/>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Architecture &amp; Design"
+                                android:fontFamily="@font/newsreader_bold"
+                                android:textSize="18sp"
+                                android:textColor="@color/scholar_navy"/>
+                        </LinearLayout>
+
+                        <com.google.android.material.imageview.ShapeableImageView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@drawable/ic_architecture"
+                            app:tint="@color/accent_gold"/>
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="COURSE"
+                        android:fontFamily="@font/public_sans_semibold"
+                        android:textSize="9sp"
+                        android:textColor="@color/on_surface_variant"
+                        android:letterSpacing="0.12"
+                        android:layout_marginBottom="4dp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Advanced Architecture III"
+                        android:fontFamily="@font/public_sans_semibold"
+                        android:textSize="15sp"
+                        android:textColor="@color/scholar_navy"/>
+
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Card 2 — Urban Planning (navy left border = inactive) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_urban_planning"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="32dp"
+            android:clickable="true"
+            android:focusable="true"
+            app:cardBackgroundColor="@color/surface"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/outline_variant"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <View
+                    android:id="@+id/stripe_urban"
+                    android:layout_width="4dp"
+                    android:layout_height="match_parent"
+                    android:background="@color/scholar_navy"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="12dp">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="DEPARTMENT"
+                                android:fontFamily="@font/public_sans_semibold"
+                                android:textSize="9sp"
+                                android:textColor="@color/on_surface_variant"
+                                android:letterSpacing="0.12"
+                                android:layout_marginBottom="4dp"/>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Urban Planning"
+                                android:fontFamily="@font/newsreader_bold"
+                                android:textSize="18sp"
+                                android:textColor="@color/scholar_navy"/>
+                        </LinearLayout>
+
+                        <com.google.android.material.imageview.ShapeableImageView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@drawable/ic_location_city"
+                            app:tint="@color/scholar_navy_20"/>
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="COURSE"
+                        android:fontFamily="@font/public_sans_semibold"
+                        android:textSize="9sp"
+                        android:textColor="@color/on_surface_variant"
+                        android:letterSpacing="0.12"
+                        android:layout_marginBottom="4dp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Sustainable Urbanism"
+                        android:fontFamily="@font/public_sans_semibold"
+                        android:textSize="15sp"
+                        android:textColor="@color/scholar_navy"/>
+
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             § 3  ACADEMIC PERIOD — 8 semester buttons
+             ═══════════════════════════════════════════════════════════ -->
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Academic Period"
+            android:fontFamily="@font/newsreader_bold"
+            android:textSize="20sp"
+            android:textColor="@color/scholar_navy"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- Row 1 — Semesters 1-4 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="10dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_sem_1"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:text="01"
+                android:fontFamily="@font/public_sans_semibold"
+                android:textSize="13sp"
+                android:textColor="@color/scholar_navy"
+                app:strokeColor="@color/outline_variant"
+                app:strokeWidth="1dp"
+                app:cornerRadius="8dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_sem_2"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:text="02"
+                android:fontFamily="@font/public_sans_semibold"
+                android:textSize="13sp"
+                android:textColor="@color/scholar_navy"
+                app:strokeColor="@color/outline_variant"
+                app:strokeWidth="1dp"
+                app:cornerRadius="8dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_sem_3"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:text="03"
+                android:fontFamily="@font/public_sans_semibold"
+                android:textSize="13sp"
+                android:textColor="@color/scholar_navy"
+                app:strokeColor="@color/outline_variant"
+                app:strokeWidth="1dp"
+                app:cornerRadius="8dp"/>
+
+            <!-- Semester 4 — active by default -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_sem_4"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:text="04"
+                android:fontFamily="@font/public_sans_semibold"
+                android:textSize="13sp"
+                android:textColor="@color/scholar_navy"
+                app:backgroundTint="@color/tertiary_fixed"
+                app:strokeColor="@color/tertiary_fixed_dim"
+                app:strokeWidth="2dp"
+                app:cornerRadius="8dp"/>
+
+        </LinearLayout>
+
+        <!-- Row 2 — Semesters 5-8 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="32dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_sem_5"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:text="05"
+                android:fontFamily="@font/public_sans_semibold"
+                android:textSize="13sp"
+                android:textColor="@color/scholar_navy"
+                app:strokeColor="@color/outline_variant"
+                app:strokeWidth="1dp"
+                app:cornerRadius="8dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_sem_6"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:text="06"
+                android:fontFamily="@font/public_sans_semibold"
+                android:textSize="13sp"
+                android:textColor="@color/scholar_navy"
+                app:strokeColor="@color/outline_variant"
+                app:strokeWidth="1dp"
+                app:cornerRadius="8dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_sem_7"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:text="07"
+                android:fontFamily="@font/public_sans_semibold"
+                android:textSize="13sp"
+                android:textColor="@color/scholar_navy"
+                app:strokeColor="@color/outline_variant"
+                app:strokeWidth="1dp"
+                app:cornerRadius="8dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_sem_8"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:text="08"
+                android:fontFamily="@font/public_sans_semibold"
+                android:textSize="13sp"
+                android:textColor="@color/scholar_navy"
+                app:strokeColor="@color/outline_variant"
+                app:strokeWidth="1dp"
+                app:cornerRadius="8dp"/>
+
+        </LinearLayout>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             § 4  CTA — MARK DAILY ATTENDANCE
+             ═══════════════════════════════════════════════════════════ -->
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_mark_attendance"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_marginBottom="32dp"
+            android:text="MARK DAILY ATTENDANCE"
+            android:fontFamily="@font/public_sans_semibold"
+            android:textSize="13sp"
+            android:textColor="@color/on_primary"
+            android:letterSpacing="0.18"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            app:backgroundTint="@color/scholar_navy"
+            app:cornerRadius="12dp"
+            app:icon="@drawable/ic_how_to_reg"
+            app:iconTint="@color/on_primary"
+            app:iconGravity="textStart"
+            app:iconPadding="10dp"
+            app:elevation="6dp"/>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             § 5  FACULTY INTEGRITY STANDARDS card
+             ═══════════════════════════════════════════════════════════ -->
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            app:cardBackgroundColor="@color/surface"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/accent_gold_20"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <!-- Dark navy header bar -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@color/scholar_navy"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="20dp"
+                    android:paddingVertical="14dp">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_verified_user"
+                        android:layout_marginEnd="10dp"
+                        app:tint="@color/accent_gold"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="FACULTY INTEGRITY STANDARDS"
+                        android:fontFamily="@font/public_sans_semibold"
+                        android:textSize="11sp"
+                        android:textColor="@android:color/white"
+                        android:letterSpacing="0.15"/>
+                </LinearLayout>
+
+                <!-- Body -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="24dp"
+                    android:gravity="center_vertical">
+
+                    <!-- Compliance ring (custom view) -->
+                    <com.mbd.cmsteacher.views.ComplianceRingView
+                        android:id="@+id/compliance_ring"
+                        android:layout_width="120dp"
+                        android:layout_height="120dp"
+                        android:layout_marginEnd="24dp"
+                        />
+
+                    <!-- Audit text -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Faculty Audit Summary"
+                            android:fontFamily="@font/newsreader_bold"
+                            android:textSize="17sp"
+                            android:textColor="@color/scholar_navy"
+                            android:layout_marginBottom="8dp"/>
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Your registry data is cross-referenced with the Central Academic Ledger. Maintaining an accuracy rate above 85% is essential for Semester Certification and Faculty Standing."
+                            android:fontFamily="@font/public_sans"
+                            android:textSize="12sp"
+                            android:textColor="@color/on_surface_variant"
+                            android:lineSpacingMultiplier="1.5"
+                            android:layout_marginBottom="16dp"/>
+
+                        <!-- Last Sync + Status grid -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <!-- Last Sync chip -->
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:layout_marginEnd="8dp"
+                                android:orientation="vertical"
+                                android:background="@drawable/bg_chip_surface"
+                                android:padding="10dp">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="LAST SYNC"
+                                    android:fontFamily="@font/public_sans"
+                                    android:textSize="9sp"
+                                    android:textColor="@color/on_surface_variant"
+                                    android:letterSpacing="0.05"
+                                    android:layout_marginBottom="4dp"/>
+
+                                <TextView
+                                    android:id="@+id/tv_last_sync"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Today, 08:30 AM"
+                                    android:fontFamily="@font/public_sans_semibold"
+                                    android:textSize="11sp"
+                                    android:textColor="@color/scholar_navy"/>
+                            </LinearLayout>
+
+                            <!-- Status chip -->
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical"
+                                android:background="@drawable/bg_chip_surface"
+                                android:padding="10dp">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="STATUS"
+                                    android:fontFamily="@font/public_sans"
+                                    android:textSize="9sp"
+                                    android:textColor="@color/on_surface_variant"
+                                    android:letterSpacing="0.05"
+                                    android:layout_marginBottom="4dp"/>
+
+                                <TextView
+                                    android:id="@+id/tv_sync_status"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Verified Registry"
+                                    android:fontFamily="@font/public_sans_semibold"
+                                    android:textSize="11sp"
+                                    android:textColor="@color/accent_gold"/>
+                            </LinearLayout>
+
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+</ScrollView>

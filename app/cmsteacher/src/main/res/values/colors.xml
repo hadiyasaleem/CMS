@@ -83,4 +83,44 @@
     <color name="topbar_scrim">#66F9F9F9</color>
     <color name="accent_gold">#B18000</color>
 
+    <!-- ══════════════════════════════════════════════════════════════
+        1. BRAND / IDENTITY
+        ══════════════════════════════════════════════════════════════ -->
+
+    <!-- Scholar Navy — primary brand colour, darkest navy -->
+    <color name="scholar_navy">#FF002147</color>
+    <!-- Ink Deep — near-black navy for hero text / dark backgrounds -->
+    <color name="ink_deep">#FF000A1E</color>
+    <!-- Accent Gold — interactive gold, borders, active states -->
+    <!-- Accent Gold Bright — brighter gold used for fill tints (tertiary_fixed_dim) -->
+    <color name="accent_gold_bright">#FFF7BD48</color>
+    <!-- Secondary Red — error/absent accent -->
+    <color name="secondary_red">#FFB22B1D</color>
+    <!-- Paper White — light neutral base -->
+    <color name="paper_white">#FFF9F9F9</color>
+
+
+
+
+
+    <!-- ══════════════════════════════════════════════════════════════
+         8. UTILITY / SEMANTIC
+         ══════════════════════════════════════════════════════════════ -->
+
+    <!-- Success green — used for the "Present" left-border strip and
+         the submit-confirmed button state -->
+    <color name="color_success">#FF2E7D32</color>
+    <color name="on_success">#FFFFFFFF</color>
+
+    <!-- Semi-transparent tints for overlays / strokes -->
+    <!-- scholar_navy @ 20% opacity -->
+    <color name="scholar_navy_20">#33002147</color>
+    <!-- accent_gold @ 20% opacity (card stroke) -->
+    <color name="accent_gold_20">#33B18000</color>
+    <!-- accent_gold @ 5% opacity (active semester btn bg tint) -->
+    <color name="accent_gold_05">#0DB18000</color>
+
+    <!-- Scrim / modal overlay -->
+    <color name="scrim">#99000000</color>
+
 </resources>

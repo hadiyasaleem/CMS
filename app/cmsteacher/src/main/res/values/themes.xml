@@ -249,4 +249,288 @@
         <item name="android:foreground">?attr/selectableItemBackground</item>
     </style>
 
+    <!-- ── Base application theme ──────────────────────────────────── -->
+    <style name="Theme.CmsTeacher" parent="Theme.MaterialComponents.Light.NoActionBar">
+
+        <!-- ── M3 colour slots ─────────────────────────────────────── -->
+        <item name="colorPrimary">@color/scholar_navy</item>
+        <item name="colorOnPrimary">@color/on_primary</item>
+        <item name="colorPrimaryContainer">@color/primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/on_primary_container</item>
+
+        <item name="colorSecondary">@color/secondary</item>
+        <item name="colorOnSecondary">@color/on_secondary</item>
+        <item name="colorSecondaryContainer">@color/secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/on_secondary_container</item>
+
+        <item name="colorTertiary">@color/tertiary</item>
+        <item name="colorOnTertiary">@color/on_tertiary</item>
+        <item name="colorTertiaryContainer">@color/tertiary_container</item>
+        <item name="colorOnTertiaryContainer">@color/on_tertiary_container</item>
+
+        <item name="colorError">@color/error</item>
+        <item name="colorOnError">@color/on_error</item>
+        <item name="colorErrorContainer">@color/error_container</item>
+        <item name="colorOnErrorContainer">@color/on_error_container</item>
+
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/on_surface</item>
+        <item name="colorSurfaceVariant">@color/surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/on_surface_variant</item>
+
+        <item name="colorOutline">@color/outline</item>
+        <item name="colorOutlineVariant">@color/outline_variant</item>
+
+        <item name="android:colorBackground">@color/background</item>
+        <item name="colorOnBackground">@color/on_background</item>
+
+        <!-- ── Window ──────────────────────────────────────────────── -->
+        <item name="android:windowBackground">@color/background</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+
+        <!-- ── Shape ───────────────────────────────────────────────── -->
+        <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.CmsTeacher.Small</item>
+        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.CmsTeacher.Medium</item>
+        <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.CmsTeacher.Large</item>
+
+        <!-- ── Typography ──────────────────────────────────────────── -->
+        <item name="textAppearanceHeadlineLarge">@style/TextAppearance.CmsTeacher.HeadlineLarge</item>
+        <item name="textAppearanceHeadlineMedium">@style/TextAppearance.CmsTeacher.HeadlineMedium</item>
+        <item name="textAppearanceTitleLarge">@style/TextAppearance.CmsTeacher.TitleLarge</item>
+        <item name="textAppearanceTitleMedium">@style/TextAppearance.CmsTeacher.TitleMedium</item>
+        <item name="textAppearanceBodyLarge">@style/TextAppearance.CmsTeacher.BodyLarge</item>
+        <item name="textAppearanceBodyMedium">@style/TextAppearance.CmsTeacher.BodyMedium</item>
+        <item name="textAppearanceLabelLarge">@style/TextAppearance.CmsTeacher.LabelLarge</item>
+        <item name="textAppearanceLabelSmall">@style/TextAppearance.CmsTeacher.LabelSmall</item>
+
+        <!-- ── Widget overrides ────────────────────────────────────── -->
+        <item name="materialButtonStyle">@style/Widget.CmsTeacher.Button</item>
+        <item name="materialButtonOutlinedStyle">@style/Widget.CmsTeacher.Button.Outlined</item>
+        <item name="bottomNavigationStyle">@style/Widget.CmsTeacher.BottomNavigation</item>
+        <item name="toolbarStyle">@style/Widget.CmsTeacher.Toolbar</item>
+        <item name="cardViewStyle">@style/Widget.CmsTeacher.CardView</item>
+        <item name="textInputStyle">@style/Widget.CmsTeacher.TextInputLayout</item>
+
+    </style>
+
+    <!-- ── Splash / launcher (no action bar, dark nav bar) ─────────── -->
+    <style name="Theme.CmsTeacher.Splash" parent="Theme.CmsTeacher">
+        <item name="android:windowBackground">@color/scholar_navy</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">@color/scholar_navy</item>
+    </style>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         SHAPE APPEARANCES
+         ══════════════════════════════════════════════════════════════ -->
+
+    <style name="ShapeAppearance.CmsTeacher.Small"
+        parent="ShapeAppearance.MaterialComponents.SmallComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">8dp</item>
+    </style>
+
+    <style name="ShapeAppearance.CmsTeacher.Medium"
+        parent="ShapeAppearance.MaterialComponents.MediumComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">12dp</item>
+    </style>
+
+    <style name="ShapeAppearance.CmsTeacher.Large"
+        parent="ShapeAppearance.MaterialComponents.LargeComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
+    </style>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         TEXT APPEARANCES
+         ══════════════════════════════════════════════════════════════ -->
+
+    <!-- Display / hero — Newsreader Bold, 36sp -->
+    <style name="TextAppearance.CmsTeacher.DisplayHero"
+        parent="TextAppearance.MaterialComponents.Headline1">
+        <item name="fontFamily">@font/newsreader_bold</item>
+        <item name="android:fontFamily">@font/newsreader_bold</item>
+        <item name="android:textSize">36sp</item>
+        <item name="android:letterSpacing">-0.02</item>
+        <item name="android:textColor">@color/scholar_navy</item>
+    </style>
+
+    <!-- Headline Large — Newsreader Bold, 28sp -->
+    <style name="TextAppearance.CmsTeacher.HeadlineLarge"
+        parent="TextAppearance.MaterialComponents.Headline4">
+        <item name="fontFamily">@font/newsreader_bold</item>
+        <item name="android:fontFamily">@font/newsreader_bold</item>
+        <item name="android:textSize">28sp</item>
+        <item name="android:textColor">@color/scholar_navy</item>
+    </style>
+
+    <!-- Headline Medium — Newsreader Bold, 20sp (section headers) -->
+    <style name="TextAppearance.CmsTeacher.HeadlineMedium"
+        parent="TextAppearance.MaterialComponents.Headline5">
+        <item name="fontFamily">@font/newsreader_bold</item>
+        <item name="android:fontFamily">@font/newsreader_bold</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:textColor">@color/scholar_navy</item>
+    </style>
+
+    <!-- Title Large — Newsreader Bold, 17sp (card titles) -->
+    <style name="TextAppearance.CmsTeacher.TitleLarge"
+        parent="TextAppearance.MaterialComponents.Headline6">
+        <item name="fontFamily">@font/newsreader_bold</item>
+        <item name="android:fontFamily">@font/newsreader_bold</item>
+        <item name="android:textSize">17sp</item>
+        <item name="android:textColor">@color/scholar_navy</item>
+    </style>
+
+    <!-- Title Medium — Public Sans SemiBold, 15sp -->
+    <style name="TextAppearance.CmsTeacher.TitleMedium"
+        parent="TextAppearance.MaterialComponents.Subtitle1">
+        <item name="fontFamily">@font/public_sans_semibold</item>
+        <item name="android:fontFamily">@font/public_sans_semibold</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textColor">@color/scholar_navy</item>
+    </style>
+
+    <!-- Body Large — Public Sans Regular, 14sp -->
+    <style name="TextAppearance.CmsTeacher.BodyLarge"
+        parent="TextAppearance.MaterialComponents.Body1">
+        <item name="fontFamily">@font/public_sans</item>
+        <item name="android:fontFamily">@font/public_sans</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/on_surface</item>
+        <item name="android:lineSpacingMultiplier">1.5</item>
+    </style>
+
+    <!-- Body Medium — Public Sans Regular, 12sp -->
+    <style name="TextAppearance.CmsTeacher.BodyMedium"
+        parent="TextAppearance.MaterialComponents.Body2">
+        <item name="fontFamily">@font/public_sans</item>
+        <item name="android:fontFamily">@font/public_sans</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/on_surface_variant</item>
+        <item name="android:lineSpacingMultiplier">1.5</item>
+    </style>
+
+    <!-- Label Large — Public Sans SemiBold, 13sp, wide tracking (buttons) -->
+    <style name="TextAppearance.CmsTeacher.LabelLarge"
+        parent="TextAppearance.MaterialComponents.Button">
+        <item name="fontFamily">@font/public_sans_semibold</item>
+        <item name="android:fontFamily">@font/public_sans_semibold</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:letterSpacing">0.12</item>
+    </style>
+
+    <!-- Label Small / Micro — Public Sans, 10sp, widest tracking (eyebrows) -->
+    <style name="TextAppearance.CmsTeacher.LabelSmall"
+        parent="TextAppearance.MaterialComponents.Caption">
+        <item name="fontFamily">@font/public_sans_semibold</item>
+        <item name="android:fontFamily">@font/public_sans_semibold</item>
+        <item name="android:textSize">10sp</item>
+        <item name="android:letterSpacing">0.15</item>
+        <item name="android:textAllCaps">true</item>
+    </style>
+
+    <!-- Toolbar title -->
+    <style name="TextAppearance.CmsTeacher.ToolbarTitle"
+        parent="TextAppearance.MaterialComponents.Headline6">
+        <item name="fontFamily">@font/public_sans_semibold</item>
+        <item name="android:fontFamily">@font/public_sans_semibold</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:letterSpacing">0.12</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textColor">@color/scholar_navy</item>
+    </style>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         WIDGET STYLES
+         ══════════════════════════════════════════════════════════════ -->
+
+    <!-- Primary filled button — scholar_navy bg, white text, 12dp corner -->
+    <style name="Widget.CmsTeacher.Button"
+        parent="Widget.MaterialComponents.Button">
+        <item name="backgroundTint">@color/scholar_navy</item>
+        <item name="android:textColor">@color/on_primary</item>
+        <item name="cornerRadius">12dp</item>
+        <item name="android:letterSpacing">0.15</item>
+        <item name="android:fontFamily">@font/public_sans_semibold</item>
+        <item name="fontFamily">@font/public_sans_semibold</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="elevation">2dp</item>
+    </style>
+
+    <!-- Outlined button — transparent bg, scholar_navy border + text -->
+    <style name="Widget.CmsTeacher.Button.Outlined"
+        parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="strokeColor">@color/outline_variant</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="android:textColor">@color/scholar_navy</item>
+        <item name="cornerRadius">8dp</item>
+        <item name="android:letterSpacing">0.10</item>
+        <item name="android:fontFamily">@font/public_sans_semibold</item>
+        <item name="fontFamily">@font/public_sans_semibold</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+    </style>
+
+    <!-- Text-only button (tertiary actions) -->
+    <style name="Widget.CmsTeacher.Button.Text"
+        parent="Widget.MaterialComponents.Button.TextButton">
+        <item name="android:textColor">@color/scholar_navy</item>
+        <item name="android:fontFamily">@font/public_sans_semibold</item>
+        <item name="fontFamily">@font/public_sans_semibold</item>
+        <item name="android:letterSpacing">0.08</item>
+    </style>
+
+    <!-- Bottom navigation -->
+    <style name="Widget.CmsTeacher.BottomNavigation"
+        parent="Widget.MaterialComponents.BottomNavigationView">
+        <item name="android:background">@color/surface</item>
+        <item name="itemIconTint">@color/bottom_nav_item_color</item>
+        <item name="itemTextColor">@color/bottom_nav_item_color</item>
+        <item name="itemTextAppearanceActive">@style/TextAppearance.CmsTeacher.LabelSmall</item>
+        <item name="itemTextAppearanceInactive">@style/TextAppearance.CmsTeacher.LabelSmall</item>
+        <item name="elevation">8dp</item>
+        <item name="labelVisibilityMode">labeled</item>
+    </style>
+
+    <!-- Toolbar -->
+    <style name="Widget.CmsTeacher.Toolbar"
+        parent="Widget.MaterialComponents.Toolbar">
+        <item name="android:background">@color/surface</item>
+        <item name="titleTextAppearance">@style/TextAppearance.CmsTeacher.ToolbarTitle</item>
+        <item name="navigationIconTint">@color/scholar_navy</item>
+        <item name="android:elevation">0dp</item>
+    </style>
+
+    <!-- Card -->
+    <style name="Widget.CmsTeacher.CardView"
+        parent="Widget.MaterialComponents.CardView">
+        <item name="cardBackgroundColor">@color/surface</item>
+        <item name="cardCornerRadius">12dp</item>
+        <item name="cardElevation">0dp</item>
+        <item name="strokeColor">@color/outline_variant</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+    <!-- TextInputLayout — outlined box -->
+    <style name="Widget.CmsTeacher.TextInputLayout"
+        parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxCornerRadiusTopStart">12dp</item>
+        <item name="boxCornerRadiusTopEnd">12dp</item>
+        <item name="boxCornerRadiusBottomStart">12dp</item>
+        <item name="boxCornerRadiusBottomEnd">12dp</item>
+        <item name="boxStrokeColor">@color/outline_variant</item>
+        <item name="boxStrokeWidth">1dp</item>
+        <item name="hintTextColor">@color/on_surface_variant</item>
+        <item name="android:fontFamily">@font/public_sans</item>
+        <item name="fontFamily">@font/public_sans</item>
+    </style>
+
+
 </resources>

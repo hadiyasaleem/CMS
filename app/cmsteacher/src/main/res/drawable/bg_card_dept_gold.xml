@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    bg_card_dept_gold.xml
+    Left-border stripe helper for the selected (gold) department card.
+    Use as background of the 4dp-wide stripe View inside card_architecture.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/accent_gold" />
+</shape>

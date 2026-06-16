@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    selector_segment_text.xml
+    Text colour selector for RadioButtons inside the segmented control.
+
+    checked   → white  (on scholar_navy bg)
+    unchecked → scholar_navy
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_checked="true"
+          android:color="@android:color/white" />
+    <item android:color="@color/scholar_navy" />
+</selector>

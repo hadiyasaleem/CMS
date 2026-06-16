@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    item_student_attendance.xml
+    ══════════════════════════════════════════════════════════════════════
+    Single student row for MarkAttendanceActivity's RecyclerView.
+    Mirrors HTML reference 2 student rows:
+
+      ┌─────────────────────────────────────────────────────────────┐
+      │  [AM]  Alexander Montgomery          [Present|Absent|Leave] │
+      │        Roll No: ARCH-2024-001                               │
+      └─────────────────────────────────────────────────────────────┘
+
+    § Avatar   — rounded square with initials (bg cycles: primary_fixed /
+                 secondary_fixed / tertiary_fixed / surface_container_highest)
+    § Name + Roll No
+    § Segmented P/A/L control  — RadioGroup styled to pill shape
+
+    Note: RadioGroup acts as the segmented control; styling for the
+    checked state is achieved in the Java adapter by observing
+    OnCheckedChangeListener and updating button tint.
+    ══════════════════════════════════════════════════════════════════════
+-->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="10dp"
+    android:clickable="false"
+    app:cardBackgroundColor="@color/surface"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="0dp"
+    app:strokeColor="@color/outline_variant"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Top row: avatar + name/roll + segmented control -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <!-- Avatar (initials) -->
+            <TextView
+                android:id="@+id/tv_initials"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="14dp"
+                android:gravity="center"
+                android:text="AM"
+                android:fontFamily="@font/public_sans_semibold"
+                android:textSize="17sp"
+                android:textColor="@color/scholar_navy"
+                android:background="@drawable/bg_avatar_initials"/>
+            <!--
+                bg_avatar_initials — rounded rect (8dp), bg = primary_fixed
+                (The Java adapter cycles bg tint per student index if desired)
+            -->
+
+            <!-- Name + Roll No -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginEnd="12dp">
+
+                <TextView
+                    android:id="@+id/tv_student_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Alexander Montgomery"
+                    android:fontFamily="@font/public_sans_semibold"
+                    android:textSize="14sp"
+                    android:textColor="@color/scholar_navy"
+                    android:maxLines="1"
+                    android:ellipsize="end"/>
+
+                <TextView
+                    android:id="@+id/tv_roll_no"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Roll No: ARCH-2024-001"
+                    android:fontFamily="@font/public_sans_semibold"
+                    android:textSize="10sp"
+                    android:textColor="@color/on_surface_variant"
+                    android:letterSpacing="0.08"
+                    android:layout_marginTop="2dp"/>
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Segmented control — Present / Absent / Leave -->
+        <!--
+            Wrapped in a separate row so it always sits below the name on
+            narrow phones too, matching the HTML reference behaviour
+            (stacks vertically on small screens).
+        -->
+        <RadioGroup
+            android:id="@+id/rg_status"
+            android:layout_width="match_parent"
+            android:layout_height="42dp"
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal"
+            android:background="@drawable/bg_segmented_control"
+            android:padding="4dp">
+
+            <!-- Present -->
+            <RadioButton
+                android:id="@+id/rb_present"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="Present"
+                android:fontFamily="@font/public_sans_semibold"
+                android:textSize="11sp"
+                android:gravity="center"
+                android:button="@null"
+                android:background="@drawable/selector_segment_btn"
+                android:textColor="@drawable/selector_segment_text"
+                android:paddingHorizontal="4dp"/>
+
+            <!-- Absent -->
+            <RadioButton
+                android:id="@+id/rb_absent"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="Absent"
+                android:fontFamily="@font/public_sans_semibold"
+                android:textSize="11sp"
+                android:gravity="center"
+                android:button="@null"
+                android:background="@drawable/selector_segment_btn"
+                android:textColor="@drawable/selector_segment_text"
+                android:paddingHorizontal="4dp"/>
+
+            <!-- Leave -->
+            <RadioButton
+                android:id="@+id/rb_leave"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="Leave"
+                android:fontFamily="@font/public_sans_semibold"
+                android:textSize="11sp"
+                android:gravity="center"
+                android:button="@null"
+                android:background="@drawable/selector_segment_btn"
+                android:textColor="@drawable/selector_segment_text"
+                android:paddingHorizontal="4dp"/>
+
+        </RadioGroup>
+
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>
