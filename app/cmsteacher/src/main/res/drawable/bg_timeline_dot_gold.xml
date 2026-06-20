@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    bg_timeline_dot_gold.xml
+    Gold oval — used for institutional event timeline dots (Faculty Meeting).
+    Matches HTML: bg-accent-gold rounded-full border-4 border-paper-white
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- White ring -->
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="@color/surface_container_lowest" />
+        </shape>
+    </item>
+
+    <!-- Gold fill inset -->
+    <item
+        android:top="3dp"
+        android:left="3dp"
+        android:right="3dp"
+        android:bottom="3dp">
+        <shape android:shape="oval">
+            <solid android:color="@color/tertiary_fixed_dim" />
+        </shape>
+    </item>
+
+</layer-list>

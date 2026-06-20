@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    bg_timeline_dot_navy.xml
+    Solid navy oval — used for Lecture and Seminar timeline dots.
+    Matches HTML: bg-scholar-navy rounded-full border-4 border-paper-white
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- White ring (simulates border-4 border-paper-white) -->
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="@color/surface_container_lowest" />
+        </shape>
+    </item>
+
+    <!-- Navy fill inset by 3dp to create the white ring effect -->
+    <item
+        android:top="3dp"
+        android:left="3dp"
+        android:right="3dp"
+        android:bottom="3dp">
+        <shape android:shape="oval">
+            <solid android:color="@color/primary" />
+        </shape>
+    </item>
+
+</layer-list>

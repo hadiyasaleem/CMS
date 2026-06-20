@@ -1,14 +1,1637 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<!--
+    fragment_schedule.xml — CMS Teacher ScheduleFragment
+    Matches the HTML "Teacher Schedule | Imperial Chancery" reference:
+      § 1  Header: "FACULTY OF LAW" eyebrow + "Master Schedule" display headline
+      § 2  Week navigator: chevron left | date + term label | chevron right
+      § 3  Day-of-week strip: Mon(selected) · Tue · Wed · Thu · Fri · Sat(dimmed)
+      § 4  Semester + Session spinners
+      § 5  Departmental Timetable — horizontal-scroll table card
+      § 6  Timeline — lecture card → faculty meeting event → seminar card → evening card
+      § 7  Preparation Notes — 2 note cards side-by-side
+-->
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".fragments.ScheduleFragment">
+    android:background="@color/surface"
+    android:fillViewport="true"
+    android:overScrollMode="never">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingBottom="100dp">
 
-</FrameLayout>
+        <!-- ═══════════════════════════════════════════════════════════
+             § 1  HEADER
+             "FACULTY OF LAW" gold eyebrow + "Master Schedule" large serif
+             ═══════════════════════════════════════════════════════════ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="28dp"
+            android:paddingBottom="20dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="FACULTY OF LAW"
+                android:textSize="10sp"
+                android:fontFamily="@font/public_sans_semibold"
+                android:textColor="@color/on_tertiary_fixed_variant"
+                android:textAllCaps="true"
+                android:letterSpacing="0.22"
+                android:layout_marginBottom="6dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Master Schedule"
+                android:textSize="42sp"
+                android:lineSpacingMultiplier="1.05"
+                android:fontFamily="@font/newsreader_bold"
+                android:textColor="@color/primary" />
+
+        </LinearLayout>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             § 2  WEEK NAVIGATOR
+             [‹]  October 24, 2023 / MICHAELMAS TERM · WEEK 4  [›]
+             ═══════════════════════════════════════════════════════════ -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="12dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@color/surface_container_lowest">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp">
+
+                <!-- Previous week -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_prev_week"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:padding="0dp"
+                    android:text="‹"
+                    android:textSize="22sp"
+                    android:fontFamily="@font/public_sans_semibold"
+                    android:textColor="@color/on_surface"
+                    app:rippleColor="@color/surface_container_high" />
+
+                <!-- Date + term label (centred) -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center">
+
+                    <TextView
+                        android:id="@+id/tv_current_date"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="October 24, 2023"
+                        android:textSize="18sp"
+                        android:fontFamily="@font/newsreader_bold"
+                        android:textColor="@color/primary"
+                        android:gravity="center"
+                        android:layout_marginBottom="2dp" />
+
+                    <TextView
+                        android:id="@+id/tv_current_term"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="MICHAELMAS TERM · WEEK 4"
+                        android:textSize="9sp"
+                        android:fontFamily="@font/public_sans_semibold"
+                        android:textColor="@color/on_surface_variant"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.14"
+                        android:gravity="center" />
+
+                </LinearLayout>
+
+                <!-- Next week -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_next_week"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:padding="0dp"
+                    android:text="›"
+                    android:textSize="22sp"
+                    android:fontFamily="@font/public_sans_semibold"
+                    android:textColor="@color/on_surface"
+                    app:rippleColor="@color/surface_container_high" />
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             § 3  DAY-OF-WEEK STRIP  Mon · Tue · Wed · Thu · Fri · Sat
+             Horizontal scroll, Monday pre-selected (gold border bottom)
+             ═══════════════════════════════════════════════════════════ -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none"
+            android:layout_marginBottom="20dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:clipToPadding="false">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <!-- MON — selected by default -->
+                <LinearLayout
+                    android:id="@+id/day_card_mon"
+                    android:layout_width="64dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp"
+                    android:layout_marginEnd="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="@drawable/bg_day_card_selected">
+
+                    <TextView
+                        android:id="@+id/tv_day_name_mon"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="MON"
+                        android:textSize="10sp"
+                        android:fontFamily="@font/public_sans_semibold"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.12"
+                        android:textColor="@color/on_tertiary_fixed_variant"
+                        android:layout_marginBottom="4dp" />
+
+                    <TextView
+                        android:id="@+id/tv_day_num_mon"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="24"
+                        android:textSize="20sp"
+                        android:fontFamily="@font/newsreader_bold"
+                        android:textColor="@color/primary" />
+
+                </LinearLayout>
+
+                <!-- TUE -->
+                <LinearLayout
+                    android:id="@+id/day_card_tue"
+                    android:layout_width="64dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp"
+                    android:layout_marginEnd="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="@drawable/bg_day_card_default">
+
+                    <TextView
+                        android:id="@+id/tv_day_name_tue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="TUE"
+                        android:textSize="10sp"
+                        android:fontFamily="@font/public_sans_semibold"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.12"
+                        android:textColor="@color/on_surface_variant"
+                        android:layout_marginBottom="4dp" />
+
+                    <TextView
+                        android:id="@+id/tv_day_num_tue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="25"
+                        android:textSize="20sp"
+                        android:fontFamily="@font/newsreader_bold"
+                        android:textColor="@color/primary" />
+
+                </LinearLayout>
+
+                <!-- WED -->
+                <LinearLayout
+                    android:id="@+id/day_card_wed"
+                    android:layout_width="64dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp"
+                    android:layout_marginEnd="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="@drawable/bg_day_card_default">
+
+                    <TextView
+                        android:id="@+id/tv_day_name_wed"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="WED"
+                        android:textSize="10sp"
+                        android:fontFamily="@font/public_sans_semibold"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.12"
+                        android:textColor="@color/on_surface_variant"
+                        android:layout_marginBottom="4dp" />
+
+                    <TextView
+                        android:id="@+id/tv_day_num_wed"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="26"
+                        android:textSize="20sp"
+                        android:fontFamily="@font/newsreader_bold"
+                        android:textColor="@color/primary" />
+
+                </LinearLayout>
+
+                <!-- THU -->
+                <LinearLayout
+                    android:id="@+id/day_card_thu"
+                    android:layout_width="64dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp"
+                    android:layout_marginEnd="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="@drawable/bg_day_card_default">
+
+                    <TextView
+                        android:id="@+id/tv_day_name_thu"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="THU"
+                        android:textSize="10sp"
+                        android:fontFamily="@font/public_sans_semibold"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.12"
+                        android:textColor="@color/on_surface_variant"
+                        android:layout_marginBottom="4dp" />
+
+                    <TextView
+                        android:id="@+id/tv_day_num_thu"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="27"
+                        android:textSize="20sp"
+                        android:fontFamily="@font/newsreader_bold"
+                        android:textColor="@color/primary" />
+
+                </LinearLayout>
+
+                <!-- FRI -->
+                <LinearLayout
+                    android:id="@+id/day_card_fri"
+                    android:layout_width="64dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp"
+                    android:layout_marginEnd="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="@drawable/bg_day_card_default">
+
+                    <TextView
+                        android:id="@+id/tv_day_name_fri"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="FRI"
+                        android:textSize="10sp"
+                        android:fontFamily="@font/public_sans_semibold"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.12"
+                        android:textColor="@color/on_surface_variant"
+                        android:layout_marginBottom="4dp" />
+
+                    <TextView
+                        android:id="@+id/tv_day_num_fri"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="28"
+                        android:textSize="20sp"
+                        android:fontFamily="@font/newsreader_bold"
+                        android:textColor="@color/primary" />
+
+                </LinearLayout>
+
+                <!-- SAT — dimmed (alpha 0.5 set in Fragment) -->
+                <LinearLayout
+                    android:id="@+id/day_card_sat"
+                    android:layout_width="64dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:paddingTop="12dp"
+                    android:paddingBottom="12dp"
+                    android:alpha="0.5"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="@drawable/bg_day_card_default">
+
+                    <TextView
+                        android:id="@+id/tv_day_name_sat"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="SAT"
+                        android:textSize="10sp"
+                        android:fontFamily="@font/public_sans_semibold"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.12"
+                        android:textColor="@color/on_surface_variant"
+                        android:layout_marginBottom="4dp" />
+
+                    <TextView
+                        android:id="@+id/tv_day_num_sat"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="29"
+                        android:textSize="20sp"
+                        android:fontFamily="@font/newsreader_bold"
+                        android:textColor="@color/primary" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             § 4  SEMESTER + SESSION SPINNERS  (2-column row)
+             ═══════════════════════════════════════════════════════════ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:layout_marginBottom="16dp">
+
+            <!-- Semester -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginEnd="8dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="SELECT SEMESTER"
+                    android:textSize="10sp"
+                    android:fontFamily="@font/public_sans_semibold"
+                    android:textColor="@color/on_surface_variant"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.15"
+                    android:layout_marginBottom="6dp"
+                    android:layout_marginStart="4dp" />
+
+                <androidx.cardview.widget.CardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardCornerRadius="8dp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="@color/surface_container_low"
+                    app:strokeColor="@color/outline_variant"
+                    app:strokeWidth="1dp">
+
+                    <Spinner
+                        android:id="@+id/spinner_semester"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="8dp"
+                        android:background="@android:color/transparent"
+                        android:fontFamily="@font/public_sans"
+                        android:textSize="13sp" />
+
+                </androidx.cardview.widget.CardView>
+            </LinearLayout>
+
+            <!-- Session -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="8dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="SELECT SESSION"
+                    android:textSize="10sp"
+                    android:fontFamily="@font/public_sans_semibold"
+                    android:textColor="@color/on_surface_variant"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.15"
+                    android:layout_marginBottom="6dp"
+                    android:layout_marginStart="4dp" />
+
+                <androidx.cardview.widget.CardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardCornerRadius="8dp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="@color/surface_container_low"
+                    app:strokeColor="@color/outline_variant"
+                    app:strokeWidth="1dp">
+
+                    <Spinner
+                        android:id="@+id/spinner_session"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:paddingStart="14dp"
+                        android:paddingEnd="8dp"
+                        android:background="@android:color/transparent"
+                        android:fontFamily="@font/public_sans"
+                        android:textSize="13sp" />
+
+                </androidx.cardview.widget.CardView>
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             § 5  DEPARTMENTAL TIMETABLE  (horizontal-scroll table card)
+             ═══════════════════════════════════════════════════════════ -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="28dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="3dp"
+            app:cardBackgroundColor="@color/surface_container_lowest">
+
+            <!-- Section label -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:paddingTop="14dp"
+                    android:paddingBottom="14dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="DEPARTMENTAL TIMETABLE"
+                        android:textSize="10sp"
+                        android:fontFamily="@font/public_sans_semibold"
+                        android:textColor="@color/primary"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.18" />
+
+                </LinearLayout>
+
+                <!-- 1dp divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/outline_variant"
+                    android:alpha="0.4" />
+
+                <!-- Horizontally scrollable table -->
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:scrollbars="horizontal"
+                    android:overScrollMode="never">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <!-- ── TABLE HEADER ROW ─────────────────────── -->
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:background="@color/primary"
+                            android:paddingTop="12dp"
+                            android:paddingBottom="12dp">
+
+                            <!-- Sticky dept column header -->
+                            <TextView
+                                android:layout_width="130dp"
+                                android:layout_height="wrap_content"
+                                android:text="DEPARTMENT"
+                                android:textSize="9sp"
+                                android:fontFamily="@font/public_sans_semibold"
+                                android:textColor="@color/tertiary_fixed_dim"
+                                android:textAllCaps="true"
+                                android:letterSpacing="0.12"
+                                android:paddingStart="14dp"
+                                android:paddingEnd="8dp" />
+
+                            <TextView
+                                android:layout_width="120dp"
+                                android:layout_height="wrap_content"
+                                android:text="09:00 – 09:45"
+                                android:textSize="9sp"
+                                android:fontFamily="@font/public_sans_semibold"
+                                android:textColor="@color/tertiary_fixed_dim"
+                                android:textAllCaps="true"
+                                android:letterSpacing="0.1"
+                                android:gravity="center"
+                                android:paddingStart="6dp"
+                                android:paddingEnd="6dp" />
+
+                            <TextView
+                                android:layout_width="120dp"
+                                android:layout_height="wrap_content"
+                                android:text="09:45 – 10:30"
+                                android:textSize="9sp"
+                                android:fontFamily="@font/public_sans_semibold"
+                                android:textColor="@color/tertiary_fixed_dim"
+                                android:textAllCaps="true"
+                                android:letterSpacing="0.1"
+                                android:gravity="center"
+                                android:paddingStart="6dp"
+                                android:paddingEnd="6dp" />
+
+                            <TextView
+                                android:layout_width="120dp"
+                                android:layout_height="wrap_content"
+                                android:text="10:30 – 11:15"
+                                android:textSize="9sp"
+                                android:fontFamily="@font/public_sans_semibold"
+                                android:textColor="@color/tertiary_fixed_dim"
+                                android:textAllCaps="true"
+                                android:letterSpacing="0.1"
+                                android:gravity="center"
+                                android:paddingStart="6dp"
+                                android:paddingEnd="6dp" />
+
+                            <TextView
+                                android:layout_width="120dp"
+                                android:layout_height="wrap_content"
+                                android:text="11:15 – 12:00"
+                                android:textSize="9sp"
+                                android:fontFamily="@font/public_sans_semibold"
+                                android:textColor="@color/tertiary_fixed_dim"
+                                android:textAllCaps="true"
+                                android:letterSpacing="0.1"
+                                android:gravity="center"
+                                android:paddingStart="6dp"
+                                android:paddingEnd="6dp" />
+
+                            <TextView
+                                android:layout_width="120dp"
+                                android:layout_height="wrap_content"
+                                android:text="12:00 – 12:45"
+                                android:textSize="9sp"
+                                android:fontFamily="@font/public_sans_semibold"
+                                android:textColor="@color/tertiary_fixed_dim"
+                                android:textAllCaps="true"
+                                android:letterSpacing="0.1"
+                                android:gravity="center"
+                                android:paddingStart="6dp"
+                                android:paddingEnd="6dp" />
+
+                        </LinearLayout>
+
+                        <!-- ── ROW 1: Faculty of Law ───────────────── -->
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:background="@color/surface_container_lowest"
+                            android:paddingTop="14dp"
+                            android:paddingBottom="14dp">
+
+                            <TextView
+                                android:layout_width="130dp"
+                                android:layout_height="wrap_content"
+                                android:text="Faculty of Law"
+                                android:textSize="13sp"
+                                android:fontFamily="@font/newsreader_bold"
+                                android:textColor="@color/primary"
+                                android:paddingStart="14dp"
+                                android:paddingEnd="8dp" />
+
+                            <!-- 09:00 — No Lecture -->
+                            <TextView
+                                android:layout_width="120dp"
+                                android:layout_height="wrap_content"
+                                android:text="No Lecture"
+                                android:textSize="11sp"
+                                android:fontFamily="@font/public_sans"
+                                android:textStyle="italic"
+                                android:textColor="@color/on_surface_variant"
+                                android:alpha="0.6"
+                                android:gravity="center"
+                                android:paddingStart="6dp"
+                                android:paddingEnd="6dp" />
+
+                            <!-- 09:45 — Advanced Jurisprudence -->
+                            <LinearLayout
+                                android:layout_width="120dp"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:gravity="center"
+                                android:paddingStart="6dp"
+                                android:paddingEnd="6dp">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Advanced Jurisprudence"
+                                    android:textSize="12sp"
+                                    android:fontFamily="@font/newsreader_bold"
+                                    android:textColor="@color/primary"
+                                    android:gravity="center"
+                                    android:layout_marginBottom="2dp" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="LAW-402"
+                                    android:textSize="9sp"
+                                    android:fontFamily="@font/public_sans_semibold"
+                                    android:textColor="@color/on_surface_variant"
+                                    android:textAllCaps="true"
+                                    android:letterSpacing="0.1"
+                                    android:gravity="center"
+                                    android:layout_marginBottom="2dp" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Dr. Alistair Thorne"
+                                    android:textSize="10sp"
+                                    android:fontFamily="@font/public_sans"
+                                    android:textStyle="italic"
+                                    android:textColor="@color/on_surface_variant"
+                                    android:gravity="center" />
+
+                            </LinearLayout>
+
+                            <!-- 10:30 — LAW-402 (cont.) -->
+                            <TextView
+                                android:layout_width="120dp"
+                                android:layout_height="wrap_content"
+                                android:text="LAW-402"
+                                android:textSize="12sp"
+                                android:fontFamily="@font/newsreader_bold"
+                                android:textColor="@color/primary"
+                                android:gravity="center"
+                                android:paddingStart="6dp"
+                                android:paddingEnd="6dp" />
+
+                            <!-- 11:15 — Break -->
+                            <TextView
+                                android:layout_width="120dp"
+                                android:layout_height="wrap_content"
+                                android:text="Break"
+                                android:textSize="11sp"
+                                android:fontFamily="@font/public_sans"
+                                android:textStyle="italic"
+                                android:textColor="@color/on_surface_variant"
+                                android:alpha="0.6"
+                                android:gravity="center"
+                                android:paddingStart="6dp"
+                                android:paddingEnd="6dp" />
+
+                            <!-- 12:00 — LAW-101 -->
+                            <TextView
+                                android:layout_width="120dp"
+                                android:layout_height="wrap_content"
+                                android:text="LAW-101"
+                                android:textSize="12sp"
+                                android:fontFamily="@font/newsreader_bold"
+                                android:textColor="@color/primary"
+                                android:gravity="center"
+                                android:paddingStart="6dp"
+                                android:paddingEnd="6dp" />
+
+                        </LinearLayout>
+
+                        <!-- 1dp row divider -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:background="@color/outline_variant"
+                            android:alpha="0.3" />
+
+                        <!-- ── ROW 2: Architecture ─────────────────── -->
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:background="@color/surface_container_low"
+                            android:paddingTop="14dp"
+                            android:paddingBottom="14dp">
+
+                            <TextView
+                                android:layout_width="130dp"
+                                android:layout_height="wrap_content"
+                                android:text="Architecture"
+                                android:textSize="13sp"
+                                android:fontFamily="@font/newsreader_bold"
+                                android:textColor="@color/primary"
+                                android:paddingStart="14dp"
+                                android:paddingEnd="8dp" />
+
+                            <!-- 09:00 — Design Theory -->
+                            <LinearLayout
+                                android:layout_width="120dp"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:gravity="center"
+                                android:paddingStart="6dp"
+                                android:paddingEnd="6dp">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Design Theory"
+                                    android:textSize="12sp"
+                                    android:fontFamily="@font/newsreader_bold"
+                                    android:textColor="@color/primary"
+                                    android:gravity="center"
+                                    android:layout_marginBottom="2dp" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="ARCH-201"
+                                    android:textSize="9sp"
+                                    android:fontFamily="@font/public_sans_semibold"
+                                    android:textColor="@color/on_surface_variant"
+                                    android:textAllCaps="true"
+                                    android:letterSpacing="0.1"
+                                    android:gravity="center"
+                                    android:layout_marginBottom="2dp" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Prof. Julian Sterling"
+                                    android:textSize="10sp"
+                                    android:fontFamily="@font/public_sans"
+                                    android:textStyle="italic"
+                                    android:textColor="@color/on_surface_variant"
+                                    android:gravity="center" />
+
+                            </LinearLayout>
+
+                            <!-- 09:45 — Building Materials -->
+                            <LinearLayout
+                                android:layout_width="120dp"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:gravity="center"
+                                android:paddingStart="6dp"
+                                android:paddingEnd="6dp">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Building Materials"
+                                    android:textSize="12sp"
+                                    android:fontFamily="@font/newsreader_bold"
+                                    android:textColor="@color/primary"
+                                    android:gravity="center"
+                                    android:layout_marginBottom="2dp" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="ARCH-202"
+                                    android:textSize="9sp"
+                                    android:fontFamily="@font/public_sans_semibold"
+                                    android:textColor="@color/on_surface_variant"
+                                    android:textAllCaps="true"
+                                    android:letterSpacing="0.1"
+                                    android:gravity="center"
+                                    android:layout_marginBottom="2dp" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Ar. Beatrice Vane"
+                                    android:textSize="10sp"
+                                    android:fontFamily="@font/public_sans"
+                                    android:textStyle="italic"
+                                    android:textColor="@color/on_surface_variant"
+                                    android:gravity="center" />
+
+                            </LinearLayout>
+
+                            <!-- 10:30 — No Lecture -->
+                            <TextView
+                                android:layout_width="120dp"
+                                android:layout_height="wrap_content"
+                                android:text="No Lecture"
+                                android:textSize="11sp"
+                                android:fontFamily="@font/public_sans"
+                                android:textStyle="italic"
+                                android:textColor="@color/on_surface_variant"
+                                android:alpha="0.6"
+                                android:gravity="center"
+                                android:paddingStart="6dp"
+                                android:paddingEnd="6dp" />
+
+                            <!-- 11:15 — Break -->
+                            <TextView
+                                android:layout_width="120dp"
+                                android:layout_height="wrap_content"
+                                android:text="Break"
+                                android:textSize="11sp"
+                                android:fontFamily="@font/public_sans"
+                                android:textStyle="italic"
+                                android:textColor="@color/on_surface_variant"
+                                android:alpha="0.6"
+                                android:gravity="center"
+                                android:paddingStart="6dp"
+                                android:paddingEnd="6dp" />
+
+                            <!-- 12:00 — ARCH-305 -->
+                            <TextView
+                                android:layout_width="120dp"
+                                android:layout_height="wrap_content"
+                                android:text="ARCH-305"
+                                android:textSize="12sp"
+                                android:fontFamily="@font/newsreader_bold"
+                                android:textColor="@color/primary"
+                                android:gravity="center"
+                                android:paddingStart="6dp"
+                                android:paddingEnd="6dp" />
+
+                        </LinearLayout>
+
+                        <!-- 1dp row divider -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:background="@color/outline_variant"
+                            android:alpha="0.3" />
+
+                        <!-- ── ROW 3: Comp. Science ────────────────── -->
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:background="@color/surface_container_lowest"
+                            android:paddingTop="14dp"
+                            android:paddingBottom="14dp">
+
+                            <TextView
+                                android:layout_width="130dp"
+                                android:layout_height="wrap_content"
+                                android:text="Comp. Science"
+                                android:textSize="13sp"
+                                android:fontFamily="@font/newsreader_bold"
+                                android:textColor="@color/primary"
+                                android:paddingStart="14dp"
+                                android:paddingEnd="8dp" />
+
+                            <!-- 09:00 — Data Structures -->
+                            <LinearLayout
+                                android:layout_width="120dp"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:gravity="center"
+                                android:paddingStart="6dp"
+                                android:paddingEnd="6dp">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Data Structures"
+                                    android:textSize="12sp"
+                                    android:fontFamily="@font/newsreader_bold"
+                                    android:textColor="@color/primary"
+                                    android:gravity="center"
+                                    android:layout_marginBottom="2dp" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="CS-110"
+                                    android:textSize="9sp"
+                                    android:fontFamily="@font/public_sans_semibold"
+                                    android:textColor="@color/on_surface_variant"
+                                    android:textAllCaps="true"
+                                    android:letterSpacing="0.1"
+                                    android:gravity="center"
+                                    android:layout_marginBottom="2dp" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Ms. Evelyn St. Claire"
+                                    android:textSize="10sp"
+                                    android:fontFamily="@font/public_sans"
+                                    android:textStyle="italic"
+                                    android:textColor="@color/on_surface_variant"
+                                    android:gravity="center" />
+
+                            </LinearLayout>
+
+                            <!-- 09:45 — No Lecture -->
+                            <TextView
+                                android:layout_width="120dp"
+                                android:layout_height="wrap_content"
+                                android:text="No Lecture"
+                                android:textSize="11sp"
+                                android:fontFamily="@font/public_sans"
+                                android:textStyle="italic"
+                                android:textColor="@color/on_surface_variant"
+                                android:alpha="0.6"
+                                android:gravity="center"
+                                android:paddingStart="6dp"
+                                android:paddingEnd="6dp" />
+
+                            <!-- 10:30 — CS-112 -->
+                            <TextView
+                                android:layout_width="120dp"
+                                android:layout_height="wrap_content"
+                                android:text="CS-112"
+                                android:textSize="12sp"
+                                android:fontFamily="@font/newsreader_bold"
+                                android:textColor="@color/primary"
+                                android:gravity="center"
+                                android:paddingStart="6dp"
+                                android:paddingEnd="6dp" />
+
+                            <!-- 11:15 — Break -->
+                            <TextView
+                                android:layout_width="120dp"
+                                android:layout_height="wrap_content"
+                                android:text="Break"
+                                android:textSize="11sp"
+                                android:fontFamily="@font/public_sans"
+                                android:textStyle="italic"
+                                android:textColor="@color/on_surface_variant"
+                                android:alpha="0.6"
+                                android:gravity="center"
+                                android:paddingStart="6dp"
+                                android:paddingEnd="6dp" />
+
+                            <!-- 12:00 — CS-201 -->
+                            <TextView
+                                android:layout_width="120dp"
+                                android:layout_height="wrap_content"
+                                android:text="CS-201"
+                                android:textSize="12sp"
+                                android:fontFamily="@font/newsreader_bold"
+                                android:textColor="@color/primary"
+                                android:gravity="center"
+                                android:paddingStart="6dp"
+                                android:paddingEnd="6dp" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+                </HorizontalScrollView>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             § 6  TIMELINE
+             Vertical list with a 1dp grey line running behind the dots.
+             The left margin (40dp) accommodates the dot column.
+             ═══════════════════════════════════════════════════════════ -->
+
+        <!-- Timeline section label -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="14dp">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_schedule"
+                android:contentDescription="@null"
+                android:layout_marginEnd="8dp"
+                app:tint="@color/on_surface_variant" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="TODAY'S TIMELINE"
+                android:textSize="10sp"
+                android:fontFamily="@font/public_sans_semibold"
+                android:textColor="@color/on_surface_variant"
+                android:textAllCaps="true"
+                android:letterSpacing="0.18" />
+
+        </LinearLayout>
+
+        <!-- Timeline container — left-padded 40dp so the dot column sits outside cards -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp">
+
+            <!-- ── EVENT 1: Advanced Jurisprudence (Lecture) ──────── -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="16dp">
+
+                <!-- Dot + line column -->
+                <LinearLayout
+                    android:layout_width="32dp"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal">
+
+                    <!-- Navy dot -->
+                    <View
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:background="@drawable/bg_timeline_dot_navy"
+                        android:layout_marginTop="20dp" />
+
+                    <!-- Connector line -->
+                    <View
+                        android:layout_width="1dp"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:background="@color/outline_variant" />
+
+                </LinearLayout>
+
+                <!-- Card -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/card_lecture"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="12dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="2dp"
+                    app:cardBackgroundColor="@color/surface_container_lowest">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="20dp"
+                        android:foreground="?attr/selectableItemBackground">
+
+                        <!-- Badge -->
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="LECTURE"
+                            android:textSize="9sp"
+                            android:fontFamily="@font/public_sans_semibold"
+                            android:textColor="@color/on_primary_container"
+                            android:textAllCaps="true"
+                            android:letterSpacing="0.12"
+                            android:paddingStart="8dp"
+                            android:paddingEnd="8dp"
+                            android:paddingTop="4dp"
+                            android:paddingBottom="4dp"
+                            android:background="@drawable/bg_badge_lecture"
+                            android:layout_marginBottom="8dp" />
+
+                        <!-- Subject -->
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Advanced Jurisprudence"
+                            android:textSize="18sp"
+                            android:fontFamily="@font/newsreader_bold"
+                            android:textColor="@color/primary"
+                            android:layout_marginBottom="10dp" />
+
+                        <!-- Time + location -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <ImageView
+                                android:layout_width="14dp"
+                                android:layout_height="14dp"
+                                android:src="@drawable/ic_schedule"
+                                android:contentDescription="@null"
+                                android:layout_marginEnd="4dp"
+                                app:tint="@color/on_surface_variant" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="10:00 AM – 11:30 AM"
+                                android:textSize="11sp"
+                                android:fontFamily="@font/public_sans_semibold"
+                                android:textColor="@color/on_surface_variant"
+                                android:textAllCaps="true"
+                                android:letterSpacing="0.08"
+                                android:layout_marginEnd="16dp" />
+
+                            <ImageView
+                                android:layout_width="14dp"
+                                android:layout_height="14dp"
+                                android:src="@drawable/ic_location"
+                                android:contentDescription="@null"
+                                android:layout_marginEnd="4dp"
+                                app:tint="@color/on_surface_variant" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Lecture Hall B"
+                                android:textSize="11sp"
+                                android:fontFamily="@font/public_sans_semibold"
+                                android:textColor="@color/on_surface_variant"
+                                android:textAllCaps="true"
+                                android:letterSpacing="0.08" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+            </LinearLayout>
+
+            <!-- ── EVENT 2: Faculty Council Meeting (Institutional) ── -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="16dp">
+
+                <!-- Gold dot + line -->
+                <LinearLayout
+                    android:layout_width="32dp"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal">
+
+                    <View
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:background="@drawable/bg_timeline_dot_gold"
+                        android:layout_marginTop="20dp" />
+
+                    <View
+                        android:layout_width="1dp"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:background="@color/outline_variant" />
+
+                </LinearLayout>
+
+                <!-- Card — gold tint -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/card_faculty_meeting"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="12dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="1dp"
+                    app:cardBackgroundColor="@color/tertiary_fixed">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:padding="20dp"
+                        android:gravity="top">
+
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:src="@drawable/ic_group"
+                            android:contentDescription="@null"
+                            android:layout_marginEnd="14dp"
+                            android:layout_marginTop="2dp"
+                            app:tint="@color/on_tertiary_fixed_variant" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Faculty Council Meeting"
+                                android:textSize="16sp"
+                                android:fontFamily="@font/newsreader_bold"
+                                android:textColor="@color/primary"
+                                android:layout_marginBottom="4dp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="2:00 PM – 3:30 PM · Dean's Boardroom"
+                                android:textSize="11sp"
+                                android:fontFamily="@font/public_sans_semibold"
+                                android:textColor="@color/on_surface_variant"
+                                android:textAllCaps="true"
+                                android:letterSpacing="0.06"
+                                android:layout_marginBottom="8dp" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Agenda: Discussion on Michaelmas Term assessment criteria and inter-disciplinary collaboration."
+                                android:textSize="12sp"
+                                android:fontFamily="@font/public_sans"
+                                android:textColor="@color/on_surface_variant"
+                                android:lineSpacingMultiplier="1.4" />
+
+                        </LinearLayout>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+            </LinearLayout>
+
+            <!-- ── EVENT 3: International Human Rights (Seminar) ───── -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="16dp">
+
+                <!-- Navy dot + line -->
+                <LinearLayout
+                    android:layout_width="32dp"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal">
+
+                    <View
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:background="@drawable/bg_timeline_dot_navy"
+                        android:layout_marginTop="20dp" />
+
+                    <View
+                        android:layout_width="1dp"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:background="@color/outline_variant" />
+
+                </LinearLayout>
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/card_seminar"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="12dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="2dp"
+                    app:cardBackgroundColor="@color/surface_container_lowest">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="20dp"
+                        android:foreground="?attr/selectableItemBackground">
+
+                        <!-- Seminar badge (crimson tint) -->
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="SEMINAR"
+                            android:textSize="9sp"
+                            android:fontFamily="@font/public_sans_semibold"
+                            android:textColor="@color/on_secondary_container"
+                            android:textAllCaps="true"
+                            android:letterSpacing="0.12"
+                            android:paddingStart="8dp"
+                            android:paddingEnd="8dp"
+                            android:paddingTop="4dp"
+                            android:paddingBottom="4dp"
+                            android:background="@drawable/bg_badge_seminar"
+                            android:layout_marginBottom="8dp" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="International Human Rights"
+                            android:textSize="18sp"
+                            android:fontFamily="@font/newsreader_bold"
+                            android:textColor="@color/primary"
+                            android:layout_marginBottom="10dp" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <ImageView
+                                android:layout_width="14dp"
+                                android:layout_height="14dp"
+                                android:src="@drawable/ic_schedule"
+                                android:contentDescription="@null"
+                                android:layout_marginEnd="4dp"
+                                app:tint="@color/on_surface_variant" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="4:00 PM – 5:30 PM"
+                                android:textSize="11sp"
+                                android:fontFamily="@font/public_sans_semibold"
+                                android:textColor="@color/on_surface_variant"
+                                android:textAllCaps="true"
+                                android:letterSpacing="0.08"
+                                android:layout_marginEnd="16dp" />
+
+                            <ImageView
+                                android:layout_width="14dp"
+                                android:layout_height="14dp"
+                                android:src="@drawable/ic_location"
+                                android:contentDescription="@null"
+                                android:layout_marginEnd="4dp"
+                                app:tint="@color/on_surface_variant" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Seminar Room 304"
+                                android:textSize="11sp"
+                                android:fontFamily="@font/public_sans_semibold"
+                                android:textColor="@color/on_surface_variant"
+                                android:textAllCaps="true"
+                                android:letterSpacing="0.08" />
+
+                        </LinearLayout>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+            </LinearLayout>
+
+            <!-- ── EVENT 4: Evening Reception (Optional, dimmed) ───── -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+
+                <!-- Grey dot — no connector below (last item) -->
+                <LinearLayout
+                    android:layout_width="32dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal">
+
+                    <View
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:background="@drawable/bg_timeline_dot_outline"
+                        android:layout_marginTop="20dp" />
+
+                </LinearLayout>
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/card_evening"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="12dp"
+                    android:alpha="0.55"
+                    android:clickable="true"
+                    android:focusable="true"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="1dp"
+                    app:cardBackgroundColor="@color/surface_container_low">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:padding="20dp"
+                        android:gravity="center_vertical"
+                        android:foreground="?attr/selectableItemBackground">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_calendar"
+                            android:contentDescription="@null"
+                            android:layout_marginEnd="14dp"
+                            app:tint="@color/on_surface_variant" />
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Evening Reception (Optional)"
+                                android:textSize="15sp"
+                                android:fontFamily="@font/newsreader_bold"
+                                android:textColor="@color/on_surface"
+                                android:layout_marginBottom="3dp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="6:30 PM · University Club"
+                                android:textSize="11sp"
+                                android:fontFamily="@font/public_sans_semibold"
+                                android:textColor="@color/on_surface_variant"
+                                android:textAllCaps="true"
+                                android:letterSpacing="0.08" />
+
+                        </LinearLayout>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             § 7  PREPARATION NOTES  (2-column note cards)
+             ═══════════════════════════════════════════════════════════ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="28dp"
+            android:paddingBottom="16dp">
+
+            <!-- Section label -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="12dp">
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_exams"
+                    android:contentDescription="@null"
+                    android:layout_marginEnd="8dp"
+                    app:tint="@color/on_surface_variant" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="PREPARATION NOTES"
+                    android:textSize="10sp"
+                    android:fontFamily="@font/public_sans_semibold"
+                    android:textColor="@color/on_surface_variant"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.18" />
+
+            </LinearLayout>
+
+            <!-- 2-column note cards -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <!-- Note 1 — navy left border -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    app:cardCornerRadius="8dp"
+                    app:cardElevation="2dp"
+                    app:cardBackgroundColor="@color/surface_container_lowest">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <!-- Left navy accent bar -->
+                        <View
+                            android:layout_width="4dp"
+                            android:layout_height="match_parent"
+                            android:background="@color/primary" />
+
+                        <TextView
+                            android:id="@+id/tv_note_jurisprudence"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Review Case Study #402 for Jurisprudence lecture."
+                            android:textSize="13sp"
+                            android:fontFamily="@font/public_sans"
+                            android:textStyle="italic"
+                            android:textColor="@color/on_surface"
+                            android:padding="14dp"
+                            android:lineSpacingMultiplier="1.4" />
+
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <!-- Note 2 — gold left border -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    app:cardCornerRadius="8dp"
+                    app:cardElevation="2dp"
+                    app:cardBackgroundColor="@color/surface_container_lowest">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <!-- Left gold accent bar -->
+                        <View
+                            android:layout_width="4dp"
+                            android:layout_height="match_parent"
+                            android:background="@color/tertiary_fixed_dim" />
+
+                        <TextView
+                            android:id="@+id/tv_note_faculty_council"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Draft Faculty Council proposal on digital archives."
+                            android:textSize="13sp"
+                            android:fontFamily="@font/public_sans"
+                            android:textStyle="italic"
+                            android:textColor="@color/on_surface"
+                            android:padding="14dp"
+                            android:lineSpacingMultiplier="1.4" />
+
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+            </LinearLayout>
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>
