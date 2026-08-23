@@ -9,10 +9,15 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/app" />
-            <option value="$PROJECT_DIR$/app/cmsadmin" />
-            <option value="$PROJECT_DIR$/app/cmsstudent" />
-            <option value="$PROJECT_DIR$/app/cmsteacher" />
+            <option value="$PROJECT_DIR$/core" />
+            <option value="$PROJECT_DIR$/desktop-admin" />
+            <option value="$PROJECT_DIR$/desktop-shared" />
+            <option value="$PROJECT_DIR$/desktop-student" />
+            <option value="$PROJECT_DIR$/desktop-teacher" />
+            <option value="$PROJECT_DIR$/mobile-admin" />
+            <option value="$PROJECT_DIR$/mobile-shared" />
+            <option value="$PROJECT_DIR$/mobile-student" />
+            <option value="$PROJECT_DIR$/mobile-teacher" />
           </set>
         </option>
       </GradleProjectSettings>

@@ -1,0 +1,106 @@
+[
+    {
+        "merged": "com.mbd.cmsstudent.mobile-student-debug-77:/drawable_ic_launcher_background.xml.flat",
+        "source": "com.mbd.cmsstudent.mobile-student-main-79:/drawable/ic_launcher_background.xml"
+    },
+    {
+        "merged": "com.mbd.cmsstudent.mobile-student-debug-77:/mipmap-mdpi_ic_launcher_round.png.flat",
+        "source": "com.mbd.cmsstudent.mobile-student-main-79:/mipmap-mdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.mbd.cmsstudent.mobile-student-debug-77:/drawable-nodpi_splash_app_logo.png.flat",
+        "source": "com.mbd.cmsstudent.mobile-student-main-79:/drawable-nodpi/splash_app_logo.png"
+    },
+    {
+        "merged": "com.mbd.cmsstudent.mobile-student-debug-77:/drawable-nodpi_student_home_hero.jpg.flat",
+        "source": "com.mbd.cmsstudent.mobile-student-main-79:/drawable-nodpi/student_home_hero.jpg"
+    },
+    {
+        "merged": "com.mbd.cmsstudent.mobile-student-debug-77:/drawable-nodpi_student_attendance_hero.jpg.flat",
+        "source": "com.mbd.cmsstudent.mobile-student-main-79:/drawable-nodpi/student_attendance_hero.jpg"
+    },
+    {
+        "merged": "com.mbd.cmsstudent.mobile-student-debug-77:/mipmap-xxhdpi_ic_launcher.png.flat",
+        "source": "com.mbd.cmsstudent.mobile-student-main-79:/mipmap-xxhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.mbd.cmsstudent.mobile-student-debug-77:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "com.mbd.cmsstudent.mobile-student-main-79:/mipmap-anydpi-v26/ic_launcher_round.xml"
+    },
+    {
+        "merged": "com.mbd.cmsstudent.mobile-student-debug-77:/mipmap-hdpi_ic_launcher.png.flat",
+        "source": "com.mbd.cmsstudent.mobile-student-main-79:/mipmap-hdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.mbd.cmsstudent.mobile-student-debug-77:/drawable-nodpi_student_exams_hero.jpg.flat",
+        "source": "com.mbd.cmsstudent.mobile-student-main-79:/drawable-nodpi/student_exams_hero.jpg"
+    },
+    {
+        "merged": "com.mbd.cmsstudent.mobile-student-debug-77:/mipmap-xxhdpi_ic_launcher_foreground.png.flat",
+        "source": "com.mbd.cmsstudent.mobile-student-main-79:/mipmap-xxhdpi/ic_launcher_foreground.png"
+    },
+    {
+        "merged": "com.mbd.cmsstudent.mobile-student-debug-77:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.mbd.cmsstudent.mobile-student-main-79:/mipmap-anydpi-v26/ic_launcher.xml"
+    },
+    {
+        "merged": "com.mbd.cmsstudent.mobile-student-debug-77:/mipmap-xhdpi_ic_launcher_foreground.png.flat",
+        "source": "com.mbd.cmsstudent.mobile-student-main-79:/mipmap-xhdpi/ic_launcher_foreground.png"
+    },
+    {
+        "merged": "com.mbd.cmsstudent.mobile-student-debug-77:/drawable-nodpi_student_timetable_hero.jpg.flat",
+        "source": "com.mbd.cmsstudent.mobile-student-main-79:/drawable-nodpi/student_timetable_hero.jpg"
+    },
+    {
+        "merged": "com.mbd.cmsstudent.mobile-student-debug-77:/mipmap-xhdpi_ic_launcher_round.png.flat",
+        "source": "com.mbd.cmsstudent.mobile-student-main-79:/mipmap-xhdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.mbd.cmsstudent.mobile-student-debug-77:/xml_file_paths.xml.flat",
+        "source": "com.mbd.cmsstudent.mobile-student-main-79:/xml/file_paths.xml"
+    },
+    {
+        "merged": "com.mbd.cmsstudent.mobile-student-debug-77:/mipmap-xxhdpi_ic_launcher_round.png.flat",
+        "source": "com.mbd.cmsstudent.mobile-student-main-79:/mipmap-xxhdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.mbd.cmsstudent.mobile-student-debug-77:/drawable-nodpi_splash_postgraduate_block.jpg.flat",
+        "source": "com.mbd.cmsstudent.mobile-student-main-79:/drawable-nodpi/splash_postgraduate_block.jpg"
+    },
+    {
+        "merged": "com.mbd.cmsstudent.mobile-student-debug-77:/mipmap-xxxhdpi_ic_launcher_foreground.png.flat",
+        "source": "com.mbd.cmsstudent.mobile-student-main-79:/mipmap-xxxhdpi/ic_launcher_foreground.png"
+    },
+    {
+        "merged": "com.mbd.cmsstudent.mobile-student-debug-77:/mipmap-xxxhdpi_ic_launcher_round.png.flat",
+        "source": "com.mbd.cmsstudent.mobile-student-main-79:/mipmap-xxxhdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.mbd.cmsstudent.mobile-student-debug-77:/drawable-nodpi_student_more_hero.jpg.flat",
+        "source": "com.mbd.cmsstudent.mobile-student-main-79:/drawable-nodpi/student_more_hero.jpg"
+    },
+    {
+        "merged": "com.mbd.cmsstudent.mobile-student-debug-77:/mipmap-xhdpi_ic_launcher.png.flat",
+        "source": "com.mbd.cmsstudent.mobile-student-main-79:/mipmap-xhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.mbd.cmsstudent.mobile-student-debug-77:/mipmap-hdpi_ic_launcher_foreground.png.flat",
+        "source": "com.mbd.cmsstudent.mobile-student-main-79:/mipmap-hdpi/ic_launcher_foreground.png"
+    },
+    {
+        "merged": "com.mbd.cmsstudent.mobile-student-debug-77:/mipmap-mdpi_ic_launcher_foreground.png.flat",
+        "source": "com.mbd.cmsstudent.mobile-student-main-79:/mipmap-mdpi/ic_launcher_foreground.png"
+    },
+    {
+        "merged": "com.mbd.cmsstudent.mobile-student-debug-77:/mipmap-hdpi_ic_launcher_round.png.flat",
+        "source": "com.mbd.cmsstudent.mobile-student-main-79:/mipmap-hdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.mbd.cmsstudent.mobile-student-debug-77:/mipmap-mdpi_ic_launcher.png.flat",
+        "source": "com.mbd.cmsstudent.mobile-student-main-79:/mipmap-mdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.mbd.cmsstudent.mobile-student-debug-77:/mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "com.mbd.cmsstudent.mobile-student-main-79:/mipmap-xxxhdpi/ic_launcher.png"
+    }
+]

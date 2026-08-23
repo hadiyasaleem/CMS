@@ -1,0 +1,13 @@
+{
+  "name": "cms-seed-admin-data",
+  "private": true,
+  "version": "1.0.0",
+  "description": "One-off admin utility to seed sample Firestore data for the CMS apps using firebase-admin. Not part of the Android build.",
+  "main": "seed.js",
+  "scripts": {
+    "seed": "node seed.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  }
+}

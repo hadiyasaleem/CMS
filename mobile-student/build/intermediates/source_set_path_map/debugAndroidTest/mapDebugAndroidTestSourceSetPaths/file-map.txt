@@ -1,0 +1,6 @@
+com.mbd.cmsstudent.test.mobile-student-core-1.7.0-0 C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\1111959a39631c3049e0d7f6041071e3\transformed\core-1.7.0\res
+com.mbd.cmsstudent.test.mobile-student-androidTest-1 D:\CMS\mobile-student\build\generated\res\resValues\androidTest\debug
+com.mbd.cmsstudent.test.mobile-student-updated_navigation_xml-2 D:\CMS\mobile-student\build\generated\updated_navigation_xml\debugAndroidTest
+com.mbd.cmsstudent.test.mobile-student-mergeDebugAndroidTestResources-3 D:\CMS\mobile-student\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\merged.dir
+com.mbd.cmsstudent.test.mobile-student-mergeDebugAndroidTestResources-4 D:\CMS\mobile-student\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\stripped.dir
+com.mbd.cmsstudent.test.mobile-student-debugAndroidTest-5 D:\CMS\mobile-student\build\intermediates\merged_res\debugAndroidTest\mergeDebugAndroidTestResources

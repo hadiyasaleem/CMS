@@ -13,3 +13,10 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Firebase service account keys — never commit these
+*firebase-adminsdk*.json
+serviceAccountKey.json
+
+# Node (seed scripts)
+node_modules/

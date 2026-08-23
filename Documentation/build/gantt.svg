@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1281 426" font-family="Arial, sans-serif">
+<rect x="0" y="0" width="1281" height="426" fill="white"/>
+<text x="640.5" y="24" font-size="18" font-weight="bold" text-anchor="middle">Project Timeline (Jan - Jul 2026)</text>
+<line x1="340.0" y1="40" x2="340.0" y2="386" stroke="#D9D9D9" stroke-width="1"/>
+<text x="344.0" y="36" font-size="12" fill="#666">Jan</text>
+<line x1="422.8" y1="40" x2="422.8" y2="386" stroke="#D9D9D9" stroke-width="1"/>
+<text x="426.8" y="36" font-size="12" fill="#666">Feb</text>
+<line x1="551.6" y1="40" x2="551.6" y2="386" stroke="#D9D9D9" stroke-width="1"/>
+<text x="555.6" y="36" font-size="12" fill="#666">Mar</text>
+<line x1="694.2" y1="40" x2="694.2" y2="386" stroke="#D9D9D9" stroke-width="1"/>
+<text x="698.2" y="36" font-size="12" fill="#666">Apr</text>
+<line x1="832.2" y1="40" x2="832.2" y2="386" stroke="#D9D9D9" stroke-width="1"/>
+<text x="836.2" y="36" font-size="12" fill="#666">May</text>
+<line x1="974.8" y1="40" x2="974.8" y2="386" stroke="#D9D9D9" stroke-width="1"/>
+<text x="978.8" y="36" font-size="12" fill="#666">Jun</text>
+<line x1="1112.8" y1="40" x2="1112.8" y2="386" stroke="#D9D9D9" stroke-width="1"/>
+<text x="1116.8" y="36" font-size="12" fill="#666">Jul</text>
+<line x1="1241.6" y1="40" x2="1241.6" y2="386" stroke="#D9D9D9" stroke-width="1"/>
+<text x="328" y="76.0" font-size="13" text-anchor="end">Requirements & Planning</text>
+<rect x="340.0" y="58" width="78.2" height="26" rx="4" fill="#4472C4"/>
+<text x="328" y="118.0" font-size="13" text-anchor="end">Original Java/Firebase Build</text>
+<rect x="422.8" y="100" width="625.6" height="26" rx="4" fill="#4472C4"/>
+<text x="328" y="160.0" font-size="13" text-anchor="end">Merge & Stabilize Original Build</text>
+<rect x="1048.4" y="142" width="59.8" height="26" rx="4" fill="#4472C4"/>
+<text x="328" y="202.0" font-size="13" text-anchor="end">Architecture Decision + Supabase Migration</text>
+<rect x="1112.8" y="184" width="64.4" height="26" rx="4" fill="#ED7D31"/>
+<text x="328" y="244.0" font-size="13" text-anchor="end">Kotlin/Compose Rebuild - Core Modules</text>
+<rect x="1154.2" y="226" width="36.8" height="26" rx="4" fill="#ED7D31"/>
+<text x="328" y="286.0" font-size="13" text-anchor="end">Phase 4 Features (Fees, Notices, Insights, Governance)</text>
+<rect x="1195.6" y="268" width="13.8" height="26" rx="4" fill="#ED7D31"/>
+<text x="328" y="328.0" font-size="13" text-anchor="end">Bug Fixes & UI Polish</text>
+<rect x="1209.4" y="310" width="18.4" height="26" rx="4" fill="#ED7D31"/>
+<text x="328" y="370.0" font-size="13" text-anchor="end">FYDP Report Writing</text>
+<rect x="1154.2" y="352" width="87.4" height="26" rx="4" fill="#70AD47"/>
+</svg>

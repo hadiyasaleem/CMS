@@ -23,8 +23,18 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "CMS"
-include(":app")
-include(":app:cmsteacher")
 
-include(":app:cmsadmin")
-include(":app:cmsstudent")
+// ── Libraries ──
+include(":core")            // plain-JVM portable subset (domain, DTOs, direct-Postgrest repos, auth)
+include(":mobile-shared")   // Android library: Room, Hilt, Android UI kit — consumed by the 3 mobile apps
+include(":desktop-shared")  // Compose-Desktop library: DI, desktop repos, UI kit — consumed by the 3 desktop apps
+
+// ── Android apps ──
+include(":mobile-admin")
+include(":mobile-teacher")
+include(":mobile-student")
+
+// ── Desktop apps ──
+include(":desktop-admin")
+include(":desktop-teacher")
+include(":desktop-student")

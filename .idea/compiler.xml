@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="CompilerConfiguration">
-    <bytecodeTargetLevel target="21" />
+    <bytecodeTargetLevel target="17">
+      <module name="CMS.admin" target="21" />
+      <module name="CMS.app" target="21" />
+      <module name="CMS.app.cmsadmin" target="21" />
+      <module name="CMS.app.cmsstudent" target="21" />
+      <module name="CMS.app.cmsteacher" target="21" />
+      <module name="CMS.shared" target="21" />
+      <module name="CMS.student" target="21" />
+      <module name="CMS.teacher" target="21" />
+    </bytecodeTargetLevel>
   </component>
 </project>

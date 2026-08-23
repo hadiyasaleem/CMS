@@ -1,0 +1,1308 @@
+package com.mbd.cmsstudent;
+
+import android.app.Activity;
+import android.app.Service;
+import android.view.View;
+import androidx.datastore.core.DataStore;
+import androidx.datastore.preferences.core.Preferences;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.SavedStateHandle;
+import androidx.lifecycle.ViewModel;
+import com.mbd.cmscommon.auth.AdminUserProvisioner;
+import com.mbd.cmscommon.auth.RoleResolver;
+import com.mbd.cmscommon.auth.SessionManager;
+import com.mbd.cmscommon.data.local.CmsDatabase;
+import com.mbd.cmscommon.data.local.dao.AcademicSessionDao;
+import com.mbd.cmscommon.data.local.dao.CalendarEventDao;
+import com.mbd.cmscommon.data.local.dao.DatesheetDao;
+import com.mbd.cmscommon.data.local.dao.DepartmentDao;
+import com.mbd.cmscommon.data.local.dao.DocumentDao;
+import com.mbd.cmscommon.data.local.dao.FineDao;
+import com.mbd.cmscommon.data.local.dao.NotificationDao;
+import com.mbd.cmscommon.data.local.dao.SemesterSubjectDao;
+import com.mbd.cmscommon.data.local.dao.SessionAttendanceDao;
+import com.mbd.cmscommon.data.local.dao.SessionFeeDao;
+import com.mbd.cmscommon.data.local.dao.SessionMarkDao;
+import com.mbd.cmscommon.data.local.dao.SessionPeriodDao;
+import com.mbd.cmscommon.data.local.dao.SessionStudentDao;
+import com.mbd.cmscommon.data.local.dao.StudentLinkRequestDao;
+import com.mbd.cmscommon.data.local.dao.StudentSemesterGpaDao;
+import com.mbd.cmscommon.data.local.dao.SyncStateDao;
+import com.mbd.cmscommon.data.local.dao.TableSyncStateDao;
+import com.mbd.cmscommon.data.local.dao.TeacherDao;
+import com.mbd.cmscommon.data.local.dao.UserDao;
+import com.mbd.cmscommon.data.repository.AcademicSessionRepositoryImpl;
+import com.mbd.cmscommon.data.repository.CalendarRepositoryLocalImpl;
+import com.mbd.cmscommon.data.repository.CurriculumRepositoryImpl;
+import com.mbd.cmscommon.data.repository.DatesheetRepositoryLocalImpl;
+import com.mbd.cmscommon.data.repository.DepartmentRepositoryImpl;
+import com.mbd.cmscommon.data.repository.DocumentRepositoryImpl;
+import com.mbd.cmscommon.data.repository.FineRepositoryLocalImpl;
+import com.mbd.cmscommon.data.repository.NotificationRepositoryImpl;
+import com.mbd.cmscommon.data.repository.SessionAttendanceRepositoryImpl;
+import com.mbd.cmscommon.data.repository.SessionFeeRepositoryImpl;
+import com.mbd.cmscommon.data.repository.SessionMarksRepositoryImpl;
+import com.mbd.cmscommon.data.repository.SessionTimetableRepositoryImpl;
+import com.mbd.cmscommon.data.repository.StudentLinkRequestRepositoryImpl;
+import com.mbd.cmscommon.data.repository.TeacherRepositoryImpl;
+import com.mbd.cmscommon.data.repository.UserRepositoryImpl;
+import com.mbd.cmscommon.data.sync.RoomSyncCheckpointStore;
+import com.mbd.cmscommon.data.sync.StartupBootstrapTracker;
+import com.mbd.cmscommon.data.sync.SyncCheckpointStore;
+import com.mbd.cmscommon.data.sync.SyncEngine;
+import com.mbd.cmscommon.di.DaoModule_ProvideAcademicSessionDaoFactory;
+import com.mbd.cmscommon.di.DaoModule_ProvideCalendarEventDaoFactory;
+import com.mbd.cmscommon.di.DaoModule_ProvideDatesheetDaoFactory;
+import com.mbd.cmscommon.di.DaoModule_ProvideDepartmentDaoFactory;
+import com.mbd.cmscommon.di.DaoModule_ProvideDocumentDaoFactory;
+import com.mbd.cmscommon.di.DaoModule_ProvideFineDaoFactory;
+import com.mbd.cmscommon.di.DaoModule_ProvideNotificationDaoFactory;
+import com.mbd.cmscommon.di.DaoModule_ProvideSemesterSubjectDaoFactory;
+import com.mbd.cmscommon.di.DaoModule_ProvideSessionAttendanceDaoFactory;
+import com.mbd.cmscommon.di.DaoModule_ProvideSessionFeeDaoFactory;
+import com.mbd.cmscommon.di.DaoModule_ProvideSessionMarkDaoFactory;
+import com.mbd.cmscommon.di.DaoModule_ProvideSessionPeriodDaoFactory;
+import com.mbd.cmscommon.di.DaoModule_ProvideSessionStudentDaoFactory;
+import com.mbd.cmscommon.di.DaoModule_ProvideStudentLinkRequestDaoFactory;
+import com.mbd.cmscommon.di.DaoModule_ProvideStudentSemesterGpaDaoFactory;
+import com.mbd.cmscommon.di.DaoModule_ProvideSyncCheckpointStoreFactory;
+import com.mbd.cmscommon.di.DaoModule_ProvideSyncStateDaoFactory;
+import com.mbd.cmscommon.di.DaoModule_ProvideTableSyncStateDaoFactory;
+import com.mbd.cmscommon.di.DaoModule_ProvideTeacherDaoFactory;
+import com.mbd.cmscommon.di.DaoModule_ProvideUserDaoFactory;
+import com.mbd.cmscommon.di.DataStoreModule_ProvideDataStoreFactory;
+import com.mbd.cmscommon.di.SupabaseModule_ProvideAuthFactory;
+import com.mbd.cmscommon.di.SupabaseModule_ProvideFunctionsFactory;
+import com.mbd.cmscommon.di.SupabaseModule_ProvidePostgrestFactory;
+import com.mbd.cmscommon.di.SupabaseModule_ProvideStorageFactory;
+import com.mbd.cmscommon.di.SupabaseModule_ProvideSupabaseClientFactory;
+import com.mbd.cmscommon.domain.repository.AcademicSessionRepository;
+import com.mbd.cmscommon.domain.repository.CalendarRepository;
+import com.mbd.cmscommon.domain.repository.CurriculumRepository;
+import com.mbd.cmscommon.domain.repository.DatesheetRepository;
+import com.mbd.cmscommon.domain.repository.DepartmentRepository;
+import com.mbd.cmscommon.domain.repository.DocumentRepository;
+import com.mbd.cmscommon.domain.repository.FineRepository;
+import com.mbd.cmscommon.domain.repository.NotificationRepository;
+import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository;
+import com.mbd.cmscommon.domain.repository.SessionFeeRepository;
+import com.mbd.cmscommon.domain.repository.SessionMarksRepository;
+import com.mbd.cmscommon.domain.repository.SessionTimetableRepository;
+import com.mbd.cmscommon.domain.repository.StudentLinkRequestRepository;
+import com.mbd.cmscommon.domain.repository.TeacherRepository;
+import com.mbd.cmscommon.domain.repository.UserRepository;
+import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider;
+import com.mbd.cmscommon.ui.datesheets.DatesheetsViewModel;
+import com.mbd.cmscommon.ui.datesheets.DatesheetsViewModel_HiltModules;
+import com.mbd.cmscommon.ui.documents.DocumentsViewModel;
+import com.mbd.cmscommon.ui.documents.DocumentsViewModel_HiltModules;
+import com.mbd.cmscommon.ui.events.EventsViewModel;
+import com.mbd.cmscommon.ui.events.EventsViewModel_HiltModules;
+import com.mbd.cmscommon.ui.state.GlobalRefreshViewModel;
+import com.mbd.cmscommon.ui.state.GlobalRefreshViewModel_HiltModules;
+import com.mbd.cmsstudent.di.DatabaseModule_ProvideStudentDatabaseFactory;
+import com.mbd.cmsstudent.feature.attendance.AttendanceSummaryViewModel;
+import com.mbd.cmsstudent.feature.attendance.AttendanceSummaryViewModel_HiltModules;
+import com.mbd.cmsstudent.feature.auth.AuthViewModel;
+import com.mbd.cmsstudent.feature.auth.AuthViewModel_HiltModules;
+import com.mbd.cmsstudent.feature.common.CurrentStudentProvider;
+import com.mbd.cmsstudent.feature.fees.FeeChallanViewModel;
+import com.mbd.cmsstudent.feature.fees.FeeChallanViewModel_HiltModules;
+import com.mbd.cmsstudent.feature.home.HomeViewModel;
+import com.mbd.cmsstudent.feature.home.HomeViewModel_HiltModules;
+import com.mbd.cmsstudent.feature.hub.StudentExamsHubViewModel;
+import com.mbd.cmsstudent.feature.hub.StudentExamsHubViewModel_HiltModules;
+import com.mbd.cmsstudent.feature.hub.StudentMoreViewModel;
+import com.mbd.cmsstudent.feature.hub.StudentMoreViewModel_HiltModules;
+import com.mbd.cmsstudent.feature.linkrequest.LinkRequestViewModel;
+import com.mbd.cmsstudent.feature.linkrequest.LinkRequestViewModel_HiltModules;
+import com.mbd.cmsstudent.feature.marks.MyMarksViewModel;
+import com.mbd.cmsstudent.feature.marks.MyMarksViewModel_HiltModules;
+import com.mbd.cmsstudent.feature.notifications.NotificationsBadgeViewModel;
+import com.mbd.cmsstudent.feature.notifications.NotificationsBadgeViewModel_HiltModules;
+import com.mbd.cmsstudent.feature.notifications.NotificationsViewModel;
+import com.mbd.cmsstudent.feature.notifications.NotificationsViewModel_HiltModules;
+import com.mbd.cmsstudent.feature.profile.ProfileViewModel;
+import com.mbd.cmsstudent.feature.profile.ProfileViewModel_HiltModules;
+import com.mbd.cmsstudent.feature.results.ResultsViewModel;
+import com.mbd.cmsstudent.feature.results.ResultsViewModel_HiltModules;
+import com.mbd.cmsstudent.feature.root.AppRootViewModel;
+import com.mbd.cmsstudent.feature.root.AppRootViewModel_HiltModules;
+import com.mbd.cmsstudent.feature.timetable.MyTimetableViewModel;
+import com.mbd.cmsstudent.feature.timetable.MyTimetableViewModel_HiltModules;
+import dagger.hilt.android.ActivityRetainedLifecycle;
+import dagger.hilt.android.ViewModelLifecycle;
+import dagger.hilt.android.internal.builders.ActivityComponentBuilder;
+import dagger.hilt.android.internal.builders.ActivityRetainedComponentBuilder;
+import dagger.hilt.android.internal.builders.FragmentComponentBuilder;
+import dagger.hilt.android.internal.builders.ServiceComponentBuilder;
+import dagger.hilt.android.internal.builders.ViewComponentBuilder;
+import dagger.hilt.android.internal.builders.ViewModelComponentBuilder;
+import dagger.hilt.android.internal.builders.ViewWithFragmentComponentBuilder;
+import dagger.hilt.android.internal.lifecycle.DefaultViewModelFactories;
+import dagger.hilt.android.internal.lifecycle.DefaultViewModelFactories_InternalFactoryFactory_Factory;
+import dagger.hilt.android.internal.managers.ActivityRetainedComponentManager_LifecycleModule_ProvideActivityRetainedLifecycleFactory;
+import dagger.hilt.android.internal.managers.SavedStateHandleHolder;
+import dagger.hilt.android.internal.modules.ApplicationContextModule;
+import dagger.hilt.android.internal.modules.ApplicationContextModule_ProvideContextFactory;
+import dagger.internal.DaggerGenerated;
+import dagger.internal.DoubleCheck;
+import dagger.internal.IdentifierNameString;
+import dagger.internal.KeepFieldType;
+import dagger.internal.LazyClassKeyMap;
+import dagger.internal.MapBuilder;
+import dagger.internal.Preconditions;
+import dagger.internal.Provider;
+import io.github.jan.supabase.SupabaseClient;
+import io.github.jan.supabase.auth.Auth;
+import io.github.jan.supabase.functions.Functions;
+import io.github.jan.supabase.postgrest.Postgrest;
+import io.github.jan.supabase.storage.Storage;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+import javax.annotation.processing.Generated;
+
+@DaggerGenerated
+@Generated(
+    value = "dagger.internal.codegen.ComponentProcessor",
+    comments = "https://dagger.dev"
+)
+@SuppressWarnings({
+    "unchecked",
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava",
+    "cast",
+    "deprecation"
+})
+public final class DaggerStudentApplication_HiltComponents_SingletonC {
+  private DaggerStudentApplication_HiltComponents_SingletonC() {
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static final class Builder {
+    private ApplicationContextModule applicationContextModule;
+
+    private Builder() {
+    }
+
+    public Builder applicationContextModule(ApplicationContextModule applicationContextModule) {
+      this.applicationContextModule = Preconditions.checkNotNull(applicationContextModule);
+      return this;
+    }
+
+    public StudentApplication_HiltComponents.SingletonC build() {
+      Preconditions.checkBuilderRequirement(applicationContextModule, ApplicationContextModule.class);
+      return new SingletonCImpl(applicationContextModule);
+    }
+  }
+
+  private static final class ActivityRetainedCBuilder implements StudentApplication_HiltComponents.ActivityRetainedC.Builder {
+    private final SingletonCImpl singletonCImpl;
+
+    private SavedStateHandleHolder savedStateHandleHolder;
+
+    private ActivityRetainedCBuilder(SingletonCImpl singletonCImpl) {
+      this.singletonCImpl = singletonCImpl;
+    }
+
+    @Override
+    public ActivityRetainedCBuilder savedStateHandleHolder(
+        SavedStateHandleHolder savedStateHandleHolder) {
+      this.savedStateHandleHolder = Preconditions.checkNotNull(savedStateHandleHolder);
+      return this;
+    }
+
+    @Override
+    public StudentApplication_HiltComponents.ActivityRetainedC build() {
+      Preconditions.checkBuilderRequirement(savedStateHandleHolder, SavedStateHandleHolder.class);
+      return new ActivityRetainedCImpl(singletonCImpl, savedStateHandleHolder);
+    }
+  }
+
+  private static final class ActivityCBuilder implements StudentApplication_HiltComponents.ActivityC.Builder {
+    private final SingletonCImpl singletonCImpl;
+
+    private final ActivityRetainedCImpl activityRetainedCImpl;
+
+    private Activity activity;
+
+    private ActivityCBuilder(SingletonCImpl singletonCImpl,
+        ActivityRetainedCImpl activityRetainedCImpl) {
+      this.singletonCImpl = singletonCImpl;
+      this.activityRetainedCImpl = activityRetainedCImpl;
+    }
+
+    @Override
+    public ActivityCBuilder activity(Activity activity) {
+      this.activity = Preconditions.checkNotNull(activity);
+      return this;
+    }
+
+    @Override
+    public StudentApplication_HiltComponents.ActivityC build() {
+      Preconditions.checkBuilderRequirement(activity, Activity.class);
+      return new ActivityCImpl(singletonCImpl, activityRetainedCImpl, activity);
+    }
+  }
+
+  private static final class FragmentCBuilder implements StudentApplication_HiltComponents.FragmentC.Builder {
+    private final SingletonCImpl singletonCImpl;
+
+    private final ActivityRetainedCImpl activityRetainedCImpl;
+
+    private final ActivityCImpl activityCImpl;
+
+    private Fragment fragment;
+
+    private FragmentCBuilder(SingletonCImpl singletonCImpl,
+        ActivityRetainedCImpl activityRetainedCImpl, ActivityCImpl activityCImpl) {
+      this.singletonCImpl = singletonCImpl;
+      this.activityRetainedCImpl = activityRetainedCImpl;
+      this.activityCImpl = activityCImpl;
+    }
+
+    @Override
+    public FragmentCBuilder fragment(Fragment fragment) {
+      this.fragment = Preconditions.checkNotNull(fragment);
+      return this;
+    }
+
+    @Override
+    public StudentApplication_HiltComponents.FragmentC build() {
+      Preconditions.checkBuilderRequirement(fragment, Fragment.class);
+      return new FragmentCImpl(singletonCImpl, activityRetainedCImpl, activityCImpl, fragment);
+    }
+  }
+
+  private static final class ViewWithFragmentCBuilder implements StudentApplication_HiltComponents.ViewWithFragmentC.Builder {
+    private final SingletonCImpl singletonCImpl;
+
+    private final ActivityRetainedCImpl activityRetainedCImpl;
+
+    private final ActivityCImpl activityCImpl;
+
+    private final FragmentCImpl fragmentCImpl;
+
+    private View view;
+
+    private ViewWithFragmentCBuilder(SingletonCImpl singletonCImpl,
+        ActivityRetainedCImpl activityRetainedCImpl, ActivityCImpl activityCImpl,
+        FragmentCImpl fragmentCImpl) {
+      this.singletonCImpl = singletonCImpl;
+      this.activityRetainedCImpl = activityRetainedCImpl;
+      this.activityCImpl = activityCImpl;
+      this.fragmentCImpl = fragmentCImpl;
+    }
+
+    @Override
+    public ViewWithFragmentCBuilder view(View view) {
+      this.view = Preconditions.checkNotNull(view);
+      return this;
+    }
+
+    @Override
+    public StudentApplication_HiltComponents.ViewWithFragmentC build() {
+      Preconditions.checkBuilderRequirement(view, View.class);
+      return new ViewWithFragmentCImpl(singletonCImpl, activityRetainedCImpl, activityCImpl, fragmentCImpl, view);
+    }
+  }
+
+  private static final class ViewCBuilder implements StudentApplication_HiltComponents.ViewC.Builder {
+    private final SingletonCImpl singletonCImpl;
+
+    private final ActivityRetainedCImpl activityRetainedCImpl;
+
+    private final ActivityCImpl activityCImpl;
+
+    private View view;
+
+    private ViewCBuilder(SingletonCImpl singletonCImpl, ActivityRetainedCImpl activityRetainedCImpl,
+        ActivityCImpl activityCImpl) {
+      this.singletonCImpl = singletonCImpl;
+      this.activityRetainedCImpl = activityRetainedCImpl;
+      this.activityCImpl = activityCImpl;
+    }
+
+    @Override
+    public ViewCBuilder view(View view) {
+      this.view = Preconditions.checkNotNull(view);
+      return this;
+    }
+
+    @Override
+    public StudentApplication_HiltComponents.ViewC build() {
+      Preconditions.checkBuilderRequirement(view, View.class);
+      return new ViewCImpl(singletonCImpl, activityRetainedCImpl, activityCImpl, view);
+    }
+  }
+
+  private static final class ViewModelCBuilder implements StudentApplication_HiltComponents.ViewModelC.Builder {
+    private final SingletonCImpl singletonCImpl;
+
+    private final ActivityRetainedCImpl activityRetainedCImpl;
+
+    private SavedStateHandle savedStateHandle;
+
+    private ViewModelLifecycle viewModelLifecycle;
+
+    private ViewModelCBuilder(SingletonCImpl singletonCImpl,
+        ActivityRetainedCImpl activityRetainedCImpl) {
+      this.singletonCImpl = singletonCImpl;
+      this.activityRetainedCImpl = activityRetainedCImpl;
+    }
+
+    @Override
+    public ViewModelCBuilder savedStateHandle(SavedStateHandle handle) {
+      this.savedStateHandle = Preconditions.checkNotNull(handle);
+      return this;
+    }
+
+    @Override
+    public ViewModelCBuilder viewModelLifecycle(ViewModelLifecycle viewModelLifecycle) {
+      this.viewModelLifecycle = Preconditions.checkNotNull(viewModelLifecycle);
+      return this;
+    }
+
+    @Override
+    public StudentApplication_HiltComponents.ViewModelC build() {
+      Preconditions.checkBuilderRequirement(savedStateHandle, SavedStateHandle.class);
+      Preconditions.checkBuilderRequirement(viewModelLifecycle, ViewModelLifecycle.class);
+      return new ViewModelCImpl(singletonCImpl, activityRetainedCImpl, savedStateHandle, viewModelLifecycle);
+    }
+  }
+
+  private static final class ServiceCBuilder implements StudentApplication_HiltComponents.ServiceC.Builder {
+    private final SingletonCImpl singletonCImpl;
+
+    private Service service;
+
+    private ServiceCBuilder(SingletonCImpl singletonCImpl) {
+      this.singletonCImpl = singletonCImpl;
+    }
+
+    @Override
+    public ServiceCBuilder service(Service service) {
+      this.service = Preconditions.checkNotNull(service);
+      return this;
+    }
+
+    @Override
+    public StudentApplication_HiltComponents.ServiceC build() {
+      Preconditions.checkBuilderRequirement(service, Service.class);
+      return new ServiceCImpl(singletonCImpl, service);
+    }
+  }
+
+  private static final class ViewWithFragmentCImpl extends StudentApplication_HiltComponents.ViewWithFragmentC {
+    private final SingletonCImpl singletonCImpl;
+
+    private final ActivityRetainedCImpl activityRetainedCImpl;
+
+    private final ActivityCImpl activityCImpl;
+
+    private final FragmentCImpl fragmentCImpl;
+
+    private final ViewWithFragmentCImpl viewWithFragmentCImpl = this;
+
+    private ViewWithFragmentCImpl(SingletonCImpl singletonCImpl,
+        ActivityRetainedCImpl activityRetainedCImpl, ActivityCImpl activityCImpl,
+        FragmentCImpl fragmentCImpl, View viewParam) {
+      this.singletonCImpl = singletonCImpl;
+      this.activityRetainedCImpl = activityRetainedCImpl;
+      this.activityCImpl = activityCImpl;
+      this.fragmentCImpl = fragmentCImpl;
+
+
+    }
+  }
+
+  private static final class FragmentCImpl extends StudentApplication_HiltComponents.FragmentC {
+    private final SingletonCImpl singletonCImpl;
+
+    private final ActivityRetainedCImpl activityRetainedCImpl;
+
+    private final ActivityCImpl activityCImpl;
+
+    private final FragmentCImpl fragmentCImpl = this;
+
+    private FragmentCImpl(SingletonCImpl singletonCImpl,
+        ActivityRetainedCImpl activityRetainedCImpl, ActivityCImpl activityCImpl,
+        Fragment fragmentParam) {
+      this.singletonCImpl = singletonCImpl;
+      this.activityRetainedCImpl = activityRetainedCImpl;
+      this.activityCImpl = activityCImpl;
+
+
+    }
+
+    @Override
+    public DefaultViewModelFactories.InternalFactoryFactory getHiltInternalFactoryFactory() {
+      return activityCImpl.getHiltInternalFactoryFactory();
+    }
+
+    @Override
+    public ViewWithFragmentComponentBuilder viewWithFragmentComponentBuilder() {
+      return new ViewWithFragmentCBuilder(singletonCImpl, activityRetainedCImpl, activityCImpl, fragmentCImpl);
+    }
+  }
+
+  private static final class ViewCImpl extends StudentApplication_HiltComponents.ViewC {
+    private final SingletonCImpl singletonCImpl;
+
+    private final ActivityRetainedCImpl activityRetainedCImpl;
+
+    private final ActivityCImpl activityCImpl;
+
+    private final ViewCImpl viewCImpl = this;
+
+    private ViewCImpl(SingletonCImpl singletonCImpl, ActivityRetainedCImpl activityRetainedCImpl,
+        ActivityCImpl activityCImpl, View viewParam) {
+      this.singletonCImpl = singletonCImpl;
+      this.activityRetainedCImpl = activityRetainedCImpl;
+      this.activityCImpl = activityCImpl;
+
+
+    }
+  }
+
+  private static final class ActivityCImpl extends StudentApplication_HiltComponents.ActivityC {
+    private final SingletonCImpl singletonCImpl;
+
+    private final ActivityRetainedCImpl activityRetainedCImpl;
+
+    private final ActivityCImpl activityCImpl = this;
+
+    private ActivityCImpl(SingletonCImpl singletonCImpl,
+        ActivityRetainedCImpl activityRetainedCImpl, Activity activityParam) {
+      this.singletonCImpl = singletonCImpl;
+      this.activityRetainedCImpl = activityRetainedCImpl;
+
+
+    }
+
+    @Override
+    public void injectMainActivity(MainActivity mainActivity) {
+    }
+
+    @Override
+    public DefaultViewModelFactories.InternalFactoryFactory getHiltInternalFactoryFactory() {
+      return DefaultViewModelFactories_InternalFactoryFactory_Factory.newInstance(getViewModelKeys(), new ViewModelCBuilder(singletonCImpl, activityRetainedCImpl));
+    }
+
+    @Override
+    public Map<Class<?>, Boolean> getViewModelKeys() {
+      return LazyClassKeyMap.<Boolean>of(MapBuilder.<String, Boolean>newMapBuilder(18).put(LazyClassKeyProvider.com_mbd_cmsstudent_feature_root_AppRootViewModel, AppRootViewModel_HiltModules.KeyModule.provide()).put(LazyClassKeyProvider.com_mbd_cmsstudent_feature_attendance_AttendanceSummaryViewModel, AttendanceSummaryViewModel_HiltModules.KeyModule.provide()).put(LazyClassKeyProvider.com_mbd_cmsstudent_feature_auth_AuthViewModel, AuthViewModel_HiltModules.KeyModule.provide()).put(LazyClassKeyProvider.com_mbd_cmscommon_ui_datesheets_DatesheetsViewModel, DatesheetsViewModel_HiltModules.KeyModule.provide()).put(LazyClassKeyProvider.com_mbd_cmscommon_ui_documents_DocumentsViewModel, DocumentsViewModel_HiltModules.KeyModule.provide()).put(LazyClassKeyProvider.com_mbd_cmscommon_ui_events_EventsViewModel, EventsViewModel_HiltModules.KeyModule.provide()).put(LazyClassKeyProvider.com_mbd_cmsstudent_feature_fees_FeeChallanViewModel, FeeChallanViewModel_HiltModules.KeyModule.provide()).put(LazyClassKeyProvider.com_mbd_cmscommon_ui_state_GlobalRefreshViewModel, GlobalRefreshViewModel_HiltModules.KeyModule.provide()).put(LazyClassKeyProvider.com_mbd_cmsstudent_feature_home_HomeViewModel, HomeViewModel_HiltModules.KeyModule.provide()).put(LazyClassKeyProvider.com_mbd_cmsstudent_feature_linkrequest_LinkRequestViewModel, LinkRequestViewModel_HiltModules.KeyModule.provide()).put(LazyClassKeyProvider.com_mbd_cmsstudent_feature_marks_MyMarksViewModel, MyMarksViewModel_HiltModules.KeyModule.provide()).put(LazyClassKeyProvider.com_mbd_cmsstudent_feature_timetable_MyTimetableViewModel, MyTimetableViewModel_HiltModules.KeyModule.provide()).put(LazyClassKeyProvider.com_mbd_cmsstudent_feature_notifications_NotificationsBadgeViewModel, NotificationsBadgeViewModel_HiltModules.KeyModule.provide()).put(LazyClassKeyProvider.com_mbd_cmsstudent_feature_notifications_NotificationsViewModel, NotificationsViewModel_HiltModules.KeyModule.provide()).put(LazyClassKeyProvider.com_mbd_cmsstudent_feature_profile_ProfileViewModel, ProfileViewModel_HiltModules.KeyModule.provide()).put(LazyClassKeyProvider.com_mbd_cmsstudent_feature_results_ResultsViewModel, ResultsViewModel_HiltModules.KeyModule.provide()).put(LazyClassKeyProvider.com_mbd_cmsstudent_feature_hub_StudentExamsHubViewModel, StudentExamsHubViewModel_HiltModules.KeyModule.provide()).put(LazyClassKeyProvider.com_mbd_cmsstudent_feature_hub_StudentMoreViewModel, StudentMoreViewModel_HiltModules.KeyModule.provide()).build());
+    }
+
+    @Override
+    public ViewModelComponentBuilder getViewModelComponentBuilder() {
+      return new ViewModelCBuilder(singletonCImpl, activityRetainedCImpl);
+    }
+
+    @Override
+    public FragmentComponentBuilder fragmentComponentBuilder() {
+      return new FragmentCBuilder(singletonCImpl, activityRetainedCImpl, activityCImpl);
+    }
+
+    @Override
+    public ViewComponentBuilder viewComponentBuilder() {
+      return new ViewCBuilder(singletonCImpl, activityRetainedCImpl, activityCImpl);
+    }
+
+    @IdentifierNameString
+    private static final class LazyClassKeyProvider {
+      static String com_mbd_cmsstudent_feature_attendance_AttendanceSummaryViewModel = "com.mbd.cmsstudent.feature.attendance.AttendanceSummaryViewModel";
+
+      static String com_mbd_cmsstudent_feature_root_AppRootViewModel = "com.mbd.cmsstudent.feature.root.AppRootViewModel";
+
+      static String com_mbd_cmsstudent_feature_notifications_NotificationsBadgeViewModel = "com.mbd.cmsstudent.feature.notifications.NotificationsBadgeViewModel";
+
+      static String com_mbd_cmsstudent_feature_home_HomeViewModel = "com.mbd.cmsstudent.feature.home.HomeViewModel";
+
+      static String com_mbd_cmsstudent_feature_marks_MyMarksViewModel = "com.mbd.cmsstudent.feature.marks.MyMarksViewModel";
+
+      static String com_mbd_cmsstudent_feature_results_ResultsViewModel = "com.mbd.cmsstudent.feature.results.ResultsViewModel";
+
+      static String com_mbd_cmscommon_ui_datesheets_DatesheetsViewModel = "com.mbd.cmscommon.ui.datesheets.DatesheetsViewModel";
+
+      static String com_mbd_cmsstudent_feature_hub_StudentExamsHubViewModel = "com.mbd.cmsstudent.feature.hub.StudentExamsHubViewModel";
+
+      static String com_mbd_cmsstudent_feature_hub_StudentMoreViewModel = "com.mbd.cmsstudent.feature.hub.StudentMoreViewModel";
+
+      static String com_mbd_cmsstudent_feature_linkrequest_LinkRequestViewModel = "com.mbd.cmsstudent.feature.linkrequest.LinkRequestViewModel";
+
+      static String com_mbd_cmsstudent_feature_profile_ProfileViewModel = "com.mbd.cmsstudent.feature.profile.ProfileViewModel";
+
+      static String com_mbd_cmscommon_ui_state_GlobalRefreshViewModel = "com.mbd.cmscommon.ui.state.GlobalRefreshViewModel";
+
+      static String com_mbd_cmscommon_ui_events_EventsViewModel = "com.mbd.cmscommon.ui.events.EventsViewModel";
+
+      static String com_mbd_cmsstudent_feature_notifications_NotificationsViewModel = "com.mbd.cmsstudent.feature.notifications.NotificationsViewModel";
+
+      static String com_mbd_cmsstudent_feature_timetable_MyTimetableViewModel = "com.mbd.cmsstudent.feature.timetable.MyTimetableViewModel";
+
+      static String com_mbd_cmsstudent_feature_fees_FeeChallanViewModel = "com.mbd.cmsstudent.feature.fees.FeeChallanViewModel";
+
+      static String com_mbd_cmscommon_ui_documents_DocumentsViewModel = "com.mbd.cmscommon.ui.documents.DocumentsViewModel";
+
+      static String com_mbd_cmsstudent_feature_auth_AuthViewModel = "com.mbd.cmsstudent.feature.auth.AuthViewModel";
+
+      @KeepFieldType
+      AttendanceSummaryViewModel com_mbd_cmsstudent_feature_attendance_AttendanceSummaryViewModel2;
+
+      @KeepFieldType
+      AppRootViewModel com_mbd_cmsstudent_feature_root_AppRootViewModel2;
+
+      @KeepFieldType
+      NotificationsBadgeViewModel com_mbd_cmsstudent_feature_notifications_NotificationsBadgeViewModel2;
+
+      @KeepFieldType
+      HomeViewModel com_mbd_cmsstudent_feature_home_HomeViewModel2;
+
+      @KeepFieldType
+      MyMarksViewModel com_mbd_cmsstudent_feature_marks_MyMarksViewModel2;
+
+      @KeepFieldType
+      ResultsViewModel com_mbd_cmsstudent_feature_results_ResultsViewModel2;
+
+      @KeepFieldType
+      DatesheetsViewModel com_mbd_cmscommon_ui_datesheets_DatesheetsViewModel2;
+
+      @KeepFieldType
+      StudentExamsHubViewModel com_mbd_cmsstudent_feature_hub_StudentExamsHubViewModel2;
+
+      @KeepFieldType
+      StudentMoreViewModel com_mbd_cmsstudent_feature_hub_StudentMoreViewModel2;
+
+      @KeepFieldType
+      LinkRequestViewModel com_mbd_cmsstudent_feature_linkrequest_LinkRequestViewModel2;
+
+      @KeepFieldType
+      ProfileViewModel com_mbd_cmsstudent_feature_profile_ProfileViewModel2;
+
+      @KeepFieldType
+      GlobalRefreshViewModel com_mbd_cmscommon_ui_state_GlobalRefreshViewModel2;
+
+      @KeepFieldType
+      EventsViewModel com_mbd_cmscommon_ui_events_EventsViewModel2;
+
+      @KeepFieldType
+      NotificationsViewModel com_mbd_cmsstudent_feature_notifications_NotificationsViewModel2;
+
+      @KeepFieldType
+      MyTimetableViewModel com_mbd_cmsstudent_feature_timetable_MyTimetableViewModel2;
+
+      @KeepFieldType
+      FeeChallanViewModel com_mbd_cmsstudent_feature_fees_FeeChallanViewModel2;
+
+      @KeepFieldType
+      DocumentsViewModel com_mbd_cmscommon_ui_documents_DocumentsViewModel2;
+
+      @KeepFieldType
+      AuthViewModel com_mbd_cmsstudent_feature_auth_AuthViewModel2;
+    }
+  }
+
+  private static final class ViewModelCImpl extends StudentApplication_HiltComponents.ViewModelC {
+    private final SingletonCImpl singletonCImpl;
+
+    private final ActivityRetainedCImpl activityRetainedCImpl;
+
+    private final ViewModelCImpl viewModelCImpl = this;
+
+    private Provider<AppRootViewModel> appRootViewModelProvider;
+
+    private Provider<AttendanceSummaryViewModel> attendanceSummaryViewModelProvider;
+
+    private Provider<AuthViewModel> authViewModelProvider;
+
+    private Provider<DatesheetsViewModel> datesheetsViewModelProvider;
+
+    private Provider<DocumentsViewModel> documentsViewModelProvider;
+
+    private Provider<EventsViewModel> eventsViewModelProvider;
+
+    private Provider<FeeChallanViewModel> feeChallanViewModelProvider;
+
+    private Provider<GlobalRefreshViewModel> globalRefreshViewModelProvider;
+
+    private Provider<HomeViewModel> homeViewModelProvider;
+
+    private Provider<LinkRequestViewModel> linkRequestViewModelProvider;
+
+    private Provider<MyMarksViewModel> myMarksViewModelProvider;
+
+    private Provider<MyTimetableViewModel> myTimetableViewModelProvider;
+
+    private Provider<NotificationsBadgeViewModel> notificationsBadgeViewModelProvider;
+
+    private Provider<NotificationsViewModel> notificationsViewModelProvider;
+
+    private Provider<ProfileViewModel> profileViewModelProvider;
+
+    private Provider<ResultsViewModel> resultsViewModelProvider;
+
+    private Provider<StudentExamsHubViewModel> studentExamsHubViewModelProvider;
+
+    private Provider<StudentMoreViewModel> studentMoreViewModelProvider;
+
+    private ViewModelCImpl(SingletonCImpl singletonCImpl,
+        ActivityRetainedCImpl activityRetainedCImpl, SavedStateHandle savedStateHandleParam,
+        ViewModelLifecycle viewModelLifecycleParam) {
+      this.singletonCImpl = singletonCImpl;
+      this.activityRetainedCImpl = activityRetainedCImpl;
+
+      initialize(savedStateHandleParam, viewModelLifecycleParam);
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize(final SavedStateHandle savedStateHandleParam,
+        final ViewModelLifecycle viewModelLifecycleParam) {
+      this.appRootViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 0);
+      this.attendanceSummaryViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 1);
+      this.authViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 2);
+      this.datesheetsViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 3);
+      this.documentsViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 4);
+      this.eventsViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 5);
+      this.feeChallanViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 6);
+      this.globalRefreshViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 7);
+      this.homeViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 8);
+      this.linkRequestViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 9);
+      this.myMarksViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 10);
+      this.myTimetableViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 11);
+      this.notificationsBadgeViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 12);
+      this.notificationsViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 13);
+      this.profileViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 14);
+      this.resultsViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 15);
+      this.studentExamsHubViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 16);
+      this.studentMoreViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 17);
+    }
+
+    @Override
+    public Map<Class<?>, javax.inject.Provider<ViewModel>> getHiltViewModelMap() {
+      return LazyClassKeyMap.<javax.inject.Provider<ViewModel>>of(MapBuilder.<String, javax.inject.Provider<ViewModel>>newMapBuilder(18).put(LazyClassKeyProvider.com_mbd_cmsstudent_feature_root_AppRootViewModel, ((Provider) appRootViewModelProvider)).put(LazyClassKeyProvider.com_mbd_cmsstudent_feature_attendance_AttendanceSummaryViewModel, ((Provider) attendanceSummaryViewModelProvider)).put(LazyClassKeyProvider.com_mbd_cmsstudent_feature_auth_AuthViewModel, ((Provider) authViewModelProvider)).put(LazyClassKeyProvider.com_mbd_cmscommon_ui_datesheets_DatesheetsViewModel, ((Provider) datesheetsViewModelProvider)).put(LazyClassKeyProvider.com_mbd_cmscommon_ui_documents_DocumentsViewModel, ((Provider) documentsViewModelProvider)).put(LazyClassKeyProvider.com_mbd_cmscommon_ui_events_EventsViewModel, ((Provider) eventsViewModelProvider)).put(LazyClassKeyProvider.com_mbd_cmsstudent_feature_fees_FeeChallanViewModel, ((Provider) feeChallanViewModelProvider)).put(LazyClassKeyProvider.com_mbd_cmscommon_ui_state_GlobalRefreshViewModel, ((Provider) globalRefreshViewModelProvider)).put(LazyClassKeyProvider.com_mbd_cmsstudent_feature_home_HomeViewModel, ((Provider) homeViewModelProvider)).put(LazyClassKeyProvider.com_mbd_cmsstudent_feature_linkrequest_LinkRequestViewModel, ((Provider) linkRequestViewModelProvider)).put(LazyClassKeyProvider.com_mbd_cmsstudent_feature_marks_MyMarksViewModel, ((Provider) myMarksViewModelProvider)).put(LazyClassKeyProvider.com_mbd_cmsstudent_feature_timetable_MyTimetableViewModel, ((Provider) myTimetableViewModelProvider)).put(LazyClassKeyProvider.com_mbd_cmsstudent_feature_notifications_NotificationsBadgeViewModel, ((Provider) notificationsBadgeViewModelProvider)).put(LazyClassKeyProvider.com_mbd_cmsstudent_feature_notifications_NotificationsViewModel, ((Provider) notificationsViewModelProvider)).put(LazyClassKeyProvider.com_mbd_cmsstudent_feature_profile_ProfileViewModel, ((Provider) profileViewModelProvider)).put(LazyClassKeyProvider.com_mbd_cmsstudent_feature_results_ResultsViewModel, ((Provider) resultsViewModelProvider)).put(LazyClassKeyProvider.com_mbd_cmsstudent_feature_hub_StudentExamsHubViewModel, ((Provider) studentExamsHubViewModelProvider)).put(LazyClassKeyProvider.com_mbd_cmsstudent_feature_hub_StudentMoreViewModel, ((Provider) studentMoreViewModelProvider)).build());
+    }
+
+    @Override
+    public Map<Class<?>, Object> getHiltViewModelAssistedMap() {
+      return Collections.<Class<?>, Object>emptyMap();
+    }
+
+    @IdentifierNameString
+    private static final class LazyClassKeyProvider {
+      static String com_mbd_cmscommon_ui_events_EventsViewModel = "com.mbd.cmscommon.ui.events.EventsViewModel";
+
+      static String com_mbd_cmsstudent_feature_timetable_MyTimetableViewModel = "com.mbd.cmsstudent.feature.timetable.MyTimetableViewModel";
+
+      static String com_mbd_cmsstudent_feature_fees_FeeChallanViewModel = "com.mbd.cmsstudent.feature.fees.FeeChallanViewModel";
+
+      static String com_mbd_cmsstudent_feature_notifications_NotificationsBadgeViewModel = "com.mbd.cmsstudent.feature.notifications.NotificationsBadgeViewModel";
+
+      static String com_mbd_cmscommon_ui_documents_DocumentsViewModel = "com.mbd.cmscommon.ui.documents.DocumentsViewModel";
+
+      static String com_mbd_cmsstudent_feature_home_HomeViewModel = "com.mbd.cmsstudent.feature.home.HomeViewModel";
+
+      static String com_mbd_cmsstudent_feature_auth_AuthViewModel = "com.mbd.cmsstudent.feature.auth.AuthViewModel";
+
+      static String com_mbd_cmsstudent_feature_hub_StudentMoreViewModel = "com.mbd.cmsstudent.feature.hub.StudentMoreViewModel";
+
+      static String com_mbd_cmsstudent_feature_linkrequest_LinkRequestViewModel = "com.mbd.cmsstudent.feature.linkrequest.LinkRequestViewModel";
+
+      static String com_mbd_cmscommon_ui_datesheets_DatesheetsViewModel = "com.mbd.cmscommon.ui.datesheets.DatesheetsViewModel";
+
+      static String com_mbd_cmsstudent_feature_profile_ProfileViewModel = "com.mbd.cmsstudent.feature.profile.ProfileViewModel";
+
+      static String com_mbd_cmsstudent_feature_hub_StudentExamsHubViewModel = "com.mbd.cmsstudent.feature.hub.StudentExamsHubViewModel";
+
+      static String com_mbd_cmsstudent_feature_attendance_AttendanceSummaryViewModel = "com.mbd.cmsstudent.feature.attendance.AttendanceSummaryViewModel";
+
+      static String com_mbd_cmsstudent_feature_marks_MyMarksViewModel = "com.mbd.cmsstudent.feature.marks.MyMarksViewModel";
+
+      static String com_mbd_cmsstudent_feature_notifications_NotificationsViewModel = "com.mbd.cmsstudent.feature.notifications.NotificationsViewModel";
+
+      static String com_mbd_cmscommon_ui_state_GlobalRefreshViewModel = "com.mbd.cmscommon.ui.state.GlobalRefreshViewModel";
+
+      static String com_mbd_cmsstudent_feature_results_ResultsViewModel = "com.mbd.cmsstudent.feature.results.ResultsViewModel";
+
+      static String com_mbd_cmsstudent_feature_root_AppRootViewModel = "com.mbd.cmsstudent.feature.root.AppRootViewModel";
+
+      @KeepFieldType
+      EventsViewModel com_mbd_cmscommon_ui_events_EventsViewModel2;
+
+      @KeepFieldType
+      MyTimetableViewModel com_mbd_cmsstudent_feature_timetable_MyTimetableViewModel2;
+
+      @KeepFieldType
+      FeeChallanViewModel com_mbd_cmsstudent_feature_fees_FeeChallanViewModel2;
+
+      @KeepFieldType
+      NotificationsBadgeViewModel com_mbd_cmsstudent_feature_notifications_NotificationsBadgeViewModel2;
+
+      @KeepFieldType
+      DocumentsViewModel com_mbd_cmscommon_ui_documents_DocumentsViewModel2;
+
+      @KeepFieldType
+      HomeViewModel com_mbd_cmsstudent_feature_home_HomeViewModel2;
+
+      @KeepFieldType
+      AuthViewModel com_mbd_cmsstudent_feature_auth_AuthViewModel2;
+
+      @KeepFieldType
+      StudentMoreViewModel com_mbd_cmsstudent_feature_hub_StudentMoreViewModel2;
+
+      @KeepFieldType
+      LinkRequestViewModel com_mbd_cmsstudent_feature_linkrequest_LinkRequestViewModel2;
+
+      @KeepFieldType
+      DatesheetsViewModel com_mbd_cmscommon_ui_datesheets_DatesheetsViewModel2;
+
+      @KeepFieldType
+      ProfileViewModel com_mbd_cmsstudent_feature_profile_ProfileViewModel2;
+
+      @KeepFieldType
+      StudentExamsHubViewModel com_mbd_cmsstudent_feature_hub_StudentExamsHubViewModel2;
+
+      @KeepFieldType
+      AttendanceSummaryViewModel com_mbd_cmsstudent_feature_attendance_AttendanceSummaryViewModel2;
+
+      @KeepFieldType
+      MyMarksViewModel com_mbd_cmsstudent_feature_marks_MyMarksViewModel2;
+
+      @KeepFieldType
+      NotificationsViewModel com_mbd_cmsstudent_feature_notifications_NotificationsViewModel2;
+
+      @KeepFieldType
+      GlobalRefreshViewModel com_mbd_cmscommon_ui_state_GlobalRefreshViewModel2;
+
+      @KeepFieldType
+      ResultsViewModel com_mbd_cmsstudent_feature_results_ResultsViewModel2;
+
+      @KeepFieldType
+      AppRootViewModel com_mbd_cmsstudent_feature_root_AppRootViewModel2;
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final SingletonCImpl singletonCImpl;
+
+      private final ActivityRetainedCImpl activityRetainedCImpl;
+
+      private final ViewModelCImpl viewModelCImpl;
+
+      private final int id;
+
+      SwitchingProvider(SingletonCImpl singletonCImpl, ActivityRetainedCImpl activityRetainedCImpl,
+          ViewModelCImpl viewModelCImpl, int id) {
+        this.singletonCImpl = singletonCImpl;
+        this.activityRetainedCImpl = activityRetainedCImpl;
+        this.viewModelCImpl = viewModelCImpl;
+        this.id = id;
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public T get() {
+        switch (id) {
+          case 0: // com.mbd.cmsstudent.feature.root.AppRootViewModel 
+          return (T) new AppRootViewModel(singletonCImpl.sessionManagerProvider.get(), singletonCImpl.bindUserRepositoryProvider.get(), singletonCImpl.syncEngineProvider.get(), singletonCImpl.currentStudentProvider.get(), singletonCImpl.startupBootstrapTrackerProvider.get());
+
+          case 1: // com.mbd.cmsstudent.feature.attendance.AttendanceSummaryViewModel 
+          return (T) new AttendanceSummaryViewModel(singletonCImpl.currentStudentProvider.get(), singletonCImpl.bindSessionAttendanceRepositoryProvider.get(), singletonCImpl.bindCurriculumRepositoryProvider.get());
+
+          case 2: // com.mbd.cmsstudent.feature.auth.AuthViewModel 
+          return (T) new AuthViewModel(singletonCImpl.sessionManagerProvider.get(), singletonCImpl.bindUserRepositoryProvider.get());
+
+          case 3: // com.mbd.cmscommon.ui.datesheets.DatesheetsViewModel 
+          return (T) new DatesheetsViewModel(singletonCImpl.bindDatesheetRepositoryProvider.get(), singletonCImpl.bindUserRepositoryProvider.get(), singletonCImpl.bindAcademicSessionRepositoryProvider.get(), singletonCImpl.bindCurriculumRepositoryProvider.get(), singletonCImpl.bindTeacherRepositoryProvider.get(), singletonCImpl.sessionManagerProvider.get());
+
+          case 4: // com.mbd.cmscommon.ui.documents.DocumentsViewModel 
+          return (T) new DocumentsViewModel(singletonCImpl.bindDocumentRepositoryProvider.get(), singletonCImpl.bindUserRepositoryProvider.get(), singletonCImpl.bindTeacherRepositoryProvider.get(), singletonCImpl.bindDepartmentRepositoryProvider.get(), singletonCImpl.sessionManagerProvider.get(), ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule));
+
+          case 5: // com.mbd.cmscommon.ui.events.EventsViewModel 
+          return (T) new EventsViewModel(singletonCImpl.bindCalendarRepositoryProvider.get(), singletonCImpl.bindUserRepositoryProvider.get(), singletonCImpl.bindTeacherRepositoryProvider.get(), singletonCImpl.teacherAssignmentsProvider.get(), singletonCImpl.bindDepartmentRepositoryProvider.get(), singletonCImpl.bindAcademicSessionRepositoryProvider.get(), singletonCImpl.sessionManagerProvider.get());
+
+          case 6: // com.mbd.cmsstudent.feature.fees.FeeChallanViewModel 
+          return (T) new FeeChallanViewModel(singletonCImpl.currentStudentProvider.get(), singletonCImpl.bindSessionFeeRepositoryProvider.get());
+
+          case 7: // com.mbd.cmscommon.ui.state.GlobalRefreshViewModel 
+          return (T) new GlobalRefreshViewModel(singletonCImpl.syncEngineProvider.get());
+
+          case 8: // com.mbd.cmsstudent.feature.home.HomeViewModel 
+          return (T) new HomeViewModel(singletonCImpl.currentStudentProvider.get(), singletonCImpl.bindAcademicSessionRepositoryProvider.get(), singletonCImpl.bindSessionAttendanceRepositoryProvider.get(), singletonCImpl.bindSessionTimetableRepositoryProvider.get());
+
+          case 9: // com.mbd.cmsstudent.feature.linkrequest.LinkRequestViewModel 
+          return (T) new LinkRequestViewModel(singletonCImpl.bindStudentLinkRequestRepositoryProvider.get(), singletonCImpl.bindDepartmentRepositoryProvider.get(), singletonCImpl.bindAcademicSessionRepositoryProvider.get(), singletonCImpl.sessionManagerProvider.get());
+
+          case 10: // com.mbd.cmsstudent.feature.marks.MyMarksViewModel 
+          return (T) new MyMarksViewModel(singletonCImpl.currentStudentProvider.get(), singletonCImpl.bindSessionMarksRepositoryProvider.get(), singletonCImpl.bindCurriculumRepositoryProvider.get());
+
+          case 11: // com.mbd.cmsstudent.feature.timetable.MyTimetableViewModel 
+          return (T) new MyTimetableViewModel(singletonCImpl.bindSessionTimetableRepositoryProvider.get(), singletonCImpl.currentStudentProvider.get());
+
+          case 12: // com.mbd.cmsstudent.feature.notifications.NotificationsBadgeViewModel 
+          return (T) new NotificationsBadgeViewModel(singletonCImpl.bindNotificationRepositoryProvider.get(), singletonCImpl.currentStudentProvider.get());
+
+          case 13: // com.mbd.cmsstudent.feature.notifications.NotificationsViewModel 
+          return (T) new NotificationsViewModel(singletonCImpl.bindNotificationRepositoryProvider.get(), singletonCImpl.bindAcademicSessionRepositoryProvider.get(), singletonCImpl.bindDepartmentRepositoryProvider.get(), singletonCImpl.currentStudentProvider.get(), singletonCImpl.sessionManagerProvider.get());
+
+          case 14: // com.mbd.cmsstudent.feature.profile.ProfileViewModel 
+          return (T) new ProfileViewModel(singletonCImpl.sessionManagerProvider.get(), singletonCImpl.bindUserRepositoryProvider.get(), singletonCImpl.bindAcademicSessionRepositoryProvider.get(), singletonCImpl.bindFineRepositoryProvider.get(), singletonCImpl.bindDepartmentRepositoryProvider.get(), singletonCImpl.currentStudentProvider.get());
+
+          case 15: // com.mbd.cmsstudent.feature.results.ResultsViewModel 
+          return (T) new ResultsViewModel(singletonCImpl.bindSessionMarksRepositoryProvider.get(), singletonCImpl.currentStudentProvider.get());
+
+          case 16: // com.mbd.cmsstudent.feature.hub.StudentExamsHubViewModel 
+          return (T) new StudentExamsHubViewModel(singletonCImpl.currentStudentProvider.get(), singletonCImpl.bindSessionMarksRepositoryProvider.get(), singletonCImpl.bindDatesheetRepositoryProvider.get());
+
+          case 17: // com.mbd.cmsstudent.feature.hub.StudentMoreViewModel 
+          return (T) new StudentMoreViewModel(singletonCImpl.currentStudentProvider.get(), singletonCImpl.bindCalendarRepositoryProvider.get(), singletonCImpl.bindDocumentRepositoryProvider.get(), singletonCImpl.bindSessionFeeRepositoryProvider.get(), singletonCImpl.bindNotificationRepositoryProvider.get(), singletonCImpl.bindAcademicSessionRepositoryProvider.get());
+
+          default: throw new AssertionError(id);
+        }
+      }
+    }
+  }
+
+  private static final class ActivityRetainedCImpl extends StudentApplication_HiltComponents.ActivityRetainedC {
+    private final SingletonCImpl singletonCImpl;
+
+    private final ActivityRetainedCImpl activityRetainedCImpl = this;
+
+    private Provider<ActivityRetainedLifecycle> provideActivityRetainedLifecycleProvider;
+
+    private ActivityRetainedCImpl(SingletonCImpl singletonCImpl,
+        SavedStateHandleHolder savedStateHandleHolderParam) {
+      this.singletonCImpl = singletonCImpl;
+
+      initialize(savedStateHandleHolderParam);
+
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize(final SavedStateHandleHolder savedStateHandleHolderParam) {
+      this.provideActivityRetainedLifecycleProvider = DoubleCheck.provider(new SwitchingProvider<ActivityRetainedLifecycle>(singletonCImpl, activityRetainedCImpl, 0));
+    }
+
+    @Override
+    public ActivityComponentBuilder activityComponentBuilder() {
+      return new ActivityCBuilder(singletonCImpl, activityRetainedCImpl);
+    }
+
+    @Override
+    public ActivityRetainedLifecycle getActivityRetainedLifecycle() {
+      return provideActivityRetainedLifecycleProvider.get();
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final SingletonCImpl singletonCImpl;
+
+      private final ActivityRetainedCImpl activityRetainedCImpl;
+
+      private final int id;
+
+      SwitchingProvider(SingletonCImpl singletonCImpl, ActivityRetainedCImpl activityRetainedCImpl,
+          int id) {
+        this.singletonCImpl = singletonCImpl;
+        this.activityRetainedCImpl = activityRetainedCImpl;
+        this.id = id;
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public T get() {
+        switch (id) {
+          case 0: // dagger.hilt.android.ActivityRetainedLifecycle 
+          return (T) ActivityRetainedComponentManager_LifecycleModule_ProvideActivityRetainedLifecycleFactory.provideActivityRetainedLifecycle();
+
+          default: throw new AssertionError(id);
+        }
+      }
+    }
+  }
+
+  private static final class ServiceCImpl extends StudentApplication_HiltComponents.ServiceC {
+    private final SingletonCImpl singletonCImpl;
+
+    private final ServiceCImpl serviceCImpl = this;
+
+    private ServiceCImpl(SingletonCImpl singletonCImpl, Service serviceParam) {
+      this.singletonCImpl = singletonCImpl;
+
+
+    }
+  }
+
+  private static final class SingletonCImpl extends StudentApplication_HiltComponents.SingletonC {
+    private final ApplicationContextModule applicationContextModule;
+
+    private final SingletonCImpl singletonCImpl = this;
+
+    private Provider<SupabaseClient> provideSupabaseClientProvider;
+
+    private Provider<Auth> provideAuthProvider;
+
+    private Provider<SessionManager> sessionManagerProvider;
+
+    private Provider<Postgrest> providePostgrestProvider;
+
+    private Provider<CmsDatabase> provideStudentDatabaseProvider;
+
+    private Provider<RoleResolver> roleResolverProvider;
+
+    private Provider<UserRepositoryImpl> userRepositoryImplProvider;
+
+    private Provider<UserRepository> bindUserRepositoryProvider;
+
+    private Provider<RoomSyncCheckpointStore> roomSyncCheckpointStoreProvider;
+
+    private Provider<DepartmentRepositoryImpl> departmentRepositoryImplProvider;
+
+    private Provider<DepartmentRepository> bindDepartmentRepositoryProvider;
+
+    private Provider<CurriculumRepositoryImpl> curriculumRepositoryImplProvider;
+
+    private Provider<CurriculumRepository> bindCurriculumRepositoryProvider;
+
+    private Provider<AcademicSessionRepositoryImpl> academicSessionRepositoryImplProvider;
+
+    private Provider<AcademicSessionRepository> bindAcademicSessionRepositoryProvider;
+
+    private Provider<SessionTimetableRepositoryImpl> sessionTimetableRepositoryImplProvider;
+
+    private Provider<SessionTimetableRepository> bindSessionTimetableRepositoryProvider;
+
+    private Provider<Functions> provideFunctionsProvider;
+
+    private Provider<AdminUserProvisioner> adminUserProvisionerProvider;
+
+    private Provider<TeacherRepositoryImpl> teacherRepositoryImplProvider;
+
+    private Provider<TeacherRepository> bindTeacherRepositoryProvider;
+
+    private Provider<StudentLinkRequestRepositoryImpl> studentLinkRequestRepositoryImplProvider;
+
+    private Provider<StudentLinkRequestRepository> bindStudentLinkRequestRepositoryProvider;
+
+    private Provider<SyncEngine> syncEngineProvider;
+
+    private Provider<SessionAttendanceRepositoryImpl> sessionAttendanceRepositoryImplProvider;
+
+    private Provider<SessionAttendanceRepository> bindSessionAttendanceRepositoryProvider;
+
+    private Provider<SessionMarksRepositoryImpl> sessionMarksRepositoryImplProvider;
+
+    private Provider<SessionMarksRepository> bindSessionMarksRepositoryProvider;
+
+    private Provider<CurrentStudentProvider> currentStudentProvider;
+
+    private Provider<StartupBootstrapTracker> startupBootstrapTrackerProvider;
+
+    private Provider<DatesheetRepositoryLocalImpl> datesheetRepositoryLocalImplProvider;
+
+    private Provider<DatesheetRepository> bindDatesheetRepositoryProvider;
+
+    private Provider<Storage> provideStorageProvider;
+
+    private Provider<DocumentRepositoryImpl> documentRepositoryImplProvider;
+
+    private Provider<DocumentRepository> bindDocumentRepositoryProvider;
+
+    private Provider<CalendarRepositoryLocalImpl> calendarRepositoryLocalImplProvider;
+
+    private Provider<CalendarRepository> bindCalendarRepositoryProvider;
+
+    private Provider<TeacherAssignmentsProvider> teacherAssignmentsProvider;
+
+    private Provider<SessionFeeRepositoryImpl> sessionFeeRepositoryImplProvider;
+
+    private Provider<SessionFeeRepository> bindSessionFeeRepositoryProvider;
+
+    private Provider<DataStore<Preferences>> provideDataStoreProvider;
+
+    private Provider<NotificationRepositoryImpl> notificationRepositoryImplProvider;
+
+    private Provider<NotificationRepository> bindNotificationRepositoryProvider;
+
+    private Provider<FineRepositoryLocalImpl> fineRepositoryLocalImplProvider;
+
+    private Provider<FineRepository> bindFineRepositoryProvider;
+
+    private SingletonCImpl(ApplicationContextModule applicationContextModuleParam) {
+      this.applicationContextModule = applicationContextModuleParam;
+      initialize(applicationContextModuleParam);
+      initialize2(applicationContextModuleParam);
+
+    }
+
+    private UserDao userDao() {
+      return DaoModule_ProvideUserDaoFactory.provideUserDao(provideStudentDatabaseProvider.get());
+    }
+
+    private TeacherDao teacherDao() {
+      return DaoModule_ProvideTeacherDaoFactory.provideTeacherDao(provideStudentDatabaseProvider.get());
+    }
+
+    private DepartmentDao departmentDao() {
+      return DaoModule_ProvideDepartmentDaoFactory.provideDepartmentDao(provideStudentDatabaseProvider.get());
+    }
+
+    private TableSyncStateDao tableSyncStateDao() {
+      return DaoModule_ProvideTableSyncStateDaoFactory.provideTableSyncStateDao(provideStudentDatabaseProvider.get());
+    }
+
+    private SyncCheckpointStore syncCheckpointStore() {
+      return DaoModule_ProvideSyncCheckpointStoreFactory.provideSyncCheckpointStore(roomSyncCheckpointStoreProvider.get());
+    }
+
+    private SemesterSubjectDao semesterSubjectDao() {
+      return DaoModule_ProvideSemesterSubjectDaoFactory.provideSemesterSubjectDao(provideStudentDatabaseProvider.get());
+    }
+
+    private AcademicSessionDao academicSessionDao() {
+      return DaoModule_ProvideAcademicSessionDaoFactory.provideAcademicSessionDao(provideStudentDatabaseProvider.get());
+    }
+
+    private SessionStudentDao sessionStudentDao() {
+      return DaoModule_ProvideSessionStudentDaoFactory.provideSessionStudentDao(provideStudentDatabaseProvider.get());
+    }
+
+    private SessionPeriodDao sessionPeriodDao() {
+      return DaoModule_ProvideSessionPeriodDaoFactory.provideSessionPeriodDao(provideStudentDatabaseProvider.get());
+    }
+
+    private StudentLinkRequestDao studentLinkRequestDao() {
+      return DaoModule_ProvideStudentLinkRequestDaoFactory.provideStudentLinkRequestDao(provideStudentDatabaseProvider.get());
+    }
+
+    private SessionAttendanceDao sessionAttendanceDao() {
+      return DaoModule_ProvideSessionAttendanceDaoFactory.provideSessionAttendanceDao(provideStudentDatabaseProvider.get());
+    }
+
+    private SessionMarkDao sessionMarkDao() {
+      return DaoModule_ProvideSessionMarkDaoFactory.provideSessionMarkDao(provideStudentDatabaseProvider.get());
+    }
+
+    private StudentSemesterGpaDao studentSemesterGpaDao() {
+      return DaoModule_ProvideStudentSemesterGpaDaoFactory.provideStudentSemesterGpaDao(provideStudentDatabaseProvider.get());
+    }
+
+    private SyncStateDao syncStateDao() {
+      return DaoModule_ProvideSyncStateDaoFactory.provideSyncStateDao(provideStudentDatabaseProvider.get());
+    }
+
+    private DatesheetDao datesheetDao() {
+      return DaoModule_ProvideDatesheetDaoFactory.provideDatesheetDao(provideStudentDatabaseProvider.get());
+    }
+
+    private DocumentDao documentDao() {
+      return DaoModule_ProvideDocumentDaoFactory.provideDocumentDao(provideStudentDatabaseProvider.get());
+    }
+
+    private CalendarEventDao calendarEventDao() {
+      return DaoModule_ProvideCalendarEventDaoFactory.provideCalendarEventDao(provideStudentDatabaseProvider.get());
+    }
+
+    private SessionFeeDao sessionFeeDao() {
+      return DaoModule_ProvideSessionFeeDaoFactory.provideSessionFeeDao(provideStudentDatabaseProvider.get());
+    }
+
+    private NotificationDao notificationDao() {
+      return DaoModule_ProvideNotificationDaoFactory.provideNotificationDao(provideStudentDatabaseProvider.get());
+    }
+
+    private FineDao fineDao() {
+      return DaoModule_ProvideFineDaoFactory.provideFineDao(provideStudentDatabaseProvider.get());
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize(final ApplicationContextModule applicationContextModuleParam) {
+      this.provideSupabaseClientProvider = DoubleCheck.provider(new SwitchingProvider<SupabaseClient>(singletonCImpl, 0));
+      this.provideAuthProvider = DoubleCheck.provider(new SwitchingProvider<Auth>(singletonCImpl, 2));
+      this.sessionManagerProvider = DoubleCheck.provider(new SwitchingProvider<SessionManager>(singletonCImpl, 1));
+      this.providePostgrestProvider = DoubleCheck.provider(new SwitchingProvider<Postgrest>(singletonCImpl, 4));
+      this.provideStudentDatabaseProvider = DoubleCheck.provider(new SwitchingProvider<CmsDatabase>(singletonCImpl, 5));
+      this.roleResolverProvider = DoubleCheck.provider(new SwitchingProvider<RoleResolver>(singletonCImpl, 6));
+      this.userRepositoryImplProvider = new SwitchingProvider<>(singletonCImpl, 3);
+      this.bindUserRepositoryProvider = DoubleCheck.provider((Provider) userRepositoryImplProvider);
+      this.roomSyncCheckpointStoreProvider = DoubleCheck.provider(new SwitchingProvider<RoomSyncCheckpointStore>(singletonCImpl, 9));
+      this.departmentRepositoryImplProvider = new SwitchingProvider<>(singletonCImpl, 8);
+      this.bindDepartmentRepositoryProvider = DoubleCheck.provider((Provider) departmentRepositoryImplProvider);
+      this.curriculumRepositoryImplProvider = new SwitchingProvider<>(singletonCImpl, 10);
+      this.bindCurriculumRepositoryProvider = DoubleCheck.provider((Provider) curriculumRepositoryImplProvider);
+      this.academicSessionRepositoryImplProvider = new SwitchingProvider<>(singletonCImpl, 11);
+      this.bindAcademicSessionRepositoryProvider = DoubleCheck.provider((Provider) academicSessionRepositoryImplProvider);
+      this.sessionTimetableRepositoryImplProvider = new SwitchingProvider<>(singletonCImpl, 12);
+      this.bindSessionTimetableRepositoryProvider = DoubleCheck.provider((Provider) sessionTimetableRepositoryImplProvider);
+      this.provideFunctionsProvider = DoubleCheck.provider(new SwitchingProvider<Functions>(singletonCImpl, 15));
+      this.adminUserProvisionerProvider = DoubleCheck.provider(new SwitchingProvider<AdminUserProvisioner>(singletonCImpl, 14));
+      this.teacherRepositoryImplProvider = new SwitchingProvider<>(singletonCImpl, 13);
+      this.bindTeacherRepositoryProvider = DoubleCheck.provider((Provider) teacherRepositoryImplProvider);
+      this.studentLinkRequestRepositoryImplProvider = new SwitchingProvider<>(singletonCImpl, 16);
+      this.bindStudentLinkRequestRepositoryProvider = DoubleCheck.provider((Provider) studentLinkRequestRepositoryImplProvider);
+      this.syncEngineProvider = DoubleCheck.provider(new SwitchingProvider<SyncEngine>(singletonCImpl, 7));
+      this.sessionAttendanceRepositoryImplProvider = new SwitchingProvider<>(singletonCImpl, 18);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initialize2(final ApplicationContextModule applicationContextModuleParam) {
+      this.bindSessionAttendanceRepositoryProvider = DoubleCheck.provider((Provider) sessionAttendanceRepositoryImplProvider);
+      this.sessionMarksRepositoryImplProvider = new SwitchingProvider<>(singletonCImpl, 19);
+      this.bindSessionMarksRepositoryProvider = DoubleCheck.provider((Provider) sessionMarksRepositoryImplProvider);
+      this.currentStudentProvider = DoubleCheck.provider(new SwitchingProvider<CurrentStudentProvider>(singletonCImpl, 17));
+      this.startupBootstrapTrackerProvider = DoubleCheck.provider(new SwitchingProvider<StartupBootstrapTracker>(singletonCImpl, 20));
+      this.datesheetRepositoryLocalImplProvider = new SwitchingProvider<>(singletonCImpl, 21);
+      this.bindDatesheetRepositoryProvider = DoubleCheck.provider((Provider) datesheetRepositoryLocalImplProvider);
+      this.provideStorageProvider = DoubleCheck.provider(new SwitchingProvider<Storage>(singletonCImpl, 23));
+      this.documentRepositoryImplProvider = new SwitchingProvider<>(singletonCImpl, 22);
+      this.bindDocumentRepositoryProvider = DoubleCheck.provider((Provider) documentRepositoryImplProvider);
+      this.calendarRepositoryLocalImplProvider = new SwitchingProvider<>(singletonCImpl, 24);
+      this.bindCalendarRepositoryProvider = DoubleCheck.provider((Provider) calendarRepositoryLocalImplProvider);
+      this.teacherAssignmentsProvider = DoubleCheck.provider(new SwitchingProvider<TeacherAssignmentsProvider>(singletonCImpl, 25));
+      this.sessionFeeRepositoryImplProvider = new SwitchingProvider<>(singletonCImpl, 26);
+      this.bindSessionFeeRepositoryProvider = DoubleCheck.provider((Provider) sessionFeeRepositoryImplProvider);
+      this.provideDataStoreProvider = DoubleCheck.provider(new SwitchingProvider<DataStore<Preferences>>(singletonCImpl, 28));
+      this.notificationRepositoryImplProvider = new SwitchingProvider<>(singletonCImpl, 27);
+      this.bindNotificationRepositoryProvider = DoubleCheck.provider((Provider) notificationRepositoryImplProvider);
+      this.fineRepositoryLocalImplProvider = new SwitchingProvider<>(singletonCImpl, 29);
+      this.bindFineRepositoryProvider = DoubleCheck.provider((Provider) fineRepositoryLocalImplProvider);
+    }
+
+    @Override
+    public SupabaseClient supabaseClient() {
+      return provideSupabaseClientProvider.get();
+    }
+
+    @Override
+    public void injectStudentApplication(StudentApplication studentApplication) {
+    }
+
+    @Override
+    public Set<Boolean> getDisableFragmentGetContextFix() {
+      return Collections.<Boolean>emptySet();
+    }
+
+    @Override
+    public ActivityRetainedComponentBuilder retainedComponentBuilder() {
+      return new ActivityRetainedCBuilder(singletonCImpl);
+    }
+
+    @Override
+    public ServiceComponentBuilder serviceComponentBuilder() {
+      return new ServiceCBuilder(singletonCImpl);
+    }
+
+    private static final class SwitchingProvider<T> implements Provider<T> {
+      private final SingletonCImpl singletonCImpl;
+
+      private final int id;
+
+      SwitchingProvider(SingletonCImpl singletonCImpl, int id) {
+        this.singletonCImpl = singletonCImpl;
+        this.id = id;
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public T get() {
+        switch (id) {
+          case 0: // io.github.jan.supabase.SupabaseClient 
+          return (T) SupabaseModule_ProvideSupabaseClientFactory.provideSupabaseClient();
+
+          case 1: // com.mbd.cmscommon.auth.SessionManager 
+          return (T) new SessionManager(singletonCImpl.provideAuthProvider.get());
+
+          case 2: // io.github.jan.supabase.auth.Auth 
+          return (T) SupabaseModule_ProvideAuthFactory.provideAuth(singletonCImpl.provideSupabaseClientProvider.get());
+
+          case 3: // com.mbd.cmscommon.data.repository.UserRepositoryImpl 
+          return (T) new UserRepositoryImpl(singletonCImpl.providePostgrestProvider.get(), singletonCImpl.userDao(), singletonCImpl.roleResolverProvider.get());
+
+          case 4: // io.github.jan.supabase.postgrest.Postgrest 
+          return (T) SupabaseModule_ProvidePostgrestFactory.providePostgrest(singletonCImpl.provideSupabaseClientProvider.get());
+
+          case 5: // com.mbd.cmscommon.data.local.CmsDatabase 
+          return (T) DatabaseModule_ProvideStudentDatabaseFactory.provideStudentDatabase(ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule));
+
+          case 6: // com.mbd.cmscommon.auth.RoleResolver 
+          return (T) new RoleResolver(singletonCImpl.userDao(), singletonCImpl.teacherDao());
+
+          case 7: // com.mbd.cmscommon.data.sync.SyncEngine 
+          return (T) new SyncEngine(singletonCImpl.bindDepartmentRepositoryProvider.get(), singletonCImpl.bindCurriculumRepositoryProvider.get(), singletonCImpl.bindAcademicSessionRepositoryProvider.get(), singletonCImpl.bindSessionTimetableRepositoryProvider.get(), singletonCImpl.bindTeacherRepositoryProvider.get(), singletonCImpl.bindStudentLinkRequestRepositoryProvider.get());
+
+          case 8: // com.mbd.cmscommon.data.repository.DepartmentRepositoryImpl 
+          return (T) new DepartmentRepositoryImpl(singletonCImpl.providePostgrestProvider.get(), singletonCImpl.departmentDao(), singletonCImpl.syncCheckpointStore(), singletonCImpl.sessionManagerProvider.get());
+
+          case 9: // com.mbd.cmscommon.data.sync.RoomSyncCheckpointStore 
+          return (T) new RoomSyncCheckpointStore(singletonCImpl.tableSyncStateDao());
+
+          case 10: // com.mbd.cmscommon.data.repository.CurriculumRepositoryImpl 
+          return (T) new CurriculumRepositoryImpl(singletonCImpl.providePostgrestProvider.get(), singletonCImpl.semesterSubjectDao(), singletonCImpl.syncCheckpointStore(), singletonCImpl.sessionManagerProvider.get());
+
+          case 11: // com.mbd.cmscommon.data.repository.AcademicSessionRepositoryImpl 
+          return (T) new AcademicSessionRepositoryImpl(singletonCImpl.providePostgrestProvider.get(), singletonCImpl.academicSessionDao(), singletonCImpl.sessionStudentDao(), singletonCImpl.sessionPeriodDao(), singletonCImpl.syncCheckpointStore(), singletonCImpl.sessionManagerProvider.get());
+
+          case 12: // com.mbd.cmscommon.data.repository.SessionTimetableRepositoryImpl 
+          return (T) new SessionTimetableRepositoryImpl(singletonCImpl.providePostgrestProvider.get(), singletonCImpl.sessionPeriodDao(), singletonCImpl.academicSessionDao(), singletonCImpl.syncCheckpointStore(), singletonCImpl.sessionManagerProvider.get());
+
+          case 13: // com.mbd.cmscommon.data.repository.TeacherRepositoryImpl 
+          return (T) new TeacherRepositoryImpl(singletonCImpl.providePostgrestProvider.get(), singletonCImpl.teacherDao(), singletonCImpl.adminUserProvisionerProvider.get(), singletonCImpl.syncCheckpointStore(), singletonCImpl.sessionManagerProvider.get());
+
+          case 14: // com.mbd.cmscommon.auth.AdminUserProvisioner 
+          return (T) new AdminUserProvisioner(singletonCImpl.provideFunctionsProvider.get());
+
+          case 15: // io.github.jan.supabase.functions.Functions 
+          return (T) SupabaseModule_ProvideFunctionsFactory.provideFunctions(singletonCImpl.provideSupabaseClientProvider.get());
+
+          case 16: // com.mbd.cmscommon.data.repository.StudentLinkRequestRepositoryImpl 
+          return (T) new StudentLinkRequestRepositoryImpl(singletonCImpl.providePostgrestProvider.get(), singletonCImpl.studentLinkRequestDao(), singletonCImpl.sessionStudentDao(), singletonCImpl.syncCheckpointStore(), singletonCImpl.sessionManagerProvider.get());
+
+          case 17: // com.mbd.cmsstudent.feature.common.CurrentStudentProvider 
+          return (T) new CurrentStudentProvider(singletonCImpl.bindUserRepositoryProvider.get(), singletonCImpl.bindAcademicSessionRepositoryProvider.get(), singletonCImpl.bindCurriculumRepositoryProvider.get(), singletonCImpl.bindSessionTimetableRepositoryProvider.get(), singletonCImpl.bindSessionAttendanceRepositoryProvider.get(), singletonCImpl.bindSessionMarksRepositoryProvider.get());
+
+          case 18: // com.mbd.cmscommon.data.repository.SessionAttendanceRepositoryImpl 
+          return (T) new SessionAttendanceRepositoryImpl(singletonCImpl.providePostgrestProvider.get(), singletonCImpl.sessionAttendanceDao(), singletonCImpl.academicSessionDao(), singletonCImpl.syncCheckpointStore(), singletonCImpl.sessionManagerProvider.get());
+
+          case 19: // com.mbd.cmscommon.data.repository.SessionMarksRepositoryImpl 
+          return (T) new SessionMarksRepositoryImpl(singletonCImpl.providePostgrestProvider.get(), singletonCImpl.sessionMarkDao(), singletonCImpl.studentSemesterGpaDao(), singletonCImpl.academicSessionDao(), singletonCImpl.syncCheckpointStore(), singletonCImpl.sessionManagerProvider.get());
+
+          case 20: // com.mbd.cmscommon.data.sync.StartupBootstrapTracker 
+          return (T) new StartupBootstrapTracker(singletonCImpl.syncStateDao());
+
+          case 21: // com.mbd.cmscommon.data.repository.DatesheetRepositoryLocalImpl 
+          return (T) new DatesheetRepositoryLocalImpl(singletonCImpl.providePostgrestProvider.get(), singletonCImpl.datesheetDao(), singletonCImpl.syncCheckpointStore(), singletonCImpl.sessionManagerProvider.get());
+
+          case 22: // com.mbd.cmscommon.data.repository.DocumentRepositoryImpl 
+          return (T) new DocumentRepositoryImpl(singletonCImpl.providePostgrestProvider.get(), singletonCImpl.provideStorageProvider.get(), singletonCImpl.documentDao(), singletonCImpl.syncCheckpointStore(), singletonCImpl.sessionManagerProvider.get());
+
+          case 23: // io.github.jan.supabase.storage.Storage 
+          return (T) SupabaseModule_ProvideStorageFactory.provideStorage(singletonCImpl.provideSupabaseClientProvider.get());
+
+          case 24: // com.mbd.cmscommon.data.repository.CalendarRepositoryLocalImpl 
+          return (T) new CalendarRepositoryLocalImpl(singletonCImpl.providePostgrestProvider.get(), singletonCImpl.calendarEventDao(), singletonCImpl.syncCheckpointStore(), singletonCImpl.sessionManagerProvider.get());
+
+          case 25: // com.mbd.cmscommon.teacher.TeacherAssignmentsProvider 
+          return (T) new TeacherAssignmentsProvider(singletonCImpl.sessionManagerProvider.get(), singletonCImpl.bindSessionTimetableRepositoryProvider.get(), singletonCImpl.bindAcademicSessionRepositoryProvider.get(), singletonCImpl.bindDepartmentRepositoryProvider.get());
+
+          case 26: // com.mbd.cmscommon.data.repository.SessionFeeRepositoryImpl 
+          return (T) new SessionFeeRepositoryImpl(singletonCImpl.providePostgrestProvider.get(), singletonCImpl.sessionFeeDao(), singletonCImpl.syncCheckpointStore(), singletonCImpl.sessionManagerProvider.get());
+
+          case 27: // com.mbd.cmscommon.data.repository.NotificationRepositoryImpl 
+          return (T) new NotificationRepositoryImpl(singletonCImpl.providePostgrestProvider.get(), singletonCImpl.notificationDao(), singletonCImpl.provideDataStoreProvider.get(), singletonCImpl.syncCheckpointStore(), singletonCImpl.sessionManagerProvider.get());
+
+          case 28: // androidx.datastore.core.DataStore<androidx.datastore.preferences.core.Preferences> 
+          return (T) DataStoreModule_ProvideDataStoreFactory.provideDataStore(ApplicationContextModule_ProvideContextFactory.provideContext(singletonCImpl.applicationContextModule));
+
+          case 29: // com.mbd.cmscommon.data.repository.FineRepositoryLocalImpl 
+          return (T) new FineRepositoryLocalImpl(singletonCImpl.providePostgrestProvider.get(), singletonCImpl.fineDao(), singletonCImpl.syncCheckpointStore(), singletonCImpl.sessionManagerProvider.get());
+
+          default: throw new AssertionError(id);
+        }
+      }
+    }
+  }
+}

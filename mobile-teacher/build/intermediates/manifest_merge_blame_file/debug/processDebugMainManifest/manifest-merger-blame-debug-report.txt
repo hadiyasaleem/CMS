@@ -1,0 +1,175 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.mbd.cmsteacher"
+4    android:versionCode="1"
+5    android:versionName="1.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="24"
+9        android:targetSdkVersion="36" />
+10
+11    <uses-permission android:name="android.permission.INTERNET" />
+11-->D:\CMS\mobile-teacher\src\main\AndroidManifest.xml:4:5-66
+11-->D:\CMS\mobile-teacher\src\main\AndroidManifest.xml:4:22-64
+12
+13    <permission
+13-->[androidx.core:core:1.18.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\c4baa6944abe8820a1e93906505e956e\transformed\core-1.18.0\AndroidManifest.xml:22:5-24:47
+14        android:name="com.mbd.cmsteacher.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+14-->[androidx.core:core:1.18.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\c4baa6944abe8820a1e93906505e956e\transformed\core-1.18.0\AndroidManifest.xml:23:9-81
+15        android:protectionLevel="signature" />
+15-->[androidx.core:core:1.18.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\c4baa6944abe8820a1e93906505e956e\transformed\core-1.18.0\AndroidManifest.xml:24:9-44
+16
+17    <uses-permission android:name="com.mbd.cmsteacher.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+17-->[androidx.core:core:1.18.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\c4baa6944abe8820a1e93906505e956e\transformed\core-1.18.0\AndroidManifest.xml:26:5-97
+17-->[androidx.core:core:1.18.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\c4baa6944abe8820a1e93906505e956e\transformed\core-1.18.0\AndroidManifest.xml:26:22-94
+18
+19    <application
+19-->D:\CMS\mobile-teacher\src\main\AndroidManifest.xml:5:5-31:19
+20        android:name="com.mbd.cmsteacher.TeacherApplication"
+20-->D:\CMS\mobile-teacher\src\main\AndroidManifest.xml:6:9-43
+21        android:allowBackup="true"
+21-->D:\CMS\mobile-teacher\src\main\AndroidManifest.xml:7:9-35
+22        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+22-->[androidx.core:core:1.18.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\c4baa6944abe8820a1e93906505e956e\transformed\core-1.18.0\AndroidManifest.xml:28:18-86
+23        android:debuggable="true"
+24        android:extractNativeLibs="false"
+25        android:icon="@mipmap/ic_launcher"
+25-->D:\CMS\mobile-teacher\src\main\AndroidManifest.xml:8:9-43
+26        android:label="@string/app_name"
+26-->D:\CMS\mobile-teacher\src\main\AndroidManifest.xml:9:9-41
+27        android:roundIcon="@mipmap/ic_launcher_round"
+27-->D:\CMS\mobile-teacher\src\main\AndroidManifest.xml:10:9-54
+28        android:supportsRtl="true"
+28-->D:\CMS\mobile-teacher\src\main\AndroidManifest.xml:11:9-35
+29        android:testOnly="true"
+30        android:theme="@style/Theme.CMS" >
+30-->D:\CMS\mobile-teacher\src\main\AndroidManifest.xml:12:9-41
+31        <activity
+31-->D:\CMS\mobile-teacher\src\main\AndroidManifest.xml:13:9-20:20
+32            android:name="com.mbd.cmsteacher.MainActivity"
+32-->D:\CMS\mobile-teacher\src\main\AndroidManifest.xml:14:13-41
+33            android:exported="true" >
+33-->D:\CMS\mobile-teacher\src\main\AndroidManifest.xml:15:13-36
+34            <intent-filter>
+34-->D:\CMS\mobile-teacher\src\main\AndroidManifest.xml:16:13-19:29
+35                <action android:name="android.intent.action.MAIN" />
+35-->D:\CMS\mobile-teacher\src\main\AndroidManifest.xml:17:17-69
+35-->D:\CMS\mobile-teacher\src\main\AndroidManifest.xml:17:25-66
+36
+37                <category android:name="android.intent.category.LAUNCHER" />
+37-->D:\CMS\mobile-teacher\src\main\AndroidManifest.xml:18:17-77
+37-->D:\CMS\mobile-teacher\src\main\AndroidManifest.xml:18:27-74
+38            </intent-filter>
+39        </activity>
+40
+41        <provider
+42            android:name="androidx.core.content.FileProvider"
+42-->D:\CMS\mobile-teacher\src\main\AndroidManifest.xml:23:13-62
+43            android:authorities="com.mbd.cmsteacher.fileprovider"
+43-->D:\CMS\mobile-teacher\src\main\AndroidManifest.xml:24:13-64
+44            android:exported="false"
+44-->D:\CMS\mobile-teacher\src\main\AndroidManifest.xml:25:13-37
+45            android:grantUriPermissions="true" >
+45-->D:\CMS\mobile-teacher\src\main\AndroidManifest.xml:26:13-47
+46            <meta-data
+46-->D:\CMS\mobile-teacher\src\main\AndroidManifest.xml:27:13-29:54
+47                android:name="android.support.FILE_PROVIDER_PATHS"
+47-->D:\CMS\mobile-teacher\src\main\AndroidManifest.xml:28:17-67
+48                android:resource="@xml/file_paths" />
+48-->D:\CMS\mobile-teacher\src\main\AndroidManifest.xml:29:17-51
+49        </provider>
+50        <provider
+50-->[io.github.jan-tennert.supabase:storage-kt-android-debug:3.1.4] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\7f88e7b6b0900c066f87952d010aeabe\transformed\storage-kt-debug\AndroidManifest.xml:9:9-17:20
+51            android:name="androidx.startup.InitializationProvider"
+51-->[io.github.jan-tennert.supabase:storage-kt-android-debug:3.1.4] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\7f88e7b6b0900c066f87952d010aeabe\transformed\storage-kt-debug\AndroidManifest.xml:10:13-67
+52            android:authorities="com.mbd.cmsteacher.androidx-startup"
+52-->[io.github.jan-tennert.supabase:storage-kt-android-debug:3.1.4] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\7f88e7b6b0900c066f87952d010aeabe\transformed\storage-kt-debug\AndroidManifest.xml:11:13-68
+53            android:exported="false" >
+53-->[io.github.jan-tennert.supabase:storage-kt-android-debug:3.1.4] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\7f88e7b6b0900c066f87952d010aeabe\transformed\storage-kt-debug\AndroidManifest.xml:12:13-37
+54            <meta-data
+54-->[io.github.jan-tennert.supabase:storage-kt-android-debug:3.1.4] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\7f88e7b6b0900c066f87952d010aeabe\transformed\storage-kt-debug\AndroidManifest.xml:14:13-16:52
+55                android:name="io.github.jan.supabase.storage.SupabaseInitializer"
+55-->[io.github.jan-tennert.supabase:storage-kt-android-debug:3.1.4] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\7f88e7b6b0900c066f87952d010aeabe\transformed\storage-kt-debug\AndroidManifest.xml:15:17-82
+56                android:value="androidx.startup" />
+56-->[io.github.jan-tennert.supabase:storage-kt-android-debug:3.1.4] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\7f88e7b6b0900c066f87952d010aeabe\transformed\storage-kt-debug\AndroidManifest.xml:16:17-49
+57            <meta-data
+57-->[io.github.jan-tennert.supabase:auth-kt-android-debug:3.1.4] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\3aaa19c3de9d55b20dc8f2c421589d77\transformed\auth-kt-debug\AndroidManifest.xml:14:13-16:52
+58                android:name="io.github.jan.supabase.auth.SupabaseInitializer"
+58-->[io.github.jan-tennert.supabase:auth-kt-android-debug:3.1.4] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\3aaa19c3de9d55b20dc8f2c421589d77\transformed\auth-kt-debug\AndroidManifest.xml:15:17-79
+59                android:value="androidx.startup" />
+59-->[io.github.jan-tennert.supabase:auth-kt-android-debug:3.1.4] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\3aaa19c3de9d55b20dc8f2c421589d77\transformed\auth-kt-debug\AndroidManifest.xml:16:17-49
+60            <meta-data
+60-->[androidx.emoji2:emoji2:1.4.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\dc3715c606fe56fbc65898517282c801\transformed\emoji2-1.4.0\AndroidManifest.xml:29:13-31:52
+61                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+61-->[androidx.emoji2:emoji2:1.4.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\dc3715c606fe56fbc65898517282c801\transformed\emoji2-1.4.0\AndroidManifest.xml:30:17-75
+62                android:value="androidx.startup" />
+62-->[androidx.emoji2:emoji2:1.4.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\dc3715c606fe56fbc65898517282c801\transformed\emoji2-1.4.0\AndroidManifest.xml:31:17-49
+63            <meta-data
+63-->[androidx.lifecycle:lifecycle-process:2.9.4] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\d5f67dc119d56b86d7f8637ef723c083\transformed\lifecycle-process-2.9.4\AndroidManifest.xml:29:13-31:52
+64                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+64-->[androidx.lifecycle:lifecycle-process:2.9.4] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\d5f67dc119d56b86d7f8637ef723c083\transformed\lifecycle-process-2.9.4\AndroidManifest.xml:30:17-78
+65                android:value="androidx.startup" />
+65-->[androidx.lifecycle:lifecycle-process:2.9.4] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\d5f67dc119d56b86d7f8637ef723c083\transformed\lifecycle-process-2.9.4\AndroidManifest.xml:31:17-49
+66            <meta-data
+66-->[com.russhwolf:multiplatform-settings-no-arg-android-debug:1.3.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\ecb6046b8f372e284d909e0447a50462\transformed\multiplatform-settings-no-arg-debug\AndroidManifest.xml:29:13-31:52
+67                android:name="com.russhwolf.settings.SettingsInitializer"
+67-->[com.russhwolf:multiplatform-settings-no-arg-android-debug:1.3.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\ecb6046b8f372e284d909e0447a50462\transformed\multiplatform-settings-no-arg-debug\AndroidManifest.xml:30:17-74
+68                android:value="androidx.startup" />
+68-->[com.russhwolf:multiplatform-settings-no-arg-android-debug:1.3.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\ecb6046b8f372e284d909e0447a50462\transformed\multiplatform-settings-no-arg-debug\AndroidManifest.xml:31:17-49
+69            <meta-data
+69-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\90b7770169bee9c64b63f1a301281fcb\transformed\profileinstaller-1.4.0\AndroidManifest.xml:29:13-31:52
+70                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+70-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\90b7770169bee9c64b63f1a301281fcb\transformed\profileinstaller-1.4.0\AndroidManifest.xml:30:17-85
+71                android:value="androidx.startup" />
+71-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\90b7770169bee9c64b63f1a301281fcb\transformed\profileinstaller-1.4.0\AndroidManifest.xml:31:17-49
+72        </provider>
+73
+74        <service
+74-->[androidx.room:room-runtime:2.6.1] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\d43472c8e421a18d91cbce11cb2b913a\transformed\room-runtime-2.6.1\AndroidManifest.xml:24:9-28:63
+75            android:name="androidx.room.MultiInstanceInvalidationService"
+75-->[androidx.room:room-runtime:2.6.1] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\d43472c8e421a18d91cbce11cb2b913a\transformed\room-runtime-2.6.1\AndroidManifest.xml:25:13-74
+76            android:directBootAware="true"
+76-->[androidx.room:room-runtime:2.6.1] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\d43472c8e421a18d91cbce11cb2b913a\transformed\room-runtime-2.6.1\AndroidManifest.xml:26:13-43
+77            android:exported="false" />
+77-->[androidx.room:room-runtime:2.6.1] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\d43472c8e421a18d91cbce11cb2b913a\transformed\room-runtime-2.6.1\AndroidManifest.xml:27:13-37
+78
+79        <receiver
+79-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\90b7770169bee9c64b63f1a301281fcb\transformed\profileinstaller-1.4.0\AndroidManifest.xml:34:9-52:20
+80            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+80-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\90b7770169bee9c64b63f1a301281fcb\transformed\profileinstaller-1.4.0\AndroidManifest.xml:35:13-76
+81            android:directBootAware="false"
+81-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\90b7770169bee9c64b63f1a301281fcb\transformed\profileinstaller-1.4.0\AndroidManifest.xml:36:13-44
+82            android:enabled="true"
+82-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\90b7770169bee9c64b63f1a301281fcb\transformed\profileinstaller-1.4.0\AndroidManifest.xml:37:13-35
+83            android:exported="true"
+83-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\90b7770169bee9c64b63f1a301281fcb\transformed\profileinstaller-1.4.0\AndroidManifest.xml:38:13-36
+84            android:permission="android.permission.DUMP" >
+84-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\90b7770169bee9c64b63f1a301281fcb\transformed\profileinstaller-1.4.0\AndroidManifest.xml:39:13-57
+85            <intent-filter>
+85-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\90b7770169bee9c64b63f1a301281fcb\transformed\profileinstaller-1.4.0\AndroidManifest.xml:40:13-42:29
+86                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+86-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\90b7770169bee9c64b63f1a301281fcb\transformed\profileinstaller-1.4.0\AndroidManifest.xml:41:17-91
+86-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\90b7770169bee9c64b63f1a301281fcb\transformed\profileinstaller-1.4.0\AndroidManifest.xml:41:25-88
+87            </intent-filter>
+88            <intent-filter>
+88-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\90b7770169bee9c64b63f1a301281fcb\transformed\profileinstaller-1.4.0\AndroidManifest.xml:43:13-45:29
+89                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+89-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\90b7770169bee9c64b63f1a301281fcb\transformed\profileinstaller-1.4.0\AndroidManifest.xml:44:17-85
+89-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\90b7770169bee9c64b63f1a301281fcb\transformed\profileinstaller-1.4.0\AndroidManifest.xml:44:25-82
+90            </intent-filter>
+91            <intent-filter>
+91-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\90b7770169bee9c64b63f1a301281fcb\transformed\profileinstaller-1.4.0\AndroidManifest.xml:46:13-48:29
+92                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+92-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\90b7770169bee9c64b63f1a301281fcb\transformed\profileinstaller-1.4.0\AndroidManifest.xml:47:17-88
+92-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\90b7770169bee9c64b63f1a301281fcb\transformed\profileinstaller-1.4.0\AndroidManifest.xml:47:25-85
+93            </intent-filter>
+94            <intent-filter>
+94-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\90b7770169bee9c64b63f1a301281fcb\transformed\profileinstaller-1.4.0\AndroidManifest.xml:49:13-51:29
+95                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+95-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\90b7770169bee9c64b63f1a301281fcb\transformed\profileinstaller-1.4.0\AndroidManifest.xml:50:17-95
+95-->[androidx.profileinstaller:profileinstaller:1.4.0] C:\Users\mujah_fc6wupv\.gradle\caches\8.13\transforms\90b7770169bee9c64b63f1a301281fcb\transformed\profileinstaller-1.4.0\AndroidManifest.xml:50:25-92
+96            </intent-filter>
+97        </receiver>
+98    </application>
+99
+100</manifest>
