@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    res/values/dimens.xml
+    Spacing & size tokens for "The Academic Ledger"
+    Mapped from the Tailwind scale used in the HTML design
+-->
+<resources>
+
+    <!-- ── Spacing scale (mirrors Tailwind rem steps) ──────────────────── -->
+    <dimen name="space_2">2dp</dimen>
+    <dimen name="space_4">4dp</dimen>
+    <dimen name="space_6">6dp</dimen>
+    <dimen name="space_8">8dp</dimen>
+    <dimen name="space_12">12dp</dimen>
+    <dimen name="space_16">16dp</dimen>
+    <dimen name="space_20">20dp</dimen>
+    <dimen name="space_24">24dp</dimen>
+    <dimen name="space_28">28dp</dimen>
+    <dimen name="space_32">32dp</dimen>
+    <dimen name="space_40">40dp</dimen>
+    <dimen name="space_48">48dp</dimen>
+    <dimen name="space_64">64dp</dimen>
+    <dimen name="space_80">80dp</dimen>
+    <dimen name="space_100">100dp</dimen>
+    <dimen name="space_120">120dp</dimen>
+
+    <!-- ── Institutional Seal ─────────────────────────────────────────── -->
+    <dimen name="seal_size">140dp</dimen>           <!-- w-32 md:w-40 → 140dp on phone -->
+    <dimen name="seal_size_large">160dp</dimen>     <!-- md:w-40 on tablet -->
+    <dimen name="seal_icon_size">72dp</dimen>
+    <dimen name="seal_elevation">8dp</dimen>
+
+    <!-- ── Top Bar ────────────────────────────────────────────────────── -->
+    <dimen name="topbar_padding_horizontal">24dp</dimen>
+    <dimen name="topbar_padding_top">48dp</dimen>   <!-- clears status bar -->
+    <dimen name="topbar_padding_bottom">16dp</dimen>
+    <dimen name="topbar_logo_icon_size">22dp</dimen>
+    <dimen name="topbar_logo_text_size">16sp</dimen>
+    <dimen name="topbar_version_text_size">9sp</dimen>
+    <dimen name="topbar_live_dot_size">8dp</dimen>
+
+    <!-- ── College Name (Headline) ────────────────────────────────────── -->
+    <dimen name="headline_text_size">30sp</dimen>
+    <dimen name="headline_margin_horizontal">32dp</dimen>
+
+    <!-- ── Eyebrow / Chip label ───────────────────────────────────────── -->
+    <dimen name="eyebrow_text_size">11sp</dimen>
+    <dimen name="chip_padding_horizontal">16dp</dimen>
+    <dimen name="chip_padding_vertical">8dp</dimen>
+    <dimen name="chip_corner_radius">24dp</dimen>   <!-- "rounded-full" = 0.75rem → pill -->
+
+    <!-- ── Tagline row ────────────────────────────────────────────────── -->
+    <dimen name="tagline_text_size">14sp</dimen>
+    <dimen name="tagline_divider_height">1dp</dimen>
+    <dimen name="tagline_margin_horizontal">48dp</dimen>
+
+    <!-- ── Login Button ───────────────────────────────────────────────── -->
+    <dimen name="btn_height">56dp</dimen>
+    <dimen name="btn_text_size">15sp</dimen>
+    <dimen name="btn_corner_radius">6dp</dimen>
+    <dimen name="btn_margin_horizontal">32dp</dimen>
+    <dimen name="btn_elevation">4dp</dimen>
+
+    <!-- ── "Request Access" link ──────────────────────────────────────── -->
+    <dimen name="link_text_size">13sp</dimen>
+    <dimen name="link_underline_height">2dp</dimen>
+
+    <!-- ── Progress bar ───────────────────────────────────────────────── -->
+    <dimen name="progress_width">160dp</dimen>
+    <dimen name="progress_height">2dp</dimen>
+
+    <!-- ── Status label ───────────────────────────────────────────────── -->
+    <dimen name="status_text_size">9sp</dimen>
+
+    <!-- ── Footer ─────────────────────────────────────────────────────── -->
+    <dimen name="footer_padding_horizontal">28dp</dimen>
+    <dimen name="footer_padding_bottom">32dp</dimen>
+    <dimen name="footer_icon_size">20dp</dimen>
+    <dimen name="footer_text_size">9sp</dimen>
+
+    <!-- ── Border radius tokens (from Tailwind config) ───────────────── -->
+    <dimen name="radius_default">2dp</dimen>        <!-- DEFAULT -->
+    <dimen name="radius_lg">4dp</dimen>             <!-- lg -->
+    <dimen name="radius_xl">8dp</dimen>             <!-- xl -->
+    <dimen name="radius_full">12dp</dimen>          <!-- full (approx pill) -->
+
+    <!-- ── Decorative accents ─────────────────────────────────────────── -->
+    <dimen name="accent_corner_radius">80dp</dimen> <!-- rounded-bl-[100%] approximation -->
+
+</resources>

@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    item_sessional_mark.xml
+    A single student row in the sessional mark entry RecyclerView.
+    Matches the HTML table row:
+      [avatar | name + roll] | [ET attendance] | [ET assignments] | [ET quizzes] | [total / 50]
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingTop="14dp"
+    android:paddingBottom="14dp"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp">
+
+    <!-- ── Student info (avatar + name + roll) ──────────────────────── -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="2.2"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/iv_student_avatar"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_teacher_placeholder"
+            app:civ_border_width="1dp"
+            app:civ_border_color="@color/outline_variant"
+            android:layout_marginEnd="12dp" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_student_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Student Name"
+                android:textSize="14sp"
+                android:fontFamily="@font/newsreader_bold"
+                android:textColor="@color/primary"
+                android:layout_marginBottom="2dp" />
+
+            <TextView
+                android:id="@+id/tv_student_roll"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Roll: 0000"
+                android:textSize="10sp"
+                android:fontFamily="@font/public_sans_semibold"
+                android:textColor="@color/outline"
+                android:textAllCaps="true"
+                android:letterSpacing="0.1" />
+
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- ── Attendance (max 10) ───────────────────────────────────────── -->
+    <EditText
+        android:id="@+id/et_attendance"
+        android:layout_width="0dp"
+        android:layout_height="44dp"
+        android:layout_weight="1"
+        android:layout_marginStart="6dp"
+        android:layout_marginEnd="6dp"
+        android:inputType="number"
+        android:maxLength="2"
+        android:hint="–"
+        android:gravity="center"
+        android:textSize="14sp"
+        android:fontFamily="@font/public_sans"
+        android:textColor="@color/primary"
+        android:background="@drawable/bg_mark_input"
+        android:paddingTop="0dp"
+        android:paddingBottom="0dp" />
+
+    <!-- ── Assignments (max 20) ──────────────────────────────────────── -->
+    <EditText
+        android:id="@+id/et_assignments"
+        android:layout_width="0dp"
+        android:layout_height="44dp"
+        android:layout_weight="1"
+        android:layout_marginStart="6dp"
+        android:layout_marginEnd="6dp"
+        android:inputType="number"
+        android:maxLength="2"
+        android:hint="–"
+        android:gravity="center"
+        android:textSize="14sp"
+        android:fontFamily="@font/public_sans"
+        android:textColor="@color/primary"
+        android:background="@drawable/bg_mark_input"
+        android:paddingTop="0dp"
+        android:paddingBottom="0dp" />
+
+    <!-- ── Quizzes (max 20) ──────────────────────────────────────────── -->
+    <EditText
+        android:id="@+id/et_quizzes"
+        android:layout_width="0dp"
+        android:layout_height="44dp"
+        android:layout_weight="1"
+        android:layout_marginStart="6dp"
+        android:layout_marginEnd="6dp"
+        android:inputType="number"
+        android:maxLength="2"
+        android:hint="–"
+        android:gravity="center"
+        android:textSize="14sp"
+        android:fontFamily="@font/public_sans"
+        android:textColor="@color/primary"
+        android:background="@drawable/bg_mark_input"
+        android:paddingTop="0dp"
+        android:paddingBottom="0dp" />
+
+    <!-- ── Total / 50 ────────────────────────────────────────────────── -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:gravity="end|center_vertical"
+        android:layout_marginStart="6dp">
+
+        <TextView
+            android:id="@+id/tv_total"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0"
+            android:textSize="18sp"
+            android:fontFamily="@font/newsreader_bold"
+            android:textColor="@color/primary" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="/ 50"
+            android:textSize="10sp"
+            android:fontFamily="@font/public_sans_semibold"
+            android:textColor="@color/outline_variant"
+            android:layout_marginStart="3dp" />
+
+    </LinearLayout>
+
+</LinearLayout>

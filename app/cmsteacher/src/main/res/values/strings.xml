@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">CMS Teacher</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <!-- MenuFragment — Institutional Resources row labels -->
+    <string name="menu_faculty_directory">Faculty Directory</string>
+    <string name="menu_departmental_news">Departmental News</string>
+    <string name="menu_resource_library">Resource Library</string>
+    <string name="menu_college_handbook">College Handbook</string>
+</resources>
