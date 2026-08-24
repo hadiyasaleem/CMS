@@ -183,6 +183,17 @@ data class SessionFeeStructure(
     val totalAmount: Double get() = heads.sumOf { it.amount }
 }
 
+data class AttendanceTally(
+    val rollNumber: String,
+    val present: Int,
+    val absent: Int,
+    val leave: Int,
+    val courseCode: String = "",
+) {
+    val total: Int get() = present + absent + leave
+    val percentage: Float get() = if (total == 0) 0f else (present * 100f) / total
+}
+
 data class SubjectExamScore(
     val courseCode: String,
     val examType: ExamType,
