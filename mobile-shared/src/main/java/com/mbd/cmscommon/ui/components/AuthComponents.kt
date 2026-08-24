@@ -1,5 +1,7 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.ui.theme.CmsTextStyles
+import com.mbd.cmscommon.ui.theme.CmsTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column

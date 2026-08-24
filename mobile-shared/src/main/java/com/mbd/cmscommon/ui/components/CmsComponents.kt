@@ -1,5 +1,7 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.ui.theme.CmsTextStyles
+import com.mbd.cmscommon.ui.theme.CmsTheme
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas

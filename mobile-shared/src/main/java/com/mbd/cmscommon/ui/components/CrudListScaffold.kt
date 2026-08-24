@@ -37,7 +37,7 @@ fun <T> CrudListScaffold(
         containerColor = MaterialTheme.colorScheme.background,
         floatingActionButton = {
             if (onAdd != null) {
-                CmsFab(onAdd, label = addLabel ?: "Add")
+                CmsFab(onAdd, contentDescription = addLabel ?: "Add")
             }
         },
     ) { padding ->
