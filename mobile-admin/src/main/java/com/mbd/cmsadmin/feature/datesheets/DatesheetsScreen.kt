@@ -70,7 +70,7 @@ fun DatesheetsScreen(viewModel: DatesheetsViewModel = hiltViewModel()) {
     val actionMessage by controller.actionMessage.collectAsState()
 
     DatesheetWorkspace(
-        sheets = sheets,
+        datesheets = sheets.orEmpty(),
         slots = slots,
         loadingSlots = loadingSlots,
         sessions = sessions,

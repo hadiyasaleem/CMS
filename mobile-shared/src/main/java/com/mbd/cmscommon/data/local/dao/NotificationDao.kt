@@ -17,8 +17,8 @@ interface NotificationDao {
         SELECT * FROM notifications
         WHERE isDeleted = 0
           AND (targetRole = :role OR targetRole = 'ALL')
-          AND (includeAllScopes = 1 OR targetOfferingId IS NULL OR targetOfferingId = :sessionId)
-          AND (includeAllScopes = 1 OR targetDeptId IS NULL OR targetDeptId = :departmentId)
+          AND (:includeAllScopes = 1 OR targetOfferingId IS NULL OR targetOfferingId = :sessionId)
+          AND (:includeAllScopes = 1 OR targetDeptId IS NULL OR targetDeptId = :departmentId)
           AND (expiresAt IS NULL OR expiresAt >= :nowMillis)
         ORDER BY createdAt DESC
         """,
@@ -36,8 +36,8 @@ interface NotificationDao {
         SELECT COUNT(*) FROM notifications
         WHERE isDeleted = 0
           AND (targetRole = :role OR targetRole = 'ALL')
-          AND (includeAllScopes = 1 OR targetOfferingId IS NULL OR targetOfferingId = :sessionId)
-          AND (includeAllScopes = 1 OR targetDeptId IS NULL OR targetDeptId = :departmentId)
+          AND (:includeAllScopes = 1 OR targetOfferingId IS NULL OR targetOfferingId = :sessionId)
+          AND (:includeAllScopes = 1 OR targetDeptId IS NULL OR targetDeptId = :departmentId)
           AND (expiresAt IS NULL OR expiresAt >= :nowMillis)
           AND createdAt >= :sinceMillis
         """,

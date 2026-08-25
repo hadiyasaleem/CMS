@@ -26,6 +26,8 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
@@ -66,7 +68,7 @@ class SessionMarksRepositoryImpl @Inject constructor(
         )
     }
 
-    private fun gpaLocalId(dto: SemesterGpaDto): String = dto.id ?: "${dto.sessionId}_${dto.rollNumber}_${dto.semester}"
+    private fun gpaLocalId(dto: SemesterGpaDto): String = "${dto.sessionId}_${dto.rollNumber}_${dto.semester}"
 
     private fun SemesterGpaDto.toEntity(): StudentSemesterGpaEntity = StudentSemesterGpaEntity(
         id = gpaLocalId(this),
@@ -229,7 +231,7 @@ class SessionMarksRepositoryImpl @Inject constructor(
             termLabel?.trim()?.takeIf { it.isNotBlank() }?.let { put("p_term_label", it) }
             classPosition?.let { put("p_class_position", it) }
             remarks?.trim()?.takeIf { it.isNotBlank() }?.let { put("p_remarks", it) }
-            putJsonArray("p_supply") { supplyCourses.forEach { add(it) } }
+            putJsonArray("p_supply") { supplyCourses.forEach { add(JsonPrimitive(it)) } }
         }
         postgrest.rpc(SupabaseTables.RPC_RECORD_SEMESTER_RESULT, params)
         syncGpaForStudent(sessionId, rollNumber)

@@ -15,14 +15,13 @@ class LoginViewModel @Inject constructor(
 
     override val wrongRoleMessage = "This account is not an Admin account"
 
-    override fun isAccepted(role: UserRole?) = role is UserRole.Admin
+    override fun isAccepted(role: UserRole) = role is UserRole.Admin
 
-    // First-run bootstrap: after a fresh Firestore, the single designated admin has no
-    // users/{email} doc yet and the rules forbid self-promotion for anyone else. The one
-    // whitelisted admin email (mirrored in firestore.rules) provisions its own ADMIN doc here,
-    // once, then re-resolves.
-    override suspend fun afterRoleResolved(accountKey: String, role: UserRole?): UserRole? {
-        if (role == null && accountKey == ADMIN_BOOTSTRAP_EMAIL) {
+    // First-run bootstrap: the single designated admin has no user record yet, and the
+    // backend rules forbid self-promotion for anyone else. The one whitelisted admin email
+    // provisions its own ADMIN record here, once, then re-resolves.
+    override suspend fun afterRoleResolved(accountKey: String, role: UserRole): UserRole {
+        if (accountKey == ADMIN_BOOTSTRAP_EMAIL && role !is UserRole.Admin) {
             userRepository.provisionAdmin(accountKey)
             return userRepository.resolveRole(accountKey)
         }

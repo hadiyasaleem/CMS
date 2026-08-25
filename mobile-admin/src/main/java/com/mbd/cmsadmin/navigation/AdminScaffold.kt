@@ -44,7 +44,7 @@ fun AdminScaffold(onSignedOut: () -> Unit) {
                 onBack = { if (!navController.popBackStack()) activity?.finish() },
                 onRefresh = refreshVm::refresh,
                 isRefreshing = refreshing,
-                onBell = {
+                onNotifications = {
                     navController.navigate(AdminLeaf.NOTIFICATIONS) { launchSingleTop = true }
                 },
                 notificationCount = unreadCount,

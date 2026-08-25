@@ -32,9 +32,9 @@ object DepartmentMapper {
         archivedAt = entity.archivedAt?.let { Instant.ofEpochMilli(it) },
         entityId = entity.entityId,
         createdAt = Instant.ofEpochMilli(entity.createdAt),
-        createdBy = entity.createdBy,
+        createdBy = entity.createdBy ?: "",
         updatedAt = Instant.ofEpochMilli(entity.updatedAt),
-        updatedBy = entity.updatedBy,
+        updatedBy = entity.updatedBy ?: "",
     )
 
     fun domainToEntity(domain: Department): DepartmentEntity = DepartmentEntity(

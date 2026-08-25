@@ -51,7 +51,7 @@ object NotificationMapper {
         notificationId = domain.notificationId,
         title = domain.title,
         body = domain.body,
-        targetRole = domain.targetRole?.name,
+        targetRole = domain.targetRole?.name ?: "",
         targetOfferingId = domain.targetOfferingId,
         createdByUid = domain.createdByUid,
         priority = domain.priority.name,

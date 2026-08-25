@@ -17,6 +17,7 @@ import com.mbd.cmscommon.domain.model.SemesterTerm
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.query.Order
+import io.github.jan.supabase.postgrest.query.filter.FilterOperator
 import java.time.Instant
 import java.time.LocalDate
 import javax.inject.Inject
@@ -89,7 +90,7 @@ class CurriculumRepositoryImpl @Inject constructor(
                 filter {
                     eq("session_id", sessionId)
                     eq("semester", semester)
-                    notIn("course_code", keepCodes)
+                    filterNot("course_code", FilterOperator.IN, "(${keepCodes.joinToString(",")})")
                 }
             }
         }

@@ -50,7 +50,7 @@ fun CalendarScreen(viewModel: CalendarViewModel = hiltViewModel()) {
     val actionMessage by viewModel.controller.actionMessage.collectAsState()
 
     CalendarWorkspace(
-        events = events,
+        events = events.orEmpty(),
         viewer = CalendarViewerContext(CalendarViewerRole.ADMIN),
         departments = departments,
         sessions = sessions,

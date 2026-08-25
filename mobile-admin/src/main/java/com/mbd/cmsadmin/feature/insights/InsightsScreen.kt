@@ -47,9 +47,9 @@ fun InsightsScreen(refreshVersion: Int = 0, viewModel: InsightsViewModel = hiltV
     }
 
     InsightsWorkspace(
-        overviews = overviews,
-        atRisk = atRisk,
-        examStats = examStats,
+        overviews = overviews.orEmpty(),
+        atRisk = atRisk.orEmpty(),
+        examStats = examStats.orEmpty(),
         sessions = sessions,
         departments = departments,
         viewer = InsightsViewer.ADMIN,

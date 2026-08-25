@@ -1,8 +1,13 @@
 package com.mbd.cmsadmin.feature.academics
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -13,6 +18,7 @@ import com.mbd.cmscommon.domain.model.StudentProfile
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.FineRepository
 import com.mbd.cmscommon.ui.components.StudentProfileWorkspace
+import com.mbd.cmscommon.util.Outcome
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -52,11 +58,19 @@ fun StudentProfileScreen(viewModel: StudentProfileViewModel = hiltViewModel()) {
     val fines by viewModel.fines.collectAsState()
     val errorMessage by viewModel.error.collectAsState()
 
+    val loadedProfile = profile
+    if (loadedProfile == null) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
     StudentProfileWorkspace(
-        loadedProfile = profile,
+        loadedProfile = loadedProfile,
         session = session,
         fines = fines,
-        saveState = saveState,
+        saveOutcome = saveState ?: Outcome.Success(Unit),
         errorMessage = errorMessage,
         onSave = viewModel::save,
         onIssueFine = viewModel::issueFine,

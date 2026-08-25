@@ -19,6 +19,15 @@ interface AcademicSessionDao {
     @Query("SELECT * FROM academic_sessions WHERE sessionId = :id LIMIT 1")
     suspend fun getById(id: String): AcademicSessionEntity?
 
+    @Query("SELECT * FROM academic_sessions WHERE deptId = :deptId AND isDeleted = 0")
+    fun observeSessionsForDept(deptId: String): Flow<List<AcademicSessionEntity>>
+
+    @Query("SELECT * FROM academic_sessions WHERE isDeleted = 0")
+    fun observeAllSessions(): Flow<List<AcademicSessionEntity>>
+
+    @Query("SELECT * FROM academic_sessions WHERE sessionId = :sessionId LIMIT 1")
+    fun observeSession(sessionId: String): Flow<AcademicSessionEntity?>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(session: AcademicSessionEntity)
 
@@ -45,6 +54,12 @@ interface AcademicSessionDao {
 
 @Dao
 interface SemesterSubjectDao {
+    @Query("SELECT * FROM semester_subjects WHERE sessionId = :sessionId AND semester = :semester AND isDeleted = 0")
+    fun observeSemesterSubjects(sessionId: String, semester: Int): Flow<List<SemesterSubjectEntity>>
+
+    @Query("SELECT * FROM semester_subjects WHERE sessionId = :sessionId AND isDeleted = 0")
+    fun observeSessionSubjects(sessionId: String): Flow<List<SemesterSubjectEntity>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(items: List<SemesterSubjectEntity>)
 
@@ -67,6 +82,12 @@ interface SemesterSubjectDao {
 interface SessionStudentDao {
     @Query("SELECT COUNT(*) FROM session_students WHERE sessionId = :sessionId AND isDeleted = 0")
     suspend fun countForSession(sessionId: String): Int
+
+    @Query("SELECT * FROM session_students WHERE sessionId = :sessionId AND isDeleted = 0")
+    fun observeForSession(sessionId: String): Flow<List<SessionStudentEntity>>
+
+    @Query("SELECT COUNT(*) FROM session_students WHERE isDeleted = 0")
+    fun observeTotalCount(): Flow<Int>
 
     @Query("SELECT * FROM session_students WHERE sessionId = :sessionId AND rollNumber = :rollNumber LIMIT 1")
     suspend fun findByRoll(sessionId: String, rollNumber: String): SessionStudentEntity?

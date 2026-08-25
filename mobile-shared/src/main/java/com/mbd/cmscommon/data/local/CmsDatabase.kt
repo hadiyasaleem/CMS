@@ -1,8 +1,6 @@
 package com.mbd.cmscommon.data.local
 
-import androidx.room.Database
 import androidx.room.RoomDatabase
-import androidx.room.TypeConverters
 import com.mbd.cmscommon.data.local.dao.AcademicSessionDao
 import com.mbd.cmscommon.data.local.dao.AdministratorAccountDao
 import com.mbd.cmscommon.data.local.dao.CalendarEventDao
@@ -26,70 +24,9 @@ import com.mbd.cmscommon.data.local.dao.SyncStateDao
 import com.mbd.cmscommon.data.local.dao.TableSyncStateDao
 import com.mbd.cmscommon.data.local.dao.TeacherDao
 import com.mbd.cmscommon.data.local.dao.UserDao
-import com.mbd.cmscommon.data.local.entity.AcademicSessionEntity
-import com.mbd.cmscommon.data.local.entity.AdministratorAccountEntity
-import com.mbd.cmscommon.data.local.entity.CalendarEventEntity
-import com.mbd.cmscommon.data.local.entity.DatesheetEntity
-import com.mbd.cmscommon.data.local.entity.DatesheetSlotEntity
-import com.mbd.cmscommon.data.local.entity.DepartmentEntity
-import com.mbd.cmscommon.data.local.entity.DocumentEntity
-import com.mbd.cmscommon.data.local.entity.ExamPaperSubmissionEntity
-import com.mbd.cmscommon.data.local.entity.FineEntity
-import com.mbd.cmscommon.data.local.entity.InsightAtRiskStudentEntity
-import com.mbd.cmscommon.data.local.entity.InsightExamStatEntity
-import com.mbd.cmscommon.data.local.entity.InsightSessionOverviewEntity
-import com.mbd.cmscommon.data.local.entity.MarkEditRequestEntity
-import com.mbd.cmscommon.data.local.entity.NotificationEntity
-import com.mbd.cmscommon.data.local.entity.SemesterSubjectEntity
-import com.mbd.cmscommon.data.local.entity.SessionAttendanceRowEntity
-import com.mbd.cmscommon.data.local.entity.SessionAttendanceTallyEntity
-import com.mbd.cmscommon.data.local.entity.SessionFeeEntity
-import com.mbd.cmscommon.data.local.entity.SessionFeeHeadEntity
-import com.mbd.cmscommon.data.local.entity.SessionMarkEntity
-import com.mbd.cmscommon.data.local.entity.SessionPeriodEntity
-import com.mbd.cmscommon.data.local.entity.SessionStudentEntity
-import com.mbd.cmscommon.data.local.entity.StudentLinkRequestEntity
-import com.mbd.cmscommon.data.local.entity.StudentSemesterGpaEntity
-import com.mbd.cmscommon.data.local.entity.SyncStateEntity
-import com.mbd.cmscommon.data.local.entity.TableSyncStateEntity
-import com.mbd.cmscommon.data.local.entity.TeacherEntity
-import com.mbd.cmscommon.data.local.entity.UserEntity
 
-@Database(
-    entities = [
-        DepartmentEntity::class,
-        AdministratorAccountEntity::class,
-        TeacherEntity::class,
-        UserEntity::class,
-        StudentLinkRequestEntity::class,
-        DocumentEntity::class,
-        ExamPaperSubmissionEntity::class,
-        NotificationEntity::class,
-        FineEntity::class,
-        CalendarEventEntity::class,
-        MarkEditRequestEntity::class,
-        InsightSessionOverviewEntity::class,
-        InsightAtRiskStudentEntity::class,
-        InsightExamStatEntity::class,
-        DatesheetEntity::class,
-        DatesheetSlotEntity::class,
-        SyncStateEntity::class,
-        TableSyncStateEntity::class,
-        AcademicSessionEntity::class,
-        SemesterSubjectEntity::class,
-        SessionStudentEntity::class,
-        SessionPeriodEntity::class,
-        SessionAttendanceRowEntity::class,
-        SessionAttendanceTallyEntity::class,
-        SessionMarkEntity::class,
-        StudentSemesterGpaEntity::class,
-        SessionFeeEntity::class,
-        SessionFeeHeadEntity::class,
-    ],
-    version = 30,
-    exportSchema = true,
-)
-@TypeConverters(Converters::class)
+const val CMS_DATABASE_VERSION = 30
+
 abstract class CmsDatabase : RoomDatabase() {
     abstract fun departmentDao(): DepartmentDao
     abstract fun administratorAccountDao(): AdministratorAccountDao

@@ -74,6 +74,6 @@ fun MarkEditRequestsScreen(
         onReject = controller::reject,
         onConsumeNotice = controller::consumeNotice,
         onClearError = controller::clearError,
-        onRetry = controller::refresh,
+        onRefresh = controller::refresh,
     )
 }
