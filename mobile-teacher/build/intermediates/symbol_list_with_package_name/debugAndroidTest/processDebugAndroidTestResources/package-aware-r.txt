@@ -1,3 +1,0 @@
-com.mbd.cmsteacher.test
-style WhiteBackgroundDialogTheme
-style WhiteBackgroundTheme

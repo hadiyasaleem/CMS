@@ -1,3 +1,0 @@
-com.mbd.cmsstudent.test
-style WhiteBackgroundDialogTheme
-style WhiteBackgroundTheme

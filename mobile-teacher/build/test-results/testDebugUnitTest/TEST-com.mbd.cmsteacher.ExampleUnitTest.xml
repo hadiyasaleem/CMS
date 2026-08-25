@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.mbd.cmsteacher.ExampleUnitTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-08-11T19:29:31.993Z" hostname="LENOVO-T460" time="0.014">
-  <properties/>
-  <testcase name="addition_isCorrect" classname="com.mbd.cmsteacher.ExampleUnitTest" time="0.014"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>
