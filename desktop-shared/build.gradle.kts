@@ -23,5 +23,11 @@ dependencies {
     api(libs.dagger)
     ksp(libs.dagger.compiler)
 
+    api(libs.datastore.preferences)
+    api(libs.multiplatform.settings)
+    api(libs.multiplatform.settings.no.arg)
+
+    api(libs.pdfbox)
+
     testImplementation(libs.junit)
 }

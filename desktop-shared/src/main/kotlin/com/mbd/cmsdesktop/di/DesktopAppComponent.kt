@@ -1,7 +1,5 @@
 package com.mbd.cmsdesktop.di
 
-import com.mbd.cmscommon.auth.AdminUserProvisioner
-import com.mbd.cmscommon.auth.RoleResolver
 import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.sync.AdminDataBootstrapper
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
@@ -23,8 +21,10 @@ import com.mbd.cmscommon.domain.repository.SessionTimetableRepository
 import com.mbd.cmscommon.domain.repository.StudentLinkRequestRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
 import com.mbd.cmscommon.domain.repository.UserRepository
-import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider
+import com.mbd.cmsdesktop.auth.DesktopRoleResolver
+import com.mbd.cmsdesktop.data.cache.DesktopBootstrapSnapshotStore
 import dagger.Component
+import io.github.jan.supabase.auth.Auth
 import javax.inject.Singleton
 
 /**
@@ -34,35 +34,34 @@ import javax.inject.Singleton
  * `hiltViewModel()` equivalent on desktop — see the "manual navigation" pattern in [[cmsdesktop-project]]).
  */
 @Singleton
-@Component(modules = [SupabaseModule::class, RepositoryModule::class])
+@Component(modules = [SupabaseModule::class, RepositoryModule::class, PreferencesModule::class])
 interface DesktopAppComponent {
 
-    fun sessionManager(): SessionManager
-    fun roleResolver(): RoleResolver
-    fun adminUserProvisioner(): AdminUserProvisioner
-    fun teacherAssignmentsProvider(): TeacherAssignmentsProvider
     fun adminDataBootstrapper(): AdminDataBootstrapper
-    fun bootstrapSnapshotStore(): BootstrapSnapshotStore
+    fun bootstrapSnapshotStore(): DesktopBootstrapSnapshotStore
+    fun auth(): Auth
+    fun sessionManager(): SessionManager
+    fun roleResolver(): DesktopRoleResolver
 
+    fun datesheetRepository(): DatesheetRepository
     fun userRepository(): UserRepository
-    fun departmentRepository(): DepartmentRepository
     fun administratorRepository(): AdministratorRepository
+    fun notificationRepository(): NotificationRepository
+    fun insightsRepository(): InsightsRepository
+    fun documentRepository(): DocumentRepository
+    fun examPaperRepository(): ExamPaperSubmissionRepository
     fun teacherRepository(): TeacherRepository
+    fun departmentRepository(): DepartmentRepository
+    fun markEditRequestRepository(): MarkEditRequestRepository
+    fun calendarRepository(): CalendarRepository
     fun academicSessionRepository(): AcademicSessionRepository
     fun curriculumRepository(): CurriculumRepository
+    fun sessionFeeRepository(): SessionFeeRepository
+    fun sessionTimetableRepository(): SessionTimetableRepository
+    fun studentLinkRequestRepository(): StudentLinkRequestRepository
     fun sessionAttendanceRepository(): SessionAttendanceRepository
     fun sessionMarksRepository(): SessionMarksRepository
-    fun sessionTimetableRepository(): SessionTimetableRepository
-    fun sessionFeeRepository(): SessionFeeRepository
     fun fineRepository(): FineRepository
-    fun datesheetRepository(): DatesheetRepository
-    fun calendarRepository(): CalendarRepository
-    fun documentRepository(): DocumentRepository
-    fun examPaperSubmissionRepository(): ExamPaperSubmissionRepository
-    fun markEditRequestRepository(): MarkEditRequestRepository
-    fun notificationRepository(): NotificationRepository
-    fun studentLinkRequestRepository(): StudentLinkRequestRepository
-    fun insightsRepository(): InsightsRepository
 
     companion object {
         fun create(): DesktopAppComponent = DaggerDesktopAppComponent.create()

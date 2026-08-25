@@ -15,9 +15,8 @@ import com.mbd.cmscommon.domain.model.UserRole
 import com.mbd.cmscommon.ui.theme.CmsApp
 import com.mbd.cmscommon.ui.theme.CmsTheme
 import com.mbd.cmsdesktop.di.DesktopAppComponent
-import com.mbd.cmsdesktop.ui.login.LoginScreen
+import com.mbd.cmsdesktop.ui.student.StudentAuthScreen
 import com.mbd.cmsdesktop.ui.student.StudentNavHost
-import com.mbd.cmsdesktop.ui.student.UnlinkedStudentScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -75,26 +74,14 @@ fun main() = application {
             if (!authChecked || !minDurationElapsed || roleRefreshInProgress) {
                 StudentSplashScreen(statusText = "VERIFYING SECURE SESSION")
             } else if (currentRole == null) {
-                LoginScreen(
+                StudentAuthScreen(
                     sessionManager = component.sessionManager(),
-                    roleResolver = component.roleResolver(),
                     userRepository = component.userRepository(),
-                    portalEyebrow = "Student Portal",
-                    screenTitle = "Student login",
-                    brandDescription = "Student console - attendance, marks, results, timetable & fee challans.",
-                    systemLabel = "GGC-MBD - STUDENT PORTAL",
-                    emailLabel = "Email Address",
-                    emailPlaceholder = "student@ggcmbd.edu.pk",
-                    footerText = "New here? Sign in with a college email to get started; link requests are handled on the mobile app.",
-                    isAccepted = { it is UserRole.LinkedStudent || it is UserRole.UnlinkedStudent },
-                    wrongRoleMessage = "This account is not a Student account",
+                    roleResolver = component.roleResolver(),
                     onResolved = { resolved -> role = resolved },
                 )
-            } else if (currentRole is UserRole.LinkedStudent) {
-                StudentNavHost(currentRole, component, window, ::signOut)
             } else {
-                // Desktop scope deliberately excludes the link-request flow (mobile-only) — see [[cmsdesktop-project]].
-                UnlinkedStudentScreen(onSignOut = ::signOut)
+                StudentNavHost(currentRole, component, window, ::signOut) { resolved -> role = resolved }
             }
         }
     }

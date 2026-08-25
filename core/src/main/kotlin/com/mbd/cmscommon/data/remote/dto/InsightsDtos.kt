@@ -4,10 +4,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class SessionOverviewDto(
-    val sessionId: String? = null,
-    val deptId: String? = null,
-    val shift: String? = null,
-    val currentSemester: Int = 0,
+    val sessionId: String = "",
+    val deptId: String = "",
+    val shift: String = "MORNING",
+    val currentSemester: Int = 1,
     val students: Long = 0L,
     val avgCgpa: Double? = null,
     val avgAttendance: Double? = null,
@@ -15,19 +15,19 @@ data class SessionOverviewDto(
 
 @Serializable
 data class AtRiskStudentDto(
-    val sessionId: String? = null,
-    val rollNumber: String? = null,
-    val name: String? = null,
+    val sessionId: String = "",
+    val rollNumber: String = "",
+    val name: String = "",
     val cgpa: Double? = null,
     val attendance: Double? = null,
 )
 
 @Serializable
 data class ExamStatDto(
-    val sessionId: String? = null,
-    val semester: Int = 0,
-    val courseCode: String? = null,
-    val examType: String? = null,
+    val sessionId: String = "",
+    val semester: Int = 1,
+    val courseCode: String = "",
+    val examType: String = "MIDTERM",
     val entered: Long = 0L,
     val avgScore: Double? = null,
     val minScore: Int? = null,

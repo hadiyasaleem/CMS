@@ -14,6 +14,7 @@ dependencies {
     api(platform(libs.supabase.bom))
     api(libs.supabase.auth)
     api(libs.supabase.functions)
+    api(libs.supabase.postgrest)
     api(libs.ktor.client.cio)
 
     api(libs.javax.inject)

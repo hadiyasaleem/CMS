@@ -12,11 +12,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Assessment
-import androidx.compose.material.icons.filled.Dashboard
-import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.filled.MoreHoriz
-import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.Badge
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -24,393 +23,401 @@ import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.unit.dp
-import com.mbd.cmscommon.controller.AdministratorsController
-import com.mbd.cmscommon.controller.DashboardController
-import com.mbd.cmscommon.controller.DepartmentsActionController
-import com.mbd.cmscommon.controller.LinkRequestsController
-import com.mbd.cmscommon.controller.MarkEditRequestsController
-import com.mbd.cmscommon.controller.MasterTimetableController
-import com.mbd.cmscommon.controller.MoreHubController
-import com.mbd.cmscommon.controller.PeopleHubController
-import com.mbd.cmscommon.controller.RecordsHubController
-import com.mbd.cmscommon.controller.departmentPortfolioStats
+import com.mbd.cmscommon.controller.NotificationPublisherKind
+import com.mbd.cmscommon.controller.NotificationsController
+import com.mbd.cmscommon.domain.model.CalendarViewerContext
+import com.mbd.cmscommon.domain.model.CalendarViewerRole
+import com.mbd.cmscommon.domain.model.DatesheetViewerContext
+import com.mbd.cmscommon.domain.model.DatesheetViewerRole
+import com.mbd.cmscommon.domain.model.DocumentViewerContext
+import com.mbd.cmscommon.domain.model.DocumentViewerRole
+import com.mbd.cmscommon.domain.model.NotificationTargetRole
 import com.mbd.cmscommon.domain.model.UserRole
-import com.mbd.cmscommon.ui.components.AdminDashboardContent
-import com.mbd.cmscommon.ui.components.AdministratorDirectoryWorkspace
-import com.mbd.cmscommon.ui.components.AdministratorProfileWorkspace
-import com.mbd.cmscommon.ui.components.DashboardActionUi
-import com.mbd.cmscommon.ui.components.DepartmentPortfolio
-import com.mbd.cmscommon.ui.components.LinkRequestReviewWorkspace
-import com.mbd.cmscommon.ui.components.MarkEditRequestReviewWorkspace
-import com.mbd.cmscommon.ui.components.MasterTimetableWorkspace
+import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider
+import com.mbd.cmscommon.ui.components.InsightsViewer
 import com.mbd.cmscommon.ui.components.MoreDestination
-import com.mbd.cmscommon.ui.components.MoreHubWorkspace
 import com.mbd.cmscommon.ui.components.NotificationControllerWorkspace
 import com.mbd.cmscommon.ui.components.PeopleDestination
-import com.mbd.cmscommon.ui.components.PeopleHubWorkspace
 import com.mbd.cmscommon.ui.components.RecordsDestination
-import com.mbd.cmscommon.ui.components.RecordsHubWorkspace
 import com.mbd.cmscommon.ui.theme.CmsTheme
 import com.mbd.cmsdesktop.di.DesktopAppComponent
-import java.awt.Window
+import com.mbd.cmsdesktop.ui.parity.desktopBackHandler
+import com.mbd.cmsdesktop.ui.shared.DatesheetsScreen
+import com.mbd.cmsdesktop.ui.shared.DocumentsScreen
+import com.mbd.cmsdesktop.ui.shared.InsightsScreen
+import com.mbd.cmsdesktop.ui.shared.NotificationsScreen
 import kotlinx.coroutines.launch
 
-private enum class AdminTab(val label: String, val icon: ImageVector) {
-    Dashboard("Dashboard", Icons.Filled.Dashboard),
-    Academics("Academics", Icons.Filled.School),
-    People("People", Icons.Filled.Groups),
-    Records("Records", Icons.Filled.Assessment),
-    More("More", Icons.Filled.MoreHoriz),
-}
-
-private sealed interface AdminLeaf {
-    data object Administrators : AdminLeaf
-    data object LinkRequests : AdminLeaf
-    data object MarkEditRequests : AdminLeaf
-    data object MasterTimetable : AdminLeaf
-    data object Notifications : AdminLeaf
-    data object Profile : AdminLeaf
-}
-
 /**
- * Top-level shell for the admin desktop app: a [NavigationRail] over the 5 mobile-parity tabs
- * (see `AdminTab` in mobile-admin) + a handful of directly-reachable leaves. Deep drill-downs
- * (department -> session -> semester -> student profile chain, attendance records, session fees)
- * are not yet ported to desktop — Academics here is department list + CRUD only.
+ * Root shell for the admin desktop app: a [NavigationRail] of the 5 [AdminTab]s, each rooted
+ * at an [AdminScreen], plus a manually-kept backstack for the drill-down chain
+ * (department -> session -> semester/timetable/fees -> student profile). There is no Compose
+ * Navigation dependency here, matching the rest of this codebase's manual-controller-construction
+ * pattern - the decompiled original kept the same hand-rolled `SnapshotStateList<AdminScreen>`.
  */
 @Composable
-fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: Window, onSignOut: () -> Unit) {
+fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: ComposeWindow, onSignOut: () -> Unit) {
     val scope = rememberCoroutineScope()
-    var tab by remember { mutableStateOf(AdminTab.Dashboard) }
-    var leaf by remember { mutableStateOf<AdminLeaf?>(null) }
+    val refreshScope = rememberCoroutineScope()
     val accountKey = component.sessionManager().accountKey.orEmpty()
 
-    Row(Modifier.fillMaxSize()) {
+    var selectedTab by remember { mutableStateOf(AdminTab.Dashboard) }
+    val backStack = remember { mutableStateListOf<AdminScreen>(AdminTab.Dashboard.root) }
+    val screen by remember { derivedStateOf { backStack.last() } }
+
+    var shellRefreshing by remember { mutableStateOf(false) }
+    var refreshVersion by remember { mutableStateOf(0) }
+
+    val notificationRepository = remember(component) { component.notificationRepository() }
+    val unreadCount by remember(notificationRepository) {
+        notificationRepository.observeUnreadCount(NotificationTargetRole.ADMIN)
+    }.collectAsState(initial = 0)
+
+    LaunchedEffect(notificationRepository, role) {
+        notificationRepository.sync(NotificationTargetRole.ADMIN)
+    }
+
+    fun push(destination: AdminScreen) {
+        backStack.add(destination)
+    }
+
+    fun popOrSwitchTab(tab: AdminTab) {
+        selectedTab = tab
+        backStack.clear()
+        backStack.add(tab.root)
+    }
+
+    fun refreshShell() {
+        refreshScope.launch {
+            shellRefreshing = true
+            try {
+                component.adminDataBootstrapper().refreshAll()
+                refreshVersion++
+            } finally {
+                shellRefreshing = false
+            }
+        }
+    }
+
+    val teacherAssignmentsProvider = remember(component) {
+        TeacherAssignmentsProvider(component.sessionManager(), component.sessionTimetableRepository(), component.academicSessionRepository(), component.departmentRepository())
+    }
+
+    Row(
+        Modifier.fillMaxSize().desktopBackHandler(enabled = backStack.size > 1) { backStack.removeAt(backStack.lastIndex) },
+    ) {
         NavigationRail(containerColor = CmsTheme.colors.ink, contentColor = CmsTheme.colors.onInk) {
             Spacer(Modifier.height(16.dp))
-            AdminTab.entries.forEach { t ->
+            AdminTab.entries.forEach { tab ->
                 NavigationRailItem(
-                    selected = leaf == null && tab == t,
-                    onClick = { tab = t; leaf = null },
-                    icon = { Icon(t.icon, contentDescription = t.label) },
-                    label = { Text(t.label) },
+                    selected = selectedTab == tab && backStack.size == 1,
+                    onClick = { popOrSwitchTab(tab) },
+                    icon = {
+                        if (tab == AdminTab.More && unreadCount > 0) {
+                            BadgedBox(badge = { Badge { Text(unreadCount.coerceAtMost(99).toString()) } }) {
+                                Icon(tab.icon, contentDescription = tab.label)
+                            }
+                        } else {
+                            Icon(tab.icon, contentDescription = tab.label)
+                        }
+                    },
+                    label = { Text(tab.label) },
                 )
             }
         }
-        Box(Modifier.weight(1f).fillMaxHeight().padding(24.dp)) {
-            val currentLeaf = leaf
-            if (currentLeaf != null) {
-                Column(Modifier.fillMaxSize()) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = { leaf = null }) {
+
+        Column(Modifier.weight(1f).fillMaxHeight()) {
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (backStack.size > 1) {
+                        IconButton(onClick = { backStack.removeAt(backStack.lastIndex) }) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         }
-                        Text(leafTitle(currentLeaf), style = MaterialTheme.typography.titleLarge)
                     }
-                    Spacer(Modifier.height(16.dp))
-                    when (currentLeaf) {
-                        AdminLeaf.Administrators -> {
-                            val controller = remember(component) {
-                                AdministratorsController(component.administratorRepository(), accountKey, scope)
-                            }
-                            val administrators by controller.administrators.collectAsState()
-                            val loading by controller.loading.collectAsState()
-                            val creating by controller.creating.collectAsState()
-                            val createdEmail by controller.createdEmail.collectAsState()
-                            AdministratorDirectoryWorkspace(
-                                administrators = administrators,
-                                currentAccountKey = controller.currentAccountKey,
-                                loading = loading,
-                                creating = creating,
-                                createdEmail = createdEmail,
-                                errorMessage = null,
-                                onRefresh = controller::refresh,
-                                onCreate = controller::create,
-                                onConsumeCreated = controller::consumeCreated,
-                                onClearError = {},
-                            )
-                        }
-                        AdminLeaf.LinkRequests -> {
-                            val controller = remember(component) {
-                                LinkRequestsController(
-                                    repository = component.studentLinkRequestRepository(),
-                                    sessionRepository = component.academicSessionRepository(),
-                                    departmentRepository = component.departmentRepository(),
-                                    reviewerId = accountKey,
-                                    scope = scope,
-                                )
-                            }
-                            val requests by controller.requests.collectAsState()
-                            val sessions by controller.sessions.collectAsState()
-                            val departments by controller.departments.collectAsState()
-                            val verifications by controller.verifications.collectAsState()
-                            val access by controller.access.collectAsState()
-                            val loading by controller.loading.collectAsState()
-                            val busyRequestId by controller.busyRequestId.collectAsState()
-                            val rowErrors by controller.rowErrors.collectAsState()
-                            val notice by controller.notice.collectAsState()
-                            LinkRequestReviewWorkspace(
-                                requests = requests,
-                                sessions = sessions,
-                                departments = departments,
-                                verifications = verifications,
-                                access = access,
-                                loading = loading,
-                                busyRequestId = busyRequestId,
-                                rowErrors = rowErrors,
-                                notice = notice,
-                                errorMessage = null,
-                                onRefresh = controller::refresh,
-                                onApprove = controller::approve,
-                                onReject = controller::reject,
-                                onConsumeNotice = controller::consumeNotice,
-                                onClearError = {},
-                            )
-                        }
-                        AdminLeaf.MarkEditRequests -> {
-                            val controller = remember(component) {
-                                MarkEditRequestsController(
-                                    component.markEditRequestRepository(),
-                                    component.academicSessionRepository(),
-                                    component.curriculumRepository(),
-                                    component.departmentRepository(),
-                                    component.teacherRepository(),
-                                    accountKey,
-                                    scope,
-                                )
-                            }
-                            val requests by controller.requests.collectAsState()
-                            val details by controller.details.collectAsState()
-                            val sessions by controller.sessions.collectAsState()
-                            val departments by controller.departments.collectAsState()
-                            val teachers by controller.teachers.collectAsState()
-                            val loading by controller.loading.collectAsState()
-                            val busyRequestId by controller.busyRequestId.collectAsState()
-                            val rowErrors by controller.rowErrors.collectAsState()
-                            val notice by controller.notice.collectAsState()
-                            MarkEditRequestReviewWorkspace(
-                                requests = requests,
-                                details = details,
-                                sessions = sessions,
-                                departments = departments,
-                                teachers = teachers,
-                                loading = loading,
-                                busyRequestId = busyRequestId,
-                                rowErrors = rowErrors,
-                                notice = notice,
-                                errorMessage = null,
-                                onApprove = controller::approve,
-                                onReject = controller::reject,
-                                onRefresh = controller::refresh,
-                                onConsumeNotice = controller::consumeNotice,
-                                onClearError = {},
-                            )
-                        }
-                        AdminLeaf.MasterTimetable -> {
-                            val controller = remember(component) {
-                                MasterTimetableController(
-                                    component.departmentRepository(),
-                                    component.academicSessionRepository(),
-                                    component.sessionTimetableRepository(),
-                                    scope,
-                                )
-                            }
-                            val day by controller.day.collectAsState()
-                            val shift by controller.shift.collectAsState()
-                            val departments by controller.departments.collectAsState()
-                            val sessions by controller.sessions.collectAsState()
-                            val periods by controller.periods.collectAsState()
-                            val loading by controller.loading.collectAsState()
-                            val refreshError by controller.refreshError.collectAsState()
-                            MasterTimetableWorkspace(
-                                day = day,
-                                shift = shift,
-                                departments = departments,
-                                sessions = sessions,
-                                periods = periods,
-                                loading = loading,
-                                errorMessage = refreshError,
-                                onDayChange = controller::selectDay,
-                                onShiftChange = controller::selectShift,
-                                onRetry = controller::refresh,
-                                onOpenSession = {},
-                            )
-                        }
-                        AdminLeaf.Notifications -> {
-                            val controller = remember(component) {
-                                com.mbd.cmscommon.controller.NotificationsController(
-                                    repository = component.notificationRepository(),
-                                    viewerRole = com.mbd.cmscommon.domain.model.NotificationTargetRole.ADMIN,
-                                    accountKey = accountKey,
-                                    sessionRepository = component.academicSessionRepository(),
-                                    departmentRepository = component.departmentRepository(),
-                                    publisherKind = com.mbd.cmscommon.controller.NotificationPublisherKind.ADMIN,
-                                    scope = scope,
-                                )
-                            }
-                            NotificationControllerWorkspace(controller = controller)
-                        }
-                        AdminLeaf.Profile -> {
-                            val controller = remember(component) {
-                                AdministratorsController(component.administratorRepository(), accountKey, scope)
-                            }
-                            val administrators by controller.administrators.collectAsState()
-                            val account = administrators.find { it.email == accountKey }
-                            AdministratorProfileWorkspace(
-                                accountKey = accountKey,
-                                account = account,
-                                directory = null,
-                                loading = false,
-                                errorMessage = null,
-                                actionMessage = null,
-                                onRetry = controller::refresh,
-                                onResetPassword = { scope.launch { runCatching { component.sessionManager().sendPasswordReset(accountKey) } } },
-                                onSignOut = onSignOut,
-                            )
-                        }
+                    Text(screenTitle(screen), style = MaterialTheme.typography.titleLarge)
+                }
+                if (shellRefreshing) {
+                    CircularProgressIndicator(Modifier.height(24.dp).padding(end = 8.dp))
+                } else {
+                    IconButton(onClick = ::refreshShell) {
+                        Icon(Icons.Filled.Refresh, contentDescription = "Refresh")
                     }
                 }
-            } else {
-                when (tab) {
-                    AdminTab.Dashboard -> {
+            }
+
+            Box(Modifier.weight(1f).fillMaxWidth().padding(horizontal = 24.dp)) {
+                when (val current = screen) {
+                    AdminScreen.Dashboard -> DashboardScreen(
+                        departmentRepository = component.departmentRepository(),
+                        teacherRepository = component.teacherRepository(),
+                        sessionRepository = component.academicSessionRepository(),
+                        linkRequestRepository = component.studentLinkRequestRepository(),
+                        onOpenAcademics = { popOrSwitchTab(AdminTab.Academics) },
+                        onOpenTeachers = { push(AdminScreen.Teachers) },
+                        onOpenCalendar = { push(AdminScreen.Calendar) },
+                        onOpenInsights = { push(AdminScreen.Insights) },
+                        onOpenLinkRequests = { push(AdminScreen.LinkRequests) },
+                        onOpenMasterTimetable = { push(AdminScreen.MasterTimetable) },
+                        onOpenNotifications = { push(AdminScreen.Notifications) },
+                    )
+
+                    AdminScreen.Academics -> DepartmentsScreen(
+                        repository = component.departmentRepository(),
+                        sessionRepository = component.academicSessionRepository(),
+                        teacherRepository = component.teacherRepository(),
+                        createdBy = accountKey,
+                        onOpenDepartment = { deptId -> push(AdminScreen.DeptDetail(deptId)) },
+                    )
+
+                    AdminScreen.PeopleHub -> PeopleHubScreen(
+                        administratorRepository = component.administratorRepository(),
+                        teacherRepository = component.teacherRepository(),
+                        sessionRepository = component.academicSessionRepository(),
+                        linkRequestRepository = component.studentLinkRequestRepository(),
+                        markEditRequestRepository = component.markEditRequestRepository(),
+                        onOpen = { destination ->
+                            when (destination) {
+                                PeopleDestination.ADMINISTRATORS -> push(AdminScreen.Administrators)
+                                PeopleDestination.TEACHERS -> push(AdminScreen.Teachers)
+                                PeopleDestination.STUDENTS -> popOrSwitchTab(AdminTab.Academics)
+                                PeopleDestination.LINK_REQUESTS -> push(AdminScreen.LinkRequests)
+                                PeopleDestination.MARK_EDIT_REQUESTS -> push(AdminScreen.MarkEditRequests)
+                            }
+                        },
+                    )
+
+                    AdminScreen.RecordsHub -> RecordsHubScreen(
+                        sessionRepository = component.academicSessionRepository(),
+                        calendarRepository = component.calendarRepository(),
+                        datesheetRepository = component.datesheetRepository(),
+                        documentRepository = component.documentRepository(),
+                        insightsRepository = component.insightsRepository(),
+                        onOpen = { destination ->
+                            when (destination) {
+                                RecordsDestination.ATTENDANCE -> push(AdminScreen.AttendanceRecords)
+                                RecordsDestination.CALENDAR -> push(AdminScreen.Calendar)
+                                RecordsDestination.DATESHEETS -> push(AdminScreen.Datesheets)
+                                RecordsDestination.DOCUMENTS -> push(AdminScreen.Documents)
+                                RecordsDestination.TIMETABLE -> push(AdminScreen.MasterTimetable)
+                                RecordsDestination.FEES -> {}
+                                RecordsDestination.INSIGHTS -> push(AdminScreen.Insights)
+                            }
+                        },
+                    )
+
+                    AdminScreen.MoreHub -> MoreHubScreen(
+                        sessionManager = component.sessionManager(),
+                        administratorRepository = component.administratorRepository(),
+                        notificationRepository = component.notificationRepository(),
+                        onOpen = { destination ->
+                            when (destination) {
+                                MoreDestination.NOTIFICATIONS -> push(AdminScreen.Notifications)
+                                MoreDestination.PROFILE -> push(AdminScreen.Profile)
+                            }
+                        },
+                    )
+
+                    AdminScreen.Administrators -> AdministratorsScreen(
+                        repository = component.administratorRepository(),
+                        currentAccountKey = accountKey,
+                    )
+
+                    AdminScreen.Teachers -> TeachersScreen(
+                        repository = component.teacherRepository(),
+                        departmentRepository = component.departmentRepository(),
+                        createdBy = accountKey,
+                        assignmentsProvider = teacherAssignmentsProvider,
+                    )
+
+                    AdminScreen.LinkRequests -> LinkRequestsScreen(
+                        repository = component.studentLinkRequestRepository(),
+                        sessionRepository = component.academicSessionRepository(),
+                        departmentRepository = component.departmentRepository(),
+                        reviewedBy = accountKey,
+                    )
+
+                    AdminScreen.MarkEditRequests -> MarkEditRequestsScreen(
+                        repository = component.markEditRequestRepository(),
+                        sessionRepository = component.academicSessionRepository(),
+                        curriculumRepository = component.curriculumRepository(),
+                        departmentRepository = component.departmentRepository(),
+                        teacherRepository = component.teacherRepository(),
+                        reviewedBy = accountKey,
+                    )
+
+                    AdminScreen.AttendanceRecords -> AttendanceRecordsScreen(
+                        departmentRepository = component.departmentRepository(),
+                        sessionRepository = component.academicSessionRepository(),
+                        attendanceRepository = component.sessionAttendanceRepository(),
+                        curriculumRepository = component.curriculumRepository(),
+                        window = window,
+                    )
+
+                    AdminScreen.Calendar -> CalendarScreen(
+                        repository = component.calendarRepository(),
+                        departmentRepository = component.departmentRepository(),
+                        sessionRepository = component.academicSessionRepository(),
+                        createdBy = accountKey,
+                        viewer = CalendarViewerContext(role = CalendarViewerRole.ADMIN),
+                    )
+
+                    AdminScreen.Datesheets -> DatesheetsScreen(
+                        repository = component.datesheetRepository(),
+                        sessionRepository = component.academicSessionRepository(),
+                        curriculumRepository = component.curriculumRepository(),
+                        viewer = DatesheetViewerContext(role = DatesheetViewerRole.ADMIN, canManage = true),
+                        createdBy = accountKey,
+                    )
+
+                    AdminScreen.Documents -> DocumentsScreen(
+                        repository = component.documentRepository(),
+                        departmentRepository = component.departmentRepository(),
+                        viewer = DocumentViewerContext(role = DocumentViewerRole.ADMIN),
+                        canUpload = true,
+                        window = window,
+                        publishedBy = accountKey,
+                    )
+
+                    AdminScreen.MasterTimetable -> MasterTimetableScreen(
+                        departmentRepository = component.departmentRepository(),
+                        sessionRepository = component.academicSessionRepository(),
+                        timetableRepository = component.sessionTimetableRepository(),
+                        onOpenSession = { sessionId -> push(AdminScreen.SessionDetail(sessionId)) },
+                    )
+
+                    AdminScreen.Insights -> InsightsScreen(
+                        repository = component.insightsRepository(),
+                        sessionRepository = component.academicSessionRepository(),
+                        departmentRepository = component.departmentRepository(),
+                        viewer = InsightsViewer.ADMIN,
+                    )
+
+                    AdminScreen.Notifications -> {
                         val controller = remember(component) {
-                            DashboardController(
-                                component.academicSessionRepository(),
-                                component.teacherRepository(),
-                                component.departmentRepository(),
-                                component.studentLinkRequestRepository(),
-                                scope,
+                            NotificationsController(
+                                repository = component.notificationRepository(),
+                                viewerRole = NotificationTargetRole.ADMIN,
+                                accountKey = accountKey,
+                                sessionRepository = component.academicSessionRepository(),
+                                departmentRepository = component.departmentRepository(),
+                                publisherKind = NotificationPublisherKind.ADMIN,
+                                scope = scope,
                             )
                         }
-                        val state by controller.state.collectAsState()
-                        AdminDashboardContent(
-                            state = state,
-                            heroPainter = androidx.compose.ui.res.painterResource("splash_postgraduate_block.jpg"),
-                            actions = listOf(
-                                DashboardActionUi("Master timetable", "Weekly schedule across every department", Icons.Filled.Assessment) { leaf = AdminLeaf.MasterTimetable },
-                                DashboardActionUi("Link requests", "Approve pending student account links", Icons.Filled.Groups) { leaf = AdminLeaf.LinkRequests },
-                            ),
-                            onOpenMasterTimetable = { leaf = AdminLeaf.MasterTimetable },
-                            onOpenLinkRequests = { leaf = AdminLeaf.LinkRequests },
-                            onOpenNotifications = { leaf = AdminLeaf.Notifications },
-                        )
+                        NotificationControllerWorkspace(controller = controller)
                     }
-                    AdminTab.Academics -> {
-                        val controller = remember(component) {
-                            DepartmentsActionController(component.departmentRepository(), accountKey, scope)
-                        }
-                        val departments by component.departmentRepository().observeActiveDepartments().collectAsState(initial = emptyList())
-                        DepartmentPortfolio(
-                            departments = departments,
-                            stats = departmentPortfolioStats(emptyList()),
-                            heroPainter = androidx.compose.ui.res.painterResource("splash_postgraduate_block.jpg"),
-                            onOpenDepartment = {},
-                            onEditDepartment = {},
-                            onDeleteDepartment = { scope.launch { controller.delete(it.deptId) } },
-                            onAddDepartment = {},
-                        )
-                    }
-                    AdminTab.People -> {
-                        val controller = remember(component) {
-                            PeopleHubController(
-                                component.administratorRepository(),
-                                component.teacherRepository(),
-                                component.academicSessionRepository(),
-                                component.studentLinkRequestRepository(),
-                                component.markEditRequestRepository(),
-                                scope,
-                            )
-                        }
-                        val snapshot by controller.snapshot.collectAsState()
-                        val loading by controller.loading.collectAsState()
-                        val loadError by controller.loadError.collectAsState()
-                        PeopleHubWorkspace(
-                            heroPainter = androidx.compose.ui.res.painterResource("splash_postgraduate_block.jpg"),
-                            snapshot = snapshot,
-                            loading = loading,
-                            errorMessage = loadError,
-                            onRetry = controller::refresh,
-                            onOpen = { destination ->
-                                when (destination) {
-                                    PeopleDestination.ADMINISTRATORS -> leaf = AdminLeaf.Administrators
-                                    PeopleDestination.TEACHERS -> {}
-                                    PeopleDestination.STUDENTS -> tab = AdminTab.Academics
-                                    PeopleDestination.LINK_REQUESTS -> leaf = AdminLeaf.LinkRequests
-                                    PeopleDestination.MARK_EDIT_REQUESTS -> leaf = AdminLeaf.MarkEditRequests
-                                }
-                            },
-                        )
-                    }
-                    AdminTab.Records -> {
-                        val controller = remember(component) {
-                            RecordsHubController(
-                                component.academicSessionRepository(),
-                                component.calendarRepository(),
-                                component.datesheetRepository(),
-                                component.documentRepository(),
-                                component.insightsRepository(),
-                                scope,
-                            )
-                        }
-                        val snapshot by controller.snapshot.collectAsState()
-                        val loading by controller.loading.collectAsState()
-                        val loadError by controller.loadError.collectAsState()
-                        RecordsHubWorkspace(
-                            heroPainter = androidx.compose.ui.res.painterResource("splash_postgraduate_block.jpg"),
-                            snapshot = snapshot,
-                            loading = loading,
-                            errorMessage = loadError,
-                            onRetry = controller::refresh,
-                            onOpen = { destination ->
-                                when (destination) {
-                                    RecordsDestination.TIMETABLE -> leaf = AdminLeaf.MasterTimetable
-                                    else -> {}
-                                }
-                            },
-                        )
-                    }
-                    AdminTab.More -> {
-                        val controller = remember(component) {
-                            MoreHubController(accountKey, component.administratorRepository(), component.notificationRepository(), scope)
-                        }
-                        val snapshot by controller.snapshot.collectAsState()
-                        val loading by controller.loading.collectAsState()
-                        val loadError by controller.loadError.collectAsState()
-                        MoreHubWorkspace(
-                            heroPainter = androidx.compose.ui.res.painterResource("splash_postgraduate_block.jpg"),
-                            snapshot = snapshot,
-                            loading = loading,
-                            errorMessage = loadError,
-                            onRetry = controller::refresh,
-                            onOpen = { destination ->
-                                when (destination) {
-                                    MoreDestination.NOTIFICATIONS -> leaf = AdminLeaf.Notifications
-                                    MoreDestination.PROFILE -> leaf = AdminLeaf.Profile
-                                }
-                            },
-                        )
-                    }
+
+                    AdminScreen.Profile -> AdminProfileScreen(
+                        sessionManager = component.sessionManager(),
+                        repository = component.administratorRepository(),
+                        onSignOut = onSignOut,
+                    )
+
+                    is AdminScreen.DeptDetail -> DepartmentDetailScreen(
+                        deptId = current.deptId,
+                        departmentRepository = component.departmentRepository(),
+                        sessionRepository = component.academicSessionRepository(),
+                        teacherRepository = component.teacherRepository(),
+                        editedBy = accountKey,
+                        onOpenSession = { sessionId -> push(AdminScreen.SessionDetail(sessionId)) },
+                    )
+
+                    is AdminScreen.SessionDetail -> SessionDetailScreen(
+                        sessionId = current.sessionId,
+                        sessionRepository = component.academicSessionRepository(),
+                        curriculumRepository = component.curriculumRepository(),
+                        timetableRepository = component.sessionTimetableRepository(),
+                        feeRepository = component.sessionFeeRepository(),
+                        teacherRepository = component.teacherRepository(),
+                        onOpenStudents = { sessionId -> push(AdminScreen.SessionStudents(sessionId)) },
+                        onOpenTimetable = { sessionId -> push(AdminScreen.SessionTimetableRoute(sessionId)) },
+                        onOpenSemester = { sessionId, semester -> push(AdminScreen.SemesterSubjectsRoute(sessionId, semester)) },
+                        onOpenFees = { sessionId -> push(AdminScreen.SessionFeesRoute(sessionId)) },
+                        onDeleted = { backStack.removeAt(backStack.lastIndex) },
+                    )
+
+                    is AdminScreen.SessionStudents -> SessionStudentsScreen(
+                        sessionId = current.sessionId,
+                        sessionRepository = component.academicSessionRepository(),
+                        window = window,
+                        onOpenStudent = { sessionId, roll -> push(AdminScreen.StudentProfile(sessionId, roll)) },
+                    )
+
+                    is AdminScreen.StudentProfile -> StudentProfileScreen(
+                        sessionId = current.sessionId,
+                        rollNumber = current.roll,
+                        sessionRepository = component.academicSessionRepository(),
+                        fineRepository = component.fineRepository(),
+                        sessionManager = component.sessionManager(),
+                    )
+
+                    is AdminScreen.SessionTimetableRoute -> SessionTimetableScreen(
+                        sessionId = current.sessionId,
+                        sessionRepository = component.academicSessionRepository(),
+                        curriculumRepository = component.curriculumRepository(),
+                        teacherRepository = component.teacherRepository(),
+                        timetableRepository = component.sessionTimetableRepository(),
+                    )
+
+                    is AdminScreen.SemesterSubjectsRoute -> SemesterSubjectsScreen(
+                        sessionId = current.sessionId,
+                        semester = current.semester,
+                        curriculumRepository = component.curriculumRepository(),
+                        sessionRepository = component.academicSessionRepository(),
+                    )
+
+                    is AdminScreen.SessionFeesRoute -> SessionFeesScreen(
+                        sessionId = current.sessionId,
+                        feeRepository = component.sessionFeeRepository(),
+                        sessionRepository = component.academicSessionRepository(),
+                        updatedBy = accountKey,
+                    )
                 }
             }
         }
     }
 }
 
-private fun leafTitle(leaf: AdminLeaf): String = when (leaf) {
-    AdminLeaf.Administrators -> "Administrators"
-    AdminLeaf.LinkRequests -> "Link requests"
-    AdminLeaf.MarkEditRequests -> "Mark edit requests"
-    AdminLeaf.MasterTimetable -> "Master timetable"
-    AdminLeaf.Notifications -> "Notifications"
-    AdminLeaf.Profile -> "Profile"
+private fun screenTitle(screen: AdminScreen): String = when (screen) {
+    AdminScreen.Dashboard -> "Dashboard"
+    AdminScreen.Academics -> "Academics"
+    AdminScreen.PeopleHub -> "People"
+    AdminScreen.RecordsHub -> "Records"
+    AdminScreen.MoreHub -> "More"
+    AdminScreen.Administrators -> "Administrators"
+    AdminScreen.Teachers -> "Teachers"
+    AdminScreen.LinkRequests -> "Link requests"
+    AdminScreen.MarkEditRequests -> "Mark edit requests"
+    AdminScreen.AttendanceRecords -> "Attendance records"
+    AdminScreen.Calendar -> "Calendar"
+    AdminScreen.Datesheets -> "Datesheets"
+    AdminScreen.Documents -> "Documents"
+    AdminScreen.MasterTimetable -> "Master timetable"
+    AdminScreen.Insights -> "Insights"
+    AdminScreen.Notifications -> "Notifications"
+    AdminScreen.Profile -> "Profile"
+    is AdminScreen.DeptDetail -> "Department"
+    is AdminScreen.SessionDetail -> "Session"
+    is AdminScreen.SessionStudents -> "Students"
+    is AdminScreen.StudentProfile -> "Student · ${screen.roll}"
+    is AdminScreen.SessionTimetableRoute -> "Timetable"
+    is AdminScreen.SemesterSubjectsRoute -> "Semester ${screen.semester}"
+    is AdminScreen.SessionFeesRoute -> "Fees"
 }

@@ -1,5 +1,15 @@
 package com.mbd.cmscommon.domain.model
 
+data class SessionOverview(
+    val sessionId: String,
+    val deptId: String,
+    val shift: Session,
+    val currentSemester: Int,
+    val students: Int,
+    val avgCgpa: Double?,
+    val avgAttendance: Double?,
+)
+
 data class AtRiskStudent(
     val sessionId: String,
     val rollNumber: String,
@@ -20,14 +30,4 @@ data class ExamStat(
     val stddev: Double?,
     val outOf: Int,
     val passRate: Double?,
-)
-
-data class SessionOverview(
-    val sessionId: String,
-    val deptId: String,
-    val shift: Session,
-    val currentSemester: Int,
-    val students: Int,
-    val avgCgpa: Double?,
-    val avgAttendance: Double?,
 )
