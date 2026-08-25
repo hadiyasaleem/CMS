@@ -1,0 +1,10 @@
+package com.mbd.cmscommon.data.local.entity
+
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+@Entity(tableName = "sync_state")
+data class SyncStateEntity(
+    @PrimaryKey val collectionName: String,
+    val lastSyncedAt: Long,
+)

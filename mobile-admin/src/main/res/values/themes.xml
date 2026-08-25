@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Only the base window theme survives here — every other legacy XML-view style
+    (bottom nav, action bar, semester buttons, etc.) was for the old Java/XML UI and is
+    now dead since the app is Compose-only. Theme.CMS is still referenced by
+    AndroidManifest.xml as the base android:theme for MainActivity's window.
+-->
+<resources>
+
+    <style name="Base.Theme.CMS" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryVariant">@color/primary_container</item>
+        <item name="colorOnPrimary">@color/on_primary</item>
+
+        <item name="colorSecondary">@color/secondary</item>
+        <item name="colorSecondaryVariant">@color/secondary_container</item>
+        <item name="colorOnSecondary">@color/on_secondary</item>
+
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/on_surface</item>
+
+        <item name="android:colorBackground">@color/background</item>
+        <item name="colorOnBackground">@color/on_background</item>
+
+        <item name="colorError">@color/error</item>
+        <item name="colorOnError">@color/on_error</item>
+
+        <item name="android:statusBarColor">@color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">@color/surface</item>
+    </style>
+
+    <!-- Theme.CMS — used in AndroidManifest: android:theme="@style/Theme.CMS" -->
+    <style name="Theme.CMS" parent="Base.Theme.CMS" />
+
+</resources>
