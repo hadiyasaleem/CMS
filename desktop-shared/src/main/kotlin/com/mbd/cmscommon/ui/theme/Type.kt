@@ -4,11 +4,16 @@ import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.sp
 
-// Desktop has no res/font — no .ttf assets were carried over from the mobile app resources, so this
-// falls back to the platform default sans-serif rather than porting the Archivo font family.
-val Archivo = FontFamily.Default
+val Archivo = FontFamily(
+    Font("fonts/archivo_regular.ttf", FontWeight.Normal),
+    Font("fonts/archivo_medium.ttf", FontWeight.Medium),
+    Font("fonts/archivo_semibold.ttf", FontWeight.SemiBold),
+    Font("fonts/archivo_bold.ttf", FontWeight.Bold),
+    Font("fonts/archivo_extrabold.ttf", FontWeight.ExtraBold),
+)
 val Newsreader = Archivo
 val PublicSans = Archivo
 
