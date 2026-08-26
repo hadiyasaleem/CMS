@@ -113,7 +113,7 @@ fun main() = application {
         onCloseRequest = ::exitApplication,
         title = "CMS Admin Desktop",
         state = windowState,
-        icon = painterResource("icon.png"),
+        icon = painterResource("splash_app_logo.png"),
     ) {
         CmsTheme(app = CmsApp.ADMIN) {
             val currentRole = role
