@@ -8,7 +8,6 @@ import com.mbd.cmscommon.domain.repository.CalendarRepository
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.DatesheetRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
-import com.mbd.cmscommon.domain.repository.DocumentRepository
 import com.mbd.cmscommon.domain.repository.ExamPaperSubmissionRepository
 import com.mbd.cmscommon.domain.repository.FineRepository
 import com.mbd.cmscommon.domain.repository.InsightsRepository
@@ -48,7 +47,6 @@ interface DesktopAppComponent {
     fun administratorRepository(): AdministratorRepository
     fun notificationRepository(): NotificationRepository
     fun insightsRepository(): InsightsRepository
-    fun documentRepository(): DocumentRepository
     fun examPaperRepository(): ExamPaperSubmissionRepository
     fun teacherRepository(): TeacherRepository
     fun departmentRepository(): DepartmentRepository

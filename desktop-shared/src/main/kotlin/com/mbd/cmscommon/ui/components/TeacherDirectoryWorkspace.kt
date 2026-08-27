@@ -4,6 +4,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -256,6 +258,7 @@ private fun TeacherMetric(label: String, value: String, modifier: Modifier = Mod
 }
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 private fun TeacherCard(
     teacher: Teacher,
     department: Department?,
@@ -275,12 +278,12 @@ private fun TeacherCard(
                     Text(teacher.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                     Text(department?.name ?: "Department not assigned", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
                 }
-                StatusBadge(teacher.status.name, if (teacher.status == TeacherStatus.ACTIVE) BadgeTone.Success else BadgeTone.Error)
             }
             Spacer(Modifier.height(8.dp))
             TeacherContactLine(teacher)
             Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                StatusBadge(teacher.status.name, if (teacher.status == TeacherStatus.ACTIVE) BadgeTone.Success else BadgeTone.Error)
                 StatusBadge("${assignments.size} classes", BadgeTone.Neutral)
                 StatusBadge("$completeness% profile", if (completeness == 100) BadgeTone.Success else BadgeTone.Warning)
             }
@@ -293,7 +296,7 @@ private fun TeacherCard(
                 Text("Contact and specialization not completed", color = TeacherGold, style = MaterialTheme.typography.bodySmall)
             }
             Spacer(Modifier.height(10.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = onEdit, enabled = !busy) { Text("Manage") }
                 when (teacher.status) {
                     TeacherStatus.ACTIVE -> TextButton(onClick = { onRequestStatus(TeacherStatus.DISABLED) }, enabled = !busy) { Text("Disable") }

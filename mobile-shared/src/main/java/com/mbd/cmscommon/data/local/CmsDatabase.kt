@@ -6,7 +6,6 @@ import com.mbd.cmscommon.data.local.dao.AdministratorAccountDao
 import com.mbd.cmscommon.data.local.dao.CalendarEventDao
 import com.mbd.cmscommon.data.local.dao.DatesheetDao
 import com.mbd.cmscommon.data.local.dao.DepartmentDao
-import com.mbd.cmscommon.data.local.dao.DocumentDao
 import com.mbd.cmscommon.data.local.dao.ExamPaperSubmissionDao
 import com.mbd.cmscommon.data.local.dao.FineDao
 import com.mbd.cmscommon.data.local.dao.InsightsDao
@@ -25,7 +24,7 @@ import com.mbd.cmscommon.data.local.dao.TableSyncStateDao
 import com.mbd.cmscommon.data.local.dao.TeacherDao
 import com.mbd.cmscommon.data.local.dao.UserDao
 
-const val CMS_DATABASE_VERSION = 30
+const val CMS_DATABASE_VERSION = 31
 
 abstract class CmsDatabase : RoomDatabase() {
     abstract fun departmentDao(): DepartmentDao
@@ -33,7 +32,6 @@ abstract class CmsDatabase : RoomDatabase() {
     abstract fun teacherDao(): TeacherDao
     abstract fun userDao(): UserDao
     abstract fun studentLinkRequestDao(): StudentLinkRequestDao
-    abstract fun documentDao(): DocumentDao
     abstract fun examPaperSubmissionDao(): ExamPaperSubmissionDao
     abstract fun notificationDao(): NotificationDao
     abstract fun fineDao(): FineDao
@@ -66,4 +64,5 @@ val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_27_28,
     MIGRATION_28_29,
     MIGRATION_29_30,
+    MIGRATION_30_31,
 )

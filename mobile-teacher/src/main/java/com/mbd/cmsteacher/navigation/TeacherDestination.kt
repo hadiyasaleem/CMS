@@ -28,7 +28,6 @@ sealed class TeacherDestination(
     data object MyStudents : TeacherDestination("my_students", "My Students")
     data object Events : TeacherDestination("events", "Events")
     data object Datesheets : TeacherDestination("datesheets", "Datesheets")
-    data object Documents : TeacherDestination("documents", "Documents")
     data object Insights : TeacherDestination("insights", "Insights")
     data object Profile : TeacherDestination("profile", "Profile")
 

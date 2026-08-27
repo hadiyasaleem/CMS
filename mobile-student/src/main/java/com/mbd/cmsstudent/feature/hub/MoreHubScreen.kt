@@ -9,14 +9,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.domain.model.CalendarViewerContext
 import com.mbd.cmscommon.domain.model.CalendarViewerRole
-import com.mbd.cmscommon.domain.model.DocumentViewerContext
-import com.mbd.cmscommon.domain.model.DocumentViewerRole
 import com.mbd.cmscommon.domain.model.NotificationTargetRole
 import com.mbd.cmscommon.domain.model.StudentMoreSnapshot
 import com.mbd.cmscommon.domain.model.studentMoreSnapshot
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.CalendarRepository
-import com.mbd.cmscommon.domain.repository.DocumentRepository
 import com.mbd.cmscommon.domain.repository.NotificationAudienceContext
 import com.mbd.cmscommon.domain.repository.NotificationRepository
 import com.mbd.cmscommon.domain.repository.SessionFeeRepository
@@ -43,7 +40,6 @@ import kotlinx.coroutines.launch
 class MoreHubViewModel @Inject constructor(
     currentStudentProvider: CurrentStudentProvider,
     private val calendarRepository: CalendarRepository,
-    private val documentRepository: DocumentRepository,
     private val feeRepository: SessionFeeRepository,
     private val sessionRepository: AcademicSessionRepository,
     private val notificationRepository: NotificationRepository,
@@ -59,7 +55,6 @@ class MoreHubViewModel @Inject constructor(
             } else {
                 _refreshTrigger.map {
                     val events = runCatching { calendarRepository.getEvents() }.getOrDefault(emptyList())
-                    val documents = runCatching { documentRepository.getDocuments() }.getOrDefault(emptyList())
                     val fee = runCatching { feeRepository.getSessionFee(context.sessionId) }.getOrNull()
                     val profile = runCatching { sessionRepository.getStudentProfile(context.sessionId, context.rollNumber) }.getOrNull()
                     val unread = runCatching {
@@ -70,12 +65,10 @@ class MoreHubViewModel @Inject constructor(
                     }.getOrDefault(0)
                     studentMoreSnapshot(
                         events = events,
-                        documents = documents,
                         fee = fee,
                         unreadNotifications = unread,
                         profile = profile,
                         viewer = CalendarViewerContext(CalendarViewerRole.STUDENT, context.deptId, setOf(context.sessionId)),
-                        documentViewer = DocumentViewerContext(DocumentViewerRole.STUDENT, context.deptId),
                         today = LocalDate.now(),
                     )
                 }
@@ -102,7 +95,6 @@ fun MoreHubScreen(onOpen: (String) -> Unit, onSignOut: () -> Unit, viewModel: Mo
             onOpen(
                 when (destination) {
                     StudentMoreDestination.CALENDAR -> StudentDestination.Events.route
-                    StudentMoreDestination.DOCUMENTS -> StudentDestination.Documents.route
                     StudentMoreDestination.FEES -> StudentDestination.Fees.route
                     StudentMoreDestination.NOTIFICATIONS -> StudentDestination.Notifications.route
                     StudentMoreDestination.PROFILE -> StudentDestination.Profile.route

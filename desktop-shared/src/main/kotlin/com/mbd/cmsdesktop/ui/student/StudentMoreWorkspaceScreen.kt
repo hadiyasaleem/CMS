@@ -10,7 +10,6 @@ import androidx.compose.ui.res.painterResource
 import com.mbd.cmscommon.controller.StudentMoreController
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.CalendarRepository
-import com.mbd.cmscommon.domain.repository.DocumentRepository
 import com.mbd.cmscommon.domain.repository.NotificationRepository
 import com.mbd.cmscommon.domain.repository.SessionFeeRepository
 import com.mbd.cmscommon.ui.components.StudentMoreDestination
@@ -22,7 +21,6 @@ fun StudentMoreScreen(
     departmentId: String,
     rollNumber: String,
     calendarRepository: CalendarRepository,
-    documentRepository: DocumentRepository,
     feeRepository: SessionFeeRepository,
     notificationRepository: NotificationRepository,
     sessionRepository: AcademicSessionRepository,
@@ -33,7 +31,7 @@ fun StudentMoreScreen(
     val controller = remember(sessionId, departmentId, rollNumber) {
         StudentMoreController(
             sessionId, departmentId, rollNumber,
-            calendarRepository, documentRepository, feeRepository, notificationRepository, sessionRepository,
+            calendarRepository, feeRepository, notificationRepository, sessionRepository,
             scope,
         )
     }

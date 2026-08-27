@@ -6,7 +6,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.mbd.cmscommon.ui.datesheets.DatesheetsScreen
-import com.mbd.cmscommon.ui.documents.DocumentsScreen
 import com.mbd.cmscommon.ui.events.EventsScreen
 import com.mbd.cmsteacher.feature.attendance.AttendanceHistoryScreen
 import com.mbd.cmsteacher.feature.attendance.MarkAttendanceScreen
@@ -36,7 +35,6 @@ fun TeacherNavHost(navController: NavHostController, onSignedOut: () -> Unit, re
             MenuHubScreen(
                 onOpenMyStudents = { go(TeacherDestination.MyStudents.route) },
                 onOpenCalendar = { go(TeacherDestination.Events.route) },
-                onOpenDocuments = { go(TeacherDestination.Documents.route) },
                 onOpenInsights = { go(TeacherDestination.Insights.route) },
                 onOpenLinkRequests = { go(TeacherDestination.LinkRequests.route) },
                 onOpenNotifications = { go(TeacherDestination.Notifications.route) },
@@ -53,7 +51,6 @@ fun TeacherNavHost(navController: NavHostController, onSignedOut: () -> Unit, re
         composable(TeacherDestination.MyStudents.route) { MyStudentsScreen() }
         composable(TeacherDestination.Events.route) { EventsScreen(viewModel = hiltViewModel()) }
         composable(TeacherDestination.Datesheets.route) { DatesheetsScreen(viewModel = hiltViewModel()) }
-        composable(TeacherDestination.Documents.route) { DocumentsScreen(viewModel = hiltViewModel()) }
         composable(TeacherDestination.Insights.route) { InsightsScreen(refreshVersion = refreshVersion) }
         composable(TeacherDestination.Profile.route) { ProfileScreen(onSignedOut = onSignedOut) }
         composable(TeacherDestination.AttendanceHistory.route) { AttendanceHistoryScreen() }

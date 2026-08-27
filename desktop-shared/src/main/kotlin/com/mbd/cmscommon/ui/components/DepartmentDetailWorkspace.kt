@@ -216,13 +216,12 @@ private fun SessionMetric(label: String, value: String, modifier: Modifier = Mod
 private fun DepartmentSessionCard(session: AcademicSession, studentCount: Int, onClick: () -> Unit) {
     Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
         Column(Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text("Session ${session.label}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                    Text("${session.shift} · Semester ${session.currentSemester}", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
-                }
-                StatusBadge(session.shift.name, if (session.shift == Session.MORNING) BadgeTone.Navy else BadgeTone.Gold)
+            Column {
+                Text("Session ${session.label}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                Text("${session.shift} · Semester ${session.currentSemester}", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
             }
+            Spacer(Modifier.height(8.dp))
+            StatusBadge(session.shift.name, if (session.shift == Session.MORNING) BadgeTone.Navy else BadgeTone.Gold)
             Spacer(Modifier.height(8.dp))
             Text(session.programName?.takeIf { it.isNotBlank() } ?: "Program name not configured", color = Color(0xFF625E58), style = MaterialTheme.typography.bodyMedium)
             Text(session.inchargeEmail?.takeIf { it.isNotBlank() } ?: "Session in-charge not assigned", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)

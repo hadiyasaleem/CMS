@@ -34,8 +34,6 @@ import com.mbd.cmscommon.domain.model.CalendarViewerContext
 import com.mbd.cmscommon.domain.model.CalendarViewerRole
 import com.mbd.cmscommon.domain.model.DatesheetViewerContext
 import com.mbd.cmscommon.domain.model.DatesheetViewerRole
-import com.mbd.cmscommon.domain.model.DocumentViewerContext
-import com.mbd.cmscommon.domain.model.DocumentViewerRole
 import com.mbd.cmscommon.domain.model.NotificationTargetRole
 import com.mbd.cmscommon.domain.model.UserRole
 import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider
@@ -49,7 +47,6 @@ import com.mbd.cmscommon.ui.theme.CmsTheme
 import com.mbd.cmsdesktop.di.DesktopAppComponent
 import com.mbd.cmsdesktop.ui.parity.desktopBackHandler
 import com.mbd.cmsdesktop.ui.shared.DatesheetsScreen
-import com.mbd.cmsdesktop.ui.shared.DocumentsScreen
 import com.mbd.cmsdesktop.ui.shared.InsightsScreen
 import com.mbd.cmsdesktop.ui.shared.NotificationsScreen
 import kotlinx.coroutines.launch
@@ -190,14 +187,12 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         sessionRepository = component.academicSessionRepository(),
                         calendarRepository = component.calendarRepository(),
                         datesheetRepository = component.datesheetRepository(),
-                        documentRepository = component.documentRepository(),
                         insightsRepository = component.insightsRepository(),
                         onOpen = { destination ->
                             when (destination) {
                                 RecordsDestination.ATTENDANCE -> push(AdminScreen.AttendanceRecords)
                                 RecordsDestination.CALENDAR -> push(AdminScreen.Calendar)
                                 RecordsDestination.DATESHEETS -> push(AdminScreen.Datesheets)
-                                RecordsDestination.DOCUMENTS -> push(AdminScreen.Documents)
                                 RecordsDestination.TIMETABLE -> push(AdminScreen.MasterTimetable)
                                 RecordsDestination.FEES -> {}
                                 RecordsDestination.INSIGHTS -> push(AdminScreen.Insights)
@@ -267,15 +262,6 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         curriculumRepository = component.curriculumRepository(),
                         viewer = DatesheetViewerContext(role = DatesheetViewerRole.ADMIN, canManage = true),
                         createdBy = accountKey,
-                    )
-
-                    AdminScreen.Documents -> DocumentsScreen(
-                        repository = component.documentRepository(),
-                        departmentRepository = component.departmentRepository(),
-                        viewer = DocumentViewerContext(role = DocumentViewerRole.ADMIN),
-                        canUpload = true,
-                        window = window,
-                        publishedBy = accountKey,
                     )
 
                     AdminScreen.MasterTimetable -> MasterTimetableScreen(

@@ -6,7 +6,6 @@ import com.mbd.cmscommon.data.repository.CalendarRepositoryLocalImpl
 import com.mbd.cmscommon.data.repository.CurriculumRepositoryImpl
 import com.mbd.cmscommon.data.repository.DatesheetRepositoryLocalImpl
 import com.mbd.cmscommon.data.repository.DepartmentRepositoryImpl
-import com.mbd.cmscommon.data.repository.DocumentRepositoryImpl
 import com.mbd.cmscommon.data.repository.ExamPaperSubmissionRepositoryImpl
 import com.mbd.cmscommon.data.repository.FineRepositoryLocalImpl
 import com.mbd.cmscommon.data.repository.InsightsRepositoryLocalImpl
@@ -25,7 +24,6 @@ import com.mbd.cmscommon.domain.repository.CalendarRepository
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.DatesheetRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
-import com.mbd.cmscommon.domain.repository.DocumentRepository
 import com.mbd.cmscommon.domain.repository.ExamPaperSubmissionRepository
 import com.mbd.cmscommon.domain.repository.FineRepository
 import com.mbd.cmscommon.domain.repository.InsightsRepository
@@ -71,10 +69,6 @@ abstract class RepositoryModule {
     @Singleton
     @Binds
     abstract fun bindDepartmentRepository(impl: DepartmentRepositoryImpl): DepartmentRepository
-
-    @Singleton
-    @Binds
-    abstract fun bindDocumentRepository(impl: DocumentRepositoryImpl): DocumentRepository
 
     @Singleton
     @Binds

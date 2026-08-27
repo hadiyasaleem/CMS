@@ -12,7 +12,6 @@ import com.mbd.cmscommon.controller.RecordsHubController
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.CalendarRepository
 import com.mbd.cmscommon.domain.repository.DatesheetRepository
-import com.mbd.cmscommon.domain.repository.DocumentRepository
 import com.mbd.cmscommon.domain.repository.InsightsRepository
 import com.mbd.cmscommon.ui.components.RecordsDestination
 import com.mbd.cmscommon.ui.components.RecordsHubWorkspace
@@ -24,14 +23,12 @@ class RecordsHubViewModel @Inject constructor(
     sessionRepository: AcademicSessionRepository,
     calendarRepository: CalendarRepository,
     datesheetRepository: DatesheetRepository,
-    documentRepository: DocumentRepository,
     insightsRepository: InsightsRepository,
 ) : ViewModel() {
     private val controller = RecordsHubController(
         sessionRepository,
         calendarRepository,
         datesheetRepository,
-        documentRepository,
         insightsRepository,
         viewModelScope,
     )

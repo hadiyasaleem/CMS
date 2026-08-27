@@ -6,7 +6,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.mbd.cmscommon.ui.datesheets.DatesheetsScreen
-import com.mbd.cmscommon.ui.documents.DocumentsScreen
 import com.mbd.cmscommon.ui.events.EventsScreen
 import com.mbd.cmsstudent.feature.attendance.AttendanceSummaryScreen
 import com.mbd.cmsstudent.feature.exams.ExamsHubScreen
@@ -34,7 +33,6 @@ fun StudentNavHost(navController: NavHostController, onSignedOut: () -> Unit, re
         composable(StudentDestination.Results.route) { ResultsScreen() }
         composable(StudentDestination.Events.route) { EventsScreen(viewModel = hiltViewModel()) }
         composable(StudentDestination.Datesheets.route) { DatesheetsScreen(viewModel = hiltViewModel()) }
-        composable(StudentDestination.Documents.route) { DocumentsScreen(viewModel = hiltViewModel()) }
         composable(StudentDestination.Fees.route) { FeeChallanScreen() }
         composable(StudentDestination.Notifications.route) { NotificationsScreen(refreshVersion = refreshVersion) }
         composable(StudentDestination.Profile.route) { ProfileScreen(onSignedOut = onSignedOut) }

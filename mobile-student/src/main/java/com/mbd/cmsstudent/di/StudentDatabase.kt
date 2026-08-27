@@ -11,7 +11,6 @@ import com.mbd.cmscommon.data.local.entity.CalendarEventEntity
 import com.mbd.cmscommon.data.local.entity.DatesheetEntity
 import com.mbd.cmscommon.data.local.entity.DatesheetSlotEntity
 import com.mbd.cmscommon.data.local.entity.DepartmentEntity
-import com.mbd.cmscommon.data.local.entity.DocumentEntity
 import com.mbd.cmscommon.data.local.entity.ExamPaperSubmissionEntity
 import com.mbd.cmscommon.data.local.entity.FineEntity
 import com.mbd.cmscommon.data.local.entity.InsightAtRiskStudentEntity
@@ -43,7 +42,7 @@ import com.mbd.cmscommon.data.local.entity.UserEntity
 @Database(
     entities = [
         DepartmentEntity::class, TeacherEntity::class, AdministratorAccountEntity::class, UserEntity::class,
-        StudentLinkRequestEntity::class, DocumentEntity::class,
+        StudentLinkRequestEntity::class,
         ExamPaperSubmissionEntity::class, NotificationEntity::class,
         SyncStateEntity::class, TableSyncStateEntity::class,
         AcademicSessionEntity::class, SemesterSubjectEntity::class, SessionStudentEntity::class,

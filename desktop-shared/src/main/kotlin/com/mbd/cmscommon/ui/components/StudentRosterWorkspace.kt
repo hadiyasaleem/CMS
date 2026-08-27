@@ -4,6 +4,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -199,6 +201,7 @@ private fun RosterMetric(label: String, value: String, modifier: Modifier = Modi
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun StudentProfileCard(student: SessionStudent, onOpen: () -> Unit, onDelete: () -> Unit) {
     val linked = student.linkedEmail.isNotBlank()
@@ -211,10 +214,10 @@ private fun StudentProfileCard(student: SessionStudent, onOpen: () -> Unit, onDe
                     Text(student.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
                     Text("Roll ${student.rollNumber}", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
                 }
-                StatusBadge(if (linked) "LINKED" else "NOT LINKED", if (linked) BadgeTone.Success else BadgeTone.Neutral)
             }
             Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                StatusBadge(if (linked) "LINKED" else "NOT LINKED", if (linked) BadgeTone.Success else BadgeTone.Neutral)
                 StatusBadge("GPA ${student.gpa?.let { "%.2f".format(it) } ?: "--"}", BadgeTone.Neutral)
                 StatusBadge("CGPA ${student.cgpa?.let { "%.2f".format(it) } ?: "--"}", BadgeTone.Neutral)
             }
@@ -223,7 +226,7 @@ private fun StudentProfileCard(student: SessionStudent, onOpen: () -> Unit, onDe
                 Text("Student-app account not connected", color = RosterGold, style = MaterialTheme.typography.bodySmall)
             }
             Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = onOpen) { Text("Open profile") }
                 TextButton(onClick = onDelete) { Text("Remove", color = CmsTheme.colors.accent) }
             }

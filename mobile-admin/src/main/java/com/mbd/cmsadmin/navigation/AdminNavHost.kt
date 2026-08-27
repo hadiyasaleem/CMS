@@ -60,7 +60,6 @@ fun AdminNavHost(navController: NavHostController, onSignedOut: () -> Unit, refr
                         RecordsDestination.ATTENDANCE -> AdminLeaf.ATTENDANCE_RECORDS
                         RecordsDestination.CALENDAR -> AdminLeaf.CALENDAR
                         RecordsDestination.DATESHEETS -> AdminLeaf.DATESHEETS
-                        RecordsDestination.DOCUMENTS -> AdminLeaf.DOCUMENTS
                         RecordsDestination.TIMETABLE -> AdminLeaf.MASTER_TIMETABLE
                         RecordsDestination.FEES -> AdminLeaf.FEES_PICKER
                         RecordsDestination.INSIGHTS -> AdminLeaf.INSIGHTS
@@ -101,7 +100,6 @@ fun AdminNavHost(navController: NavHostController, onSignedOut: () -> Unit, refr
         }
         composable(AdminLeaf.CALENDAR) { com.mbd.cmsadmin.feature.calendar.CalendarScreen() }
         composable(AdminLeaf.DATESHEETS) { com.mbd.cmsadmin.feature.datesheets.DatesheetsScreen() }
-        composable(AdminLeaf.DOCUMENTS) { com.mbd.cmsadmin.feature.documents.DocumentsScreen() }
         composable(AdminLeaf.INSIGHTS) { com.mbd.cmsadmin.feature.insights.InsightsScreen(refreshVersion = refreshVersion) }
 
         // ── Department drill-down ──

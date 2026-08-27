@@ -4,6 +4,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -190,25 +192,26 @@ private fun TermReadinessCard(term: SemesterTerm?, onClick: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SubjectCurriculumCard(subject: SemesterSubject, onEdit: () -> Unit, onRemove: () -> Unit) {
     Surface(shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
         Column(Modifier.padding(14.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(subject.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
-                    Text("${subject.courseCode} · ${subject.creditHours} credit(s)", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
-                }
+            Column {
+                Text(subject.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
+                Text("${subject.courseCode} · ${subject.creditHours} credit(s)", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+            }
+            Spacer(Modifier.height(8.dp))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 StatusBadge(subject.subjectType.name, if (subject.subjectType == SubjectType.LAB) BadgeTone.Navy else BadgeTone.Neutral)
                 if (subject.isElective) {
-                    Spacer(Modifier.width(6.dp))
                     StatusBadge("ELECTIVE", BadgeTone.Gold)
                 }
             }
             Spacer(Modifier.height(6.dp))
             Text(subject.outline?.takeIf { it.isNotBlank() } ?: "No course outline has been added.", color = Color(0xFF625E58), style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = onEdit) { Text("Edit") }
                 TextButton(onClick = onRemove) { Text("Remove", color = CmsTheme.colors.accent) }
             }

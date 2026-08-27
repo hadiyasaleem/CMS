@@ -416,3 +416,10 @@ val MIGRATION_29_30: Migration = object : Migration(29, 30) {
         }
     }
 }
+
+// Documents feature removed: drop the local cache table (and its indices, dropped implicitly).
+val MIGRATION_30_31: Migration = object : Migration(30, 31) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("DROP TABLE IF EXISTS `documents`")
+    }
+}

@@ -34,7 +34,6 @@ object AdminLeaf {
     const val ATTENDANCE_RECORDS = "attendance_records"
     const val CALENDAR = "calendar"
     const val DATESHEETS = "datesheets"
-    const val DOCUMENTS = "documents"
     const val INSIGHTS = "insights"
 }
 

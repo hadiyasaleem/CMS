@@ -28,8 +28,6 @@ import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.domain.model.DatesheetViewerContext
 import com.mbd.cmscommon.domain.model.DatesheetViewerRole
-import com.mbd.cmscommon.domain.model.DocumentViewerContext
-import com.mbd.cmscommon.domain.model.DocumentViewerRole
 import com.mbd.cmscommon.domain.model.NotificationTargetRole
 import com.mbd.cmscommon.domain.model.UserRole
 import com.mbd.cmscommon.ui.components.CmsTopBar
@@ -40,7 +38,6 @@ import com.mbd.cmscommon.ui.components.StudentMoreDestination
 import com.mbd.cmscommon.ui.theme.CmsTheme
 import com.mbd.cmsdesktop.di.DesktopAppComponent
 import com.mbd.cmsdesktop.ui.shared.DatesheetsScreen
-import com.mbd.cmsdesktop.ui.shared.DocumentsScreen
 import com.mbd.cmsdesktop.ui.shared.NotificationsScreen
 import com.mbd.cmscommon.util.StudentIdCodec
 import kotlinx.coroutines.delay
@@ -53,8 +50,8 @@ import kotlinx.coroutines.launch
  * unlinked account gets approved, so the caller (`Main.kt`) can swap this composable's `role` input
  * without a full re-login.
  *
- * Uses the shared [DatesheetsScreen]/[DocumentsScreen]/[NotificationsScreen] composables from
- * `ui.shared` for the Datesheets/Documents/Notifications leaves instead of inlining controller +
+ * Uses the shared [DatesheetsScreen]/[NotificationsScreen] composables from
+ * `ui.shared` for the Datesheets/Notifications leaves instead of inlining controller +
  * workspace wiring per leaf (that inlining is what the earlier stopgap version of this file did).
  */
 @Composable
@@ -158,12 +155,11 @@ private fun StudentShell(role: UserRole.LinkedStudent, component: DesktopAppComp
                         StudentScreen.Timetable -> StudentTimetableScreen(sessionId, component.sessionTimetableRepository())
                         StudentScreen.MoreHub -> StudentMoreScreen(
                             sessionId, deptId, rollNumber,
-                            component.calendarRepository(), component.documentRepository(), component.sessionFeeRepository(),
+                            component.calendarRepository(), component.sessionFeeRepository(),
                             component.notificationRepository(), component.academicSessionRepository(),
                             onOpen = { destination ->
                                 when (destination) {
                                     StudentMoreDestination.CALENDAR -> open(StudentScreen.Events)
-                                    StudentMoreDestination.DOCUMENTS -> open(StudentScreen.Documents)
                                     StudentMoreDestination.FEES -> open(StudentScreen.Fees)
                                     StudentMoreDestination.NOTIFICATIONS -> open(StudentScreen.Notifications)
                                     StudentMoreDestination.PROFILE -> open(StudentScreen.Profile)
@@ -180,13 +176,6 @@ private fun StudentShell(role: UserRole.LinkedStudent, component: DesktopAppComp
                             viewer = DatesheetViewerContext(role = DatesheetViewerRole.STUDENT, sessionId = sessionId, canManage = false),
                         )
                         StudentScreen.Events -> StudentCalendarScreen(sessionId, deptId, component.calendarRepository(), component.departmentRepository(), component.academicSessionRepository())
-                        StudentScreen.Documents -> DocumentsScreen(
-                            repository = component.documentRepository(),
-                            departmentRepository = component.departmentRepository(),
-                            viewer = DocumentViewerContext(DocumentViewerRole.STUDENT, deptId),
-                            canUpload = false,
-                            window = window,
-                        )
                         StudentScreen.Fees -> StudentFeeChallanScreen(sessionId, rollNumber, component.sessionFeeRepository())
                         StudentScreen.Notifications -> NotificationsScreen(
                             repository = component.notificationRepository(),

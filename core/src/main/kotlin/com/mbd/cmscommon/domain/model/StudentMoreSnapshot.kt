@@ -5,7 +5,6 @@ import java.time.LocalDate
 data class StudentMoreSnapshot(
     val upcomingEvents: Int,
     val nextEvent: CalendarEvent?,
-    val availableDocuments: Int,
     val feeConfigured: Boolean,
     val feeTotal: Double?,
     val feeDueDate: LocalDate?,
@@ -16,20 +15,16 @@ data class StudentMoreSnapshot(
 
 fun studentMoreSnapshot(
     events: List<CalendarEvent>,
-    documents: List<Document>,
     fee: SessionFeeStructure?,
     unreadNotifications: Int,
     profile: StudentProfile?,
     viewer: CalendarViewerContext,
-    documentViewer: DocumentViewerContext,
     today: LocalDate,
 ): StudentMoreSnapshot {
     val visibleEvents = events
         .filter { isVisibleTo(it, viewer) && isUpcomingOn(it, today) }
         .distinctBy { it.id }
     val nextEvent = visibleEvents.minByOrNull { startDateOrNull(it) ?: LocalDate.MAX }
-
-    val visibleDocuments = documents.filter { isVisibleTo(it, documentViewer) }.distinctBy { it.id }
 
     val required = listOf(
         "Name" to profile?.name,
@@ -47,7 +42,6 @@ fun studentMoreSnapshot(
     return StudentMoreSnapshot(
         upcomingEvents = visibleEvents.size,
         nextEvent = nextEvent,
-        availableDocuments = visibleDocuments.size,
         feeConfigured = fee != null,
         feeTotal = fee?.totalAmount,
         feeDueDate = fee?.dueDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() },

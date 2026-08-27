@@ -6,6 +6,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -156,6 +158,7 @@ private fun DepartmentMetric(label: String, value: String, modifier: Modifier = 
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun DepartmentPortfolioCard(
     department: Department,
@@ -179,7 +182,6 @@ private fun DepartmentPortfolioCard(
                     Text(department.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                     Text("Code ${department.code}", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
                 }
-                StatusBadge(if (hasHod) "HOD ASSIGNED" else "HOD NOT ASSIGNED", if (hasHod) BadgeTone.Success else BadgeTone.Warning)
                 Box {
                     IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Filled.MoreVert, contentDescription = "More") }
                     DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
@@ -189,9 +191,11 @@ private fun DepartmentPortfolioCard(
                 }
             }
             Spacer(Modifier.height(8.dp))
+            StatusBadge(if (hasHod) "HOD ASSIGNED" else "HOD NOT ASSIGNED", if (hasHod) BadgeTone.Success else BadgeTone.Warning)
+            Spacer(Modifier.height(8.dp))
             Text(department.description?.takeIf { it.isNotBlank() } ?: "No department description added yet.", color = Color(0xFF625E58), style = MaterialTheme.typography.bodyMedium)
             Spacer(Modifier.height(10.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 StatusBadge("${stats.studentCount} students", BadgeTone.Neutral)
                 StatusBadge("${stats.activeSessions} sessions", BadgeTone.Neutral)
                 StatusBadge(semesterSummary, BadgeTone.Navy)

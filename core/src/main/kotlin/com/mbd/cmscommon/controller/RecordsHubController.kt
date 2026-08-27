@@ -6,7 +6,6 @@ import com.mbd.cmscommon.domain.model.recordsHubSnapshot
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.CalendarRepository
 import com.mbd.cmscommon.domain.repository.DatesheetRepository
-import com.mbd.cmscommon.domain.repository.DocumentRepository
 import com.mbd.cmscommon.domain.repository.InsightsRepository
 import com.mbd.cmscommon.util.userMessage
 import java.time.LocalDate
@@ -22,7 +21,6 @@ class RecordsHubController(
     private val sessionRepository: AcademicSessionRepository,
     private val calendarRepository: CalendarRepository,
     private val datesheetRepository: DatesheetRepository,
-    private val documentRepository: DocumentRepository,
     private val insightsRepository: InsightsRepository,
     scope: CoroutineScope,
     private val today: () -> LocalDate = { LocalDate.now() },
@@ -53,13 +51,11 @@ class RecordsHubController(
                 val sessionsDeferred = async { runCatching { sessionRepository.observeAllSessions().first() } }
                 val eventsDeferred = async { runCatching { calendarRepository.getEvents() } }
                 val datesheetsDeferred = async { runCatching { datesheetRepository.getDatesheets() } }
-                val documentsDeferred = async { runCatching { documentRepository.getDocuments() } }
                 val risksDeferred = async { runCatching { insightsRepository.getAtRiskStudents() } }
 
                 val sessionsResult = sessionsDeferred.await()
                 val eventsResult = eventsDeferred.await()
                 val datesheetsResult = datesheetsDeferred.await()
-                val documentsResult = documentsDeferred.await()
                 val risksResult = risksDeferred.await()
 
                 if (version == loadVersion) {
@@ -67,7 +63,6 @@ class RecordsHubController(
                         if (sessionsResult.isFailure) add(RecordsSummarySource.SESSIONS)
                         if (eventsResult.isFailure) add(RecordsSummarySource.CALENDAR)
                         if (datesheetsResult.isFailure) add(RecordsSummarySource.DATESHEETS)
-                        if (documentsResult.isFailure) add(RecordsSummarySource.DOCUMENTS)
                         if (risksResult.isFailure) add(RecordsSummarySource.INSIGHTS)
                     }
 
@@ -75,12 +70,11 @@ class RecordsHubController(
                         sessionsResult.getOrDefault(emptyList()),
                         eventsResult.getOrDefault(emptyList()),
                         datesheetsResult.getOrDefault(emptyList()),
-                        documentsResult.getOrDefault(emptyList()),
                         risksResult.getOrDefault(emptyList()),
                         today(),
                         unavailableSources,
                     )
-                    _loadError.value = listOf(sessionsResult, eventsResult, datesheetsResult, documentsResult, risksResult)
+                    _loadError.value = listOf(sessionsResult, eventsResult, datesheetsResult, risksResult)
                         .firstNotNullOfOrNull { it.exceptionOrNull() }
                         ?.userMessage("Some record summaries could not be loaded.")
                     _loading.value = false

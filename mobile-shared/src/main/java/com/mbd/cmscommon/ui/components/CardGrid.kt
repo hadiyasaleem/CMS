@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
 /**
  * Number of entity cards shown per row in the app's card grids. Mobile shows 2 across; the
  * desktop-shared copy of this file sets 4. Single source of truth so every directory screen
- * (departments, sessions, teachers, students, subjects, documents) stays consistent.
+ * (departments, sessions, teachers, students, subjects) stays consistent.
  */
 const val CardGridColumns = 2
 

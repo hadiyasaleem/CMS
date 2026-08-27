@@ -12,7 +12,6 @@ import com.mbd.cmscommon.domain.repository.CalendarRepository
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.DatesheetRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
-import com.mbd.cmscommon.domain.repository.DocumentRepository
 import com.mbd.cmscommon.domain.repository.ExamPaperSubmissionRepository
 import com.mbd.cmscommon.domain.repository.FineRepository
 import com.mbd.cmscommon.domain.repository.InsightsRepository
@@ -28,7 +27,6 @@ import com.mbd.cmscommon.domain.repository.UserRepository
 import com.mbd.cmsdesktop.data.repository.DesktopAcademicSessionRepositoryImpl
 import com.mbd.cmsdesktop.data.repository.DesktopCurriculumRepositoryImpl
 import com.mbd.cmsdesktop.data.repository.DesktopDepartmentRepositoryImpl
-import com.mbd.cmsdesktop.data.repository.DesktopDocumentRepository
 import com.mbd.cmsdesktop.data.repository.DesktopExamPaperSubmissionRepository
 import com.mbd.cmsdesktop.data.repository.DesktopNotificationRepositoryImpl
 import com.mbd.cmsdesktop.data.repository.DesktopSessionAttendanceRepositoryImpl
@@ -43,10 +41,10 @@ import dagger.Module
 import javax.inject.Singleton
 
 /**
- * 6 of the 19 domain repositories are pure-Postgrest and reused as-is from `:core`
+ * 6 of the 18 domain repositories are pure-Postgrest and reused as-is from `:core`
  * ([AdministratorRepositoryImpl], [CalendarRepositoryImpl], [DatesheetRepositoryImpl],
  * [FineRepositoryImpl], [InsightsRepositoryImpl], [MarkEditRequestRepositoryImpl]) — no Room, so
- * nothing platform-specific about them. The other 13 need desktop-specific caching/bootstrap
+ * nothing platform-specific about them. The other 12 need desktop-specific caching/bootstrap
  * behavior and are bound to `Desktop*` classes in `data/repository`.
  */
 @Module
@@ -119,10 +117,6 @@ abstract class RepositoryModule {
     @Singleton
     @Binds
     abstract fun bindFineRepository(impl: FineRepositoryImpl): FineRepository
-
-    @Singleton
-    @Binds
-    abstract fun bindDocumentRepository(impl: DesktopDocumentRepository): DocumentRepository
 
     @Singleton
     @Binds

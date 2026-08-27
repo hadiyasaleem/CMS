@@ -26,8 +26,6 @@ import com.mbd.cmscommon.domain.model.CalendarViewerContext
 import com.mbd.cmscommon.domain.model.CalendarViewerRole
 import com.mbd.cmscommon.domain.model.DatesheetViewerContext
 import com.mbd.cmscommon.domain.model.DatesheetViewerRole
-import com.mbd.cmscommon.domain.model.DocumentViewerContext
-import com.mbd.cmscommon.domain.model.DocumentViewerRole
 import com.mbd.cmscommon.domain.model.NotificationTargetRole
 import com.mbd.cmscommon.domain.model.UserRole
 import com.mbd.cmscommon.domain.model.teacherMenuSnapshot
@@ -43,7 +41,6 @@ import com.mbd.cmsdesktop.ui.admin.CalendarScreen
 import com.mbd.cmsdesktop.ui.admin.LinkRequestsScreen
 import com.mbd.cmsdesktop.ui.parity.desktopBackHandler
 import com.mbd.cmsdesktop.ui.shared.DatesheetsScreen
-import com.mbd.cmsdesktop.ui.shared.DocumentsScreen
 import com.mbd.cmsdesktop.ui.shared.InsightsScreen
 import com.mbd.cmsdesktop.ui.shared.NotificationsScreen
 import java.awt.event.WindowEvent
@@ -212,7 +209,6 @@ fun TeacherNavHost(role: UserRole.Teacher, component: DesktopAppComponent, windo
                         snapshot = snapshot,
                         onOpenMyStudents = { screen = TeacherScreen.MyStudents },
                         onOpenCalendar = { screen = TeacherScreen.Calendar },
-                        onOpenDocuments = { screen = TeacherScreen.Documents },
                         onOpenInsights = { screen = TeacherScreen.Insights },
                         onOpenLinkRequests = { screen = TeacherScreen.LinkRequests },
                         onOpenNotifications = { screen = TeacherScreen.Notifications },
@@ -259,18 +255,6 @@ fun TeacherNavHost(role: UserRole.Teacher, component: DesktopAppComponent, windo
                         ),
                         invigilators = listOfNotNull(signedInTeacher),
                         createdBy = component.sessionManager().accountKey,
-                    )
-                }
-
-                TeacherScreen.Documents -> {
-                    val teacherProfile by component.teacherRepository().observeTeacher(teacherId).collectAsState(initial = null)
-                    DocumentsScreen(
-                        repository = component.documentRepository(),
-                        departmentRepository = component.departmentRepository(),
-                        viewer = DocumentViewerContext(DocumentViewerRole.TEACHER, teacherProfile?.deptId),
-                        canUpload = false,
-                        window = window,
-                        publishedBy = component.sessionManager().accountKey,
                     )
                 }
 

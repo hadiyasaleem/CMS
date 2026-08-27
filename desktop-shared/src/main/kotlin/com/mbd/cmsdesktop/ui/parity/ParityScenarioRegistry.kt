@@ -29,7 +29,7 @@ object ParityScenarioRegistry {
         )
         role(
             ParityRole.ADMIN, FORM_STATES,
-            "teachers", "notifications", "calendar", "datesheets", "documents", "dept/{deptId}",
+            "teachers", "notifications", "calendar", "datesheets", "dept/{deptId}",
             "session/{sessionId}", "session/{sessionId}/fees", "session/{sessionId}/semester/{semester}",
             "session/{sessionId}/students", "session/{sessionId}/student/{roll}", "session/{sessionId}/timetable",
         )
@@ -41,7 +41,7 @@ object ParityScenarioRegistry {
         )
         role(
             ParityRole.TEACHER, BASIC_STATES,
-            "home", "exams_hub", "menu_hub", "my_students", "events", "datesheets", "documents",
+            "home", "exams_hub", "menu_hub", "my_students", "events", "datesheets",
             "insights", "profile",
         )
         role(ParityRole.TEACHER, PERMISSION_STATES, "schedule", "notifications", "link_requests")
@@ -49,7 +49,7 @@ object ParityScenarioRegistry {
         role(
             ParityRole.STUDENT, BASIC_STATES,
             "home", "attendance", "exams_hub", "marks", "results", "timetable", "more", "events",
-            "datesheets", "documents", "fees", "notifications", "profile",
+            "datesheets", "fees", "notifications", "profile",
         )
     }
 

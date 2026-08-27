@@ -27,7 +27,6 @@ sealed class StudentDestination(
     data object Results : StudentDestination("results", "Results", Icons.Filled.Grading)
     data object Events : StudentDestination("events", "Events", Icons.Filled.CalendarMonth)
     data object Datesheets : StudentDestination("datesheets", "Datesheets", Icons.Filled.CalendarMonth)
-    data object Documents : StudentDestination("documents", "Documents", Icons.Filled.Description)
     data object Fees : StudentDestination("fees", "Fee Challan", Icons.Filled.Payments)
     data object Notifications : StudentDestination("notifications", "Notifications", Icons.Filled.Notifications)
     data object Profile : StudentDestination("profile", "Profile", Icons.Filled.Person)

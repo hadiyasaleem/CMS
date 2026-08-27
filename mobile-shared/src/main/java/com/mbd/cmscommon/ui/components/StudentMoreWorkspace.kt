@@ -55,7 +55,7 @@ private val StudentMoreRed = Color(0xFFB43A31)
 private val StudentMoreBlue = Color(0xFF24577A)
 private val MoreDateFormat = DateTimeFormatter.ofPattern("dd MMM yyyy")
 
-enum class StudentMoreDestination { CALENDAR, DOCUMENTS, FEES, NOTIFICATIONS, PROFILE }
+enum class StudentMoreDestination { CALENDAR, FEES, NOTIFICATIONS, PROFILE }
 
 private data class StudentPortalCard(
     val destination: StudentMoreDestination,
@@ -127,7 +127,6 @@ private fun studentMoreCards(snapshot: StudentMoreSnapshot): List<StudentPortalC
 
     return listOf(
         StudentPortalCard(StudentMoreDestination.CALENDAR, "Calendar", snapshot.upcomingEvents.toString(), "upcoming items", calendarSubtitle, calendarBadge, if (snapshot.nextEvent == null) BadgeTone.Neutral else BadgeTone.Success, Icons.Outlined.CalendarMonth),
-        StudentPortalCard(StudentMoreDestination.DOCUMENTS, "Documents", snapshot.availableDocuments.toString(), "available resources", "Published prospectus, rules, reports and student resources", if (snapshot.availableDocuments == 0) "No resources" else "Available now", if (snapshot.availableDocuments == 0) BadgeTone.Neutral else BadgeTone.Success, Icons.Outlined.Description),
         StudentPortalCard(StudentMoreDestination.FEES, "Fee challan", feeMetric, "configured total", feeSubtitle, if (snapshot.feeConfigured) "Configured" else "Not configured", if (snapshot.feeConfigured) BadgeTone.Success else BadgeTone.Neutral, Icons.Outlined.Payments),
         StudentPortalCard(StudentMoreDestination.NOTIFICATIONS, "Notifications", snapshot.unreadNotifications.toString(), "unread notices", "College, department and session notices relevant to you", if (snapshot.unreadNotifications == 0) "All caught up" else "Needs attention", if (snapshot.unreadNotifications == 0) BadgeTone.Success else BadgeTone.Warning, Icons.Outlined.Notifications),
         StudentPortalCard(StudentMoreDestination.PROFILE, "Profile", "${snapshot.profileCompletion}%", "essential details", profileSubtitle, if (snapshot.profileCompletion == 100) "Complete" else "${missing.size} missing", if (snapshot.profileCompletion == 100) BadgeTone.Success else BadgeTone.Warning, Icons.Outlined.Person),

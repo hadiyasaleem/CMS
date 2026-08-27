@@ -6,7 +6,6 @@ import com.mbd.cmscommon.data.local.dao.AdministratorAccountDao
 import com.mbd.cmscommon.data.local.dao.CalendarEventDao
 import com.mbd.cmscommon.data.local.dao.DatesheetDao
 import com.mbd.cmscommon.data.local.dao.DepartmentDao
-import com.mbd.cmscommon.data.local.dao.DocumentDao
 import com.mbd.cmscommon.data.local.dao.ExamPaperSubmissionDao
 import com.mbd.cmscommon.data.local.dao.FineDao
 import com.mbd.cmscommon.data.local.dao.InsightsDao
@@ -48,9 +47,6 @@ object DaoModule {
 
     @Provides
     fun provideStudentLinkRequestDao(db: CmsDatabase): StudentLinkRequestDao = db.studentLinkRequestDao()
-
-    @Provides
-    fun provideDocumentDao(db: CmsDatabase): DocumentDao = db.documentDao()
 
     @Provides
     fun provideExamPaperSubmissionDao(db: CmsDatabase): ExamPaperSubmissionDao = db.examPaperSubmissionDao()

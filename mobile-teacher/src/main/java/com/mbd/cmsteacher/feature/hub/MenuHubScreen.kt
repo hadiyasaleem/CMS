@@ -12,7 +12,6 @@ import com.mbd.cmsteacher.R
 fun MenuHubScreen(
     onOpenMyStudents: () -> Unit,
     onOpenCalendar: () -> Unit,
-    onOpenDocuments: () -> Unit,
     onOpenInsights: () -> Unit,
     onOpenLinkRequests: () -> Unit,
     onOpenNotifications: () -> Unit,
@@ -27,7 +26,6 @@ fun MenuHubScreen(
         snapshot = snapshot,
         onOpenMyStudents = onOpenMyStudents,
         onOpenCalendar = onOpenCalendar,
-        onOpenDocuments = onOpenDocuments,
         onOpenInsights = onOpenInsights,
         onOpenLinkRequests = onOpenLinkRequests,
         onOpenNotifications = onOpenNotifications,

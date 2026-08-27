@@ -52,7 +52,7 @@ private val RecordsGreen = Color(0xFF2F6B4F)
 private val RecordsGold = Color(0xFF9A651B)
 private val RecordsRed = Color(0xFFB43A31)
 
-enum class RecordsDestination { ATTENDANCE, CALENDAR, DATESHEETS, DOCUMENTS, TIMETABLE, FEES, INSIGHTS }
+enum class RecordsDestination { ATTENDANCE, CALENDAR, DATESHEETS, TIMETABLE, FEES, INSIGHTS }
 
 private data class RecordsCard(
     val destination: RecordsDestination,
@@ -115,7 +115,7 @@ private fun RecordsHeader(heroPainter: Painter) {
                 Spacer(Modifier.height(6.dp))
                 Text("Records", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
                 Spacer(Modifier.height(4.dp))
-                Text("Attendance, calendar, datesheets, documents, timetable, fees, and insights.", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
+                Text("Attendance, calendar, datesheets, timetable, fees, and insights.", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
             }
         }
     }
@@ -161,13 +161,6 @@ private fun recordsCards(snapshot: RecordsHubSnapshot): List<RecordsCard> = list
         "${snapshot.publishedDatesheets} published · ${snapshot.draftDatesheets} draft",
         Icons.Outlined.CalendarMonth, RecordsGold, RecordsSummarySource.DATESHEETS,
         RecordsSummarySource.DATESHEETS in snapshot.unavailableSources,
-    ),
-    RecordsCard(
-        RecordsDestination.DOCUMENTS, "Documents",
-        "Publish prospectuses, rules, reports, and shared files.",
-        "${snapshot.publishedDocuments} published · ${snapshot.draftDocuments} draft",
-        Icons.Outlined.Description, RecordsNavy, RecordsSummarySource.DOCUMENTS,
-        RecordsSummarySource.DOCUMENTS in snapshot.unavailableSources,
     ),
     RecordsCard(
         RecordsDestination.TIMETABLE, "Master Timetable",

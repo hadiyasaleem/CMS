@@ -15,7 +15,6 @@ sealed interface StudentScreen {
     data object Results : StudentScreen
     data object Datesheets : StudentScreen
     data object Events : StudentScreen
-    data object Documents : StudentScreen
     data object Fees : StudentScreen
     data object Notifications : StudentScreen
     data object Profile : StudentScreen

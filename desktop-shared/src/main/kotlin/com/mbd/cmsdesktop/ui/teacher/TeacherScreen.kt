@@ -20,7 +20,6 @@ sealed interface TeacherScreen {
     data object MyStudents : TeacherScreen
     data object Calendar : TeacherScreen
     data object Datesheets : TeacherScreen
-    data object Documents : TeacherScreen
     data object Insights : TeacherScreen
     data object Profile : TeacherScreen
 }

@@ -2,14 +2,11 @@ package com.mbd.cmscommon.controller
 
 import com.mbd.cmscommon.domain.model.CalendarViewerContext
 import com.mbd.cmscommon.domain.model.CalendarViewerRole
-import com.mbd.cmscommon.domain.model.DocumentViewerContext
-import com.mbd.cmscommon.domain.model.DocumentViewerRole
 import com.mbd.cmscommon.domain.model.NotificationTargetRole
 import com.mbd.cmscommon.domain.model.StudentMoreSnapshot
 import com.mbd.cmscommon.domain.model.studentMoreSnapshot
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.CalendarRepository
-import com.mbd.cmscommon.domain.repository.DocumentRepository
 import com.mbd.cmscommon.domain.repository.NotificationAudienceContext
 import com.mbd.cmscommon.domain.repository.NotificationRepository
 import com.mbd.cmscommon.domain.repository.SessionFeeRepository
@@ -28,7 +25,6 @@ class StudentMoreController(
     private val departmentId: String,
     private val rollNumber: String,
     private val calendarRepository: CalendarRepository,
-    private val documentRepository: DocumentRepository,
     private val feeRepository: SessionFeeRepository,
     private val notificationRepository: NotificationRepository,
     private val sessionRepository: AcademicSessionRepository,
@@ -58,7 +54,6 @@ class StudentMoreController(
             _loadError.value = null
             coroutineScope {
                 val events = async { runCatching { calendarRepository.getEvents() } }
-                val documents = async { runCatching { documentRepository.getDocuments() } }
                 val fee = async { runCatching { feeRepository.getSessionFee(sessionId) } }
                 val profile = async { runCatching { sessionRepository.getStudentProfile(sessionId, rollNumber) } }
                 val unread = async {
@@ -70,23 +65,19 @@ class StudentMoreController(
                 }
 
                 val eventResult = events.await()
-                val documentResult = documents.await()
                 val feeResult = fee.await()
                 val profileResult = profile.await()
                 val unreadResult = unread.await()
-                val results = listOf(eventResult, documentResult, feeResult, profileResult, unreadResult)
+                val results = listOf(eventResult, feeResult, profileResult, unreadResult)
 
                 if (request == version) {
                     val viewer = CalendarViewerContext(CalendarViewerRole.STUDENT, departmentId, setOf(sessionId))
-                    val documentViewer = DocumentViewerContext(DocumentViewerRole.STUDENT, departmentId)
                     _snapshot.value = studentMoreSnapshot(
                         eventResult.getOrDefault(emptyList()),
-                        documentResult.getOrDefault(emptyList()),
                         feeResult.getOrNull(),
                         unreadResult.getOrDefault(0),
                         profileResult.getOrNull(),
                         viewer,
-                        documentViewer,
                         LocalDate.now(),
                     )
                     _loadError.value = results.firstNotNullOfOrNull { it.exceptionOrNull() }
@@ -99,7 +90,6 @@ class StudentMoreController(
 
     private fun emptySnapshot(): StudentMoreSnapshot {
         val viewer = CalendarViewerContext(CalendarViewerRole.STUDENT, departmentId, setOf(sessionId))
-        val documentViewer = DocumentViewerContext(DocumentViewerRole.STUDENT, departmentId)
-        return studentMoreSnapshot(emptyList(), emptyList(), null, 0, null, viewer, documentViewer, LocalDate.now())
+        return studentMoreSnapshot(emptyList(), null, 0, null, viewer, LocalDate.now())
     }
 }

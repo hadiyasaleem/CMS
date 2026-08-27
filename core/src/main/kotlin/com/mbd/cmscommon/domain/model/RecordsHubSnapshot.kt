@@ -6,7 +6,6 @@ enum class RecordsSummarySource {
     SESSIONS,
     CALENDAR,
     DATESHEETS,
-    DOCUMENTS,
     INSIGHTS,
 }
 
@@ -15,20 +14,17 @@ data class RecordsHubSnapshot(
     val upcomingEvents: Int,
     val publishedDatesheets: Int,
     val draftDatesheets: Int,
-    val publishedDocuments: Int,
-    val draftDocuments: Int,
     val atRiskStudents: Int,
     val unavailableSources: Set<RecordsSummarySource> = emptySet(),
 ) {
-    val publishedResources: Int get() = publishedDatesheets + publishedDocuments
-    val draftResources: Int get() = draftDatesheets + draftDocuments
+    val publishedResources: Int get() = publishedDatesheets
+    val draftResources: Int get() = draftDatesheets
 }
 
 fun recordsHubSnapshot(
     sessions: List<AcademicSession>,
     events: List<CalendarEvent>,
     datesheets: List<Datesheet>,
-    documents: List<Document>,
     atRiskStudents: List<AtRiskStudent>,
     today: LocalDate,
     unavailableSources: Set<RecordsSummarySource> = emptySet(),
@@ -43,8 +39,6 @@ fun recordsHubSnapshot(
         upcomingEvents = upcomingEvents,
         publishedDatesheets = datesheets.count { it.published },
         draftDatesheets = datesheets.count { !it.published },
-        publishedDocuments = documents.count { it.published },
-        draftDocuments = documents.count { !it.published },
         atRiskStudents = atRiskStudents.distinctBy { it.sessionId to it.rollNumber }.size,
         unavailableSources = unavailableSources,
     )
