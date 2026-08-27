@@ -18,12 +18,15 @@ import io.github.jan.supabase.serializer.KotlinXSerializer
 import io.github.jan.supabase.storage.Storage
 import io.github.jan.supabase.storage.storage
 import javax.inject.Singleton
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNamingStrategy
 
 @Module
 @InstallIn(SingletonComponent::class)
 object SupabaseModule {
 
+    @OptIn(ExperimentalSerializationApi::class)
     @Provides
     @Singleton
     fun provideSupabaseClient(): SupabaseClient = createSupabaseClient(
@@ -32,6 +35,10 @@ object SupabaseModule {
     ) {
         defaultSerializer = KotlinXSerializer(
             Json {
+                // DB columns are snake_case (dept_id, hod_email, …) while every DTO property is
+                // camelCase and carries no @SerialName; without this strategy every multi-word
+                // column silently deserializes to null (e.g. Department.deptId == "").
+                namingStrategy = JsonNamingStrategy.SnakeCase
                 ignoreUnknownKeys = true
                 encodeDefaults = false
                 explicitNulls = false

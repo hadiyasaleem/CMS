@@ -1,6 +1,5 @@
 package com.mbd.cmsdesktop.ui.admin
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,15 +9,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Badge
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Text
@@ -32,7 +25,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.unit.dp
@@ -47,6 +39,7 @@ import com.mbd.cmscommon.domain.model.DocumentViewerRole
 import com.mbd.cmscommon.domain.model.NotificationTargetRole
 import com.mbd.cmscommon.domain.model.UserRole
 import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider
+import com.mbd.cmscommon.ui.components.CmsTopBar
 import com.mbd.cmscommon.ui.components.InsightsViewer
 import com.mbd.cmscommon.ui.components.MoreDestination
 import com.mbd.cmscommon.ui.components.NotificationControllerWorkspace
@@ -116,53 +109,43 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
         TeacherAssignmentsProvider(component.sessionManager(), component.sessionTimetableRepository(), component.academicSessionRepository(), component.departmentRepository())
     }
 
-    Row(
-        Modifier.fillMaxSize().desktopBackHandler(enabled = backStack.size > 1) { backStack.removeAt(backStack.lastIndex) },
-    ) {
-        NavigationRail(containerColor = CmsTheme.colors.ink, contentColor = CmsTheme.colors.onInk) {
-            Spacer(Modifier.height(16.dp))
-            AdminTab.entries.forEach { tab ->
-                NavigationRailItem(
-                    selected = selectedTab == tab && backStack.size == 1,
-                    onClick = { popOrSwitchTab(tab) },
-                    icon = {
-                        if (tab == AdminTab.More && unreadCount > 0) {
-                            BadgedBox(badge = { Badge { Text(unreadCount.coerceAtMost(99).toString()) } }) {
+    Column(Modifier.fillMaxSize()) {
+        CmsTopBar(
+            onBack = if (backStack.size > 1) {
+                { backStack.removeAt(backStack.lastIndex) }
+            } else {
+                null
+            },
+            onRefresh = ::refreshShell,
+            isRefreshing = shellRefreshing,
+            onNotifications = { push(AdminScreen.Notifications) },
+            notificationCount = unreadCount,
+            goldWordmark = true,
+        )
+        Row(
+            Modifier.weight(1f).fillMaxWidth().desktopBackHandler(enabled = backStack.size > 1) { backStack.removeAt(backStack.lastIndex) },
+        ) {
+            NavigationRail(containerColor = CmsTheme.colors.ink, contentColor = CmsTheme.colors.onInk) {
+                Spacer(Modifier.height(16.dp))
+                AdminTab.entries.forEach { tab ->
+                    NavigationRailItem(
+                        selected = selectedTab == tab && backStack.size == 1,
+                        onClick = { popOrSwitchTab(tab) },
+                        icon = {
+                            if (tab == AdminTab.More && unreadCount > 0) {
+                                BadgedBox(badge = { Badge { Text(unreadCount.coerceAtMost(99).toString()) } }) {
+                                    Icon(tab.icon, contentDescription = tab.label)
+                                }
+                            } else {
                                 Icon(tab.icon, contentDescription = tab.label)
                             }
-                        } else {
-                            Icon(tab.icon, contentDescription = tab.label)
-                        }
-                    },
-                    label = { Text(tab.label) },
-                )
-            }
-        }
-
-        Column(Modifier.weight(1f).fillMaxHeight()) {
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (backStack.size > 1) {
-                        IconButton(onClick = { backStack.removeAt(backStack.lastIndex) }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                        }
-                    }
-                    Text(screenTitle(screen), style = MaterialTheme.typography.titleLarge)
-                }
-                if (shellRefreshing) {
-                    CircularProgressIndicator(Modifier.height(24.dp).padding(end = 8.dp))
-                } else {
-                    IconButton(onClick = ::refreshShell) {
-                        Icon(Icons.Filled.Refresh, contentDescription = "Refresh")
-                    }
+                        },
+                        label = { Text(tab.label) },
+                    )
                 }
             }
 
-            Box(Modifier.weight(1f).fillMaxWidth().padding(horizontal = 24.dp)) {
+            Box(Modifier.weight(1f).fillMaxHeight().padding(horizontal = 24.dp)) {
                 when (val current = screen) {
                     AdminScreen.Dashboard -> DashboardScreen(
                         departmentRepository = component.departmentRepository(),
@@ -393,31 +376,4 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
             }
         }
     }
-}
-
-private fun screenTitle(screen: AdminScreen): String = when (screen) {
-    AdminScreen.Dashboard -> "Dashboard"
-    AdminScreen.Academics -> "Academics"
-    AdminScreen.PeopleHub -> "People"
-    AdminScreen.RecordsHub -> "Records"
-    AdminScreen.MoreHub -> "More"
-    AdminScreen.Administrators -> "Administrators"
-    AdminScreen.Teachers -> "Teachers"
-    AdminScreen.LinkRequests -> "Link requests"
-    AdminScreen.MarkEditRequests -> "Mark edit requests"
-    AdminScreen.AttendanceRecords -> "Attendance records"
-    AdminScreen.Calendar -> "Calendar"
-    AdminScreen.Datesheets -> "Datesheets"
-    AdminScreen.Documents -> "Documents"
-    AdminScreen.MasterTimetable -> "Master timetable"
-    AdminScreen.Insights -> "Insights"
-    AdminScreen.Notifications -> "Notifications"
-    AdminScreen.Profile -> "Profile"
-    is AdminScreen.DeptDetail -> "Department"
-    is AdminScreen.SessionDetail -> "Session"
-    is AdminScreen.SessionStudents -> "Students"
-    is AdminScreen.StudentProfile -> "Student · ${screen.roll}"
-    is AdminScreen.SessionTimetableRoute -> "Timetable"
-    is AdminScreen.SemesterSubjectsRoute -> "Semester ${screen.semester}"
-    is AdminScreen.SessionFeesRoute -> "Fees"
 }

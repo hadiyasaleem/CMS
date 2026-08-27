@@ -9,13 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Text
@@ -38,6 +32,7 @@ import com.mbd.cmscommon.domain.model.DocumentViewerContext
 import com.mbd.cmscommon.domain.model.DocumentViewerRole
 import com.mbd.cmscommon.domain.model.NotificationTargetRole
 import com.mbd.cmscommon.domain.model.UserRole
+import com.mbd.cmscommon.ui.components.CmsTopBar
 import com.mbd.cmscommon.ui.components.NotificationBadge
 import com.mbd.cmscommon.ui.components.StudentExamsDestination
 import com.mbd.cmscommon.ui.components.StudentHomeDestination
@@ -101,46 +96,41 @@ private fun StudentShell(role: UserRole.LinkedStudent, component: DesktopAppComp
         screen = target
     }
 
-    Row(Modifier.fillMaxSize()) {
-        NavigationRail(containerColor = CmsTheme.colors.ink, contentColor = CmsTheme.colors.onInk) {
-            Spacer(Modifier.height(16.dp))
-            StudentTab.entries.forEach { tab ->
-                NavigationRailItem(
-                    selected = screen == tab.root,
-                    onClick = { selectedTab = tab; screen = tab.root },
-                    icon = {
-                        if (tab == StudentTab.More && unreadCount > 0) {
-                            Box {
+    Column(Modifier.fillMaxSize()) {
+        CmsTopBar(
+            onBack = if (screen != selectedTab.root) {
+                { screen = selectedTab.root }
+            } else {
+                null
+            },
+            onRefresh = ::refreshCurrentScreen,
+            isRefreshing = shellRefreshing,
+            onNotifications = { open(StudentScreen.Notifications) },
+            notificationCount = unreadCount,
+            goldWordmark = true,
+        )
+        Row(Modifier.weight(1f).fillMaxWidth()) {
+            NavigationRail(containerColor = CmsTheme.colors.ink, contentColor = CmsTheme.colors.onInk) {
+                Spacer(Modifier.height(16.dp))
+                StudentTab.entries.forEach { tab ->
+                    NavigationRailItem(
+                        selected = screen == tab.root,
+                        onClick = { selectedTab = tab; screen = tab.root },
+                        icon = {
+                            if (tab == StudentTab.More && unreadCount > 0) {
+                                Box {
+                                    Icon(tab.icon, contentDescription = tab.label)
+                                    NotificationBadge(unreadCount, modifier = Modifier.align(Alignment.TopEnd))
+                                }
+                            } else {
                                 Icon(tab.icon, contentDescription = tab.label)
-                                NotificationBadge(unreadCount, modifier = Modifier.align(Alignment.TopEnd))
                             }
-                        } else {
-                            Icon(tab.icon, contentDescription = tab.label)
-                        }
-                    },
-                    label = { Text(tab.label) },
-                )
-            }
-        }
-        Column(Modifier.weight(1f).fillMaxHeight()) {
-            Row(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                if (screen != selectedTab.root) {
-                    IconButton(onClick = { screen = selectedTab.root }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
-                Text(screenTitle(screen), style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
-                IconButton(onClick = { open(StudentScreen.Notifications) }) {
-                    Box {
-                        Icon(Icons.Filled.Notifications, contentDescription = "Notifications")
-                        if (unreadCount > 0) NotificationBadge(unreadCount, modifier = Modifier.align(Alignment.TopEnd))
-                    }
-                }
-                IconButton(onClick = ::refreshCurrentScreen, enabled = !shellRefreshing) {
-                    Icon(Icons.Filled.Refresh, contentDescription = "Refresh")
+                        },
+                        label = { Text(tab.label) },
+                    )
                 }
             }
-            Box(Modifier.weight(1f).fillMaxWidth().padding(horizontal = 24.dp)) {
+            Box(Modifier.weight(1f).fillMaxHeight().padding(horizontal = 24.dp)) {
                 key(refreshVersion) {
                     when (screen) {
                         StudentScreen.Home -> StudentHomeWorkspaceScreen(
@@ -214,20 +204,4 @@ private fun StudentShell(role: UserRole.LinkedStudent, component: DesktopAppComp
             }
         }
     }
-}
-
-private fun screenTitle(screen: StudentScreen): String = when (screen) {
-    StudentScreen.Home -> "Home"
-    StudentScreen.Attendance -> "Attendance"
-    StudentScreen.ExamsHub -> "Exams"
-    StudentScreen.Timetable -> "Timetable"
-    StudentScreen.MoreHub -> "More"
-    StudentScreen.Marks -> "Marks"
-    StudentScreen.Results -> "Results"
-    StudentScreen.Datesheets -> "Datesheets"
-    StudentScreen.Events -> "Events"
-    StudentScreen.Documents -> "Documents"
-    StudentScreen.Fees -> "Fee challan"
-    StudentScreen.Notifications -> "Notifications"
-    StudentScreen.Profile -> "Profile"
 }
