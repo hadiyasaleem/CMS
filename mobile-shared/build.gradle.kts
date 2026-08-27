@@ -52,6 +52,8 @@ ksp {
 dependencies {
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 
+    api(project(":core"))
+
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
 

@@ -74,8 +74,9 @@ fun StudentTimetableWorkspace(
             loading && snapshot == null -> items(3) { SkeletonRow() }
             snapshot != null -> {
                 item { TimetableOverview(snapshot) }
-                if (snapshot.nextLecture != null) {
-                    item { NextLectureCard(snapshot.nextLecture) }
+                val nextLecture = snapshot.nextLecture
+                if (nextLecture != null) {
+                    item { NextLectureCard(nextLecture) }
                 }
                 val lectures = snapshot.periods.filter { it.period.periodType == PeriodType.LECTURE && it.period.courseCode.isNotBlank() }
                 if (lectures.isEmpty()) {

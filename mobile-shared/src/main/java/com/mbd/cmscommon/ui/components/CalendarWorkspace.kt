@@ -261,12 +261,14 @@ private fun CalendarEventCard(event: CalendarEvent, today: LocalDate, canDelete:
                 }
                 Spacer(Modifier.height(4.dp))
                 Text(eventDateStatus(event, today), color = CalendarBlue, style = MaterialTheme.typography.bodySmall)
-                if (!event.venue.isNullOrBlank()) {
-                    Text(event.venue, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                val venue = event.venue
+                if (!venue.isNullOrBlank()) {
+                    Text(venue, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
                 }
-                if (!event.description.isNullOrBlank()) {
+                val description = event.description
+                if (!description.isNullOrBlank()) {
                     Spacer(Modifier.height(6.dp))
-                    Text(event.description, color = Color(0xFF625E58), style = MaterialTheme.typography.bodyMedium)
+                    Text(description, color = Color(0xFF625E58), style = MaterialTheme.typography.bodyMedium)
                 }
                 if (needsReview) {
                     Spacer(Modifier.height(6.dp))

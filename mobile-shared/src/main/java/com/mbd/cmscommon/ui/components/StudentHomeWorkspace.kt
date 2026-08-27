@@ -86,11 +86,12 @@ fun StudentHomeWorkspace(
                     }
                 }
             }
-            if (snapshot.weakestSubject != null && snapshot.weakestSubject.percent < 75f) {
+            val weakestSubject = snapshot.weakestSubject
+            if (weakestSubject != null && weakestSubject.percent < 75f) {
                 item {
                     Surface(shape = RoundedCornerShape(14.dp), color = Color(0xFFFFEFEB), border = BorderStroke(1.dp, StudentHomeRed.copy(alpha = 0.3f))) {
                         Text(
-                            "ATTENDANCE NEEDS ATTENTION: ${snapshot.weakestSubject.courseCode} at ${snapshot.weakestSubject.percent.toInt()}%. Review your subject attendance before the next class.",
+                            "ATTENDANCE NEEDS ATTENTION: ${weakestSubject.courseCode} at ${weakestSubject.percent.toInt()}%. Review your subject attendance before the next class.",
                             modifier = Modifier.padding(14.dp),
                             color = StudentHomeRed,
                             style = MaterialTheme.typography.bodySmall,
@@ -151,8 +152,9 @@ private fun NextStudentClassCard(snapshot: StudentHomeSnapshot) {
                 Spacer(Modifier.height(6.dp))
                 StudentClassMeta(Icons.Filled.CalendarMonth, "${next.dayLabel} · ${next.timeRange}")
                 StudentClassMeta(Icons.Filled.FactCheck, next.teacherName.ifBlank { "Teacher not assigned" })
-                if (!next.location.isNullOrBlank()) {
-                    StudentClassMeta(Icons.Filled.Payments, next.location)
+                val location = next.location
+                if (!location.isNullOrBlank()) {
+                    StudentClassMeta(Icons.Filled.Payments, location)
                 }
             }
         }

@@ -58,13 +58,14 @@ fun StudentFeeWorkspace(
             snapshot != null -> {
                 item { FeeOverview(snapshot) }
                 item { FeeDueCard(snapshot) }
-                if (snapshot.structure != null && snapshot.itemCount > 0) {
+                val structure = snapshot.structure
+                if (structure != null && snapshot.itemCount > 0) {
                     item {
                         Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
                             Column(Modifier.padding(16.dp)) {
                                 Text("Fee component", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                                 Spacer(Modifier.height(8.dp))
-                                snapshot.structure.heads.filter { it.label.isNotBlank() && it.amount >= 0.0 }.forEach { head -> FeeHeadCard(head) }
+                                structure.heads.filter { it.label.isNotBlank() && it.amount >= 0.0 }.forEach { head -> FeeHeadCard(head) }
                             }
                         }
                     }

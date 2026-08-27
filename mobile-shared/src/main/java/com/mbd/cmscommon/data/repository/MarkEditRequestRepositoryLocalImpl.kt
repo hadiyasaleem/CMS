@@ -18,6 +18,8 @@ import io.github.jan.supabase.postgrest.query.Order
 import java.time.Instant
 import javax.inject.Inject
 
+private const val MARK_EDIT_STATUS_PENDING = "PENDING"
+
 class MarkEditRequestRepositoryLocalImpl @Inject constructor(
     private val postgrest: Postgrest,
     private val requestDao: MarkEditRequestDao,
