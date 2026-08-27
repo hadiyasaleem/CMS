@@ -10,8 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Description
@@ -98,19 +97,19 @@ fun DocumentWorkspace(
         .filter { query.isBlank() || it.title.contains(query, ignoreCase = true) }
         .sortedByDescending { activityAt(it) }
 
-    LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { DocumentHeader(canManage) { showCreate = true } }
+    CardGrid(modifier.fillMaxWidth()) {
+        fullSpanItem { DocumentHeader(canManage) { showCreate = true } }
 
         if (!errorMessage.isNullOrBlank()) {
-            item { DocumentNotice(errorMessage, CmsTheme.colors.accent, action = "Retry", onAction = onRetry) }
+            fullSpanItem { DocumentNotice(errorMessage, CmsTheme.colors.accent, action = "Retry", onAction = onRetry) }
         }
         if (!actionMessage.isNullOrBlank()) {
-            item { DocumentNotice(actionMessage, Color(0xFF2F6B4F), action = null, onAction = null) }
+            fullSpanItem { DocumentNotice(actionMessage, Color(0xFF2F6B4F), action = null, onAction = null) }
         }
 
-        item { DocumentSummary(summary.totalResources, summary.pdfResources, summary.recentlyUpdatedResources, reviewCount) }
+        fullSpanItem { DocumentSummary(summary.totalResources, summary.pdfResources, summary.recentlyUpdatedResources, reviewCount) }
 
-        item {
+        fullSpanItem {
             DocumentFilters(
                 query = query,
                 onQueryChange = { query = it },
@@ -120,9 +119,9 @@ fun DocumentWorkspace(
         }
 
         when {
-            loading -> items(3) { SkeletonRow() }
-            visibleToViewer.isEmpty() -> item { DocumentEmptyState(filtered = false, canManage = canManage, onAdd = { showCreate = true }, onClear = {}) }
-            filtered.isEmpty() -> item { DocumentEmptyState(filtered = true, canManage = false, onAdd = {}, onClear = { query = ""; selectedKind = null }) }
+            loading -> fullSpanItems(3) { SkeletonRow() }
+            visibleToViewer.isEmpty() -> fullSpanItem { DocumentEmptyState(filtered = false, canManage = canManage, onAdd = { showCreate = true }, onClear = {}) }
+            filtered.isEmpty() -> fullSpanItem { DocumentEmptyState(filtered = true, canManage = false, onAdd = {}, onClear = { query = ""; selectedKind = null }) }
             else -> items(filtered, key = { it.id }) { document ->
                 DocumentResourceCard(
                     document = document,
@@ -136,7 +135,7 @@ fun DocumentWorkspace(
             }
         }
 
-        item { Spacer(Modifier.height(72.dp)) }
+        fullSpanItem { Spacer(Modifier.height(72.dp)) }
     }
 
     if (showCreate) {

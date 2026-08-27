@@ -13,8 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -72,10 +71,10 @@ fun DepartmentPortfolio(
     val occupancy = if (totalCapacity == 0) 0f else (totalStudents * 100f) / totalCapacity
     val departmentsWithHod = departments.count { !it.hodEmail.isNullOrBlank() }
 
-    LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { DepartmentHero(heroPainter, departments.size, onAddDepartment) }
-        item { PortfolioSummary(departments.size, totalStudents, totalSessions, occupancy, departmentsWithHod) }
-        item {
+    CardGrid(modifier.fillMaxWidth()) {
+        fullSpanItem { DepartmentHero(heroPainter, departments.size, onAddDepartment) }
+        fullSpanItem { PortfolioSummary(departments.size, totalStudents, totalSessions, occupancy, departmentsWithHod) }
+        fullSpanItem {
             OutlinedTextField(
                 value = query,
                 onValueChange = { query = it },
@@ -85,9 +84,9 @@ fun DepartmentPortfolio(
             )
         }
         if (departments.isEmpty()) {
-            item { FilteredDepartmentEmptyState(hasQuery = false, onAdd = onAddDepartment, onClear = {}) }
+            fullSpanItem { FilteredDepartmentEmptyState(hasQuery = false, onAdd = onAddDepartment, onClear = {}) }
         } else if (visible.isEmpty()) {
-            item { FilteredDepartmentEmptyState(hasQuery = true, onAdd = onAddDepartment, onClear = { query = "" }) }
+            fullSpanItem { FilteredDepartmentEmptyState(hasQuery = true, onAdd = onAddDepartment, onClear = { query = "" }) }
         } else {
             items(visible, key = { it.deptId }) { department ->
                 DepartmentPortfolioCard(
@@ -99,7 +98,7 @@ fun DepartmentPortfolio(
                 )
             }
         }
-        item { Spacer(Modifier.height(72.dp)) }
+        fullSpanItem { Spacer(Modifier.height(72.dp)) }
     }
 }
 

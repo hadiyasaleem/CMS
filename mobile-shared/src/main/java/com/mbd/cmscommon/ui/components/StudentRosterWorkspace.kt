@@ -11,8 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -72,8 +71,8 @@ fun StudentRosterWorkspace(
     val visible = students.filter { query.isBlank() || it.name.contains(query, ignoreCase = true) || it.rollNumber.contains(query, ignoreCase = true) }
         .sortedBy { it.rollNumber }
 
-    LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item {
+    CardGrid(modifier.fillMaxWidth()) {
+        fullSpanItem {
             RosterHero(
                 session = session,
                 studentCount = students.size,
@@ -85,7 +84,7 @@ fun StudentRosterWorkspace(
         }
 
         if (!errorMessage.isNullOrBlank()) {
-            item {
+            fullSpanItem {
                 Surface(shape = RoundedCornerShape(14.dp), color = RosterRed.copy(alpha = 0.1f), border = BorderStroke(1.dp, RosterRed.copy(alpha = 0.25f))) {
                     Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text(errorMessage, modifier = Modifier.weight(1f), color = RosterRed, style = MaterialTheme.typography.bodyMedium)
@@ -95,9 +94,9 @@ fun StudentRosterWorkspace(
             }
         }
 
-        item { RosterSummaryCard(students.size, avgCgpa, withGpa, (maxStudents - students.size).coerceAtLeast(0)) }
+        fullSpanItem { RosterSummaryCard(students.size, avgCgpa, withGpa, (maxStudents - students.size).coerceAtLeast(0)) }
 
-        item {
+        fullSpanItem {
             OutlinedTextField(
                 value = query,
                 onValueChange = { query = it },
@@ -108,14 +107,14 @@ fun StudentRosterWorkspace(
         }
 
         when {
-            students.isEmpty() -> item { RosterEmptyState(hasStudents = false, isFull = false, onAdd = { showAddStudent = true }, onClear = {}) }
-            visible.isEmpty() -> item { RosterEmptyState(hasStudents = true, isFull = false, onAdd = {}, onClear = { query = "" }) }
+            students.isEmpty() -> fullSpanItem { RosterEmptyState(hasStudents = false, isFull = false, onAdd = { showAddStudent = true }, onClear = {}) }
+            visible.isEmpty() -> fullSpanItem { RosterEmptyState(hasStudents = true, isFull = false, onAdd = {}, onClear = { query = "" }) }
             else -> items(visible, key = { it.rollNumber }) { student ->
                 StudentProfileCard(student, onOpen = { onOpenStudent(student) }, onDelete = { pendingDelete = student })
             }
         }
 
-        item { Spacer(Modifier.height(72.dp)) }
+        fullSpanItem { Spacer(Modifier.height(72.dp)) }
     }
 
     if (showAddStudent) {

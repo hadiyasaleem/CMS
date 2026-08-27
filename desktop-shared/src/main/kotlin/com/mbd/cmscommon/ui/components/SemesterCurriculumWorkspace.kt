@@ -11,8 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -70,17 +69,17 @@ fun SemesterCurriculumWorkspace(
     val visible = subjects.filter { query.isBlank() || it.name.contains(query, ignoreCase = true) || it.courseCode.contains(query, ignoreCase = true) }
         .sortedBy { it.courseCode }
 
-    LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { CurriculumHero(session, semester, subjects.size, totalCredits, onAdd = { addingSubject = true }) }
+    CardGrid(modifier.fillMaxWidth()) {
+        fullSpanItem { CurriculumHero(session, semester, subjects.size, totalCredits, onAdd = { addingSubject = true }) }
 
         if (!errorMessage.isNullOrBlank()) {
-            item { ValidationMessage(errorMessage) }
+            fullSpanItem { ValidationMessage(errorMessage) }
         }
 
-        item { CurriculumSummaryCard(subjects.size, totalCredits, electiveCount) }
-        item { TermReadinessCard(term, onClick = { showTermEditor = true }) }
+        fullSpanItem { CurriculumSummaryCard(subjects.size, totalCredits, electiveCount) }
+        fullSpanItem { TermReadinessCard(term, onClick = { showTermEditor = true }) }
 
-        item {
+        fullSpanItem {
             OutlinedTextField(
                 value = query,
                 onValueChange = { query = it },
@@ -91,15 +90,15 @@ fun SemesterCurriculumWorkspace(
         }
 
         when {
-            loading -> items(3) { SkeletonRow() }
-            subjects.isEmpty() -> item { CurriculumEmptyState(hasSubjects = false, onAdd = { addingSubject = true }, onClear = {}) }
-            visible.isEmpty() -> item { CurriculumEmptyState(hasSubjects = true, onAdd = {}, onClear = { query = "" }) }
+            loading -> fullSpanItems(3) { SkeletonRow() }
+            subjects.isEmpty() -> fullSpanItem { CurriculumEmptyState(hasSubjects = false, onAdd = { addingSubject = true }, onClear = {}) }
+            visible.isEmpty() -> fullSpanItem { CurriculumEmptyState(hasSubjects = true, onAdd = {}, onClear = { query = "" }) }
             else -> items(visible, key = { it.courseCode }) { subject ->
                 SubjectCurriculumCard(subject, onEdit = { subjectEditor = subject }, onRemove = { pendingRemove = subject })
             }
         }
 
-        item { Spacer(Modifier.height(72.dp)) }
+        fullSpanItem { Spacer(Modifier.height(72.dp)) }
     }
 
     if (addingSubject || subjectEditor != null) {

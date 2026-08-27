@@ -11,8 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
@@ -115,19 +114,19 @@ fun TeacherDirectoryWorkspace(
         TeacherSort.NEWEST -> filtered.sortedByDescending { it.createdAt }
     }
 
-    LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { TeacherHero(teachers.size) { showCreateDialog = true } }
+    CardGrid(modifier.fillMaxWidth()) {
+        fullSpanItem { TeacherHero(teachers.size) { showCreateDialog = true } }
 
         if (!errorMessage.isNullOrBlank()) {
-            item { TeacherNotice(errorMessage, TeacherRed, onClearError) }
+            fullSpanItem { TeacherNotice(errorMessage, TeacherRed, onClearError) }
         }
         if (!notice.isNullOrBlank()) {
-            item { TeacherNotice(notice, TeacherGreen, onConsumeNotice) }
+            fullSpanItem { TeacherNotice(notice, TeacherGreen, onConsumeNotice) }
         }
 
-        item { TeacherSummaryCard(teachers.size, teachers.count { it.status == TeacherStatus.ACTIVE }, assignments.values.sumOf { it.size }, teachers.count { completeness(it) < 100 }) }
+        fullSpanItem { TeacherSummaryCard(teachers.size, teachers.count { it.status == TeacherStatus.ACTIVE }, assignments.values.sumOf { it.size }, teachers.count { completeness(it) < 100 }) }
 
-        item {
+        fullSpanItem {
             Column(Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = query,
@@ -152,9 +151,9 @@ fun TeacherDirectoryWorkspace(
         }
 
         when {
-            loading -> items(3) { SkeletonRow() }
-            teachers.isEmpty() -> item { TeacherEmptyState(filtered = false, onAdd = { showCreateDialog = true }, onClearFilters = {}) }
-            visible.isEmpty() -> item { TeacherEmptyState(filtered = true, onAdd = {}, onClearFilters = { query = ""; filter = TeacherFilter.ALL }) }
+            loading -> fullSpanItems(3) { SkeletonRow() }
+            teachers.isEmpty() -> fullSpanItem { TeacherEmptyState(filtered = false, onAdd = { showCreateDialog = true }, onClearFilters = {}) }
+            visible.isEmpty() -> fullSpanItem { TeacherEmptyState(filtered = true, onAdd = {}, onClearFilters = { query = ""; filter = TeacherFilter.ALL }) }
             else -> items(visible, key = { it.teacherId }) { teacher ->
                 val dept = departments.firstOrNull { it.deptId == teacher.deptId }
                 TeacherCard(
@@ -170,7 +169,7 @@ fun TeacherDirectoryWorkspace(
             }
         }
 
-        item { Spacer(Modifier.height(72.dp)) }
+        fullSpanItem { Spacer(Modifier.height(72.dp)) }
     }
 
     if (showCreateDialog) {

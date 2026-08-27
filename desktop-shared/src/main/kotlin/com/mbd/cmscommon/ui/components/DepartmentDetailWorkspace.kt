@@ -9,8 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -62,8 +61,8 @@ fun DepartmentDetailWorkspace(
         .filter { query.isBlank() || it.label.contains(query, ignoreCase = true) || (it.programName ?: "").contains(query, ignoreCase = true) }
         .sortedByDescending { it.startYear }
 
-    LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item {
+    CardGrid(modifier.fillMaxWidth()) {
+        fullSpanItem {
             DepartmentIdentityCard(
                 department = department,
                 fallbackName = fallbackName,
@@ -73,7 +72,7 @@ fun DepartmentDetailWorkspace(
         }
 
         if (!errorMessage.isNullOrBlank()) {
-            item {
+            fullSpanItem {
                 Surface(shape = RoundedCornerShape(14.dp), color = Color(0xFFFFEFEB), border = BorderStroke(1.dp, CmsTheme.colors.accent.copy(alpha = 0.25f))) {
                     Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text(errorMessage, modifier = Modifier.weight(1f), color = CmsTheme.colors.accent, style = MaterialTheme.typography.bodyMedium)
@@ -83,7 +82,7 @@ fun DepartmentDetailWorkspace(
             }
         }
 
-        item {
+        fullSpanItem {
             DepartmentSummary(
                 sessionCount = snapshot.sessions.size,
                 studentCount = snapshot.studentCount,
@@ -95,14 +94,14 @@ fun DepartmentDetailWorkspace(
             )
         }
 
-        item {
+        fullSpanItem {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text("Current intakes", modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                 CmsPrimaryButton(text = "Create session", onClick = { showAddSession = true })
             }
         }
 
-        item {
+        fullSpanItem {
             Column(Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = query,
@@ -122,11 +121,11 @@ fun DepartmentDetailWorkspace(
         }
 
         if (snapshot.sessions.isEmpty()) {
-            item {
+            fullSpanItem {
                 SessionEmptyState(filtered = false, onAction = { showAddSession = true })
             }
         } else if (filtered.isEmpty()) {
-            item {
+            fullSpanItem {
                 SessionEmptyState(filtered = true, onAction = { query = ""; shiftFilter = null })
             }
         } else {
@@ -135,7 +134,7 @@ fun DepartmentDetailWorkspace(
             }
         }
 
-        item { Spacer(Modifier.height(72.dp)) }
+        fullSpanItem { Spacer(Modifier.height(72.dp)) }
     }
 
     if (showAddSession) {
