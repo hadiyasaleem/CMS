@@ -1,65 +1,91 @@
 package com.mbd.cmscommon.data.repository
 
+import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.mapper.DesktopFineMapper
 import com.mbd.cmscommon.data.remote.SupabaseTables
 import com.mbd.cmscommon.data.remote.dto.FineDto
+import com.mbd.cmscommon.data.sync.SyncCheckpointDefaults
+import com.mbd.cmscommon.data.sync.fetchIncrementalDelta
+import com.mbd.cmscommon.data.sync.mergeIncrementalDelta
 import com.mbd.cmscommon.domain.model.Fine
 import com.mbd.cmscommon.domain.repository.FineRepository
+import com.mbd.cmsdesktop.data.cache.DesktopBootstrapSnapshotStore
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.query.Order
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
 
-/**
- * Desktop repos are always-online: no local persistence, every call re-fetches from Postgrest.
- *
- * [FineRepository] exposes no `observe*`/`sync()` methods, so there is nothing for a screen to
- * subscribe to — [cache] is kept purely as a small in-memory memoization keyed by
- * "sessionId|rollNumber" (mirroring the template's cache-then-refresh shape) rather than being
- * exposed as a Flow; [getFines] always re-fetches and refreshes it.
- */
+/** Durable cache-first fines repository. */
 @Singleton
 class DesktopFineRepository @Inject constructor(
     private val postgrest: Postgrest,
+    private val store: DesktopBootstrapSnapshotStore,
+    private val sessionManager: SessionManager,
 ) : FineRepository {
+    override suspend fun getFines(sessionId: String, rollNumber: String): List<Fine> =
+        cachedRows().filter {
+            it.sessionId == sessionId && it.rollNumber == rollNumber && !it.isDeleted
+        }.map(DesktopFineMapper::dtoToDomain).sortedByDescending { it.issuedAt }
 
-    private val cache = MutableStateFlow<Map<String, List<Fine>>>(emptyMap())
-
-    private fun cacheKey(sessionId: String, rollNumber: String) = "$sessionId|$rollNumber"
-
-    override suspend fun getFines(sessionId: String, rollNumber: String): List<Fine> {
-        val rows = postgrest.from(SupabaseTables.FINES).select {
-            filter {
-                eq("session_id", sessionId)
-                eq("roll_number", rollNumber)
-                eq("is_deleted", false)
-            }
-            order("issued_at", Order.DESCENDING)
-        }.decodeList<FineDto>()
-        val fines = rows.map { DesktopFineMapper.dtoToDomain(it) }
-        cache.update { it + (cacheKey(sessionId, rollNumber) to fines) }
-        return fines
+    override suspend fun sync(sessionId: String, rollNumber: String) {
+        val delta = fetchIncrementalDelta(
+            store,
+            ownerKey(),
+            SupabaseTables.FINES,
+            SyncCheckpointDefaults.scoped("session" to sessionId, "roll" to rollNumber),
+            FineDto::updatedAt,
+        ) { since, from, to ->
+            postgrest.from(SupabaseTables.FINES).select {
+                filter {
+                    eq("session_id", sessionId)
+                    eq("roll_number", rollNumber)
+                    gte("updated_at", since)
+                }
+                order("updated_at", Order.ASCENDING)
+                range(from, to)
+            }.decodeList()
+        }
+        writeMerged(delta)
     }
 
-    override suspend fun issueFine(sessionId: String, rollNumber: String, category: String, amount: Double, reason: String, issuedBy: String) {
-        val dto = FineDto(
-            sessionId = sessionId,
-            rollNumber = rollNumber,
-            category = category.ifBlank { "OTHER" },
-            amount = amount,
-            reason = reason.trim(),
-            issuedBy = issuedBy,
-        )
-        postgrest.from(SupabaseTables.FINES).insert(dto)
-        getFines(sessionId, rollNumber)
+    override suspend fun issueFine(
+        sessionId: String,
+        rollNumber: String,
+        category: String,
+        amount: Double,
+        reason: String,
+        issuedBy: String,
+    ) {
+        val inserted = postgrest.from(SupabaseTables.FINES).insert(
+            FineDto(
+                sessionId = sessionId,
+                rollNumber = rollNumber,
+                category = category.ifBlank { "OTHER" },
+                amount = amount,
+                reason = reason.trim(),
+                issuedBy = issuedBy,
+            ),
+        ) { select() }.decodeList<FineDto>()
+        writeMerged(inserted)
     }
 
     override suspend fun deleteFine(id: String) {
         postgrest.from(SupabaseTables.FINES).update({ set("is_deleted", true) }) {
             filter { eq("id", id) }
         }
-        cache.update { m -> m.mapValues { (_, fines) -> fines.filterNot { it.id == id } } }
+        store.writeRows(CACHE_FILE, FineDto.serializer(), cachedRows().filterNot { it.id == id })
     }
+
+    private fun cachedRows() = store.readRows(CACHE_FILE, FineDto.serializer())
+
+    private fun writeMerged(delta: List<FineDto>) {
+        store.writeRows(CACHE_FILE, FineDto.serializer(), mergeIncrementalDelta(
+            cachedRows(), delta, { it.id ?: "entity:${it.entityId}" }, FineDto::isDeleted,
+        ))
+    }
+
+    private fun ownerKey() =
+        sessionManager.accountKey ?: SyncCheckpointDefaults.ownerKey("anonymous-local")
+
+    private companion object { const val CACHE_FILE = "fines.json" }
 }

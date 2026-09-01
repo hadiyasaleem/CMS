@@ -8,6 +8,7 @@ import com.mbd.cmscommon.domain.model.StudentLinkRequest
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.StudentLinkRequestRepository
+import com.mbd.cmscommon.domain.repository.TeacherRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -16,13 +17,20 @@ class LinkRequestsViewModel @Inject constructor(
     repository: StudentLinkRequestRepository,
     sessionRepository: AcademicSessionRepository,
     departmentRepository: DepartmentRepository,
+    teacherRepository: TeacherRepository,
     sessionManager: SessionManager,
 ) : ViewModel() {
+    private val reviewerId = sessionManager.accountKey.orEmpty()
+
     private val controller = LinkRequestsController(
         repository = repository,
         sessionRepository = sessionRepository,
         departmentRepository = departmentRepository,
-        reviewerId = sessionManager.accountKey.orEmpty(),
+        reviewerId = reviewerId,
+        // Unlike admins (implicitly authorized), a teacher must hold canApproveLinkRequests.
+        permissionCheck = {
+            teacherRepository.getTeacher(reviewerId)?.permissions?.canApproveLinkRequests == true
+        },
         scope = viewModelScope,
     )
 

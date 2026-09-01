@@ -39,14 +39,21 @@ import com.mbd.cmscommon.domain.model.linkRequestClaimQuality
 import com.mbd.cmscommon.domain.model.linkRequestVerificationKey
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModWarn
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-private val LinkGreen = Color(0xFF2F6B4F)
-private val LinkGold = Color(0xFF9A651B)
-private val LinkRed = Color(0xFFB43A31)
+private val LinkGreen = ModSuccess
+private val LinkGold = ModWarn
+private val LinkRed = ModAccent
 private val LinkClaimDateFormat = DateTimeFormatter.ofPattern("dd MMM yyyy")
 
 enum class LinkRequestFilter(val label: String) {
@@ -166,7 +173,7 @@ fun LinkRequestReviewWorkspace(
                     singleLine = true,
                 )
                 Spacer(Modifier.height(8.dp))
-                Text("SHOW", color = Color(0xFF716B64), style = CmsTextStyles.eyebrow)
+                Text("SHOW", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     LinkRequestFilter.entries.forEach { option ->
@@ -174,7 +181,7 @@ fun LinkRequestReviewWorkspace(
                     }
                 }
                 Spacer(Modifier.height(8.dp))
-                Text("SORT", color = Color(0xFF716B64), style = CmsTextStyles.eyebrow)
+                Text("SORT", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     LinkRequestSort.entries.forEach { option ->
@@ -234,7 +241,7 @@ fun LinkRequestReviewWorkspace(
             title = { Text("Reject request", style = MaterialTheme.typography.headlineSmall) },
             text = {
                 Column {
-                    Text("The reason is shown to the student.", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                    Text("The reason is shown to the student.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(8.dp))
                     OutlinedTextField(value = reason, onValueChange = { reason = it }, modifier = Modifier.fillMaxWidth(), minLines = 2)
                 }
@@ -249,7 +256,7 @@ fun LinkRequestReviewWorkspace(
 
 @Composable
 private fun LinkRequestAccessState(access: LinkRequestAccess) {
-    Surface(modifier = Modifier.fillMaxWidth().padding(16.dp), shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(modifier = Modifier.fillMaxWidth().padding(16.dp), shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(24.dp)) {
             Text(
                 if (access == LinkRequestAccess.CHECKING) "Checking review permission" else "Review permission required",
@@ -263,7 +270,7 @@ private fun LinkRequestAccessState(access: LinkRequestAccess) {
                 } else {
                     "An Admin must grant the Approve link requests permission before this queue can be reviewed."
                 },
-                color = Color(0xFF77716A),
+                color = ModMuted,
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
@@ -272,7 +279,7 @@ private fun LinkRequestAccessState(access: LinkRequestAccess) {
 
 @Composable
 private fun LinkRequestHero(count: Int) {
-    Surface(shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Column(Modifier.padding(20.dp)) {
             Text("ACCOUNT VERIFICATION", color = LinkGold, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
@@ -285,10 +292,10 @@ private fun LinkRequestHero(count: Int) {
 
 @Composable
 private fun LinkSummaryTile(label: String, value: String, modifier: Modifier = Modifier, alert: Boolean = false) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(14.dp)) {
-            Text(value, color = if (alert) LinkRed else Color(0xFF252321), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(), color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text(value, color = if (alert) LinkRed else ModInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }
@@ -317,12 +324,12 @@ private fun LinkRequestCard(
     val quality = linkRequestClaimQuality(request)
     val canApprove = verification?.state == RosterVerificationState.MATCHED || verification?.state == RosterVerificationState.RELINK
 
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(request.nameClaimed?.takeIf { it.isNotBlank() } ?: "Name not provided", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                    Text("Roll ${request.rollNumberClaimed} · $sessionLabel", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                    Text("Roll ${request.rollNumberClaimed} · $sessionLabel", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
                 StatusBadge(badgeLabel, badgeTone)
             }
@@ -336,7 +343,7 @@ private fun LinkRequestCard(
             if (quality.issues.isNotEmpty()) {
                 Spacer(Modifier.height(8.dp))
                 Text("CLAIM ISSUE", color = LinkRed, style = CmsTextStyles.eyebrow)
-                quality.issues.forEach { issue -> Text("· $issue", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall) }
+                quality.issues.forEach { issue -> Text("· $issue", color = ModMuted, style = MaterialTheme.typography.bodySmall) }
             }
             if (verification != null && verification.identityComparisons.isNotEmpty()) {
                 Spacer(Modifier.height(8.dp))
@@ -358,7 +365,7 @@ private fun LinkRequestCard(
 @Composable
 private fun LinkRequestDetail(label: String, value: String) {
     Row(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
-        Text(label, modifier = Modifier.weight(1f), color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+        Text(label, modifier = Modifier.weight(1f), color = ModMuted, style = MaterialTheme.typography.bodySmall)
         Text(value, style = MaterialTheme.typography.bodySmall)
     }
 }
@@ -366,13 +373,13 @@ private fun LinkRequestDetail(label: String, value: String) {
 @Composable
 private fun IdentityCheckSummary(verification: LinkRequestVerification) {
     Column {
-        Text("IDENTITY CLAIM", color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+        Text("IDENTITY CLAIM", color = ModMuted, style = CmsTextStyles.eyebrow)
         verification.identityComparisons.forEach { comparison ->
             val tone = when (comparison.status) {
                 IdentityClaimStatus.MATCHED -> LinkGreen
                 IdentityClaimStatus.MISMATCHED -> LinkRed
                 IdentityClaimStatus.OFFICIAL_MISSING -> LinkGold
-                IdentityClaimStatus.NOT_CLAIMED -> Color(0xFF77716A)
+                IdentityClaimStatus.NOT_CLAIMED -> ModMuted
             }
             Text(
                 "${comparison.field.label}: ${comparison.claimedValue ?: "not provided"} → ${comparison.officialValue ?: "not provided"}",
@@ -395,13 +402,13 @@ private fun LinkRequestNotice(message: String, color: Color, onDismiss: () -> Un
 
 @Composable
 private fun LinkRequestEmptyState(filtered: Boolean, onClearFilters: () -> Unit) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(if (filtered) "No matching requests" else "Review queue is clear", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(4.dp))
             Text(
                 if (filtered) "Try another search or review filter." else "There are no pending student account claims.",
-                color = Color(0xFF77716A),
+                color = ModMuted,
                 style = MaterialTheme.typography.bodySmall,
             )
             if (filtered) {

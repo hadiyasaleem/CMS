@@ -47,12 +47,19 @@ import com.mbd.cmscommon.domain.model.StudentMoreSnapshot
 import com.mbd.cmscommon.domain.model.startDateOrNull
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModGround
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModWarn
 import java.time.format.DateTimeFormatter
 
-private val StudentMoreCanvas = Color(0xFFF7F5F0)
-private val StudentMoreGold = Color(0xFF9A651B)
-private val StudentMoreRed = Color(0xFFB43A31)
-private val StudentMoreBlue = Color(0xFF24577A)
+private val StudentMoreCanvas = ModGround
+private val StudentMoreGold = ModWarn
+private val StudentMoreRed = ModAccent
+private val StudentMoreBlue = ModInk
 private val MoreDateFormat = DateTimeFormatter.ofPattern("dd MMM yyyy")
 
 enum class StudentMoreDestination { CALENDAR, FEES, NOTIFICATIONS, PROFILE }
@@ -135,7 +142,7 @@ private fun studentMoreCards(snapshot: StudentMoreSnapshot): List<StudentPortalC
 
 @Composable
 private fun StudentMoreHeader(heroPainter: Painter) {
-    Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = ModInk) {
         Box(Modifier.fillMaxSize()) {
             Image(
                 painter = heroPainter,
@@ -158,9 +165,9 @@ private fun StudentMoreHeader(heroPainter: Painter) {
 
 @Composable
 private fun AccountRow(onSignOut: () -> Unit) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text("Signed in to GGC-MBD Student Portal", modifier = Modifier.weight(1f), color = Color(0xFF77716A), style = MaterialTheme.typography.bodyMedium)
+            Text("Signed in to GGC-MBD Student Portal", modifier = Modifier.weight(1f), color = ModMuted, style = MaterialTheme.typography.bodyMedium)
             TextButton(onClick = onSignOut) { Text("Sign out", color = StudentMoreBlue) }
         }
     }
@@ -171,8 +178,8 @@ private fun MoreNavigationCard(card: StudentPortalCard, onClick: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
-        color = Color.White,
-        border = BorderStroke(1.dp, Color(0xFFE5E0D7)),
+        color = ModSurface,
+        border = BorderStroke(1.dp, ModTrack),
     ) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(44.dp).background(StudentMoreBlue.copy(alpha = 0.1f), RoundedCornerShape(13.dp)), contentAlignment = Alignment.Center) {
@@ -184,7 +191,7 @@ private fun MoreNavigationCard(card: StudentPortalCard, onClick: () -> Unit) {
                     Text(card.title, modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                     StatusBadge(card.badge, card.badgeTone)
                 }
-                Text(card.subtitle, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                Text(card.subtitle, color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.height(4.dp))
                 MoreSummaryMetric(card.metric, card.metricLabel)
             }
@@ -197,7 +204,7 @@ private fun MoreSummaryMetric(value: String, label: String) {
     Row(verticalAlignment = Alignment.Bottom) {
         Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.width(6.dp))
-        Text(label, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+        Text(label, color = ModMuted, style = MaterialTheme.typography.bodySmall)
     }
 }
 

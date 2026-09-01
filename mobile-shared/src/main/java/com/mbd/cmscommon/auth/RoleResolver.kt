@@ -17,6 +17,7 @@ class RoleResolver @Inject constructor(
 ) {
     fun observeRole(): Flow<UserRole?> =
         combine(userDao.observeCurrent(), teacherDao.observeActive()) { user, _ ->
+            if (user == null) return@combine null
             resolveRoleFromEntities(user.uid, user.role, user.teacherId, user.linkedStudentId)
         }
 

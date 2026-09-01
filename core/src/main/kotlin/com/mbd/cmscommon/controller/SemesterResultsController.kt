@@ -59,27 +59,30 @@ class SemesterResultsController(
         _sessionId.value = id
         _results.value = emptyMap()
         _subjects.value = emptyList()
-        reload()
+        reload(fetchRemote = false)
     }
 
     fun setSemester(n: Int) {
         _semester.value = n
         _results.value = emptyMap()
         _subjects.value = emptyList()
-        reload()
+        reload(fetchRemote = false)
     }
 
     fun refresh() {
-        reload()
+        reload(fetchRemote = true)
     }
 
-    private fun reload() {
+    private fun reload(fetchRemote: Boolean) {
         val sid = _sessionId.value ?: return
         launch {
             try {
                 _loadState.value = Outcome.Loading
-                runCatching { sessionRepository.syncStudents(sid) }
-                runCatching { curriculumRepository.syncSession(sid) }
+                if (fetchRemote) {
+                    runCatching { sessionRepository.syncStudents(sid) }
+                    runCatching { curriculumRepository.syncSession(sid) }
+                    runCatching { marksRepository.syncSession(sid) }
+                }
 
                 _subjects.value = curriculumRepository.observeSemesterSubjects(sid, _semester.value).first().map { it.courseCode }
                 _results.value = marksRepository.getSemesterResults(sid, _semester.value).associateBy { it.rollNumber }
@@ -114,9 +117,9 @@ class SemesterResultsController(
                 require((remarks ?: "").trim().length <= 500) { "Remarks must not exceed 500 characters." }
                 require(supply.all { _subjects.value.contains(it) }) { "Choose supply subjects from this semester's curriculum." }
 
-                marksRepository.recordSemesterResult(sid, roll, _semester.value, gpa, cgpa, termLabel, result, position, remarks, supply)
+                marksRepository.recordSemesterResult(sid, roll, _semester.value, gpa, cgpa, termLabel, result.trim().uppercase(Locale.ROOT), position, remarks, supply)
                 _saveState.value = Outcome.Success(Unit)
-                _results.value = _results.value + (roll to SemesterGpa(sid, roll, _semester.value, gpa, cgpa, termLabel, result, position, remarks, supply))
+                _results.value = _results.value + (roll to SemesterGpa(sid, roll, _semester.value, gpa, cgpa, termLabel, result.trim().uppercase(Locale.ROOT), position, remarks, supply))
             } catch (t: Throwable) {
                 _saveState.value = Outcome.Error(t.userMessage("Could not save the result."), t)
             }

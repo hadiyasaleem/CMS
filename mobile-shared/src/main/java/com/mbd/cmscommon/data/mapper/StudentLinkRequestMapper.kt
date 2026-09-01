@@ -80,5 +80,9 @@ object StudentLinkRequestMapper {
         updatedBy = entity.updatedBy,
     )
 
-    fun dtoToEntity(dto: StudentLinkRequestDto): StudentLinkRequestEntity = domainToEntity(dtoToDomain(dto))
+    fun dtoToEntity(dto: StudentLinkRequestDto): StudentLinkRequestEntity = domainToEntity(dtoToDomain(dto)).copy(
+        isDeleted = dto.isDeleted,
+        deletedAt = PgTime.parse(dto.deletedAt)?.toEpochMilli(),
+        deletedBy = dto.deletedBy,
+    )
 }

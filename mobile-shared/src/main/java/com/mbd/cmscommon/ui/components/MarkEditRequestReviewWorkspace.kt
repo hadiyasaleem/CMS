@@ -36,15 +36,22 @@ import com.mbd.cmscommon.domain.model.Teacher
 import com.mbd.cmscommon.domain.model.markEditReviewQuality
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModWarn
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-private val MarkGreen = Color(0xFF2F6B4F)
-private val MarkAmber = Color(0xFF9A651B)
-private val MarkRed = Color(0xFFB43A31)
-private val MarkBlue = Color(0xFF24577A)
+private val MarkGreen = ModSuccess
+private val MarkAmber = ModWarn
+private val MarkRed = ModAccent
+private val MarkBlue = ModInk
 private val MarkDateFormat = DateTimeFormatter.ofPattern("dd MMM yyyy")
 
 enum class MarkRequestFilter(val label: String) {
@@ -148,7 +155,7 @@ fun MarkEditRequestReviewWorkspace(
                     }
                 }
                 Spacer(Modifier.height(8.dp))
-                Text("SORT: ${sort.label}", color = Color(0xFF716B64), style = CmsTextStyles.eyebrow)
+                Text("SORT: ${sort.label}", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     MarkRequestSort.entries.forEach { option ->
@@ -203,7 +210,7 @@ fun MarkEditRequestReviewWorkspace(
 
 @Composable
 private fun MarkRequestHero(count: Int) {
-    Surface(shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Column(Modifier.padding(20.dp)) {
             Text("ASSESSMENT CONTROL", color = MarkAmber, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
@@ -230,10 +237,10 @@ private fun MarkSummaryCard(requests: List<MarkEditRequest>) {
 
 @Composable
 private fun MarkStatLabel(label: String, value: String, modifier: Modifier = Modifier, alert: Boolean = false) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(14.dp)) {
-            Text(value, color = if (alert) MarkRed else Color(0xFF252321), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label, color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text(value, color = if (alert) MarkRed else ModInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+            Text(label, color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }
@@ -253,13 +260,13 @@ private fun MarkRequestCard(
     val quality = markEditReviewQuality(request)
     val delta = request.requestedScore - (request.currentScore ?: 0)
 
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, if (quality.blocksApproval) MarkRed.copy(alpha = 0.3f) else Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, if (quality.blocksApproval) MarkRed.copy(alpha = 0.3f) else ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(studentName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                    Text("Roll ${request.rollNumber} · $subjectName · ${request.examType}", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
-                    Text(sessionLabel, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                    Text("Roll ${request.rollNumber} · $subjectName · ${request.examType}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                    Text(sessionLabel, color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
                 if (quality.blocksApproval) StatusBadge("BLOCKED", BadgeTone.Error)
             }
@@ -269,10 +276,10 @@ private fun MarkRequestCard(
                 MarkScoreValue("REQUESTED", request.requestedScore.toString(), if (delta >= 0) MarkGreen else MarkRed)
             }
             Spacer(Modifier.height(8.dp))
-            Text("Requested ${relativeRequestAge(request.requestedAt, now)}", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+            Text("Requested ${relativeRequestAge(request.requestedAt, now)}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(6.dp))
-            Text("TEACHER'S REASON", color = Color(0xFF716B64), style = CmsTextStyles.eyebrow)
-            Text(request.reason?.takeIf { it.isNotBlank() } ?: "No reason was supplied. Confirm the change before approval.", color = Color(0xFF625E58), style = MaterialTheme.typography.bodyMedium)
+            Text("TEACHER'S REASON", color = ModMuted, style = CmsTextStyles.eyebrow)
+            Text(request.reason?.takeIf { it.isNotBlank() } ?: "No reason was supplied. Confirm the change before approval.", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
             if (quality.blockingIssues.isNotEmpty() || quality.warnings.isNotEmpty()) {
                 Spacer(Modifier.height(6.dp))
                 (quality.blockingIssues + quality.warnings).forEach { issue ->
@@ -314,13 +321,13 @@ private fun MarkRequestNotice(message: String, color: Color, onDismiss: () -> Un
 
 @Composable
 private fun MarkRequestEmpty(filtered: Boolean, onClearFilters: () -> Unit) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(if (filtered) "No matching requests" else "Review queue clear", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(4.dp))
             Text(
                 if (filtered) "Try a different search or filter." else "There are no pending score changes. New teacher requests will appear here.",
-                color = Color(0xFF77716A),
+                color = ModMuted,
                 style = MaterialTheme.typography.bodySmall,
             )
             if (filtered) {

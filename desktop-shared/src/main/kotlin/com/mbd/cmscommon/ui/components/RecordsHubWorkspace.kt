@@ -44,13 +44,21 @@ import com.mbd.cmscommon.domain.model.RecordsHubSnapshot
 import com.mbd.cmscommon.domain.model.RecordsSummarySource
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModGround
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModWarn
 
-private val RecordsCanvas = Color(0xFFF7F5F0)
-private val RecordsNavy = Color(0xFF2F4B7A)
-private val RecordsBlue = Color(0xFF24577A)
-private val RecordsGreen = Color(0xFF2F6B4F)
-private val RecordsGold = Color(0xFF9A651B)
-private val RecordsRed = Color(0xFFB43A31)
+private val RecordsCanvas = ModGround
+private val RecordsNavy = ModInk
+private val RecordsBlue = ModInk
+private val RecordsGreen = ModSuccess
+private val RecordsGold = ModWarn
+private val RecordsRed = ModAccent
 
 enum class RecordsDestination { ATTENDANCE, CALENDAR, DATESHEETS, TIMETABLE, FEES, INSIGHTS }
 
@@ -100,7 +108,7 @@ fun RecordsHubWorkspace(
 
 @Composable
 private fun RecordsHeader(heroPainter: Painter) {
-    Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = ModInk) {
         Box(Modifier.fillMaxSize()) {
             Image(
                 painter = heroPainter,
@@ -132,10 +140,10 @@ private fun RecordsSummaryRow(snapshot: RecordsHubSnapshot) {
 
 @Composable
 private fun RecordsMetric(value: String, label: String, modifier: Modifier = Modifier, alert: Boolean = false) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(14.dp)) {
-            Text(value, color = if (alert) RecordsRed else Color(0xFF252321), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(), color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text(value, color = if (alert) RecordsRed else ModInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }
@@ -190,7 +198,7 @@ private fun RecordsActionCard(card: RecordsCard, onClick: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
-        color = Color.White,
+        color = ModSurface,
         border = BorderStroke(1.dp, card.tone.copy(alpha = 0.25f)),
     ) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -200,7 +208,7 @@ private fun RecordsActionCard(card: RecordsCard, onClick: () -> Unit) {
             Spacer(Modifier.size(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(card.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                Text(card.detail, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                Text(card.detail, color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.height(4.dp))
                 Text(if (card.unavailable) "Data unavailable - tap to retry" else card.status, color = if (card.unavailable) RecordsRed else card.tone, style = MaterialTheme.typography.labelMedium)
             }

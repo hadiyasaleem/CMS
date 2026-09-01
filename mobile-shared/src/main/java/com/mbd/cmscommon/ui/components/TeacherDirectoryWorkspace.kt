@@ -47,11 +47,18 @@ import com.mbd.cmscommon.domain.model.TeacherStatus
 import com.mbd.cmscommon.teacher.ResolvedAssignment
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModWarn
 import com.mbd.cmscommon.util.FieldValidators
 
-private val TeacherGreen = Color(0xFF2F6B4F)
-private val TeacherGold = Color(0xFF9A651B)
-private val TeacherRed = Color(0xFFB43A31)
+private val TeacherGreen = ModSuccess
+private val TeacherGold = ModWarn
+private val TeacherRed = ModAccent
 
 enum class TeacherFilter(val label: String) {
     ALL("All faculty"),
@@ -138,13 +145,13 @@ fun TeacherDirectoryWorkspace(
                     singleLine = true,
                 )
                 Spacer(Modifier.height(8.dp))
-                Text("SHOW", color = Color(0xFF716B64), style = CmsTextStyles.eyebrow)
+                Text("SHOW", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     TeacherFilter.entries.forEach { option -> CmsChip(option.label, selected = filter == option, onClick = { filter = option }) }
                 }
                 Spacer(Modifier.height(8.dp))
-                Text("SORT", color = Color(0xFF716B64), style = CmsTextStyles.eyebrow)
+                Text("SORT", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     TeacherSort.entries.forEach { option -> CmsChip(option.label, selected = sort == option, onClick = { sort = option }) }
@@ -223,7 +230,7 @@ fun TeacherDirectoryWorkspace(
 
 @Composable
 private fun TeacherHero(count: Int, onAdd: () -> Unit) {
-    Surface(shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("FACULTY DIRECTORY", color = TeacherGold, style = CmsTextStyles.eyebrow)
@@ -249,10 +256,10 @@ private fun TeacherSummaryCard(total: Int, active: Int, classes: Int, incomplete
 
 @Composable
 private fun TeacherMetric(label: String, value: String, modifier: Modifier = Modifier, alert: Boolean = false) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(14.dp)) {
-            Text(value, color = if (alert) TeacherRed else Color(0xFF252321), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(), color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text(value, color = if (alert) TeacherRed else ModInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }
@@ -269,14 +276,14 @@ private fun TeacherCard(
     onRequestStatus: (TeacherStatus) -> Unit,
     onRequestDelete: () -> Unit,
 ) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 AvatarInitials(teacher.name, size = 42)
                 Spacer(Modifier.width(10.dp))
                 Column(Modifier.weight(1f)) {
                     Text(teacher.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                    Text(department?.name ?: "Department not assigned", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                    Text(department?.name ?: "Department not assigned", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
             }
             Spacer(Modifier.height(8.dp))
@@ -289,7 +296,7 @@ private fun TeacherCard(
             }
             if (assignments.isEmpty()) {
                 Spacer(Modifier.height(4.dp))
-                Text("No timetable classes assigned", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                Text("No timetable classes assigned", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             }
             if (completeness < 100) {
                 Spacer(Modifier.height(4.dp))
@@ -315,7 +322,7 @@ private fun TeacherCard(
 private fun TeacherContactLine(teacher: Teacher) {
     Text(
         listOfNotNull(teacher.email, teacher.phone?.takeIf { it.isNotBlank() }).joinToString(" · "),
-        color = Color(0xFF77716A),
+        color = ModMuted,
         style = MaterialTheme.typography.bodySmall,
     )
 }
@@ -332,13 +339,13 @@ private fun TeacherNotice(message: String, color: Color, onDismiss: () -> Unit) 
 
 @Composable
 private fun TeacherEmptyState(filtered: Boolean, onAdd: () -> Unit, onClearFilters: () -> Unit) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(if (filtered) "No matching teachers" else "No teachers found", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(4.dp))
             Text(
                 if (filtered) "Try another search or filter." else "Add the first faculty account.",
-                color = Color(0xFF77716A),
+                color = ModMuted,
                 style = MaterialTheme.typography.bodySmall,
             )
             Spacer(Modifier.height(12.dp))
@@ -380,7 +387,7 @@ private fun TeacherActionDialog(
         text = {
             Column {
                 if (existing == null) {
-                    Text("Create the sign-in account and complete the initial faculty profile in one step.", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                    Text("Create the sign-in account and complete the initial faculty profile in one step.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(10.dp))
                 }
                 OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Teacher name") }, isError = name.isNotBlank() && nameError != null, modifier = Modifier.fillMaxWidth(), singleLine = true)
@@ -388,7 +395,7 @@ private fun TeacherActionDialog(
                 OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email") }, enabled = existing == null, isError = email.isNotBlank() && emailError != null, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 if (existing == null) {
                     Spacer(Modifier.height(10.dp))
-                    Text("TEMPORARY CREDENTIAL", color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+                    Text("TEMPORARY CREDENTIAL", color = ModMuted, style = CmsTextStyles.eyebrow)
                     Spacer(Modifier.height(6.dp))
                     OutlinedTextField(
                         value = password,
@@ -423,13 +430,13 @@ private fun TeacherActionDialog(
                 Spacer(Modifier.height(10.dp))
                 OutlinedTextField(value = officeRoom, onValueChange = { officeRoom = it }, label = { Text("Office") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 Spacer(Modifier.height(10.dp))
-                Text("GENDER", color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+                Text("GENDER", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf("MALE", "FEMALE", "OTHER").forEach { option -> CmsChip(option, selected = gender == option, onClick = { gender = option }) }
                 }
                 Spacer(Modifier.height(10.dp))
-                Text("DELEGATED PERMISSIONS", color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+                Text("DELEGATED PERMISSIONS", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
                 PermissionEditor(permissions, onChange = { permissions = it })
             }

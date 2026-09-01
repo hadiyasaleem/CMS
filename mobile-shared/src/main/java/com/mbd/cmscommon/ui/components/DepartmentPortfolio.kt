@@ -45,6 +45,11 @@ import com.mbd.cmscommon.controller.DepartmentPortfolioStats
 import com.mbd.cmscommon.domain.model.Department
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModWarn
 import java.util.Locale
 
 @Composable
@@ -106,7 +111,7 @@ fun DepartmentPortfolio(
 
 @Composable
 private fun DepartmentHero(heroPainter: Painter, departmentCount: Int, onAdd: () -> Unit) {
-    Surface(modifier = Modifier.fillMaxWidth().height(200.dp), shape = RoundedCornerShape(22.dp), color = Color(0xFFFFFBF3), border = BorderStroke(1.dp, Color(0xFFE5DED2))) {
+    Surface(modifier = Modifier.fillMaxWidth().height(200.dp), shape = RoundedCornerShape(22.dp), color = ModWarn.copy(alpha = 0.12f), border = BorderStroke(1.dp, ModTrack)) {
         Box(Modifier.fillMaxSize()) {
             Image(
                 painter = heroPainter,
@@ -118,19 +123,19 @@ private fun DepartmentHero(heroPainter: Painter, departmentCount: Int, onAdd: ()
             Box(
                 Modifier.fillMaxSize().background(
                     Brush.horizontalGradient(
-                        0f to Color(0xFFFFFBF3),
-                        0.6f to Color(0xFFFFFBF3).copy(alpha = 0.92f),
+                        0f to ModWarn.copy(alpha = 0.12f),
+                        0.6f to ModWarn.copy(alpha = 0.92f),
                         1f to Color.Transparent,
                     ),
                 ),
             )
             Row(Modifier.align(Alignment.CenterStart).padding(24.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.fillMaxWidth(0.6f)) {
-                    Text("ACADEMIC STRUCTURE", color = Color(0xFF716B64), style = CmsTextStyles.eyebrow)
+                    Text("ACADEMIC STRUCTURE", color = ModMuted, style = CmsTextStyles.eyebrow)
                     Spacer(Modifier.height(6.dp))
-                    Text("Department portfolio", color = Color(0xFF252321), fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.headlineMedium)
+                    Text("Department portfolio", color = ModInk, fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.headlineMedium)
                     Spacer(Modifier.height(4.dp))
-                    Text("$departmentCount departments across the college", color = Color(0xFF625E58), style = MaterialTheme.typography.bodyMedium)
+                    Text("$departmentCount departments across the college", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
                 }
             }
             CmsPrimaryButton(text = "Add department", onClick = onAdd, modifier = Modifier.align(Alignment.BottomEnd).padding(24.dp))
@@ -150,10 +155,10 @@ private fun PortfolioSummary(departmentCount: Int, totalStudents: Int, totalSess
 
 @Composable
 private fun DepartmentMetric(label: String, value: String, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(14.dp)) {
             Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(Locale.ROOT), color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text(label.uppercase(Locale.ROOT), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }
@@ -175,12 +180,12 @@ private fun DepartmentPortfolioCard(
         "No active sessions"
     }
 
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(department.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                    Text("Code ${department.code}", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                    Text("Code ${department.code}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
                 Box {
                     IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Filled.MoreVert, contentDescription = "More") }
@@ -193,7 +198,7 @@ private fun DepartmentPortfolioCard(
             Spacer(Modifier.height(8.dp))
             StatusBadge(if (hasHod) "HOD ASSIGNED" else "HOD NOT ASSIGNED", if (hasHod) BadgeTone.Success else BadgeTone.Warning)
             Spacer(Modifier.height(8.dp))
-            Text(department.description?.takeIf { it.isNotBlank() } ?: "No department description added yet.", color = Color(0xFF625E58), style = MaterialTheme.typography.bodyMedium)
+            Text(department.description?.takeIf { it.isNotBlank() } ?: "No department description added yet.", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
             Spacer(Modifier.height(10.dp))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 StatusBadge("${stats.studentCount} students", BadgeTone.Neutral)
@@ -208,13 +213,13 @@ private fun DepartmentPortfolioCard(
 
 @Composable
 private fun FilteredDepartmentEmptyState(hasQuery: Boolean, onAdd: () -> Unit, onClear: () -> Unit) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(if (hasQuery) "No matching departments" else "No departments yet", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(4.dp))
             Text(
                 if (hasQuery) "Try another name, code, or HOD email." else "Create the first department to begin the academic structure.",
-                color = Color(0xFF77716A),
+                color = ModMuted,
                 style = MaterialTheme.typography.bodySmall,
             )
             Spacer(Modifier.height(12.dp))

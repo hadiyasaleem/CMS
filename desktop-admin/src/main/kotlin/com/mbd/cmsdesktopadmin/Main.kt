@@ -1,10 +1,17 @@
 package com.mbd.cmsdesktopadmin
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -55,33 +62,16 @@ fun main() = application {
         val cachedRole = accountKey?.let { key -> component.userRepository().getCachedRole(key) as? UserRole.Admin }
         role = cachedRole
         authChecked = cachedRole != null
-        if (cachedRole != null) {
-            val bootstrapComplete = bootstrapStore.isBootstrapComplete(ADMIN_BOOTSTRAP_SCOPE, cachedRole.uid)
-            if (!bootstrapComplete) {
-                val hasCachedData = runCatching { component.adminDataBootstrapper().hasCachedData() }.getOrDefault(false)
-                if (hasCachedData) {
-                    bootstrapStore.markBootstrapComplete(ADMIN_BOOTSTRAP_SCOPE, cachedRole.uid)
-                } else {
-                    requestBootstrap(cachedRole.uid)
-                }
-            }
-        }
+        if (cachedRole != null) requestBootstrap(cachedRole.uid)
+
         if (accountKey != null) {
             roleRefreshInProgress = cachedRole == null
             launch {
                 try {
                     val refreshedRole = runCatching { component.userRepository().resolveRole(accountKey) }.getOrNull() as? UserRole.Admin
                     role = refreshedRole ?: cachedRole
-                    if ((refreshedRole ?: cachedRole) != null && cachedRole == null) {
-                        val bootstrapComplete = bootstrapStore.isBootstrapComplete(ADMIN_BOOTSTRAP_SCOPE, accountKey)
-                        if (!bootstrapComplete) {
-                            val hasCachedData = runCatching { component.adminDataBootstrapper().hasCachedData() }.getOrDefault(false)
-                            if (hasCachedData) {
-                                bootstrapStore.markBootstrapComplete(ADMIN_BOOTSTRAP_SCOPE, accountKey)
-                            } else if (!bootstrapInProgress) {
-                                requestBootstrap(accountKey)
-                            }
-                        }
+                    if ((refreshedRole ?: cachedRole) != null && cachedRole == null && !bootstrapInProgress) {
+                        requestBootstrap(accountKey)
                     }
                 } finally {
                     roleRefreshInProgress = false
@@ -116,37 +106,48 @@ fun main() = application {
         icon = painterResource("icon.png"),
     ) {
         CmsTheme(app = CmsApp.ADMIN) {
-            val currentRole = role
-            if (!authChecked || !minDurationElapsed || roleRefreshInProgress || (currentRole == null && bootstrapInProgress)) {
-                AdminSplashScreen(
-                    statusText = if (bootstrapInProgress) "LOADING ADMIN DATA" else "VERIFYING SECURE SESSION",
-                )
-            } else if (currentRole == null) {
-                LoginScreen(
-                    sessionManager = component.sessionManager(),
-                    roleResolver = component.roleResolver(),
-                    userRepository = component.userRepository(),
-                    portalEyebrow = "Security Portal",
-                    screenTitle = "Admin login",
-                    brandDescription = "Central console - enrolment, faculty, attendance, examinations & records.",
-                    systemLabel = "GGC-MBD - ADMIN PORTAL",
-                    emailLabel = "Email Address",
-                    emailPlaceholder = "admin@ggcmbd.edu.pk",
-                    footerText = "Admin accounts are created by another administrator. Self-registration isn't available.",
-                    isAccepted = { it is UserRole.Admin },
-                    wrongRoleMessage = "This account is not an Admin account",
-                    onResolved = { resolved ->
-                        role = resolved as UserRole.Admin
-                        if (!bootstrapStore.isBootstrapComplete(ADMIN_BOOTSTRAP_SCOPE, resolved.uid)) {
-                            requestBootstrap(resolved.uid)
-                        }
-                    },
-                )
-            } else {
-                AdminNavHost(currentRole, component, window, ::signOut)
+            Box(
+                modifier = Modifier.fillMaxSize().background(CmsTheme.colors.ink),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    Modifier
+                        .fillMaxHeight()
+                        .width(ADMIN_MOBILE_CANVAS_WIDTH)
+                        .background(CmsTheme.colors.faint),
+                ) {
+                    val currentRole = role
+                    if (!authChecked || !minDurationElapsed || roleRefreshInProgress || bootstrapInProgress) {
+                        AdminSplashScreen(
+                            statusText = if (bootstrapInProgress) "LOADING ADMIN DATA" else "VERIFYING SECURE SESSION",
+                        )
+                    } else if (currentRole == null) {
+                        LoginScreen(
+                            sessionManager = component.sessionManager(),
+                            roleResolver = component.roleResolver(),
+                            userRepository = component.userRepository(),
+                            portalEyebrow = "Security Portal",
+                            screenTitle = "Admin login",
+                            brandDescription = "Central console — enrolment, faculty, attendance, examinations & records.",
+                            systemLabel = "GGC-MBD - ADMIN PORTAL",
+                            emailLabel = "Email Address",
+                            emailPlaceholder = "admin@ggcmbd.edu.pk",
+                            footerText = "Admin accounts are created by another administrator. Self-registration isn't available.",
+                            isAccepted = { it is UserRole.Admin },
+                            wrongRoleMessage = "This account is not an Admin account",
+                            onResolved = { resolved ->
+                                role = resolved as UserRole.Admin
+                                requestBootstrap(resolved.uid)
+                            },
+                        )
+                    } else {
+                        AdminNavHost(currentRole, component, window, ::signOut)
+                    }
+                }
             }
         }
     }
 }
 
 private const val ADMIN_BOOTSTRAP_SCOPE = "admin-data"
+private val ADMIN_MOBILE_CANVAS_WIDTH = 412.dp

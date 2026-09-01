@@ -4,7 +4,9 @@ import com.mbd.cmscommon.domain.model.UserRole
 import kotlinx.coroutines.flow.Flow
 
 interface UserRepository {
-    fun observeCurrentUserRole(): Flow<UserRole>
+    // Emits null when there is no signed-in user (e.g. after sign-out clears the local cache),
+    // so callers such as the app-root role gate can actually leave the authenticated state.
+    fun observeCurrentUserRole(): Flow<UserRole?>
 
     suspend fun resolveRole(uid: String): UserRole
     suspend fun getCachedRole(uid: String): UserRole

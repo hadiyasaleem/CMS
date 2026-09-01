@@ -37,7 +37,7 @@ fun MarkAttendanceScreen(onOpenHistory: (String) -> Unit, viewModel: MarkAttenda
         alreadyMarked = alreadyMarked,
         allMarked = allMarked,
         lectureTopic = lectureTopic,
-        outcome = submitState ?: Outcome.Success(Unit),
+        outcome = submitState,
         onSelect = controller::select,
         onStatus = controller::setStatus,
         onToggleLate = controller::toggleLate,

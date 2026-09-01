@@ -41,9 +41,7 @@ class ExamPaperSubmissionController(
     fun select(assignment: ResolvedAssignment) {
         _selected.value = assignment
         _uploadState.value = null
-        launch {
-            runCatching { repo.sync(assignment.sessionId, assignment.courseCode) }
-        }
+
     }
 
     fun selectExamType(type: ExamType) {
@@ -52,13 +50,14 @@ class ExamPaperSubmissionController(
 
     fun upload(fileBytes: ByteArray, fileName: String) {
         val assignment = _selected.value ?: return
+        if (_uploadState.value is Outcome.Loading) return // single-flight: block a double-tap duplicate upload
         val message = examPaperUploadError(fileName, fileBytes)
         if (message != null) {
             _uploadState.value = Outcome.Error(message)
             return
         }
+        _uploadState.value = Outcome.Loading // set before launch so the guard above sees it synchronously
         launch {
-            _uploadState.value = Outcome.Loading
             _uploadState.value = runCatching {
                 repo.uploadSubmission(assignment.sessionId, assignment.courseCode, _examType.value, teacherId, fileBytes, fileName)
             }.fold(

@@ -97,8 +97,12 @@ class SessionTimetableRepositoryImpl @Inject constructor(
             createdBy = period.createdBy,
             updatedBy = period.updatedBy,
         )
-        postgrest.from(SupabaseTables.TIMETABLE_PERIODS).upsert(dto) { onConflict = "primary_session_id,day,start_time" }
-        resyncDay(period.sessionId, period.day)
+        val saved = postgrest.from(SupabaseTables.TIMETABLE_PERIODS).upsert(dto) {
+            onConflict = "primary_session_id,day,start_time"
+            select()
+        }.decodeList<TimetablePeriodDto>().first()
+        periodDao.deleteForSlot(period.sessionId, period.day.name, period.startTime)
+        periodDao.upsertAll(listOf(saved.toEntity(period.sessionId, deptOf(period.sessionId))))
     }
 
     override suspend fun removePeriod(period: SessionPeriod) {
@@ -109,20 +113,7 @@ class SessionTimetableRepositoryImpl @Inject constructor(
                 eq("start_time", period.startTime)
             }
         }
-        resyncDay(period.sessionId, period.day)
-    }
-
-    private suspend fun resyncDay(sessionId: String, day: DayOfWeek) {
-        val deptId = deptOf(sessionId)
-        val rows = postgrest.from(SupabaseTables.TIMETABLE_PERIODS).select {
-            filter {
-                eq("primary_session_id", sessionId)
-                eq("day", day.name)
-            }
-        }.decodeList<TimetablePeriodDto>()
-        periodDao.deleteForSessionDay(sessionId, day.name)
-        val entities = rows.filterNot { it.isDeleted }.map { it.toEntity(sessionId, deptId) }
-        if (entities.isNotEmpty()) periodDao.upsertAll(entities)
+        periodDao.deleteForSlot(period.sessionId, period.day.name, period.startTime)
     }
 
     override suspend fun syncSession(sessionId: String) {

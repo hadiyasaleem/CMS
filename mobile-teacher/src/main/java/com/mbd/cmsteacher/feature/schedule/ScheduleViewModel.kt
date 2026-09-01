@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -46,9 +47,19 @@ class ScheduleViewModel @Inject constructor(
         viewModelScope.launch {
             _outcome.value = Outcome.Loading
             _outcome.value = try {
-                periods.value.map { it.sessionId }.distinct().forEach { sessionId ->
+                // Read a fresh period list rather than periods.value: the WhileSubscribed StateFlow
+                // may still hold its emptyList() seed (unsubscribed / first launch), which would make
+                // refresh a silent no-op.
+                val sessionIds = timetableRepository.observeMyPeriods(teacherId).first()
+                    .map { it.sessionId }.distinct()
+                // Aggregate per-session failures so a total sync failure surfaces as an error
+                // instead of always reporting success.
+                var lastFailure: Throwable? = null
+                for (sessionId in sessionIds) {
                     runCatching { timetableRepository.syncSession(sessionId) }
+                        .onFailure { lastFailure = it }
                 }
+                lastFailure?.let { throw it }
                 Outcome.Success(Unit)
             } catch (t: Throwable) {
                 Outcome.Error(t.userMessage("Refresh failed. Please try again."), t)

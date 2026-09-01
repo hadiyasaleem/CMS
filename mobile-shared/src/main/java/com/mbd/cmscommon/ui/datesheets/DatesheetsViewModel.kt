@@ -63,7 +63,7 @@ class DatesheetsViewModel @Inject constructor(
         loadingSubjects += sessionId
         viewModelScope.launch {
             try {
-                curriculumRepository.syncSession(sessionId)
+
                 val subjects = curriculumRepository.observeSessionSubjects(sessionId)
                 _subjectsBySession.value = _subjectsBySession.value + (sessionId to emptyList())
                 subjects.collect { list ->
@@ -75,7 +75,8 @@ class DatesheetsViewModel @Inject constructor(
         }
     }
 
-    private fun buildViewerContext(role: UserRole): DatesheetViewerContext = when (role) {
+    private fun buildViewerContext(role: UserRole?): DatesheetViewerContext = when (role) {
+        null -> DatesheetViewerContext(DatesheetViewerRole.STUDENT)
         is UserRole.Admin -> DatesheetViewerContext(DatesheetViewerRole.ADMIN, canManage = true)
         is UserRole.Teacher -> DatesheetViewerContext(DatesheetViewerRole.TEACHER, canManage = true, identityKey = role.teacherId)
         is UserRole.LinkedStudent -> DatesheetViewerContext(

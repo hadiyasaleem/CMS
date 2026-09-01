@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 @HiltViewModel
 class MyStudentsViewModel @Inject constructor(
@@ -51,5 +52,11 @@ class MyStudentsViewModel @Inject constructor(
 
     fun selectAssignment(assignment: ResolvedAssignment) {
         _selected.value = assignment
+        // observeStudents/observeTallies are local-cache flows; pull remote data on selection
+        // (mirrors MyStudentsController.select) so the roster/tallies populate on a cold cache.
+        viewModelScope.launch {
+            runCatching { sessionRepository.syncStudents(assignment.sessionId) }
+            runCatching { attendanceRepository.syncSummary(assignment.sessionId, assignment.courseCode) }
+        }
     }
 }

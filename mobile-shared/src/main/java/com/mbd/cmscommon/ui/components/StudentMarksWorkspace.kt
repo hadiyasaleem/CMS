@@ -28,12 +28,20 @@ import com.mbd.cmscommon.controller.SubjectMarksRow
 import com.mbd.cmscommon.domain.model.SubjectType
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModGround
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModWarn
 
-private val MarksCanvas = Color(0xFFF7F5F0)
-private val MarksGreen = Color(0xFF2F6B4F)
-private val MarksGold = Color(0xFF9A651B)
-private val MarksRed = Color(0xFFB43A31)
-private val MarksBlue = Color(0xFF24577A)
+private val MarksCanvas = ModGround
+private val MarksGreen = ModSuccess
+private val MarksGold = ModWarn
+private val MarksRed = ModAccent
+private val MarksBlue = ModInk
 
 @Composable
 fun StudentMarksWorkspace(
@@ -70,8 +78,8 @@ fun StudentMarksWorkspace(
                 }
                 if (snapshot.rows.isEmpty()) {
                     item {
-                        Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
-                            Text("Marks are awaiting entry", modifier = Modifier.padding(24.dp), color = Color(0xFF77716A), style = MaterialTheme.typography.bodyMedium)
+                        Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
+                            Text("Marks are awaiting entry", modifier = Modifier.padding(24.dp), color = ModMuted, style = MaterialTheme.typography.bodyMedium)
                         }
                     }
                 } else {
@@ -86,7 +94,7 @@ fun StudentMarksWorkspace(
 
 @Composable
 private fun StudentMarksHeader() {
-    Surface(shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Column(Modifier.padding(20.dp)) {
             Text("ASSESSMENT", color = MarksGold, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
@@ -99,9 +107,9 @@ private fun StudentMarksHeader() {
 
 @Composable
 private fun MarksOverviewCard(snapshot: StudentMarksSnapshot) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
-            Text("RECORDED TOTAL", color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text("RECORDED TOTAL", color = ModMuted, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
             Text(
                 snapshot.percentage?.let { "${snapshot.earnedMarks} / ${snapshot.availableMarks} (${it.toInt()}%)" } ?: "Not entered",
@@ -122,7 +130,7 @@ private fun MarksOverviewCard(snapshot: StudentMarksSnapshot) {
 private fun MarksMetric(label: String, value: String) {
     Column {
         Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-        Text(label.uppercase(), color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+        Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
     }
 }
 
@@ -139,14 +147,14 @@ private fun MarksHighlightCard(snapshot: StudentMarksSnapshot) {
 
 @Composable
 private fun SubjectMarksCard(row: SubjectMarksRow) {
-    Surface(shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(row.subjectName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
                     Text(
                         listOfNotNull(row.courseCode, row.semester?.let { "Semester $it" }, row.subjectType?.let { if (it == SubjectType.LAB) "Lab" else "Theory" }, if (row.isElective) "Elective" else null).joinToString(" · "),
-                        color = Color(0xFF77716A),
+                        color = ModMuted,
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }
@@ -166,7 +174,7 @@ private fun SubjectMarksCard(row: SubjectMarksRow) {
 
 @Composable
 private fun AssessmentScore(label: String, score: Int?, maxMarks: Int?, absent: Boolean) {
-    Surface(shape = RoundedCornerShape(10.dp), color = Color(0xFFF7F5F0)) {
+    Surface(shape = RoundedCornerShape(10.dp), color = ModGround) {
         Column(Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
             Text(
                 when {
@@ -175,10 +183,10 @@ private fun AssessmentScore(label: String, score: Int?, maxMarks: Int?, absent: 
                     else -> "${score ?: 0} / $maxMarks"
                 },
                 fontWeight = FontWeight.Bold,
-                color = if (absent) MarksRed else if (maxMarks == null) MarksGold else Color(0xFF252321),
+                color = if (absent) MarksRed else if (maxMarks == null) MarksGold else ModInk,
                 style = MaterialTheme.typography.bodyMedium,
             )
-            Text(label.uppercase(), color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }

@@ -39,14 +39,22 @@ import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.domain.model.MoreHubSnapshot
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModGround
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModWarn
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-private val MoreCanvas = Color(0xFFF7F5F0)
-private val MoreGreen = Color(0xFF2F6B4F)
-private val MoreGold = Color(0xFF9A651B)
-private val MoreRed = Color(0xFFB43A31)
-private val MoreNavy = Color(0xFF2F4B7A)
+private val MoreCanvas = ModGround
+private val MoreGreen = ModSuccess
+private val MoreGold = ModWarn
+private val MoreRed = ModAccent
+private val MoreNavy = ModInk
 private val MoreDateFormat = DateTimeFormatter.ofPattern("dd MMM yyyy")
 
 enum class MoreDestination { NOTIFICATIONS, PROFILE }
@@ -100,7 +108,7 @@ fun MoreHubWorkspace(
 
 @Composable
 private fun MoreHeader(heroPainter: Painter) {
-    Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = ModInk) {
         Box(Modifier.fillMaxSize()) {
             Image(
                 painter = heroPainter,
@@ -123,12 +131,12 @@ private fun MoreHeader(heroPainter: Painter) {
 
 @Composable
 private fun AccountSummary(snapshot: MoreHubSnapshot?, loading: Boolean) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
-            Text("SIGNED-IN ADMINISTRATOR", color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text("SIGNED-IN ADMINISTRATOR", color = ModMuted, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
             when {
-                loading -> Text("Loading account...", color = Color(0xFF77716A), style = MaterialTheme.typography.bodyMedium)
+                loading -> Text("Loading account...", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
                 snapshot == null -> Text("Directory summary unavailable - retry to restore account details", color = MoreRed, style = MaterialTheme.typography.bodyMedium)
                 else -> {
                     Text(snapshot.accountEmail, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
@@ -138,7 +146,7 @@ private fun AccountSummary(snapshot: MoreHubSnapshot?, loading: Boolean) {
                         Spacer(Modifier.width(8.dp))
                         Text(
                             snapshot.lastLoginAt?.let { "Last sign-in ${it.atZone(ZoneId.systemDefault()).format(MoreDateFormat)}" } ?: "Last sign-in not recorded",
-                            color = Color(0xFF77716A),
+                            color = ModMuted,
                             style = MaterialTheme.typography.bodySmall,
                         )
                     }
@@ -165,10 +173,10 @@ private fun MoreMetrics(snapshot: MoreHubSnapshot?, loading: Boolean) {
 
 @Composable
 private fun MoreMetric(value: String, label: String, modifier: Modifier = Modifier, alert: Boolean = false) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(14.dp)) {
-            Text(value, color = if (alert) MoreRed else Color(0xFF252321), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(), color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text(value, color = if (alert) MoreRed else ModInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }
@@ -178,7 +186,7 @@ private fun MoreActionCard(action: MoreAction, onClick: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
-        color = Color.White,
+        color = ModSurface,
         border = BorderStroke(1.dp, action.tone.copy(alpha = 0.25f)),
     ) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -188,7 +196,7 @@ private fun MoreActionCard(action: MoreAction, onClick: () -> Unit) {
             Spacer(Modifier.size(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(action.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                Text(action.detail, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                Text(action.detail, color = ModMuted, style = MaterialTheme.typography.bodySmall)
             }
         }
     }

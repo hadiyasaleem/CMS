@@ -40,7 +40,6 @@ import com.mbd.cmsdesktop.di.DesktopAppComponent
 import com.mbd.cmsdesktop.ui.shared.DatesheetsScreen
 import com.mbd.cmsdesktop.ui.shared.NotificationsScreen
 import com.mbd.cmscommon.util.StudentIdCodec
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -81,11 +80,15 @@ private fun StudentShell(role: UserRole.LinkedStudent, component: DesktopAppComp
         .collectAsState(initial = 0)
 
     fun refreshCurrentScreen() {
+        if (shellRefreshing) return
         scope.launch {
             shellRefreshing = true
-            refreshVersion += 1
-            delay(400)
-            shellRefreshing = false
+            try {
+                component.adminDataBootstrapper().refreshAll()
+                refreshVersion += 1
+            } finally {
+                shellRefreshing = false
+            }
         }
     }
 

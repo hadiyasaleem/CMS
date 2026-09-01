@@ -1,12 +1,17 @@
 package com.mbd.cmsdesktop.data.repository
 
+import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.mapper.DesktopExamPaperSubmissionMapper
 import com.mbd.cmscommon.data.remote.SupabaseTables
 import com.mbd.cmscommon.data.remote.dto.ExamPaperSubmissionDto
+import com.mbd.cmscommon.data.sync.SyncCheckpointDefaults
+import com.mbd.cmscommon.data.sync.fetchIncrementalDelta
+import com.mbd.cmscommon.data.sync.mergeIncrementalDelta
 import com.mbd.cmscommon.domain.model.ExamPaperSubmission
 import com.mbd.cmscommon.domain.model.ExamType
 import com.mbd.cmscommon.domain.model.examPaperUploadError
 import com.mbd.cmscommon.domain.repository.ExamPaperSubmissionRepository
+import com.mbd.cmsdesktop.data.cache.DesktopBootstrapSnapshotStore
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.storage.Storage
@@ -19,17 +24,16 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 
-/**
- * No local persistence. [cache] is one flat list spanning every (offeringId, subjectId) pair ever
- * synced; [sync] filterNot-replaces just its own scope, mirroring the other session-scoped repos.
- */
+/** Durable cache-first exam-paper submission repository. */
 @Singleton
 class DesktopExamPaperSubmissionRepository @Inject constructor(
     private val postgrest: Postgrest,
     private val storage: Storage,
+    private val store: DesktopBootstrapSnapshotStore,
+    private val sessionManager: SessionManager,
 ) : ExamPaperSubmissionRepository {
 
-    private val cache = MutableStateFlow<List<ExamPaperSubmission>>(emptyList())
+    private val cache = MutableStateFlow(rows().filterNot { it.isDeleted }.map(DesktopExamPaperSubmissionMapper::dtoToDomain))
 
     override fun observeSubmissionsForOffering(offeringId: String, subjectId: String): Flow<List<ExamPaperSubmission>> =
         cache.asStateFlow().map { list -> list.filter { it.offeringId == offeringId && it.subjectId == subjectId } }
@@ -58,8 +62,10 @@ class DesktopExamPaperSubmissionRepository @Inject constructor(
             fileSizeBytes = fileBytes.size.toLong(),
             createdBy = teacherId,
         )
-        postgrest.from(SupabaseTables.EXAM_PAPER_SUBMISSIONS).insert(dto)
-        sync(offeringId, subjectId)
+        val inserted = postgrest.from(SupabaseTables.EXAM_PAPER_SUBMISSIONS)
+            .insert(dto) { select() }
+            .decodeList<ExamPaperSubmissionDto>()
+        writeMerged(inserted)
     }
 
     override suspend fun downloadTo(submission: ExamPaperSubmission, targetDir: File): File {
@@ -77,20 +83,45 @@ class DesktopExamPaperSubmissionRepository @Inject constructor(
         if (existing != null && existing.storagePath.isNotBlank()) {
             runCatching { storage.from(SupabaseTables.BUCKET_EXAM_PAPERS).delete(existing.storagePath) }
         }
-        if (existing != null) sync(existing.offeringId, existing.subjectId)
+        writeRows(rows().filterNot { keyOf(it) == id })
     }
 
     override suspend fun sync(offeringId: String, subjectId: String) {
-        val rows = postgrest.from(SupabaseTables.EXAM_PAPER_SUBMISSIONS).select {
-            filter {
-                eq("session_id", offeringId)
-                eq("course_code", subjectId)
-                eq("is_deleted", false)
-            }
-            order("uploaded_at", Order.DESCENDING)
-        }.decodeList<ExamPaperSubmissionDto>()
-
-        val mapped = rows.map { DesktopExamPaperSubmissionMapper.dtoToDomain(it) }
-        cache.value = cache.value.filterNot { it.offeringId == offeringId && it.subjectId == subjectId } + mapped
+        val delta = fetchIncrementalDelta(
+            store,
+            ownerKey(),
+            SupabaseTables.EXAM_PAPER_SUBMISSIONS,
+            SyncCheckpointDefaults.scoped("session" to offeringId, "course" to subjectId),
+            ExamPaperSubmissionDto::updatedAt,
+        ) { since, from, to ->
+            postgrest.from(SupabaseTables.EXAM_PAPER_SUBMISSIONS).select {
+                filter {
+                    eq("session_id", offeringId)
+                    eq("course_code", subjectId)
+                    gte("updated_at", since)
+                }
+                order("updated_at", Order.ASCENDING)
+                range(from, to)
+            }.decodeList()
+        }
+        writeMerged(delta)
     }
+
+    private fun rows() = store.readRows(CACHE_FILE, ExamPaperSubmissionDto.serializer())
+
+    private fun keyOf(dto: ExamPaperSubmissionDto) = dto.id ?: "entity:${dto.entityId}"
+
+    private fun writeMerged(delta: List<ExamPaperSubmissionDto>) {
+        writeRows(mergeIncrementalDelta(rows(), delta, ::keyOf, ExamPaperSubmissionDto::isDeleted))
+    }
+
+    private fun writeRows(updated: List<ExamPaperSubmissionDto>) {
+        store.writeRows(CACHE_FILE, ExamPaperSubmissionDto.serializer(), updated)
+        cache.value = updated.filterNot { it.isDeleted }.map(DesktopExamPaperSubmissionMapper::dtoToDomain)
+    }
+
+    private fun ownerKey() =
+        sessionManager.accountKey ?: SyncCheckpointDefaults.ownerKey("anonymous-local")
+
+    private companion object { const val CACHE_FILE = "exam-paper-submissions.json" }
 }

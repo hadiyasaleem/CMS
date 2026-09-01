@@ -4,6 +4,7 @@ import com.mbd.cmscommon.domain.model.ExamType
 import com.mbd.cmscommon.domain.model.MarkEditRequest
 
 interface MarkEditRequestRepository {
+    suspend fun sync() = Unit
     suspend fun getPendingForAssignment(sessionId: String, courseCode: String, examType: ExamType): List<MarkEditRequest>
     suspend fun getPendingRequests(): List<MarkEditRequest>
     suspend fun submitRequest(

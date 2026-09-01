@@ -49,15 +49,23 @@ import com.mbd.cmscommon.domain.model.attendanceRegisterSummary
 import com.mbd.cmscommon.teacher.ResolvedAssignment
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModGround
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModWarn
 import com.mbd.cmscommon.util.Outcome
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-private val RegisterCanvas = Color(0xFFF7F5F0)
-private val RegisterGreen = Color(0xFF2F6B4F)
-private val RegisterGold = Color(0xFF9A651B)
-private val RegisterRed = Color(0xFFB43A31)
-private val RegisterBlue = Color(0xFF24577A)
+private val RegisterCanvas = ModGround
+private val RegisterGreen = ModSuccess
+private val RegisterGold = ModWarn
+private val RegisterRed = ModAccent
+private val RegisterBlue = ModInk
 private val RegisterDateFormat = DateTimeFormatter.ofPattern("EEEE · dd MMM yyyy")
 
 @Composable
@@ -73,7 +81,7 @@ fun MarkAttendanceWorkspace(
     alreadyMarked: Boolean,
     allMarked: Boolean,
     lectureTopic: String,
-    outcome: Outcome<Unit>,
+    outcome: Outcome<Unit>?,
     onSelect: (ResolvedAssignment) -> Unit,
     onStatus: (String, AttendanceStatus) -> Unit,
     onToggleLate: (String) -> Unit,
@@ -151,7 +159,7 @@ fun MarkAttendanceWorkspace(
 
 @Composable
 private fun RegisterHeader(heroPainter: Painter) {
-    Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = ModInk) {
         Box(Modifier.fillMaxSize()) {
             Image(
                 painter = heroPainter,
@@ -176,7 +184,7 @@ private fun RegisterHeader(heroPainter: Painter) {
 private fun AssignmentPicker(assignments: List<ResolvedAssignment>, selected: ResolvedAssignment?, onSelect: (ResolvedAssignment) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     Column {
-        Text("MY CLASSES", color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+        Text("MY CLASSES", color = ModMuted, style = CmsTextStyles.eyebrow)
         Spacer(Modifier.height(6.dp))
         Box(Modifier.fillMaxWidth()) {
             OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) {
@@ -197,10 +205,10 @@ private fun AssignmentPicker(assignments: List<ResolvedAssignment>, selected: Re
 
 @Composable
 private fun RegisterSummary(summary: AttendanceRegisterSummary, locked: Boolean) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("MARKING PROGRESS", modifier = Modifier.weight(1f), color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+                Text("MARKING PROGRESS", modifier = Modifier.weight(1f), color = ModMuted, style = CmsTextStyles.eyebrow)
                 if (locked) StatusBadge("REGISTER LOCKED", BadgeTone.Neutral)
             }
             Spacer(Modifier.height(8.dp))
@@ -208,7 +216,7 @@ private fun RegisterSummary(summary: AttendanceRegisterSummary, locked: Boolean)
                 progress = { summary.progress },
                 modifier = Modifier.fillMaxWidth().height(6.dp),
                 color = RegisterGreen,
-                trackColor = Color(0xFFE5E0D7),
+                trackColor = ModTrack,
             )
             Spacer(Modifier.height(10.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -231,7 +239,7 @@ private fun SummaryPill(text: String, color: Color) {
 
 @Composable
 private fun RegisterTools(selected: ResolvedAssignment?, locked: Boolean, topic: String, onTopic: (String) -> Unit, onHistory: () -> Unit) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             OutlinedTextField(
                 value = topic,
@@ -260,15 +268,15 @@ private fun StudentAttendanceCard(
     onNote: () -> Unit,
 ) {
     val atRisk = percent != null && percent < 65f
-    Surface(shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, if (atRisk) RegisterRed.copy(alpha = 0.3f) else Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, if (atRisk) RegisterRed.copy(alpha = 0.3f) else ModTrack)) {
         Column(Modifier.padding(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(student.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
-                    Text("Roll ${student.rollNumber}", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                    Text("Roll ${student.rollNumber}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
                 if (atRisk) StatusBadge("AT RISK", BadgeTone.Error)
-                if (percent != null) Text("${percent.toInt()}%", modifier = Modifier.padding(start = 8.dp), color = if (atRisk) RegisterRed else Color(0xFF77716A), style = MaterialTheme.typography.labelMedium)
+                if (percent != null) Text("${percent.toInt()}%", modifier = Modifier.padding(start = 8.dp), color = if (atRisk) RegisterRed else ModMuted, style = MaterialTheme.typography.labelMedium)
             }
             Spacer(Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -287,7 +295,7 @@ private fun StudentAttendanceCard(
             }
             if (!remark.isNullOrBlank()) {
                 Spacer(Modifier.height(4.dp))
-                Text("Note: $remark", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                Text("Note: $remark", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             }
         }
     }
@@ -295,11 +303,11 @@ private fun StudentAttendanceCard(
 
 @Composable
 private fun SubmitCard(unmarked: Int, locked: Boolean, allMarked: Boolean, loading: Boolean, onSubmit: () -> Unit) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Text(
                 if (locked) "Submitted for today. This register cannot be changed." else if (allMarked) "The register is complete and ready to submit." else "Every student needs an explicit P, A, or L status.",
-                color = Color(0xFF77716A),
+                color = ModMuted,
                 style = MaterialTheme.typography.bodyMedium,
             )
             Spacer(Modifier.height(10.dp))
@@ -313,8 +321,9 @@ private fun SubmitCard(unmarked: Int, locked: Boolean, allMarked: Boolean, loadi
 }
 
 @Composable
-private fun SubmitNotice(outcome: Outcome<Unit>) {
+private fun SubmitNotice(outcome: Outcome<Unit>?) {
     when (outcome) {
+        null -> {} // idle: no submit yet, show no notice
         is Outcome.Loading -> Row(verticalAlignment = Alignment.CenterVertically) {
             CircularProgressIndicator(modifier = Modifier.height(16.dp), strokeWidth = 2.dp)
             Spacer(Modifier.width(8.dp))
@@ -327,7 +336,7 @@ private fun SubmitNotice(outcome: Outcome<Unit>) {
 
 @Composable
 private fun RegisterEmpty(message: String) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
-        Text(message, modifier = Modifier.padding(24.dp), color = Color(0xFF77716A), style = MaterialTheme.typography.bodyMedium)
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
+        Text(message, modifier = Modifier.padding(24.dp), color = ModMuted, style = MaterialTheme.typography.bodyMedium)
     }
 }

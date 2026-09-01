@@ -33,14 +33,23 @@ import com.mbd.cmscommon.domain.model.LinkRequestStatus
 import com.mbd.cmscommon.domain.model.StudentLinkRequest
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModGround
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModWarn
+import com.mbd.cmscommon.ui.theme.ModRedTint
 import com.mbd.cmscommon.util.Outcome
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-private val LinkCanvas = Color(0xFFF7F5F0)
-private val LinkGreen = Color(0xFF2F6B4F)
-private val LinkGold = Color(0xFF9A651B)
-private val LinkRed = Color(0xFFB43A31)
+private val LinkCanvas = ModGround
+private val LinkGreen = ModSuccess
+private val LinkGold = ModWarn
+private val LinkRed = ModAccent
 private val LinkDateFormat = DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a")
 
 data class StudentLinkRequestUiState(
@@ -89,7 +98,7 @@ fun StudentLinkRequestWorkspace(state: StudentLinkRequestUiState, actions: Stude
 
 @Composable
 private fun LinkHeader(refreshing: Boolean, onRefresh: () -> Unit) {
-    Surface(shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("ACCOUNT LINKING", color = LinkGold, style = CmsTextStyles.eyebrow)
@@ -103,11 +112,11 @@ private fun LinkHeader(refreshing: Boolean, onRefresh: () -> Unit) {
 
 @Composable
 private fun LinkGuidanceCard() {
-    Surface(shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Text(
             "Submit one accurate claim so a reviewer can match your account safely. Enter values exactly as they appear in college records.",
             modifier = Modifier.padding(16.dp),
-            color = Color(0xFF625E58),
+            color = ModMuted,
             style = MaterialTheme.typography.bodyMedium,
         )
     }
@@ -115,13 +124,13 @@ private fun LinkGuidanceCard() {
 
 @Composable
 private fun PendingRequestCard(request: StudentLinkRequest) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, LinkGold.copy(alpha = 0.3f))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, LinkGold.copy(alpha = 0.3f))) {
         Column(Modifier.padding(16.dp)) {
             StatusBadge("REQUEST PENDING", BadgeTone.Gold)
             Spacer(Modifier.height(8.dp))
-            Text("Submitted ${request.createdAt.atZone(ZoneId.systemDefault()).format(LinkDateFormat)}", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+            Text("Submitted ${request.createdAt.atZone(ZoneId.systemDefault()).format(LinkDateFormat)}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             if (request.attemptCount > 1) {
-                Text("Attempt ${request.attemptCount}", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                Text("Attempt ${request.attemptCount}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             }
             Spacer(Modifier.height(10.dp))
             ClaimGrid(request)
@@ -131,13 +140,13 @@ private fun PendingRequestCard(request: StudentLinkRequest) {
 
 @Composable
 private fun RejectedRequestCard(request: StudentLinkRequest) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color(0xFFFFEFEB), border = BorderStroke(1.dp, LinkRed.copy(alpha = 0.3f))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModRedTint, border = BorderStroke(1.dp, LinkRed.copy(alpha = 0.3f))) {
         Column(Modifier.padding(16.dp)) {
             StatusBadge("CORRECTION REQUIRED", BadgeTone.Error)
             Spacer(Modifier.height(8.dp))
             Text(request.rejectionReason?.takeIf { it.isNotBlank() } ?: "Not provided", color = LinkRed, style = MaterialTheme.typography.bodyMedium)
             Spacer(Modifier.height(6.dp))
-            Text("Review your details and submit a corrected request.", color = Color(0xFF625E58), style = MaterialTheme.typography.bodySmall)
+            Text("Review your details and submit a corrected request.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
@@ -157,7 +166,7 @@ private fun ClaimGrid(request: StudentLinkRequest) {
 @Composable
 private fun ClaimLine(label: String, value: String) {
     Row(Modifier.fillMaxWidth().padding(vertical = 3.dp)) {
-        Text(label, modifier = Modifier.weight(1f), color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+        Text(label, modifier = Modifier.weight(1f), color = ModMuted, style = MaterialTheme.typography.bodySmall)
         Text(value, style = MaterialTheme.typography.bodySmall)
     }
 }
@@ -181,9 +190,9 @@ private fun LinkRequestForm(
     val busy = state.submitState is Outcome.Loading
     val valid = sessionId != null && rollNumber.isNotBlank() && name.isNotBlank() && cnic.isNotBlank()
 
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
-            Text("Choose the class record a reviewer should search.", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+            Text("Choose the class record a reviewer should search.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(10.dp))
             if (state.departments.isEmpty()) {
                 Text("No departments are available yet. Refresh to try again.", color = LinkRed, style = MaterialTheme.typography.bodySmall)
@@ -196,7 +205,7 @@ private fun LinkRequestForm(
                 )
                 Spacer(Modifier.height(10.dp))
                 if (deptId == null || sessionsForDept.isEmpty()) {
-                    Text("Select a department and shift first.", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                    Text("Select a department and shift first.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 } else {
                     CmsEntityPicker(
                         label = "Academic session",
@@ -218,7 +227,7 @@ private fun LinkRequestForm(
             Spacer(Modifier.height(10.dp))
             CmsDateField(value = dob, onValueChange = { dob = it }, label = "Date of birth", optional = true)
             Spacer(Modifier.height(10.dp))
-            Text("Optional identifiers can speed up a difficult match.", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+            Text("Optional identifiers can speed up a difficult match.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(6.dp))
             OutlinedTextField(value = universityRoll, onValueChange = { universityRoll = it }, label = { Text("University roll number (optional)") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
             Spacer(Modifier.height(10.dp))
@@ -226,7 +235,7 @@ private fun LinkRequestForm(
             Spacer(Modifier.height(10.dp))
             OutlinedTextField(value = message, onValueChange = { message = it }, label = { Text("Message to reviewer (optional)") }, placeholder = { Text("Add context only if needed") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
             Spacer(Modifier.height(6.dp))
-            Text("Session, class roll number, full name, and CNIC / B-Form are required.", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+            Text("Session, class roll number, full name, and CNIC / B-Form are required.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             if (state.submitState is Outcome.Error) {
                 Spacer(Modifier.height(8.dp))
                 Text(state.submitState.message, color = LinkRed, style = MaterialTheme.typography.bodySmall)
@@ -244,7 +253,7 @@ private fun LinkRequestForm(
 
 @Composable
 private fun LinkFieldLabel(text: String) {
-    Text(text, color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+    Text(text, color = ModMuted, style = CmsTextStyles.eyebrow)
     Spacer(Modifier.height(4.dp))
 }
 

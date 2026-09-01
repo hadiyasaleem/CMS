@@ -62,12 +62,13 @@ class MarkEditRequestsController(
     val notice: StateFlow<String?> = _notice.asStateFlow()
 
     init {
-        refresh()
+        refresh(fetchRemote = false)
     }
 
-    fun refresh() = launch {
+    fun refresh(fetchRemote: Boolean = true) = launch {
         _loading.value = true
         try {
+            if (fetchRemote) repository.sync()
             val requests = markEditQueueSnapshot(repository.getPendingRequests()).requests
             _requests.value = requests
             _details.value = loadDetails(requests)
@@ -88,8 +89,9 @@ class MarkEditRequestsController(
             require(_requests.value.any { it.id == request.id }) { "This request is no longer pending. Refresh the queue." }
 
             repository.approveRequest(request.id, reviewedBy)
+            val notice = "${displayStudent(request)} now has ${request.requestedScore} marks for ${request.courseCode}."
             removeResolvedRequest(request)
-            _notice.value = "${displayStudent(request)} now has ${request.requestedScore} marks for ${request.courseCode}."
+            _notice.value = notice
         } catch (t: Throwable) {
             _rowErrors.value = _rowErrors.value + (requestKey to t.userMessage("Could not approve this score change."))
         } finally {
@@ -107,8 +109,9 @@ class MarkEditRequestsController(
             require(_requests.value.any { it.id == request.id }) { "This request is no longer pending. Refresh the queue." }
 
             repository.rejectRequest(request.id, reviewedBy)
+            val notice = "The score change for ${displayStudent(request)} was rejected."
             removeResolvedRequest(request)
-            _notice.value = "The score change for ${displayStudent(request)} was rejected."
+            _notice.value = notice
         } catch (t: Throwable) {
             _rowErrors.value = _rowErrors.value + (requestKey to t.userMessage("Could not reject this score change."))
         } finally {

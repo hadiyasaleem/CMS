@@ -1,6 +1,8 @@
 package com.mbd.cmscommon.data.repository
 
 import com.mbd.cmscommon.auth.SessionManager
+import com.mbd.cmscommon.data.local.dao.AcademicSessionDao
+import com.mbd.cmscommon.data.local.dao.DepartmentDao
 import com.mbd.cmscommon.data.local.dao.SessionStudentDao
 import com.mbd.cmscommon.data.local.dao.StudentLinkRequestDao
 import com.mbd.cmscommon.data.mapper.StudentLinkRequestMapper
@@ -37,20 +39,16 @@ class StudentLinkRequestRepositoryImpl @Inject constructor(
     private val postgrest: Postgrest,
     private val requestDao: StudentLinkRequestDao,
     private val sessionStudentDao: SessionStudentDao,
+    private val sessionDao: AcademicSessionDao,
+    private val departmentDao: DepartmentDao,
     private val checkpointStore: SyncCheckpointStore,
     private val sessionManager: SessionManager,
 ) : StudentLinkRequestRepository {
 
     private fun syncOwnerKey(): String = sessionManager.accountKey ?: SyncCheckpointDefaults.ownerKey("anonymous-local")
 
-    private suspend fun matchClaim(sessionId: String, roll: String): RollMatchRow? =
-        postgrest.from(SupabaseTables.SESSION_STUDENTS).select {
-            filter {
-                eq("session_id", sessionId)
-                eq("roll_number", roll)
-            }
-            limit(1)
-        }.decodeList<RollMatchRow>().firstOrNull()
+
+
 
     override suspend fun rosterHas(sessionId: String?, rollNumber: String): Boolean =
         rosterLinkMatch(sessionId, rollNumber).exists
@@ -60,8 +58,8 @@ class StudentLinkRequestRepositoryImpl @Inject constructor(
         val normalizedRoll = rollNumber.trim()
         if (normalizedSession.isBlank() || normalizedRoll.isBlank()) return RosterLinkMatch(false)
 
-        val match = matchClaim(normalizedSession, normalizedRoll) ?: return RosterLinkMatch(false)
-        return RosterLinkMatch(true, match.linked_email.takeIf { it.isNotBlank() })
+        val match = sessionStudentDao.findByRoll(normalizedSession, normalizedRoll) ?: return RosterLinkMatch(false)
+        return RosterLinkMatch(true, match.linkedEmail?.takeIf { it.isNotBlank() })
     }
 
     override fun observePendingRequests(): Flow<List<StudentLinkRequest>> =
@@ -112,15 +110,12 @@ class StudentLinkRequestRepositoryImpl @Inject constructor(
         require(requestedByUid != null && FieldValidators.emailError(requestedByUid, false) == null) { "A valid account email is required." }
         require(sessionId.isNotBlank()) { "Choose an academic session." }
 
-        val session = postgrest.from(SupabaseTables.ACADEMIC_SESSIONS).select {
-            filter { eq("session_id", sessionId.trim()) }
-            limit(1)
-        }.decodeList<AcademicSessionDto>().firstOrNull() ?: error("The selected academic session is no longer available.")
-
-        val department = postgrest.from(SupabaseTables.DEPARTMENTS).select {
-            filter { eq("dept_id", session.deptId ?: "") }
-            limit(1)
-        }.decodeList<DepartmentDto>().firstOrNull() ?: error("The selected session's department is no longer available.")
+        val session = sessionDao.getById(sessionId.trim())
+            ?.takeUnless { it.isDeleted }
+            ?: error("The selected academic session is no longer available.")
+        val department = departmentDao.getById(session.deptId)
+            ?.takeUnless { it.isDeleted }
+            ?: error("The selected session's department is no longer available.")
 
         val normalizedRoll = FieldValidators.normalizeRollNumber(rollNumber)
         FieldValidators.rollNumberError(normalizedRoll, department.code, session.startYear)?.let { throw IllegalArgumentException(it) }
@@ -148,19 +143,18 @@ class StudentLinkRequestRepositoryImpl @Inject constructor(
     }
 
     override suspend fun approveRequest(requestId: String, reviewedByUid: String) {
-        val request = postgrest.from(SupabaseTables.STUDENT_LINK_REQUESTS).select {
-            filter { eq("request_id", requestId) }
-        }.decodeList<StudentLinkRequestDto>().first()
+        val request = requestDao.getById(requestId)
+            ?: error("Link request $requestId is not available in the local cache.")
 
         val roll = request.rollNumberClaimed?.trim() ?: ""
         require(roll.isNotBlank()) { "Link request $requestId has no roll number" }
-        val requester = request.requestedByEmail ?: ""
-        val sessionId = request.sessionId?.trim() ?: ""
+        val requester = request.requestedByUid
+        val sessionId = request.sessionIdClaimed?.trim() ?: ""
         require(sessionId.isNotBlank()) { "Link request $requestId has no session" }
 
-        val match = matchClaim(sessionId, roll)
+        val match = sessionStudentDao.findByRoll(sessionId, roll)
             ?: error("No student $roll in session $sessionId — add that student to the roster first.")
-        val previousEmail = match.linked_email.takeIf { it.isNotBlank() }
+        val previousEmail = match.linkedEmail?.takeIf { it.isNotBlank() }
 
         if (previousEmail != null && previousEmail != requester) {
             postgrest.from(SupabaseTables.PROFILES).update({

@@ -45,11 +45,19 @@ import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.domain.model.Teacher
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModWarn
+import com.mbd.cmscommon.ui.theme.ModRedTint
 
-private val SessionGreen = Color(0xFF2F6B4F)
-private val SessionGold = Color(0xFF9A651B)
-private val SessionRed = Color(0xFFB43A31)
-private val SessionBlue = Color(0xFF24577A)
+private val SessionGreen = ModSuccess
+private val SessionGold = ModWarn
+private val SessionRed = ModAccent
+private val SessionBlue = ModInk
 
 private data class SessionAction(val title: String, val subtitle: String, val detail: String, val icon: ImageVector, val onClick: () -> Unit)
 
@@ -161,7 +169,7 @@ fun SessionOperationsWorkspace(
 
 @Composable
 private fun SessionIdentityCard(session: AcademicSession?, onEdit: () -> Unit) {
-    Surface(shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("ACADEMIC SESSION", color = SessionGold, style = CmsTextStyles.eyebrow)
@@ -184,9 +192,9 @@ private fun SessionProgressCard(session: AcademicSession?, studentCount: Int, gp
     val gpaPercent = if (studentCount == 0) 0f else gpaRecorded.toFloat() / studentCount
     val curriculumPercent = configuredSemesters / 8f
 
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
-            Text("CURRENT ACADEMIC POSITION", color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text("CURRENT ACADEMIC POSITION", color = ModMuted, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
             Text("Semester ${session?.currentSemester ?: 1}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(10.dp))
@@ -209,12 +217,12 @@ private fun ProgressLine(label: String, percent: Float, detail: String) {
     Column {
         Row {
             Text(label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
-            Text("${(percent * 100).toInt()}%", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+            Text("${(percent * 100).toInt()}%", color = ModMuted, style = MaterialTheme.typography.bodySmall)
         }
         Spacer(Modifier.height(4.dp))
-        LinearProgressIndicator(progress = { percent }, modifier = Modifier.fillMaxWidth().height(6.dp), color = SessionBlue, trackColor = Color(0xFFE5E0D7))
+        LinearProgressIndicator(progress = { percent }, modifier = Modifier.fillMaxWidth().height(6.dp), color = SessionBlue, trackColor = ModTrack)
         Spacer(Modifier.height(2.dp))
-        Text(detail, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+        Text(detail, color = ModMuted, style = MaterialTheme.typography.bodySmall)
     }
 }
 
@@ -222,7 +230,7 @@ private fun ProgressLine(label: String, percent: Float, detail: String) {
 private fun WorkspaceSection(title: String, subtitle: String) {
     Column {
         Text(title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-        Text(subtitle, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+        Text(subtitle, color = ModMuted, style = MaterialTheme.typography.bodySmall)
     }
 }
 
@@ -231,15 +239,15 @@ private fun SessionActionCard(action: SessionAction) {
     Surface(
         modifier = Modifier.fillMaxWidth().clickable(onClick = action.onClick),
         shape = RoundedCornerShape(16.dp),
-        color = Color.White,
-        border = BorderStroke(1.dp, Color(0xFFE5E0D7)),
+        color = ModSurface,
+        border = BorderStroke(1.dp, ModTrack),
     ) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(action.icon, contentDescription = null, tint = SessionBlue)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(action.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                Text(action.subtitle, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                Text(action.subtitle, color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 Text(action.detail, color = SessionBlue, style = MaterialTheme.typography.labelMedium)
             }
         }
@@ -251,27 +259,27 @@ private fun CurriculumSemesterCard(semester: Int, subjectCount: Int, isCurrent: 
     Surface(
         modifier = modifier.clickable(onClick = onClick),
         shape = RoundedCornerShape(14.dp),
-        color = if (isCurrent) SessionBlue.copy(alpha = 0.08f) else Color.White,
-        border = BorderStroke(1.dp, if (isCurrent) SessionBlue.copy(alpha = 0.4f) else Color(0xFFE5E0D7)),
+        color = if (isCurrent) SessionBlue.copy(alpha = 0.08f) else ModSurface,
+        border = BorderStroke(1.dp, if (isCurrent) SessionBlue.copy(alpha = 0.4f) else ModTrack),
     ) {
         Column(Modifier.padding(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Semester $semester", modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
                 if (isCurrent) StatusBadge("CURRENT", BadgeTone.Navy)
             }
-            Text(if (subjectCount > 0) "$subjectCount subject(s)" else "Subjects not configured", color = if (subjectCount > 0) Color(0xFF77716A) else SessionGold, style = MaterialTheme.typography.bodySmall)
+            Text(if (subjectCount > 0) "$subjectCount subject(s)" else "Subjects not configured", color = if (subjectCount > 0) ModMuted else SessionGold, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
 
 @Composable
 private fun DangerZoneCard(studentCount: Int, onDelete: () -> Unit) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color(0xFFFFEFEB), border = BorderStroke(1.dp, SessionRed.copy(alpha = 0.3f))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModRedTint, border = BorderStroke(1.dp, SessionRed.copy(alpha = 0.3f))) {
         Column(Modifier.padding(16.dp)) {
             Text("DANGER ZONE", color = SessionRed, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
             Text("Delete this session", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-            Text("This permanently removes the session and its $studentCount enrolled student(s).", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+            Text("This permanently removes the session and its $studentCount enrolled student(s).", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(10.dp))
             TextButton(onClick = onDelete) { Text("Delete session", color = SessionRed) }
         }

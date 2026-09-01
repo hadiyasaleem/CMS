@@ -1,7 +1,6 @@
 package com.mbd.cmsdesktop.ui.student
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,8 +53,6 @@ fun StudentLinkRequestScreen(component: DesktopAppComponent, onLinked: (UserRole
             refreshing = false
         }
     }
-
-    LaunchedEffect(accountKey) { refresh() }
 
     val latestRequest = requests.maxByOrNull { it.createdAt }
     val state = StudentLinkRequestUiState(

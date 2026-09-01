@@ -41,7 +41,8 @@ interface CurriculumRepository {
     fun observeSessionSubjects(sessionId: String): Flow<List<SemesterSubject>>
 
     suspend fun getSemesterTerm(sessionId: String, semester: Int): SemesterTerm?
-    suspend fun saveSemesterSubjects(sessionId: String, semester: Int, subjects: List<SemesterSubject>)
+    suspend fun saveSemesterSubject(subject: SemesterSubject)
+    suspend fun deleteSemesterSubject(sessionId: String, semester: Int, courseCode: String)
     suspend fun saveSemesterTerm(sessionId: String, semester: Int, startDate: LocalDate?, endDate: LocalDate?)
     suspend fun syncSession(sessionId: String)
 }
@@ -111,5 +112,6 @@ interface SessionTimetableRepository {
 
 interface SessionFeeRepository {
     suspend fun getSessionFee(sessionId: String): com.mbd.cmscommon.domain.model.SessionFeeStructure?
+    suspend fun syncSession(sessionId: String) = Unit
     suspend fun saveSessionFee(structure: com.mbd.cmscommon.domain.model.SessionFeeStructure, updatedBy: String)
 }

@@ -37,14 +37,21 @@ import com.mbd.cmscommon.domain.model.Teacher
 import com.mbd.cmscommon.teacher.ResolvedAssignment
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModGround
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModTrack
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-private val ProfileCanvas = Color(0xFFF7F5F0)
-private val ProfileBlue = Color(0xFF24577A)
-private val ProfileGreen = Color(0xFF2F6B4F)
-private val ProfileRed = Color(0xFFB43A31)
+private val ProfileCanvas = ModGround
+private val ProfileBlue = ModInk
+private val ProfileGreen = ModSuccess
+private val ProfileRed = ModAccent
 private val ProfileDateFormatter = DateTimeFormatter.ofPattern("dd MMM yyyy")
 
 private data class ProfileMetric(val label: String, val value: String, val detail: String)
@@ -302,7 +309,7 @@ fun StudentOwnProfileWorkspace(
 
 @Composable
 private fun ProfileHero(name: String, role: String, status: String, statusTone: BadgeTone, supporting: String) {
-    Surface(shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
             AvatarInitials(name, size = 52)
             Spacer(Modifier.width(14.dp))
@@ -320,11 +327,11 @@ private fun ProfileHero(name: String, role: String, status: String, statusTone: 
 private fun ProfileMetrics(metrics: List<ProfileMetric>) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         metrics.forEach { metric ->
-            Surface(modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+            Surface(modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
                 Column(Modifier.padding(14.dp)) {
                     Text(metric.value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-                    Text(metric.label.uppercase(), color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
-                    Text(metric.detail, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                    Text(metric.label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
+                    Text(metric.detail, color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
             }
         }
@@ -333,10 +340,10 @@ private fun ProfileMetrics(metrics: List<ProfileMetric>) {
 
 @Composable
 private fun ProfileSectionCard(title: String, subtitle: String, content: @Composable () -> Unit) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Text(title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-            Text(subtitle, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+            Text(subtitle, color = ModMuted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(10.dp))
             content()
         }
@@ -344,9 +351,9 @@ private fun ProfileSectionCard(title: String, subtitle: String, content: @Compos
 }
 
 @Composable
-private fun ProfileInfoRow(label: String, value: String, valueColor: Color = Color(0xFF252321)) {
+private fun ProfileInfoRow(label: String, value: String, valueColor: Color = ModInk) {
     Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-        Text(label, modifier = Modifier.weight(1f), color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+        Text(label, modifier = Modifier.weight(1f), color = ModMuted, style = MaterialTheme.typography.bodySmall)
         Text(value, color = valueColor, style = MaterialTheme.typography.bodyMedium)
     }
 }
@@ -361,10 +368,10 @@ private fun PermissionLine(label: String, granted: Boolean) {
 
 @Composable
 private fun AssignmentCard(assignment: ResolvedAssignment) {
-    Surface(modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp), shape = RoundedCornerShape(10.dp), color = Color(0xFFF7F5F0)) {
+    Surface(modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp), shape = RoundedCornerShape(10.dp), color = ModGround) {
         Column(Modifier.padding(10.dp)) {
             Text(assignment.subjectLabel, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
-            Text("${assignment.sessionLabel} · ${assignment.courseCode}", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+            Text("${assignment.sessionLabel} · ${assignment.courseCode}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
@@ -374,7 +381,7 @@ private fun FineLine(fine: Fine) {
     Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
         Column(Modifier.weight(1f)) {
             Text(fine.category, style = MaterialTheme.typography.bodyMedium)
-            Text(fine.reason.ifBlank { "Issue details not recorded" }, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+            Text(fine.reason.ifBlank { "Issue details not recorded" }, color = ModMuted, style = MaterialTheme.typography.bodySmall)
         }
         Text("Rs ${fine.amount}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
     }
@@ -382,7 +389,7 @@ private fun FineLine(fine: Fine) {
 
 @Composable
 private fun ProfileEmptyLine(text: String) {
-    Text(text, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+    Text(text, color = ModMuted, style = MaterialTheme.typography.bodySmall)
 }
 
 @Composable
@@ -400,7 +407,7 @@ private fun ProfileNotice(message: String, color: Color, showProgress: Boolean, 
 @Composable
 private fun ProfileActionCard(email: String, onResetPassword: () -> Unit, onSignOut: () -> Unit) {
     Column {
-        Text(email, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+        Text(email, color = ModMuted, style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TextButton(onClick = onResetPassword) { Text("Send password reset") }

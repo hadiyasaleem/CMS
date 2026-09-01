@@ -42,14 +42,22 @@ import com.mbd.cmscommon.domain.model.scopeTeacherInsights
 import com.mbd.cmscommon.teacher.ResolvedAssignment
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModGround
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModWarn
 import java.util.Locale
 import kotlin.math.roundToInt
 
-private val InsightsCanvas = Color(0xFFF7F5F0)
-private val InsightsNavy = Color(0xFF2F4B7A)
-private val InsightsGreen = Color(0xFF2F6B4F)
-private val InsightsGold = Color(0xFF9A651B)
-private val InsightsRed = Color(0xFFB43A31)
+private val InsightsCanvas = ModGround
+private val InsightsNavy = ModInk
+private val InsightsGreen = ModSuccess
+private val InsightsGold = ModWarn
+private val InsightsRed = ModAccent
 
 enum class InsightsViewer { ADMIN, TEACHER }
 
@@ -183,7 +191,7 @@ fun InsightsWorkspace(
 
 @Composable
 private fun InsightsHeader(viewer: InsightsViewer) {
-    Surface(shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Column(Modifier.padding(20.dp)) {
             Text(if (viewer == InsightsViewer.ADMIN) "INSTITUTIONAL INTELLIGENCE" else "MY CLASS INTELLIGENCE", color = InsightsGold, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
@@ -214,22 +222,22 @@ private fun InsightsSummaryStrip(sessions: Int, students: Int, atRisk: Int, weig
 
 @Composable
 private fun InsightSummaryTile(label: String, value: String, modifier: Modifier = Modifier, alert: Boolean = false) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(14.dp)) {
-            Text(value, color = if (alert) InsightsRed else Color(0xFF252321), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(Locale.ROOT), color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text(value, color = if (alert) InsightsRed else ModInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+            Text(label.uppercase(Locale.ROOT), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }
 
 @Composable
 private fun SessionInsightCard(overview: SessionOverview, sessionLabel: String, viewer: InsightsViewer, reasons: List<String>) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(sessionLabel, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                    Text("SEM ${overview.currentSemester} · ${overview.shift}", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                    Text("SEM ${overview.currentSemester} · ${overview.shift}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
                 if (viewer == InsightsViewer.ADMIN && reasons.isNotEmpty()) {
                     StatusBadge("ADMIN REVIEW", BadgeTone.Warning)
@@ -252,12 +260,12 @@ private fun SessionInsightCard(overview: SessionOverview, sessionLabel: String, 
 @Composable
 private fun RiskStudentCard(student: AtRiskStudent, sessionLabel: String) {
     val signals = riskSignals(student)
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, if (signals.isNotEmpty()) InsightsRed.copy(alpha = 0.3f) else Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, if (signals.isNotEmpty()) InsightsRed.copy(alpha = 0.3f) else ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(student.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                    Text("Roll ${student.rollNumber} · $sessionLabel", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                    Text("Roll ${student.rollNumber} · $sessionLabel", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
             }
             Spacer(Modifier.height(8.dp))
@@ -278,7 +286,7 @@ private fun RiskStudentCard(student: AtRiskStudent, sessionLabel: String) {
                     signals.contains(RiskSignal.CGPA) -> "CGPA is below the 2.00 academic-standing threshold."
                     else -> "No active risk signal."
                 },
-                color = Color(0xFF77716A),
+                color = ModMuted,
                 style = MaterialTheme.typography.bodySmall,
             )
         }
@@ -287,12 +295,12 @@ private fun RiskStudentCard(student: AtRiskStudent, sessionLabel: String) {
 
 @Composable
 private fun ExamInsightCard(stat: ExamStat, sessionLabel: String) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("${stat.courseCode} · ${stat.examType}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                    Text("$sessionLabel · SEM ${stat.semester}", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                    Text("$sessionLabel · SEM ${stat.semester}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
                 StatusBadge("Entered ${stat.entered}", BadgeTone.Neutral)
             }
@@ -304,10 +312,10 @@ private fun ExamInsightCard(stat: ExamStat, sessionLabel: String) {
             }
             if (stat.stddev != null) {
                 Spacer(Modifier.height(6.dp))
-                Text("Variation: %.2f".format(stat.stddev), color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                Text("Variation: %.2f".format(stat.stddev), color = ModMuted, style = MaterialTheme.typography.bodySmall)
             }
             Spacer(Modifier.height(6.dp))
-            Text("Pass rate uses the college rule: score at least 40% of maximum marks.", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+            Text("Pass rate uses the college rule: score at least 40% of maximum marks.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
@@ -326,7 +334,7 @@ private fun MetricPill(label: String, value: String, tone: Color) {
 private fun InsightReviewReasons(reasons: List<String>) {
     Column {
         Text("NEEDS REVIEW", color = InsightsRed, style = CmsTextStyles.eyebrow)
-        reasons.forEach { reason -> Text("· $reason", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall) }
+        reasons.forEach { reason -> Text("· $reason", color = ModMuted, style = MaterialTheme.typography.bodySmall) }
     }
 }
 
@@ -342,7 +350,7 @@ private fun InsightsNotice(message: String, onRetry: () -> Unit) {
 
 @Composable
 private fun InsightsEmpty(message: String) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
-        Text(message, modifier = Modifier.padding(24.dp), color = Color(0xFF77716A), style = MaterialTheme.typography.bodyMedium)
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
+        Text(message, modifier = Modifier.padding(24.dp), color = ModMuted, style = MaterialTheme.typography.bodyMedium)
     }
 }

@@ -3,18 +3,7 @@ package com.mbd.cmsteacher.di
 import android.content.Context
 import androidx.room.Room
 import com.mbd.cmscommon.data.local.CmsDatabase
-import com.mbd.cmscommon.data.local.MIGRATION_18_19
-import com.mbd.cmscommon.data.local.MIGRATION_19_20
-import com.mbd.cmscommon.data.local.MIGRATION_20_21
-import com.mbd.cmscommon.data.local.MIGRATION_21_22
-import com.mbd.cmscommon.data.local.MIGRATION_22_23
-import com.mbd.cmscommon.data.local.MIGRATION_23_24
-import com.mbd.cmscommon.data.local.MIGRATION_24_25
-import com.mbd.cmscommon.data.local.MIGRATION_25_26
-import com.mbd.cmscommon.data.local.MIGRATION_26_27
-import com.mbd.cmscommon.data.local.MIGRATION_27_28
-import com.mbd.cmscommon.data.local.MIGRATION_28_29
-import com.mbd.cmscommon.data.local.MIGRATION_29_30
+import com.mbd.cmscommon.data.local.CMS_DATABASE_MIGRATIONS
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -34,7 +23,7 @@ object DatabaseModule {
     @Singleton
     fun provideTeacherDatabase(@ApplicationContext context: Context): CmsDatabase =
         Room.databaseBuilder(context, TeacherDatabase::class.java, "cms_teacher.db")
-            .addMigrations(MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22, MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26, MIGRATION_26_27, MIGRATION_27_28, MIGRATION_28_29, MIGRATION_29_30)
+            .addMigrations(*CMS_DATABASE_MIGRATIONS)
             .fallbackToDestructiveMigration()
             .build()
 }

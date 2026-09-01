@@ -36,12 +36,19 @@ import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModWarn
 import com.mbd.cmscommon.util.ImportedStudentRow
 import com.mbd.cmscommon.util.StudentImportResult
 
-private val RosterGreen = Color(0xFF2F6B4F)
-private val RosterGold = Color(0xFF9A651B)
-private val RosterRed = Color(0xFFB43A31)
+private val RosterGreen = ModSuccess
+private val RosterGold = ModWarn
+private val RosterRed = ModAccent
 
 @Composable
 fun StudentRosterWorkspace(
@@ -161,7 +168,7 @@ private fun RosterHero(
     onAdd: () -> Unit,
     onImport: () -> Unit,
 ) {
-    Surface(shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Column(Modifier.padding(20.dp)) {
             Text("CLASS ROSTER", color = RosterGold, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
@@ -193,10 +200,10 @@ private fun RosterSummaryCard(enrolled: Int, avgCgpa: Double?, gpaRecords: Int, 
 
 @Composable
 private fun RosterMetric(label: String, value: String, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(14.dp)) {
             Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-            Text(label.uppercase(), color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }
@@ -205,14 +212,14 @@ private fun RosterMetric(label: String, value: String, modifier: Modifier = Modi
 @Composable
 private fun StudentProfileCard(student: SessionStudent, onOpen: () -> Unit, onDelete: () -> Unit) {
     val linked = student.linkedEmail.isNotBlank()
-    Surface(shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 AvatarInitials(student.name, size = 40)
                 Spacer(Modifier.width(10.dp))
                 Column(Modifier.weight(1f)) {
                     Text(student.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
-                    Text("Roll ${student.rollNumber}", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                    Text("Roll ${student.rollNumber}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
             }
             Spacer(Modifier.height(8.dp))
@@ -236,13 +243,13 @@ private fun StudentProfileCard(student: SessionStudent, onOpen: () -> Unit, onDe
 
 @Composable
 private fun RosterEmptyState(hasStudents: Boolean, isFull: Boolean, onAdd: () -> Unit, onClear: () -> Unit) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(if (hasStudents) "No matching students" else "No students enrolled", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(4.dp))
             Text(
                 if (hasStudents) "Clear the search and filters to see the full roster." else "Add a student manually or import a CSV/Excel roster.",
-                color = Color(0xFF77716A),
+                color = ModMuted,
                 style = MaterialTheme.typography.bodySmall,
             )
             Spacer(Modifier.height(12.dp))

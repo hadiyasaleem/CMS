@@ -81,7 +81,7 @@ fun TeacherNavHost(role: UserRole.Teacher, component: DesktopAppComponent, windo
     LaunchedEffect(teacherId) {
         val teacher = component.teacherRepository().getTeacher(teacherId)
         notificationContext = NotificationAudienceContext(departmentId = teacher?.deptId)
-        notificationRepository.sync(NotificationTargetRole.TEACHER, notificationContext)
+
     }
 
     fun refreshCurrentScreen() {

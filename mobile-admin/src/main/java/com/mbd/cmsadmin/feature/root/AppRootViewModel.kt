@@ -75,20 +75,7 @@ class AppRootViewModel @Inject constructor(
             val resolved = runCatching { userRepository.resolveRole(accountKey) }.getOrNull() as? UserRole.Admin
             val effectiveRole = resolved ?: cachedRole
             if (effectiveRole != null) {
-                val bootstrapComplete = runCatching {
-                    startupBootstrapTracker.isComplete(StartupBootstrapTracker.ADMIN_DATA, accountKey)
-                }.getOrDefault(false)
-                val hasCachedData = runCatching { adminDataBootstrapper.hasCachedData() }.getOrDefault(false)
-                if (bootstrapComplete || hasCachedData) {
-                    if (!bootstrapComplete && hasCachedData) {
-                        runCatching {
-                            startupBootstrapTracker.markComplete(StartupBootstrapTracker.ADMIN_DATA, accountKey)
-                        }
-                    }
-                    _readyAccount.value = accountKey
-                } else {
-                    ensureAdminData(accountKey)
-                }
+                ensureAdminData(accountKey)
             } else {
                 _readyAccount.value = accountKey
             }
@@ -105,21 +92,6 @@ class AppRootViewModel @Inject constructor(
     private suspend fun ensureAdminData(accountKey: String) {
         bootstrapMutex.withLock {
             if (_readyAccount.value == accountKey) return
-            val bootstrapComplete = runCatching {
-                startupBootstrapTracker.isComplete(StartupBootstrapTracker.ADMIN_DATA, accountKey)
-            }.getOrDefault(false)
-            if (bootstrapComplete) {
-                _readyAccount.value = accountKey
-                return
-            }
-            val hasCachedData = runCatching { adminDataBootstrapper.hasCachedData() }.getOrDefault(false)
-            if (hasCachedData) {
-                runCatching {
-                    startupBootstrapTracker.markComplete(StartupBootstrapTracker.ADMIN_DATA, accountKey)
-                }
-                _readyAccount.value = accountKey
-                return
-            }
             _isBootstrapping.value = true
             try {
                 val completed = runCatching { adminDataBootstrapper.refreshAll() }.getOrDefault(false)
@@ -134,7 +106,6 @@ class AppRootViewModel @Inject constructor(
             }
         }
     }
-
     fun signOut() {
         startupRole.value = null
         _readyAccount.value = null

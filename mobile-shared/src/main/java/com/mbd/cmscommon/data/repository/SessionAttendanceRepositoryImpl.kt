@@ -64,6 +64,9 @@ class SessionAttendanceRepositoryImpl @Inject constructor(
         createdBy = createdBy,
         updatedAt = PgTime.parseOrEpoch(updatedAt).toEpochMilli(),
         updatedBy = updatedBy,
+        isDeleted = isDeleted,
+        deletedAt = PgTime.parse(deletedAt)?.toEpochMilli(),
+        deletedBy = deletedBy,
     )
 
     private fun toTallies(rows: List<SessionAttendanceRowEntity>): List<SessionAttendanceTallyEntity> =
@@ -119,23 +122,26 @@ class SessionAttendanceRepositoryImpl @Inject constructor(
         if (rows.isNotEmpty()) {
             postgrest.from(SupabaseTables.SESSION_ATTENDANCE).insert(rows)
         }
-        syncSummary(sessionId, courseCode)
+        val now = System.currentTimeMillis()
+        attendanceDao.upsertRows(
+            rows.map { dto ->
+                dto.toEntity().copy(
+                    recordedAt = now,
+                    createdAt = now,
+                    updatedAt = now,
+                )
+            },
+        )
     }
 
-    override suspend fun isMarkedOn(sessionId: String, courseCode: String, date: LocalDate): Boolean {
-        runCatching { syncSummary(sessionId, courseCode) }
-        return attendanceDao.getMarkedOn(sessionId, courseCode, date.toString()) != null
-    }
+    override suspend fun isMarkedOn(sessionId: String, courseCode: String, date: LocalDate): Boolean =
+        attendanceDao.getMarkedOn(sessionId, courseCode, date.toString()) != null
 
-    override suspend fun marksBetween(sessionId: String, courseCode: String, from: LocalDate, to: LocalDate): List<DailyAttendanceMark> {
-        runCatching { syncSummary(sessionId, courseCode) }
-        return attendanceDao.getRowsBetween(sessionId, courseCode, from.toString(), to.toString()).map { toDailyMark(it) }
-    }
+    override suspend fun marksBetween(sessionId: String, courseCode: String, from: LocalDate, to: LocalDate): List<DailyAttendanceMark> =
+        attendanceDao.getRowsBetween(sessionId, courseCode, from.toString(), to.toString()).map { toDailyMark(it) }
 
-    override suspend fun semesterMarks(sessionId: String, semester: Int): List<DailyAttendanceMark> {
-        runCatching { syncSession(sessionId) }
-        return attendanceDao.getRowsForSemester(sessionId, semester).map { toDailyMark(it) }
-    }
+    override suspend fun semesterMarks(sessionId: String, semester: Int): List<DailyAttendanceMark> =
+        attendanceDao.getRowsForSemester(sessionId, semester).map { toDailyMark(it) }
 
     override suspend fun syncSummary(sessionId: String, courseCode: String) {
         val scopeKey = SyncCheckpointDefaults.scoped("session_id" to sessionId, "course_code" to courseCode)

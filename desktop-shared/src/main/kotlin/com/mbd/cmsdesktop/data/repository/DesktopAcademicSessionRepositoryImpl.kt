@@ -1,10 +1,15 @@
 package com.mbd.cmsdesktop.data.repository
 
+import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.mapper.DesktopAcademicSessionMapper
+import com.mbd.cmscommon.data.mapper.StudentProfileMapper
 import com.mbd.cmscommon.data.remote.SupabaseTables
 import com.mbd.cmscommon.data.remote.dto.AcademicSessionDto
 import com.mbd.cmscommon.data.remote.dto.SessionStudentDto
 import com.mbd.cmscommon.data.remote.dto.StudentProfileDto
+import com.mbd.cmscommon.data.sync.SyncCheckpointDefaults
+import com.mbd.cmscommon.data.sync.fetchIncrementalDelta
+import com.mbd.cmscommon.data.sync.mergeIncrementalDelta
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.SessionStudent
@@ -32,6 +37,7 @@ import kotlinx.coroutines.flow.map
 class DesktopAcademicSessionRepositoryImpl @Inject constructor(
     private val postgrest: Postgrest,
     private val snapshotStore: DesktopBootstrapSnapshotStore,
+    private val sessionManager: SessionManager,
 ) : AcademicSessionRepository {
 
     private val sessionsCache = MutableStateFlow(
@@ -52,6 +58,13 @@ class DesktopAcademicSessionRepositoryImpl @Inject constructor(
 
     private fun persistStudents() {
         snapshotStore.writeStudents(studentsCache.value.map { DesktopAcademicSessionMapper.studentDomainToDto(it) })
+    }
+
+    private fun profileRows() =
+        snapshotStore.readRows(PROFILES_CACHE_FILE, StudentProfileDto.serializer())
+
+    private fun writeProfiles(rows: List<StudentProfileDto>) {
+        snapshotStore.writeRows(PROFILES_CACHE_FILE, StudentProfileDto.serializer(), rows)
     }
 
     override fun observeSessionsForDept(deptId: String): Flow<List<AcademicSession>> =
@@ -80,8 +93,9 @@ class DesktopAcademicSessionRepositoryImpl @Inject constructor(
         )
         val dto = DesktopAcademicSessionMapper.sessionDomainToDto(session)
         postgrest.from(SupabaseTables.ACADEMIC_SESSIONS).upsert(dto) { onConflict = "session_id" }
-        syncSessionsForDept(deptId)
-        return sessionsCache.value.find { it.sessionId == session.sessionId } ?: session
+        sessionsCache.value = sessionsCache.value.filterNot { it.sessionId == session.sessionId } + session
+        persistSessions()
+        return session
     }
 
     override suspend fun setCurrentSemester(sessionId: String, semester: Int) {
@@ -89,7 +103,10 @@ class DesktopAcademicSessionRepositoryImpl @Inject constructor(
         postgrest.from(SupabaseTables.ACADEMIC_SESSIONS).update({ set("current_semester", clamped) }) {
             filter { eq("session_id", sessionId) }
         }
-        syncSessionsForDept(deptOf(sessionId))
+        sessionsCache.value = sessionsCache.value.map {
+            if (it.sessionId == sessionId) it.copy(currentSemester = clamped) else it
+        }
+        persistSessions()
     }
 
     override suspend fun updateSessionDetails(sessionId: String, programName: String?, inchargeEmail: String?, maxStudents: Int) {
@@ -100,7 +117,18 @@ class DesktopAcademicSessionRepositoryImpl @Inject constructor(
         }) {
             filter { eq("session_id", sessionId) }
         }
-        syncSessionsForDept(deptOf(sessionId))
+        sessionsCache.value = sessionsCache.value.map {
+            if (it.sessionId == sessionId) {
+                it.copy(
+                    programName = programName?.trim()?.takeIf { value -> value.isNotBlank() },
+                    inchargeEmail = inchargeEmail?.trim()?.takeIf { value -> value.isNotBlank() },
+                    maxStudents = maxStudents.coerceAtLeast(0),
+                )
+            } else {
+                it
+            }
+        }
+        persistSessions()
     }
 
     override suspend fun deleteSession(sessionId: String) {
@@ -111,6 +139,7 @@ class DesktopAcademicSessionRepositoryImpl @Inject constructor(
         studentsCache.value = studentsCache.value.filterNot { it.sessionId == sessionId }
         persistSessions()
         persistStudents()
+        writeProfiles(profileRows().filterNot { it.sessionId == sessionId })
     }
 
     override suspend fun addStudent(sessionId: String, rollNumber: String, name: String, gpa: Double?, cgpa: Double?) {
@@ -128,7 +157,11 @@ class DesktopAcademicSessionRepositoryImpl @Inject constructor(
             cgpa = cgpa,
         )
         postgrest.from(SupabaseTables.SESSION_STUDENTS).upsert(dto) { onConflict = "session_id,roll_number" }
-        syncStudents(sessionId)
+        val student = DesktopAcademicSessionMapper.studentDtoToDomain(dto, sessionId, deptOf(sessionId))
+        studentsCache.value = studentsCache.value.filterNot {
+            it.sessionId == sessionId && it.rollNumber == student.rollNumber
+        } + student
+        persistStudents()
     }
 
     override suspend fun deleteStudent(studentId: String) {
@@ -140,19 +173,32 @@ class DesktopAcademicSessionRepositoryImpl @Inject constructor(
                 eq("roll_number", roll)
             }
         }
-        syncStudents(sessionId)
+        studentsCache.value = studentsCache.value.filterNot {
+            it.sessionId == sessionId && it.rollNumber == roll
+        }
+        persistStudents()
+        writeProfiles(profileRows().filterNot { it.sessionId == sessionId && it.rollNumber == roll })
     }
 
     override suspend fun getStudentProfile(sessionId: String, rollNumber: String): StudentProfile? {
-        val dto = postgrest.from(SupabaseTables.SESSION_STUDENTS).select {
-            filter {
-                eq("session_id", sessionId)
-                eq("roll_number", rollNumber)
-            }
-        }.decodeList<StudentProfileDto>().firstOrNull() ?: return null
-        return DesktopAcademicSessionMapper.profileDtoToDomain(dto, sessionId, rollNumber)
+        val dto = profileRows().firstOrNull {
+            it.sessionId == sessionId && it.rollNumber == rollNumber && !it.isDeleted
+        } ?: return studentsCache.value.firstOrNull {
+            it.sessionId == sessionId && it.rollNumber == rollNumber
+        }?.let { cached ->
+            StudentProfileMapper.dtoToDomain(
+                StudentProfileDto(
+                    sessionId = cached.sessionId,
+                    rollNumber = cached.rollNumber,
+                    name = cached.name,
+                    linkedEmail = cached.linkedEmail,
+                    gpa = cached.gpa,
+                    cgpa = cached.cgpa,
+                ),
+            )
+        }
+        return StudentProfileMapper.dtoToDomain(dto, sessionId, rollNumber)
     }
-
     override suspend fun saveStudentProfile(profile: StudentProfile) {
         val dto = DesktopAcademicSessionMapper.profileDomainToDto(profile)
         postgrest.from(SupabaseTables.SESSION_STUDENTS).update(dto) {
@@ -161,33 +207,93 @@ class DesktopAcademicSessionRepositoryImpl @Inject constructor(
                 eq("roll_number", profile.rollNumber)
             }
         }
-        syncStudents(profile.sessionId)
+        writeProfiles(
+            mergeIncrementalDelta(
+                profileRows(),
+                listOf(dto),
+                { "${it.sessionId}|${it.rollNumber}" },
+                StudentProfileDto::isDeleted,
+            ),
+        )
+        val roster = DesktopAcademicSessionMapper.studentDtoToDomain(
+            StudentProfileMapper.rosterDto(dto),
+            profile.sessionId,
+            deptOf(profile.sessionId),
+        )
+        studentsCache.value = studentsCache.value.filterNot {
+            it.sessionId == profile.sessionId && it.rollNumber == profile.rollNumber
+        } + roster
+        persistStudents()
     }
 
     override suspend fun syncSessionsForDept(deptId: String) {
-        val rows = postgrest.from(SupabaseTables.ACADEMIC_SESSIONS).select {
-            filter {
-                eq("dept_id", deptId)
-                eq("is_deleted", false)
-            }
-            order("start_year", Order.DESCENDING)
-        }.decodeList<AcademicSessionDto>()
-        val mapped = rows.map { DesktopAcademicSessionMapper.sessionDtoToDomain(it, deptId) }
-        sessionsCache.value = sessionsCache.value.filterNot { it.deptId == deptId } + mapped
+        val delta = fetchIncrementalDelta(
+            snapshotStore,
+            ownerKey(),
+            SupabaseTables.ACADEMIC_SESSIONS,
+            SyncCheckpointDefaults.scoped("department" to deptId),
+            AcademicSessionDto::updatedAt,
+        ) { since, from, to ->
+            postgrest.from(SupabaseTables.ACADEMIC_SESSIONS).select {
+                filter {
+                    eq("dept_id", deptId)
+                    gte("updated_at", since)
+                }
+                order("updated_at", Order.ASCENDING)
+                order("session_id", Order.ASCENDING)
+                range(from, to)
+            }.decodeList()
+        }
+        val deleted = delta.filter { it.isDeleted }.map { it.sessionId.orEmpty() }.toSet()
+        val active = delta.filterNot { it.isDeleted }
+        val activeIds = active.map { it.sessionId.orEmpty() }.toSet()
+        sessionsCache.value = sessionsCache.value
+            .filterNot { it.sessionId in deleted || it.sessionId in activeIds } +
+            active.map { DesktopAcademicSessionMapper.sessionDtoToDomain(it, deptId) }
         persistSessions()
     }
 
     override suspend fun syncStudents(sessionId: String) {
         val deptId = deptOf(sessionId)
-        val rows = postgrest.from(SupabaseTables.SESSION_STUDENTS).select {
-            filter {
-                eq("session_id", sessionId)
-                eq("is_deleted", false)
-            }
-            order("roll_number", Order.ASCENDING)
-        }.decodeList<SessionStudentDto>()
-        val mapped = rows.map { DesktopAcademicSessionMapper.studentDtoToDomain(it, sessionId, deptId) }
-        studentsCache.value = studentsCache.value.filterNot { it.sessionId == sessionId } + mapped
+        val delta = fetchIncrementalDelta(
+            snapshotStore,
+            ownerKey(),
+            SupabaseTables.SESSION_STUDENTS,
+            SyncCheckpointDefaults.scoped("session" to sessionId),
+            StudentProfileDto::updatedAt,
+        ) { since, from, to ->
+            postgrest.from(SupabaseTables.SESSION_STUDENTS).select {
+                filter {
+                    eq("session_id", sessionId)
+                    gte("updated_at", since)
+                }
+                order("updated_at", Order.ASCENDING)
+                order("session_id", Order.ASCENDING)
+                range(from, to)
+            }.decodeList()
+        }
+        val deleted = delta.filter { it.isDeleted }.map { it.rollNumber.orEmpty() }.toSet()
+        val active = delta.filterNot { it.isDeleted }
+        val activeRolls = active.map { it.rollNumber.orEmpty() }.toSet()
+        studentsCache.value = studentsCache.value
+            .filterNot {
+                it.sessionId == sessionId && (it.rollNumber in deleted || it.rollNumber in activeRolls)
+            } + active.map { DesktopAcademicSessionMapper.studentDtoToDomain(StudentProfileMapper.rosterDto(it), sessionId, deptId) }
         persistStudents()
+        writeProfiles(
+            mergeIncrementalDelta(
+                profileRows(),
+                delta,
+                { "${it.sessionId}|${it.rollNumber}" },
+                StudentProfileDto::isDeleted,
+            ),
+        )
+    }
+
+    private fun ownerKey() =
+        sessionManager.accountKey ?: SyncCheckpointDefaults.ownerKey("anonymous-local")
+
+    private companion object {
+        const val PROFILES_CACHE_FILE = "student-profiles.json"
     }
 }

@@ -40,10 +40,6 @@ class SessionTimetableController(
     val teachers: StateFlow<List<Teacher>> =
         teacherRepository.observeActiveTeachers().stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    init {
-        launch { timetableRepository.syncSession(sessionId) }
-    }
-
     fun savePeriod(
         day: DayOfWeek,
         start: String,

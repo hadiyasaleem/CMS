@@ -39,22 +39,23 @@ class StudentProfileController(
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
 
     init {
-        refresh()
+        refresh(fetchRemote = false)
     }
 
-    fun refresh() {
+    fun refresh(fetchRemote: Boolean = true) {
         clearError()
         launch {
             _loading.value = true
             try {
-                val rosterSync = runCatching { sessionRepository.syncStudents(sessionId) }
+                val rosterSync = if (fetchRemote) runCatching { sessionRepository.syncStudents(sessionId) } else Result.success(Unit)
+                val fineSync = if (fetchRemote) runCatching { fineRepository.sync(sessionId, rollNumber) } else Result.success(Unit)
                 val profileLoad = runCatching { sessionRepository.getStudentProfile(sessionId, rollNumber) }
                 val finesLoad = runCatching { fineRepository.getFines(sessionId, rollNumber) }
 
-                profileLoad.getOrNull()?.let { _profile.value = it }
+                if (profileLoad.isSuccess) _profile.value = profileLoad.getOrNull()
                 finesLoad.getOrNull()?.let { _fines.value = it }
 
-                (rosterSync.exceptionOrNull() ?: profileLoad.exceptionOrNull() ?: finesLoad.exceptionOrNull())?.let { throw it }
+                (rosterSync.exceptionOrNull() ?: fineSync.exceptionOrNull() ?: profileLoad.exceptionOrNull() ?: finesLoad.exceptionOrNull())?.let { throw it }
             } finally {
                 _loading.value = false
             }

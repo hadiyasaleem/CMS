@@ -46,9 +46,6 @@ class SessionDetailController(
     val feeLoading: StateFlow<Boolean> = _feeLoading.asStateFlow()
 
     init {
-        launch { runCatching { sessionRepository.syncStudents(sessionId) } }
-        launch { runCatching { curriculumRepository.syncSession(sessionId) } }
-        launch { runCatching { timetableRepository.syncSession(sessionId) } }
         launch {
             try {
                 _fee.value = feeRepository.getSessionFee(sessionId)

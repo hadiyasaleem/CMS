@@ -25,14 +25,15 @@ class EventsController(
     val actionMessage: StateFlow<String?> = _actionMessage.asStateFlow()
 
     init {
-        refresh()
+        refresh(fetchRemote = false)
     }
 
-    fun refresh() {
+    fun refresh(fetchRemote: Boolean = true) {
         clearError()
         launch {
             _loading.value = true
             try {
+                if (fetchRemote) repo.sync()
                 _events.value = repo.getEvents()
             } finally {
                 _loading.value = false
@@ -42,10 +43,10 @@ class EventsController(
 
     fun createEvent(event: CalendarEvent, createdBy: String) {
         if (_busy.value) return
+        _busy.value = true // set synchronously before launch so the guard actually blocks a double-tap
         launch {
             clearError()
             _actionMessage.value = null
-            _busy.value = true
             try {
                 repo.createEvent(event, createdBy)
                 _events.value = repo.getEvents()
@@ -58,10 +59,10 @@ class EventsController(
 
     fun deleteEvent(id: String) {
         if (_busy.value) return
+        _busy.value = true // set synchronously before launch so the guard actually blocks a double-tap
         launch {
             clearError()
             _actionMessage.value = null
-            _busy.value = true
             try {
                 repo.deleteEvent(id)
                 _events.value = repo.getEvents()

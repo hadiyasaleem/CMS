@@ -45,14 +45,22 @@ import com.mbd.cmscommon.domain.model.isAssignedTo
 import com.mbd.cmscommon.domain.model.isVisibleTo
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModGround
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModRedTint
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModWarn
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private val DatesheetCanvas = Color(0xFFF7F5F0)
-private val DatesheetGreen = Color(0xFF2F6B4F)
-private val DatesheetGold = Color(0xFF9A651B)
-private val DatesheetNavy = Color(0xFF2F4B7A)
+private val DatesheetCanvas = ModGround
+private val DatesheetGreen = ModSuccess
+private val DatesheetGold = ModWarn
+private val DatesheetNavy = ModInk
 private val DatesheetDateFormat = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy")
 
 private val EXAM_TYPES = listOf("MIDTERM", "SESSIONAL")
@@ -234,7 +242,7 @@ fun DatesheetWorkspace(
 
 @Composable
 private fun DatesheetHeader(canManage: Boolean, onAdd: () -> Unit) {
-    Surface(shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("Exam Datesheets", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
@@ -263,10 +271,10 @@ private fun DatesheetSummaryRow(schedules: Int, papers: Int, upcomingDuties: Int
 
 @Composable
 private fun SummaryTile(label: String, value: String, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(14.dp)) {
             Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(Locale.ROOT), color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text(label.uppercase(Locale.ROOT), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }
@@ -326,14 +334,14 @@ private fun DatesheetScheduleCard(
     onDeletePaper: (DatesheetSlot) -> Unit,
 ) {
     val quality = datesheetScheduleQuality(sheet, slots)
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Row(Modifier.fillMaxWidth().clickable(onClick = onToggle), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(sheet.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                     Text(
                         (sheet.examType ?: "EXAM").uppercase(Locale.ROOT) + " · ${slots.size} papers",
-                        color = Color(0xFF77716A),
+                        color = ModMuted,
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }
@@ -384,7 +392,7 @@ private fun PaperCard(slot: DatesheetSlot, canManage: Boolean, isMyDuty: Boolean
     val date = runCatching { LocalDate.parse(slot.examDate) }.getOrNull()
     Surface(
         shape = RoundedCornerShape(12.dp),
-        color = if (isMyDuty) Color(0xFFFFF5DD) else Color(0xFFF7F5F0),
+        color = if (isMyDuty) ModRedTint else ModGround,
         border = if (isMyDuty) BorderStroke(1.dp, DatesheetGold) else null,
     ) {
         Column(Modifier.padding(12.dp)) {
@@ -418,7 +426,7 @@ private fun locationLabel(slot: DatesheetSlot): String =
 
 @Composable
 private fun MetaLine(text: String) {
-    Text(text, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+    Text(text, color = ModMuted, style = MaterialTheme.typography.bodySmall)
 }
 
 @Composable
@@ -435,13 +443,13 @@ private fun DatesheetNotice(message: String, color: Color, action: String?, onAc
 
 @Composable
 private fun DatesheetEmpty(filtered: Boolean, canManage: Boolean, onAdd: () -> Unit) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(if (filtered) "No matching schedules" else "No exam schedules yet", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(4.dp))
             Text(
                 if (filtered) "Try a different search, status or session filter." else "New datesheets start as drafts. Add at least one paper before publishing.",
-                color = Color(0xFF77716A),
+                color = ModMuted,
                 style = MaterialTheme.typography.bodySmall,
             )
             if (!filtered && canManage) {
@@ -455,7 +463,7 @@ private fun DatesheetEmpty(filtered: Boolean, canManage: Boolean, onAdd: () -> U
 @Composable
 private fun DatesheetInlineEmpty(canManage: Boolean, onAdd: () -> Unit) {
     Column(Modifier.padding(vertical = 8.dp)) {
-        Text("No papers have been scheduled.", color = Color(0xFF77716A), style = MaterialTheme.typography.bodyMedium)
+        Text("No papers have been scheduled.", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
         if (canManage) {
             Spacer(Modifier.height(8.dp))
             TextButton(onClick = onAdd) { Text("Add exam paper") }
@@ -491,7 +499,7 @@ private fun DatesheetEditorDialog(
             Column {
                 OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Title") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 Spacer(Modifier.height(10.dp))
-                Text("EXAM TYPE", color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+                Text("EXAM TYPE", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     EXAM_TYPES.forEach { type ->

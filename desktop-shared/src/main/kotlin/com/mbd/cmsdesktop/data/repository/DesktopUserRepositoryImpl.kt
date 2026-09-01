@@ -28,7 +28,7 @@ class DesktopUserRepositoryImpl @Inject constructor(
 
     private val roleCache = MutableStateFlow<UserRole?>(snapshotStore.readRole())
 
-    override fun observeCurrentUserRole(): Flow<UserRole> = roleCache.filterNotNull()
+    override fun observeCurrentUserRole(): Flow<UserRole?> = roleCache
 
     override suspend fun getCachedRole(uid: String): UserRole {
         val cached = snapshotStore.readRole()

@@ -39,7 +39,6 @@ class SemesterSubjectsController(
     init {
         launch {
             try {
-                repo.syncSession(sessionId)
             } finally {
                 _loading.value = false
             }
@@ -94,8 +93,7 @@ class SemesterSubjectsController(
         }
         require(!conflict) { "Course code $normalizedCode already exists in this semester." }
 
-        val remaining = subjects.value.filterNot { it.courseCode.equals(originalCourseCode ?: "", ignoreCase = true) }
-        val updated = remaining + SemesterSubject(
+        val subject = SemesterSubject(
             sessionId = sessionId,
             semester = semester,
             courseCode = normalizedCode,
@@ -105,7 +103,7 @@ class SemesterSubjectsController(
             isElective = isElective,
             outline = outline?.trim()?.takeIf { it.isNotBlank() },
         )
-        repo.saveSemesterSubjects(sessionId, semester, updated)
+        repo.saveSemesterSubject(subject)
     }
 
     fun addSubject(courseCode: String, name: String, creditHours: Int, subjectType: SubjectType, isElective: Boolean, outline: String?) {
@@ -113,8 +111,7 @@ class SemesterSubjectsController(
     }
 
     fun removeSubject(courseCode: String) = launch {
-        val updated = subjects.value.filterNot { it.courseCode == courseCode }
-        repo.saveSemesterSubjects(sessionId, semester, updated)
+        repo.deleteSemesterSubject(sessionId, semester, courseCode)
     }
 
     private fun parseDate(text: String): Pair<LocalDate?, Boolean> {

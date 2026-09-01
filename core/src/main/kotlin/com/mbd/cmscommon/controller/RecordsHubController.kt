@@ -38,16 +38,23 @@ class RecordsHubController(
     private var loadVersion = 0
 
     init {
-        refresh()
+        refresh(fetchRemote = false)
     }
 
-    fun refresh() {
+    fun refresh(fetchRemote: Boolean = true) {
         loadVersion++
         val version = loadVersion
         launch {
             _loading.value = true
             _loadError.value = null
             supervisorScope {
+                if (fetchRemote) {
+                    listOf(
+                        async { calendarRepository.sync() },
+                        async { datesheetRepository.sync() },
+                        async { insightsRepository.sync() },
+                    ).forEach { it.await() }
+                }
                 val sessionsDeferred = async { runCatching { sessionRepository.observeAllSessions().first() } }
                 val eventsDeferred = async { runCatching { calendarRepository.getEvents() } }
                 val datesheetsDeferred = async { runCatching { datesheetRepository.getDatesheets() } }

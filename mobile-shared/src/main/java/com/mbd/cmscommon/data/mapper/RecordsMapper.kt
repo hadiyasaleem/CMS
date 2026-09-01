@@ -28,6 +28,9 @@ object CalendarEventMapper {
         createdBy = dto.createdBy,
         updatedAt = PgTime.parseOrEpoch(dto.updatedAt).toEpochMilli(),
         updatedBy = dto.updatedBy,
+        isDeleted = dto.isDeleted,
+        deletedAt = PgTime.parse(dto.deletedAt)?.toEpochMilli(),
+        deletedBy = dto.deletedBy,
     )
 
     fun entityToDomain(entity: CalendarEventEntity): CalendarEvent = CalendarEvent(
@@ -66,6 +69,9 @@ object FineMapper {
         createdBy = dto.createdBy,
         updatedAt = PgTime.parseOrEpoch(dto.updatedAt).toEpochMilli(),
         updatedBy = dto.updatedBy,
+        isDeleted = dto.isDeleted,
+        deletedAt = PgTime.parse(dto.deletedAt)?.toEpochMilli(),
+        deletedBy = dto.deletedBy,
     )
 
     fun entityToDomain(entity: FineEntity): Fine = Fine(

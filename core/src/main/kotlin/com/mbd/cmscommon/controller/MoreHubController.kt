@@ -36,10 +36,10 @@ class MoreHubController(
     private var loadVersion = 0
 
     init {
-        refresh()
+        refresh(fetchRemote = false)
     }
 
-    fun refresh() {
+    fun refresh(fetchRemote: Boolean = true) {
         loadVersion++
         val version = loadVersion
         launch {
@@ -48,19 +48,19 @@ class MoreHubController(
             supervisorScope {
                 val administratorsDeferred = async {
                     runCatching {
-                        administratorRepository.sync()
+                        if (fetchRemote) administratorRepository.sync()
                         administratorRepository.observeAdministrators().first()
                     }
                 }
                 val authoredDeferred = async {
                     runCatching {
-                        notificationRepository.syncAuthoredByCurrentUser(accountKey)
+                        if (fetchRemote) notificationRepository.syncAuthoredByCurrentUser(accountKey)
                         notificationRepository.observeAuthoredByCurrentUser(accountKey).first()
                     }
                 }
                 val unreadDeferred = async {
                     runCatching {
-                        notificationRepository.sync(NotificationTargetRole.ADMIN)
+                        if (fetchRemote) notificationRepository.sync(NotificationTargetRole.ADMIN)
                         notificationRepository.observeUnreadCount(NotificationTargetRole.ADMIN).first()
                     }
                 }

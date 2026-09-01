@@ -45,6 +45,16 @@ import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.controller.DashboardState
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModFaint
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModGround
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModSurfaceAlt
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModWarn
+import com.mbd.cmscommon.ui.theme.ModRedTint
 import com.mbd.cmscommon.ui.theme.CollegeInfo
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -86,44 +96,44 @@ fun AdminDashboardContent(
             state.students.toString(),
             if (state.activeSessions > 0) "$studentsPerSession per active session" else "No active sessions",
             Icons.Outlined.School,
-            Color(0xFF24577A),
-            Color(0xFFEAF4FA),
+            ModInk,
+            ModInk.copy(alpha = 0.08f),
         ),
         DashboardMetric(
             "Teachers",
             state.teachers.toString(),
             if (state.teachers > 0) "$studentsPerTeacher students per teacher" else "Faculty directory is empty",
             Icons.Outlined.Groups,
-            Color(0xFF3C6B52),
-            Color(0xFFEDF6EF),
+            ModSuccess,
+            ModSuccess.copy(alpha = 0.12f),
         ),
         DashboardMetric(
             "Departments",
             state.departments.toString(),
             if (state.departments > 0) "$sessionsPerDepartment sessions per department" else "Create the first department",
             Icons.Outlined.SpaceDashboard,
-            Color(0xFF775A24),
-            Color(0xFFFFF5DD),
+            ModWarn,
+            ModWarn.copy(alpha = 0.14f),
         ),
         DashboardMetric(
             "Active sessions",
             state.activeSessions.toString(),
             if (state.activeSessions > 0) "$studentsPerSession students per session" else "No active intakes",
             Icons.Outlined.Schedule,
-            Color(0xFF5C4B8A),
-            Color(0xFFF1EDFA),
+            ModInk,
+            ModInk.copy(alpha = 0.08f),
         ),
         DashboardMetric(
             "Link requests",
             state.pendingRequests.toString(),
             if (state.pendingRequests > 0) "Waiting for review" else "Queue is clear",
             Icons.Outlined.HowToReg,
-            if (state.pendingRequests > 0) CmsTheme.colors.accent else Color(0xFF3C6B52),
-            if (state.pendingRequests > 0) Color(0xFFFFEFEB) else Color(0xFFEDF6EF),
+            if (state.pendingRequests > 0) CmsTheme.colors.accent else ModSuccess,
+            if (state.pendingRequests > 0) ModRedTint else ModSuccess.copy(alpha = 0.12f),
         ),
     )
 
-    BoxWithConstraints(modifier.fillMaxSize().background(Color(0xFFF7F5F0))) {
+    BoxWithConstraints(modifier.fillMaxSize().background(ModGround)) {
         val wide = maxWidth >= 900.dp
         val contentPadding = if (wide) 32.dp else 16.dp
 
@@ -141,7 +151,7 @@ fun AdminDashboardContent(
             if (!errorMessage.isNullOrBlank()) {
                 Surface(
                     shape = RoundedCornerShape(16.dp),
-                    color = Color(0xFFFFEFEB),
+                    color = ModRedTint,
                     border = BorderStroke(1.dp, CmsTheme.colors.accent.copy(alpha = 0.22f)),
                 ) {
                     Text(errorMessage, modifier = Modifier.padding(16.dp), color = CmsTheme.colors.accent, style = MaterialTheme.typography.bodyMedium)
@@ -181,8 +191,8 @@ private fun DashboardHero(heroPainter: Painter, wide: Boolean) {
     Surface(
         modifier = Modifier.fillMaxWidth().height(if (wide) 278.dp else 236.dp),
         shape = RoundedCornerShape(if (wide) 28.dp else 22.dp),
-        color = Color(0xFFFFFBF3),
-        border = BorderStroke(1.dp, Color(0xFFE5DED2)),
+        color = ModWarn.copy(alpha = 0.12f),
+        border = BorderStroke(1.dp, ModTrack),
     ) {
         Box(Modifier.fillMaxSize()) {
             Image(
@@ -195,9 +205,9 @@ private fun DashboardHero(heroPainter: Painter, wide: Boolean) {
             Box(
                 Modifier.fillMaxSize().background(
                     Brush.horizontalGradient(
-                        0f to Color(0xFFFFFBF3),
-                        0.48f to Color(0xFFFFFBF3).copy(alpha = 0.94f),
-                        0.72f to Color(0xFFFFFBF3).copy(alpha = 0.18f),
+                        0f to ModWarn.copy(alpha = 0.12f),
+                        0.48f to ModWarn.copy(alpha = 0.94f),
+                        0.72f to ModWarn.copy(alpha = 0.18f),
                         1f to Color.Transparent,
                     ),
                 ),
@@ -208,20 +218,20 @@ private fun DashboardHero(heroPainter: Painter, wide: Boolean) {
                     .fillMaxWidth(if (wide) 0.5f else 0.64f)
                     .padding(if (wide) 32.dp else 22.dp),
             ) {
-                Surface(shape = RoundedCornerShape(999.dp), color = Color.White.copy(alpha = 0.9f)) {
+                Surface(shape = RoundedCornerShape(999.dp), color = ModSurface.copy(alpha = 0.9f)) {
                     CollegeCrestBadge()
                 }
                 Spacer(Modifier.height(14.dp))
                 Text(
                     "Welcome back,\nAdmin.",
-                    color = Color(0xFF252321),
+                    color = ModInk,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold,
                     style = if (wide) MaterialTheme.typography.displayMedium else MaterialTheme.typography.headlineLarge,
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
                     "A clear view of people, sessions, and the work that needs attention today.",
-                    color = Color(0xFF625E58),
+                    color = ModMuted,
                     maxLines = if (wide) 3 else 4,
                     overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.bodyMedium,
@@ -236,7 +246,7 @@ private fun CollegeCrestBadge() {
     Text(
         CollegeInfo.NAME,
         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-        color = Color(0xFF252321),
+        color = ModInk,
         style = CmsTextStyles.eyebrow,
     )
 }
@@ -246,7 +256,7 @@ private fun DashboardSectionHeading(title: String, subtitle: String? = null) {
     Column {
         Text(title, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
         if (subtitle != null) {
-            Text(subtitle, color = Color(0xFF77716A), style = MaterialTheme.typography.bodyMedium)
+            Text(subtitle, color = ModMuted, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
@@ -273,7 +283,7 @@ private fun DashboardMetricCard(metric: DashboardMetric, modifier: Modifier = Mo
             }
             Spacer(Modifier.height(12.dp))
             Text(metric.value, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-            Text(metric.label.uppercase(Locale.ROOT), color = Color(0xFF716B64), style = CmsTextStyles.eyebrow)
+            Text(metric.label.uppercase(Locale.ROOT), color = ModMuted, style = CmsTextStyles.eyebrow)
             Text(
                 metric.detail,
                 color = metric.tint,
@@ -294,7 +304,7 @@ private fun TimetableCard(state: DashboardState, onClick: () -> Unit, modifier: 
     }
     DashboardOperationCard(
         "Master timetable", body, "Open schedule",
-        Icons.Outlined.CalendarMonth, Color(0xFF24577A), Color(0xFFEAF4FA), onClick, modifier,
+        Icons.Outlined.CalendarMonth, ModInk, ModInk.copy(alpha = 0.08f), onClick, modifier,
     )
 }
 
@@ -302,8 +312,8 @@ private fun TimetableCard(state: DashboardState, onClick: () -> Unit, modifier: 
 private fun ReviewQueueCard(pendingRequests: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val title = if (pendingRequests > 0) "$pendingRequests requests" else "Queue clear"
     val body = if (pendingRequests > 0) "Student accounts are waiting to be linked." else "No student link requests need review."
-    val tint = if (pendingRequests > 0) CmsTheme.colors.accent else Color(0xFF3C6B52)
-    val container = if (pendingRequests > 0) Color(0xFFFFEFEB) else Color(0xFFEDF6EF)
+    val tint = if (pendingRequests > 0) CmsTheme.colors.accent else ModSuccess
+    val container = if (pendingRequests > 0) ModRedTint else ModSuccess.copy(alpha = 0.12f)
     DashboardOperationCard(title, body, "Review queue", Icons.Outlined.HowToReg, tint, container, onClick, modifier)
 }
 
@@ -311,7 +321,7 @@ private fun ReviewQueueCard(pendingRequests: Int, onClick: () -> Unit, modifier:
 private fun BroadcastCard(onClick: () -> Unit, modifier: Modifier = Modifier) {
     DashboardOperationCard(
         "Broadcast", "Send an announcement to students or faculty.", "New notice",
-        Icons.Outlined.Campaign, Color(0xFF775A24), Color(0xFFFFF5DD), onClick, modifier,
+        Icons.Outlined.Campaign, ModWarn, ModWarn.copy(alpha = 0.14f), onClick, modifier,
     )
 }
 
@@ -334,7 +344,7 @@ private fun DashboardOperationCard(
     ) {
         Column(Modifier.padding(18.dp)) {
             Text(title, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(body, color = Color(0xFF625E58), style = MaterialTheme.typography.bodyMedium)
+            Text(body, color = ModMuted, style = MaterialTheme.typography.bodyMedium)
             Spacer(Modifier.height(12.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(label.uppercase(Locale.ROOT), color = tint, style = CmsTextStyles.eyebrow)
@@ -347,27 +357,27 @@ private fun DashboardOperationCard(
 @Composable
 private fun DashboardActionCard(action: DashboardActionUi, modifier: Modifier = Modifier) {
     Surface(
-        modifier = modifier.clickable(onClick = action.onClick),
+        modifier = modifier.height(112.dp).clickable(onClick = action.onClick),
         shape = RoundedCornerShape(18.dp),
-        color = Color.White,
-        border = BorderStroke(1.dp, Color(0xFFE7E2DA)),
+        color = ModSurface,
+        border = BorderStroke(1.dp, ModTrack),
     ) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(42.dp).background(Color(0xFFF1EEE8), RoundedCornerShape(13.dp)), contentAlignment = Alignment.Center) {
-                Icon(action.icon, contentDescription = null, tint = Color(0xFF383532), modifier = Modifier.size(21.dp))
+            Box(Modifier.size(42.dp).background(ModSurfaceAlt, RoundedCornerShape(13.dp)), contentAlignment = Alignment.Center) {
+                Icon(action.icon, contentDescription = null, tint = ModInk, modifier = Modifier.size(21.dp))
             }
             Spacer(Modifier.size(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(action.label, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                 Text(
                     action.description,
-                    color = Color(0xFF77716A),
+                    color = ModMuted,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
-            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = Color(0xFFAAA39A), modifier = Modifier.size(17.dp))
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = ModFaint, modifier = Modifier.size(17.dp))
         }
     }
 }

@@ -41,15 +41,23 @@ import com.mbd.cmscommon.domain.model.ExamType
 import com.mbd.cmscommon.teacher.ResolvedAssignment
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModGround
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModWarn
 import com.mbd.cmscommon.util.Outcome
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-private val PaperCanvas = Color(0xFFF7F5F0)
-private val PaperBlue = Color(0xFF24577A)
-private val PaperGreen = Color(0xFF2F6B4F)
-private val PaperGold = Color(0xFF9A651B)
-private val PaperRed = Color(0xFFB43A31)
+private val PaperCanvas = ModGround
+private val PaperBlue = ModInk
+private val PaperGreen = ModSuccess
+private val PaperGold = ModWarn
+private val PaperRed = ModAccent
 private val PaperDateFormat = DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a")
 
 @Composable
@@ -58,7 +66,7 @@ fun ExamPaperSubmissionWorkspace(
     selected: ResolvedAssignment?,
     examType: ExamType,
     submissions: List<ExamPaperSubmission>,
-    outcome: Outcome<Unit>,
+    outcome: Outcome<Unit>?,
     onSelect: (ResolvedAssignment) -> Unit,
     onExamType: (ExamType) -> Unit,
     onChooseFile: () -> Unit,
@@ -91,8 +99,8 @@ fun ExamPaperSubmissionWorkspace(
 
         if (forThisType.isEmpty()) {
             item {
-                Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
-                    Text("No papers uploaded for $examType yet.", modifier = Modifier.padding(24.dp), color = Color(0xFF77716A), style = MaterialTheme.typography.bodyMedium)
+                Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
+                    Text("No papers uploaded for $examType yet.", modifier = Modifier.padding(24.dp), color = ModMuted, style = MaterialTheme.typography.bodyMedium)
                 }
             }
         } else {
@@ -116,7 +124,7 @@ fun ExamPaperSubmissionWorkspace(
 
 @Composable
 private fun PaperHeader(selected: ResolvedAssignment?, examType: ExamType) {
-    Surface(shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Column(Modifier.padding(20.dp)) {
             Text("ASSESSMENT WORKSPACE", color = PaperGold, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
@@ -165,22 +173,24 @@ private fun PaperMetrics(total: Int, forType: Int, covered: Int, latest: java.ti
 
 @Composable
 private fun PaperMetric(label: String, value: String, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(14.dp)) {
             Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-            Text(label.uppercase(), color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }
 
 @Composable
-private fun UploadPaperCard(examType: ExamType, outcome: Outcome<Unit>, onChooseFile: () -> Unit) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+private fun UploadPaperCard(examType: ExamType, outcome: Outcome<Unit>?, onChooseFile: () -> Unit) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Text("Upload $examType paper", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-            Text("PDF or DOCX, stored securely with this class", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+            Text("PDF or DOCX, stored securely with this class", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(10.dp))
             when (outcome) {
+                // null = idle (nothing uploaded yet): show only the picker, not a false "success".
+                null -> CmsPrimaryButton(text = "Choose file", onClick = onChooseFile)
                 is Outcome.Loading -> Row(verticalAlignment = Alignment.CenterVertically) {
                     CircularProgressIndicator(modifier = Modifier.height(18.dp), strokeWidth = 2.dp)
                     Spacer(Modifier.width(8.dp))
@@ -203,13 +213,13 @@ private fun UploadPaperCard(examType: ExamType, outcome: Outcome<Unit>, onChoose
 
 @Composable
 private fun SubmissionCard(submission: ExamPaperSubmission, onOpen: () -> Unit, onDelete: () -> Unit) {
-    Surface(shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(submission.fileName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
                 Text(
                     "Uploaded ${submission.uploadedAt.atZone(ZoneId.systemDefault()).format(PaperDateFormat)}",
-                    color = Color(0xFF77716A),
+                    color = ModMuted,
                     style = MaterialTheme.typography.bodySmall,
                 )
             }

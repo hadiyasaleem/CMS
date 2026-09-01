@@ -1,7 +1,6 @@
 package com.mbd.cmsdesktop.ui.teacher
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -16,7 +15,7 @@ import com.mbd.cmscommon.ui.components.TeacherProfileWorkspace
 import com.mbd.cmscommon.util.userMessage
 import kotlinx.coroutines.launch
 
-/** Profile leaf: syncs the signed-in teacher's own record and offers password reset / sign-out. */
+/** Profile leaf backed by the login-populated teacher cache, with password reset and sign-out. */
 @Composable
 fun TeacherProfileScreen(
     teacherId: String,
@@ -34,17 +33,10 @@ fun TeacherProfileScreen(
         departments.firstOrNull { it.deptId == profile?.deptId }?.let { "${it.name} (${it.code})" }
     }
 
-    var loading by remember { mutableStateOf(true) }
+    var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var actionMessage by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(teacherId) {
-        loading = true
-        error = null
-        runCatching { teacherRepository.syncSelf(teacherId) }
-            .onFailure { error = it.userMessage() }
-        loading = false
-    }
 
     val accountKey = sessionManager.accountKey ?: teacherId
 

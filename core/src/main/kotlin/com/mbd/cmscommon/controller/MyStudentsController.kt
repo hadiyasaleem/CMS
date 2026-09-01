@@ -43,6 +43,10 @@ class MyStudentsController(
 
     fun select(assignment: ResolvedAssignment) {
         _selected.value = assignment
+    }
+
+    fun refresh() {
+        val assignment = _selected.value ?: return
         launch {
             runCatching { sessionRepository.syncStudents(assignment.sessionId) }
             runCatching { attendanceRepository.syncSummary(assignment.sessionId, assignment.courseCode) }

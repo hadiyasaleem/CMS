@@ -33,17 +33,25 @@ import com.mbd.cmscommon.domain.model.PeriodType
 import com.mbd.cmscommon.domain.model.SessionPeriod
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModGround
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModWarn
 import com.mbd.cmscommon.util.Outcome
 import java.time.DayOfWeek
 import java.time.format.TextStyle
 import java.util.Locale
 
-private val ScheduleCanvas = Color(0xFFF7F5F0)
-private val ScheduleBorder = Color(0xFFE5E0D7)
-private val ScheduleGreen = Color(0xFF2F6B4F)
-private val ScheduleGold = Color(0xFF9A651B)
-private val ScheduleRed = Color(0xFFB43A31)
-private val ScheduleBlue = Color(0xFF24577A)
+private val ScheduleCanvas = ModGround
+private val ScheduleBorder = ModTrack
+private val ScheduleGreen = ModSuccess
+private val ScheduleGold = ModWarn
+private val ScheduleRed = ModAccent
+private val ScheduleBlue = ModInk
 private val ScheduleDays = listOf(
     DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
     DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY,
@@ -63,14 +71,14 @@ fun TeacherScheduleWorkspace(
     val teachingPeriods = periods.filter { it.periodType != PeriodType.BREAK && it.courseCode.isNotBlank() }
     val classDays = teachingPeriods.map { it.day }.distinct().size
     val totalMinutes = teachingPeriods.sumOf { period ->
-        val start = runCatching { java.time.LocalTime.parse(period.startTime) }.getOrNull()
-        val end = runCatching { java.time.LocalTime.parse(period.endTime) }.getOrNull()
+        val start = scheduleTime(period.startTime)
+        val end = scheduleTime(period.endTime)
         if (start != null && end != null && end.isAfter(start)) java.time.Duration.between(start, end).toMinutes().toInt() else 0
     }
     val rooms = teachingPeriods.mapNotNull { it.roomNo?.takeIf { r -> r.isNotBlank() } }.distinct().size
     val busiest = ScheduleDays.maxByOrNull { day -> teachingPeriods.count { it.day == day } }
 
-    val dayPeriods = teachingPeriods.filter { it.day == selectedDay }.sortedBy { it.startTime }
+    val dayPeriods = teachingPeriods.filter { it.day == selectedDay }.sortedBy { scheduleTime(it.startTime) ?: java.time.LocalTime.MAX }
 
     LazyColumn(
         modifier = modifier.fillMaxWidth().background(ScheduleCanvas),
@@ -93,11 +101,11 @@ fun TeacherScheduleWorkspace(
 
         if (dayPeriods.isEmpty()) {
             item {
-                Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, ScheduleBorder)) {
+                Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ScheduleBorder)) {
                     Text(
                         if (teachingPeriods.isEmpty()) "No periods are assigned to you yet." else "No periods are scheduled for ${selectedDay.getDisplayName(TextStyle.FULL, Locale.ENGLISH)}.",
                         modifier = Modifier.padding(24.dp),
-                        color = Color(0xFF77716A),
+                        color = ModMuted,
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }
@@ -114,7 +122,7 @@ fun TeacherScheduleWorkspace(
 
 @Composable
 private fun ScheduleHeader(heroPainter: Painter, total: Int) {
-    Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = ModInk) {
         Box(Modifier.fillMaxSize()) {
             Image(
                 painter = heroPainter,
@@ -157,27 +165,27 @@ private fun formatMinutes(minutes: Int): String {
 
 @Composable
 private fun ScheduleMetric(value: String, label: String, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, ScheduleBorder)) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ScheduleBorder)) {
         Column(Modifier.padding(14.dp)) {
             Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-            Text(label.uppercase(), color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }
 
 @Composable
 private fun SchedulePeriodCard(period: SessionPeriod, session: AcademicSession?) {
-    Surface(shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, ScheduleBorder)) {
+    Surface(shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ScheduleBorder)) {
         Column(Modifier.padding(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(period.subjectName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
-                    Text(session?.label ?: period.sessionId, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                    Text(session?.label ?: period.sessionId, color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
                 StatusBadge(period.timeRange, BadgeTone.Navy)
             }
             Spacer(Modifier.height(6.dp))
-            Text("Room ${listOfNotNull(period.building, period.roomNo).joinToString(" / ").ifBlank { "not assigned" }}", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+            Text("Room ${listOfNotNull(period.building, period.roomNo).joinToString(" / ").ifBlank { "not assigned" }}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
@@ -191,3 +199,7 @@ private fun ScheduleNotice(message: String, color: Color, action: String, onActi
         }
     }
 }
+private val scheduleTimeFormatter = java.time.format.DateTimeFormatter.ofPattern("H:mm")
+
+private fun scheduleTime(value: String?): java.time.LocalTime? =
+    value?.trim()?.let { runCatching { java.time.LocalTime.parse(it, scheduleTimeFormatter) }.getOrNull() }

@@ -19,7 +19,7 @@ class UserRepositoryImpl @Inject constructor(
     private val roleResolver: RoleResolver,
 ) : UserRepository {
 
-    override fun observeCurrentUserRole(): Flow<UserRole> = roleResolver.observeRole().filterNotNull()
+    override fun observeCurrentUserRole(): Flow<UserRole?> = roleResolver.observeRole()
 
     override suspend fun getCachedRole(uid: String): UserRole {
         val user = userDao.getByUid(uid) ?: error("No cached user for $uid")

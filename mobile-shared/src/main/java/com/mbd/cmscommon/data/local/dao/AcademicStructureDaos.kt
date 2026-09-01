@@ -25,6 +25,9 @@ interface AcademicSessionDao {
     @Query("SELECT * FROM academic_sessions WHERE isDeleted = 0")
     fun observeAllSessions(): Flow<List<AcademicSessionEntity>>
 
+    @Query("SELECT * FROM academic_sessions WHERE isDeleted = 0")
+    suspend fun getAllActive(): List<AcademicSessionEntity>
+
     @Query("SELECT * FROM academic_sessions WHERE sessionId = :sessionId LIMIT 1")
     fun observeSession(sessionId: String): Flow<AcademicSessionEntity?>
 
@@ -67,6 +70,9 @@ interface SemesterSubjectDao {
     suspend fun deleteByIds(ids: List<String>)
 
     @Query("DELETE FROM semester_subjects WHERE sessionId = :sessionId AND semester = :semester")
+    @Query("DELETE FROM semester_subjects WHERE sessionId = :sessionId AND semester = :semester AND courseCode = :courseCode")
+    suspend fun deleteByCourseCode(sessionId: String, semester: Int, courseCode: String)
+
     suspend fun deleteForSemester(sessionId: String, semester: Int)
 
     @Query("DELETE FROM semester_subjects WHERE sessionId = :sessionId")
@@ -88,6 +94,9 @@ interface SessionStudentDao {
 
     @Query("SELECT COUNT(*) FROM session_students WHERE isDeleted = 0")
     fun observeTotalCount(): Flow<Int>
+
+    @Query("SELECT * FROM session_students WHERE isDeleted = 0")
+    suspend fun getAllActive(): List<SessionStudentEntity>
 
     @Query("SELECT * FROM session_students WHERE sessionId = :sessionId AND rollNumber = :rollNumber LIMIT 1")
     suspend fun findByRoll(sessionId: String, rollNumber: String): SessionStudentEntity?
@@ -142,6 +151,9 @@ interface SessionPeriodDao {
     @Query("DELETE FROM session_periods WHERE sessionId = :sessionId AND day = :day")
     suspend fun deleteForSessionDay(sessionId: String, day: String)
 
+    @Query("DELETE FROM session_periods WHERE sessionId = :sessionId AND day = :day AND startTime = :startTime")
+    suspend fun deleteForSlot(sessionId: String, day: String, startTime: String?)
+
     suspend fun applyDelta(upserts: List<SessionPeriodEntity>, deletedIds: List<String>) {
         if (upserts.isNotEmpty()) upsertAll(upserts)
         if (deletedIds.isNotEmpty()) deleteByIds(deletedIds)
@@ -158,6 +170,9 @@ interface SessionAttendanceDao {
 
     @Query("SELECT * FROM session_attendance_rows WHERE sessionId = :sessionId AND semester = :semester")
     suspend fun getRowsForSemester(sessionId: String, semester: Int): List<SessionAttendanceRowEntity>
+
+    @Query("SELECT * FROM session_attendance_rows")
+    suspend fun getAllRows(): List<SessionAttendanceRowEntity>
 
     @Query("SELECT * FROM session_attendance_rows WHERE sessionId = :sessionId AND courseCode = :courseCode")
     fun observeTalliesFor(sessionId: String, courseCode: String): Flow<List<SessionAttendanceRowEntity>>
@@ -197,6 +212,9 @@ interface SessionMarkDao {
     @Query("SELECT * FROM session_marks WHERE sessionId = :sessionId AND rollNumber = :rollNumber")
     fun observeForStudent(sessionId: String, rollNumber: String): Flow<List<SessionMarkEntity>>
 
+    @Query("SELECT * FROM session_marks")
+    suspend fun getAllRows(): List<SessionMarkEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(items: List<SessionMarkEntity>)
 
@@ -222,6 +240,9 @@ interface StudentSemesterGpaDao {
 
     @Query("SELECT * FROM student_semester_gpa WHERE sessionId = :sessionId AND rollNumber = :rollNumber ORDER BY semester")
     suspend fun getForStudent(sessionId: String, rollNumber: String): List<StudentSemesterGpaEntity>
+
+    @Query("SELECT * FROM student_semester_gpa")
+    suspend fun getAllRows(): List<StudentSemesterGpaEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(items: List<StudentSemesterGpaEntity>)

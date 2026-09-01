@@ -40,10 +40,17 @@ import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.teacher.ResolvedAssignment
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModWarn
 
-private val RosterGold = Color(0xFF9A651B)
-private val RosterGreen = Color(0xFF2F6B4F)
-private val RosterRed = Color(0xFFB43A31)
+private val RosterGold = ModWarn
+private val RosterGreen = ModSuccess
+private val RosterRed = ModAccent
 
 enum class TeacherRosterFilter(val label: String) {
     ALL("All"),
@@ -113,7 +120,7 @@ fun TeacherStudentRosterWorkspace(
                         TeacherRosterFilter.entries.forEach { option -> CmsChip(option.label, selected = filter == option, onClick = { filter = option }) }
                     }
                     Spacer(Modifier.height(8.dp))
-                    Text("SORT", color = Color(0xFF716B64), style = CmsTextStyles.eyebrow)
+                    Text("SORT", color = ModMuted, style = CmsTextStyles.eyebrow)
                     Spacer(Modifier.height(6.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         TeacherRosterSort.entries.forEach { option -> CmsChip(option.label, selected = sort == option, onClick = { sort = option }) }
@@ -138,7 +145,7 @@ fun TeacherStudentRosterWorkspace(
 
 @Composable
 private fun TeacherRosterHero(selected: ResolvedAssignment?, count: Int) {
-    Surface(shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Column(Modifier.padding(20.dp)) {
             Text("FACULTY ROSTER", color = RosterGold, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
@@ -183,10 +190,10 @@ private fun TeacherRosterSummaryCard(count: Int, avgCgpa: Double?, linked: Int) 
 
 @Composable
 private fun TeacherRosterMetric(label: String, value: String, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(14.dp)) {
             Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-            Text(label.uppercase(), color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }
@@ -194,14 +201,14 @@ private fun TeacherRosterMetric(label: String, value: String, modifier: Modifier
 @Composable
 private fun TeacherStudentCard(student: SessionStudent, tally: AttendanceTally?) {
     val atRisk = tally != null && tally.total > 0 && tally.percentage < 65f
-    Surface(shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, if (atRisk) RosterRed.copy(alpha = 0.3f) else Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, if (atRisk) RosterRed.copy(alpha = 0.3f) else ModTrack)) {
         Column(Modifier.padding(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 AvatarInitials(student.name, size = 40)
                 Spacer(Modifier.width(10.dp))
                 Column(Modifier.weight(1f)) {
                     Text(student.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
-                    Text("Roll ${student.rollNumber}", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                    Text("Roll ${student.rollNumber}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
                 if (student.linkedEmail.isBlank()) StatusBadge("NOT LINKED", BadgeTone.Neutral)
             }
@@ -216,7 +223,7 @@ private fun TeacherStudentCard(student: SessionStudent, tally: AttendanceTally?)
             }
             if (tally == null || tally.total == 0) {
                 Spacer(Modifier.height(4.dp))
-                Text("Attendance has not been marked for this subject.", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                Text("Attendance has not been marked for this subject.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             }
         }
     }
@@ -224,11 +231,11 @@ private fun TeacherStudentCard(student: SessionStudent, tally: AttendanceTally?)
 
 @Composable
 private fun TeacherRosterEmpty(title: String, detail: String) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(4.dp))
-            Text(detail, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+            Text(detail, color = ModMuted, style = MaterialTheme.typography.bodySmall)
         }
     }
 }

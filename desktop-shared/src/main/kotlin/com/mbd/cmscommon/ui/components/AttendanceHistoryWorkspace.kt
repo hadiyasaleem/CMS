@@ -45,15 +45,23 @@ import com.mbd.cmscommon.domain.model.StudentAttendanceHistorySummary
 import com.mbd.cmscommon.domain.model.attendanceHistorySummary
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModGround
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModWarn
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-private val HistoryCanvas = Color(0xFFF8F6F1)
-private val HistoryBorder = Color(0xFFE5E0D7)
-private val HistoryGreen = Color(0xFF2F6B55)
-private val HistoryBlue = Color(0xFF2F6687)
-private val HistoryGold = Color(0xFF9A741F)
-private val HistoryRed = Color(0xFFB43A31)
+private val HistoryCanvas = ModGround
+private val HistoryBorder = ModTrack
+private val HistoryGreen = ModSuccess
+private val HistoryBlue = ModInk
+private val HistoryGold = ModWarn
+private val HistoryRed = ModAccent
 private val HistoryDateFormatter = DateTimeFormatter.ofPattern("dd MMM yyyy")
 
 enum class AttendanceHistoryFilter(val label: String) {
@@ -136,7 +144,7 @@ private fun HistoryHeader(
 ) {
     var showExport by remember { mutableStateOf(false) }
 
-    Surface(shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Column(Modifier.padding(20.dp)) {
             Text("ATTENDANCE HISTORY", color = HistoryGold, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
@@ -175,10 +183,10 @@ private fun HistoryMetrics(summary: AttendanceHistorySummary) {
 
 @Composable
 private fun HistoryMetric(value: String, label: String, modifier: Modifier = Modifier, alert: Boolean = false) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, HistoryBorder)) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, HistoryBorder)) {
         Column(Modifier.padding(14.dp)) {
-            Text(value, color = if (alert) HistoryRed else Color(0xFF252321), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(), color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text(value, color = if (alert) HistoryRed else ModInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }
@@ -210,12 +218,12 @@ private fun HistoryFilters(
 @Composable
 private fun StudentHistoryCard(student: StudentAttendanceHistorySummary, onMark: (DailyAttendanceMark) -> Unit) {
     val tint = if (student.isAtRisk) HistoryRed else HistoryGreen
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, HistoryBorder)) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, HistoryBorder)) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(student.student.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                    Text(student.student.rollNumber, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                    Text(student.student.rollNumber, color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
                 Text(
                     if (student.total == 0) "No record" else "${student.percentage}%",
@@ -290,7 +298,7 @@ private fun MarkDetailDialog(name: String, mark: DailyAttendanceMark, onDismiss:
         title = { Text(name, style = MaterialTheme.typography.headlineSmall) },
         text = {
             Column {
-                Text(mark.date.format(HistoryDateFormatter), color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                Text(mark.date.format(HistoryDateFormatter), color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.height(10.dp))
                 DetailRow("Status", mark.status.name.lowercase().replaceFirstChar { it.uppercase() })
                 DetailRow("Late", if (mark.isLate) "Yes" else "No")
@@ -305,7 +313,7 @@ private fun MarkDetailDialog(name: String, mark: DailyAttendanceMark, onDismiss:
 @Composable
 private fun DetailRow(label: String, value: String) {
     Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-        Text(label, modifier = Modifier.weight(1f), color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+        Text(label, modifier = Modifier.weight(1f), color = ModMuted, style = MaterialTheme.typography.bodySmall)
         Text(value, style = MaterialTheme.typography.bodyMedium)
     }
     HorizontalDivider(modifier = Modifier.padding(top = 4.dp), color = HistoryBorder)
@@ -313,7 +321,7 @@ private fun DetailRow(label: String, value: String) {
 
 @Composable
 private fun HistoryEmpty(message: String) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, HistoryBorder)) {
-        Text(message, modifier = Modifier.padding(24.dp), color = Color(0xFF77716A), style = MaterialTheme.typography.bodyMedium)
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, HistoryBorder)) {
+        Text(message, modifier = Modifier.padding(24.dp), color = ModMuted, style = MaterialTheme.typography.bodyMedium)
     }
 }

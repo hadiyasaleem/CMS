@@ -70,10 +70,10 @@ class ExamsHubController(
     )
 
     init {
-        refresh()
+        refresh(fetchRemote = false)
     }
 
-    fun refresh() {
+    fun refresh(fetchRemote: Boolean = true) {
         loadVersion++
         val version = loadVersion
         launch {
@@ -82,19 +82,35 @@ class ExamsHubController(
             try {
                 supervisorScope {
                     val currentAssignments = async { assignmentsProvider.observeAssignmentsFor(teacherId).first() }.await()
-                    val datesheetsDeferred = async { runCatching { datesheetRepository.getDatesheets() } }
+                    val datesheetsDeferred = async {
+                        runCatching {
+                            if (fetchRemote) datesheetRepository.sync()
+                            datesheetRepository.getDatesheets()
+                        }
+                    }
 
                     val offerings = currentAssignments.distinctBy { it.sessionId to it.courseCode }
-                    val paperResults = offerings
-                        .map { assignment -> async { runCatching { examPaperRepository.sync(assignment.sessionId, assignment.courseCode) } } }
-                        .awaitAll()
+                    val paperResults = if (fetchRemote) {
+                        offerings.map { assignment ->
+                            async { runCatching { examPaperRepository.sync(assignment.sessionId, assignment.courseCode) } }
+                        }.awaitAll()
+                    } else {
+                        emptyList()
+                    }
 
                     val datesheetResult = datesheetsDeferred.await()
                     val sheets = datesheetResult.getOrDefault(emptyList())
                     if (version == loadVersion) _datesheets.value = sheets
 
                     val slotResults = sheets
-                        .map { sheet -> async { runCatching { datesheetRepository.getSlots(sheet.id) } } }
+                        .map { sheet ->
+                            async {
+                                runCatching {
+                                    if (fetchRemote) datesheetRepository.syncSlots(sheet.id)
+                                    datesheetRepository.getSlots(sheet.id)
+                                }
+                            }
+                        }
                         .awaitAll()
 
                     if (version == loadVersion) {

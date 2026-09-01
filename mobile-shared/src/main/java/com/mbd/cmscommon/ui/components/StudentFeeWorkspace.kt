@@ -28,13 +28,21 @@ import com.mbd.cmscommon.domain.model.FeeHead
 import com.mbd.cmscommon.domain.model.StudentFeeSnapshot
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModGround
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModWarn
 import java.time.format.DateTimeFormatter
 
-private val FeeCanvas = Color(0xFFF7F5F0)
-private val FeeGreen = Color(0xFF2F6B4F)
-private val FeeGold = Color(0xFF9A651B)
-private val FeeRed = Color(0xFFB43A31)
-private val FeeBlue = Color(0xFF24577A)
+private val FeeCanvas = ModGround
+private val FeeGreen = ModSuccess
+private val FeeGold = ModWarn
+private val FeeRed = ModAccent
+private val FeeBlue = ModInk
 private val FeeDateFormat = DateTimeFormatter.ofPattern("dd MMM yyyy")
 
 @Composable
@@ -61,7 +69,7 @@ fun StudentFeeWorkspace(
                 val structure = snapshot.structure
                 if (structure != null && snapshot.itemCount > 0) {
                     item {
-                        Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+                        Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
                             Column(Modifier.padding(16.dp)) {
                                 Text("Fee component", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                                 Spacer(Modifier.height(8.dp))
@@ -80,7 +88,7 @@ fun StudentFeeWorkspace(
 
 @Composable
 private fun FeeHeader() {
-    Surface(shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Column(Modifier.padding(20.dp)) {
             Text("FINANCIALS", color = FeeGold, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
@@ -94,22 +102,22 @@ private fun FeeHeader() {
 @Composable
 private fun FeeOverview(snapshot: StudentFeeSnapshot) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Surface(modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+        Surface(modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
             Column(Modifier.padding(14.dp)) {
                 Text("Rs ${snapshot.totalAmount}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-                Text("TOTAL PUBLISHED FEE", color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+                Text("TOTAL PUBLISHED FEE", color = ModMuted, style = CmsTextStyles.eyebrow)
             }
         }
-        Surface(modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+        Surface(modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
             Column(Modifier.padding(14.dp)) {
                 Text(snapshot.itemCount.toString(), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-                Text(if (snapshot.itemCount == 1) "COMPONENT" else "COMPONENTS", color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+                Text(if (snapshot.itemCount == 1) "COMPONENT" else "COMPONENTS", color = ModMuted, style = CmsTextStyles.eyebrow)
             }
         }
     }
     snapshot.largestHead?.let { head ->
         Spacer(Modifier.height(8.dp))
-        Text("Largest component: ${head.label} (Rs ${head.amount})", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+        Text("Largest component: ${head.label} (Rs ${head.amount})", color = ModMuted, style = MaterialTheme.typography.bodySmall)
     }
 }
 
@@ -122,9 +130,9 @@ private fun FeeDueCard(snapshot: StudentFeeSnapshot) {
         FeeDueState.DUE_TODAY -> FeeGold to "Due today. Confirm payment timing with the accounts office."
         FeeDueState.OVERDUE -> FeeRed to "The published due date passed ${-(snapshot.daysUntilDue ?: 0)} day(s) ago."
     }
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, color.copy(alpha = 0.3f))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, color.copy(alpha = 0.3f))) {
         Column(Modifier.padding(16.dp)) {
-            Text("PAYMENT DUE DATE", color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text("PAYMENT DUE DATE", color = ModMuted, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
             Text(snapshot.dueDate?.format(FeeDateFormat) ?: "Not specified", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Text(message, color = color, style = MaterialTheme.typography.bodyMedium)
@@ -142,15 +150,15 @@ private fun FeeHeadCard(head: FeeHead) {
 
 @Composable
 private fun FeeGuidanceCards(snapshot: StudentFeeSnapshot) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Text("Payment guidance", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(6.dp))
-            Text(snapshot.structure?.paymentNote?.takeIf { it.isNotBlank() } ?: "Not specified", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+            Text(snapshot.structure?.paymentNote?.takeIf { it.isNotBlank() } ?: "Not specified", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(10.dp))
             Text("Late fee policy", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(6.dp))
-            Text(snapshot.structure?.lateFineNote?.takeIf { it.isNotBlank() } ?: "Not specified", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+            Text(snapshot.structure?.lateFineNote?.takeIf { it.isNotBlank() } ?: "Not specified", color = ModMuted, style = MaterialTheme.typography.bodySmall)
         }
     }
 }

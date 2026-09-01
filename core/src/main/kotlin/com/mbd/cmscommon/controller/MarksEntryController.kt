@@ -82,22 +82,14 @@ class MarksEntryController(
         _selected.value = assignment
         _edits.value = emptyMap()
         _absentRolls.value = emptySet()
-        launch {
-            runCatching { sessionRepository.syncStudents(assignment.sessionId) }
-            runCatching { marksRepository.sync(assignment.sessionId, assignment.courseCode, _examType.value) }
-        }
+
         loadPendingRequests()
     }
 
     fun selectExamType(type: ExamType) {
         _examType.value = type
         _edits.value = emptyMap()
-        val assignment = _selected.value
-        if (assignment != null) {
-            launch {
-                runCatching { marksRepository.sync(assignment.sessionId, assignment.courseCode, type) }
-            }
-        }
+
         loadPendingRequests()
     }
 
@@ -110,11 +102,24 @@ class MarksEntryController(
 
     fun save() {
         val assignment = _selected.value ?: return
+        if (_saveState.value is Outcome.Loading) return // single-flight: block a double-tap
         val type = _examType.value
         val display = displayScores.value
         val saved = savedScores.value
         val absent = _absentRolls.value
 
+        val invalidScore = roster.value.firstOrNull { student ->
+            if (saved.containsKey(student.rollNumber) || absent.contains(student.rollNumber)) return@firstOrNull false
+            val raw = display[student.rollNumber]?.trim().orEmpty()
+            raw.isNotEmpty() && raw.toIntOrNull()?.let { it !in 0..type.maxMarks } != false
+        }
+        if (invalidScore != null) {
+            _saveState.value = Outcome.Error(
+                "Enter a whole-number score between 0 and ${type.maxMarks} for ${invalidScore.rollNumber}.",
+                IllegalArgumentException("score out of range"),
+            )
+            return
+        }
         val parsed = roster.value.mapNotNull { student ->
             if (saved.containsKey(student.rollNumber)) return@mapNotNull null
             if (absent.contains(student.rollNumber)) {
@@ -125,9 +130,9 @@ class MarksEntryController(
             }
         }.toMap()
 
+        _saveState.value = Outcome.Loading // set before launch so the guard above sees it synchronously
         launch {
             try {
-                _saveState.value = Outcome.Loading
                 val absentToSave = absent.filter { parsed.containsKey(it) }.toSet()
                 marksRepository.saveScores(assignment.sessionId, assignment.courseCode, type, teacherId, parsed, absentToSave)
                 _saveState.value = Outcome.Success(Unit)
@@ -160,6 +165,11 @@ class MarksEntryController(
         val currentScore = savedScores.value[rollNumber]
 
         if ((reason ?: "").trim().length > 500) {
+        if (requestedScore !in 0..type.maxMarks) {
+            _requestState.value = Outcome.Error("Score must be between 0 and ${type.maxMarks}.", IllegalArgumentException("score out of range"))
+            return
+        }
+
             _requestState.value = Outcome.Error("Reason must not exceed 500 characters.", IllegalArgumentException("reason length"))
             return
         }

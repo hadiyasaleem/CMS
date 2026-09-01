@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.sync.StartupBootstrapTracker
-import com.mbd.cmscommon.data.sync.SyncEngine
+import com.mbd.cmscommon.data.sync.AdminDataBootstrapper
 import com.mbd.cmscommon.domain.model.UserRole
 import com.mbd.cmscommon.domain.repository.TeacherRepository
 import com.mbd.cmscommon.domain.repository.UserRepository
@@ -23,7 +23,7 @@ class AppRootViewModel @Inject constructor(
     private val sessionManager: SessionManager,
     private val userRepository: UserRepository,
     private val teacherRepository: TeacherRepository,
-    private val syncEngine: SyncEngine,
+    private val dataBootstrapper: AdminDataBootstrapper,
     private val startupBootstrapTracker: StartupBootstrapTracker,
 ) : ViewModel() {
 
@@ -52,15 +52,9 @@ class AppRootViewModel @Inject constructor(
             runCatching { userRepository.resolveRole(accountKey) }
             runCatching { teacherRepository.syncSelf(accountKey) }
 
-            val bootstrapComplete = runCatching {
-                startupBootstrapTracker.isComplete(StartupBootstrapTracker.REFERENCE_DATA, accountKey)
-            }.getOrDefault(false)
-            if (!bootstrapComplete) {
-                val hasCachedData = runCatching { syncEngine.hasCachedReferenceData() }.getOrDefault(false)
-                val completed = if (hasCachedData) true else runCatching { syncEngine.refreshReferenceData() }.getOrDefault(false)
-                if (completed) {
-                    runCatching { startupBootstrapTracker.markComplete(StartupBootstrapTracker.REFERENCE_DATA, accountKey) }
-                }
+            val completed = runCatching { dataBootstrapper.refreshAll() }.getOrDefault(false)
+            if (completed) {
+                runCatching { startupBootstrapTracker.markComplete(StartupBootstrapTracker.REFERENCE_DATA, accountKey) }
             }
             _authChecked.value = true
         }

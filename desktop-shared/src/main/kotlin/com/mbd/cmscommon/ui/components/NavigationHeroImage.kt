@@ -1,5 +1,10 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModGround
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModWarn
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -51,8 +56,8 @@ fun NavigationHeroImage(
         Surface(
             modifier = Modifier.fillMaxWidth().widthIn(max = 1440.dp).height(heroHeight),
             shape = RoundedCornerShape(20.dp),
-            color = Color(0xFFF4EFE5),
-            border = BorderStroke(1.dp, Color(0xFFE5E0D7)),
+            color = ModGround,
+            border = BorderStroke(1.dp, ModTrack),
         ) {
             androidx.compose.foundation.layout.Box(Modifier.fillMaxSize()) {
                 Image(
@@ -77,10 +82,10 @@ fun NavigationHeroImage(
                         .padding(if (compact) 18.dp else 24.dp),
                     verticalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 8.dp),
                 ) {
-                    Text(eyebrow.uppercase(), color = Color(0xFFFFC857), style = CmsTextStyles.eyebrow)
+                    Text(eyebrow.uppercase(), color = ModWarn, style = CmsTextStyles.eyebrow)
                     Text(
                         title,
-                        color = Color.White,
+                        color = ModSurface,
                         fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
@@ -88,7 +93,7 @@ fun NavigationHeroImage(
                     )
                     Text(
                         subtitle,
-                        color = Color.White.copy(alpha = 0.88f),
+                        color = ModSurface.copy(alpha = 0.88f),
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.bodyMedium,
@@ -109,9 +114,9 @@ fun NavigationHeroImage(
 
 @Composable
 fun HeroAction(label: String, onClick: () -> Unit, primary: Boolean) {
-    val bg = if (primary) Color.White else Color.Black.copy(alpha = 0.28f)
-    val fg = if (primary) Color(0xFF1D252C) else Color.White
-    val border = if (primary) null else BorderStroke(1.dp, Color.White.copy(alpha = 0.58f))
+    val bg = if (primary) ModSurface else Color.Black.copy(alpha = 0.28f)
+    val fg = if (primary) ModInk else ModSurface
+    val border = if (primary) null else BorderStroke(1.dp, ModSurface.copy(alpha = 0.58f))
 
     Surface(
         onClick = onClick,

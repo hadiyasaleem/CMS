@@ -362,7 +362,7 @@ fun AttendanceRecordsScreen(viewModel: AttendanceRecordsViewModel = hiltViewMode
         AlertDialog(
             onDismissRequest = { showExport = false },
             title = { Text("Export ${mode.label}", style = MaterialTheme.typography.titleLarge) },
-            text = { Text("Choose a format. The file opens in the system share sheet.", style = MaterialTheme.typography.bodyMedium) },
+            text = { Text("Choose a format.", style = MaterialTheme.typography.bodyMedium) },
             confirmButton = {
                 TextButton(onClick = {
                     runCatching { RecordsExporter.exportCsv(context, payload.fileBase, payload.title, payload.header, payload.rows) }

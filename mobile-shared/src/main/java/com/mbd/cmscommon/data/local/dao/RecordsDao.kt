@@ -50,6 +50,9 @@ interface FineDao {
 
 @Dao
 interface MarkEditRequestDao {
+    @Query("SELECT * FROM mark_edit_requests WHERE requestId = :id LIMIT 1")
+    suspend fun getById(id: String): MarkEditRequestEntity?
+
     @Query(
         "SELECT * FROM mark_edit_requests WHERE sessionId = :sessionId AND courseCode = :courseCode AND examType = :examType AND status = 'PENDING' AND isDeleted = 0",
     )

@@ -2,6 +2,7 @@ package com.mbd.cmscommon.ui.components
 
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModSurface
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -98,7 +99,7 @@ fun BrandedSplashScreen(
             Text(
                 "GGC-MBD",
                 modifier = Modifier.graphicsLayer { alpha = entrance.value },
-                color = Color.White,
+                color = ModSurface,
                 fontWeight = FontWeight.Black,
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.displaySmall,
@@ -106,7 +107,7 @@ fun BrandedSplashScreen(
             Spacer(Modifier.height(6.dp))
             Text(
                 portalLabel.uppercase(Locale.ROOT),
-                color = Color.White.copy(alpha = 0.9f),
+                color = ModSurface.copy(alpha = 0.9f),
                 textAlign = TextAlign.Center,
                 style = CmsTextStyles.eyebrow,
             )
@@ -114,12 +115,12 @@ fun BrandedSplashScreen(
             LinearProgressIndicator(
                 modifier = Modifier.width(if (compact) 180.dp else 220.dp).height(3.dp),
                 color = CmsTheme.colors.accent,
-                trackColor = Color.White.copy(alpha = 0.16f),
+                trackColor = ModSurface.copy(alpha = 0.16f),
             )
             Spacer(Modifier.height(16.dp))
             Text(
                 statusText.uppercase(Locale.ROOT),
-                color = Color.White.copy(alpha = pulse),
+                color = ModSurface.copy(alpha = pulse),
                 textAlign = TextAlign.Center,
                 style = CmsTextStyles.eyebrow,
             )

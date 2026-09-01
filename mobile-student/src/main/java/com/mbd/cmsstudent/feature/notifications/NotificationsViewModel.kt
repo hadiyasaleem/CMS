@@ -8,15 +8,19 @@ import com.mbd.cmscommon.controller.NotificationsController
 import com.mbd.cmscommon.domain.model.NotificationTargetRole
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
+import com.mbd.cmscommon.domain.repository.NotificationAudienceContext
 import com.mbd.cmscommon.domain.repository.NotificationRepository
+import com.mbd.cmsstudent.feature.common.CurrentStudentProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.flow.map
 
 @HiltViewModel
 class NotificationsViewModel @Inject constructor(
     repository: NotificationRepository,
     sessionRepository: AcademicSessionRepository,
     departmentRepository: DepartmentRepository,
+    currentStudentProvider: CurrentStudentProvider,
     sessionManager: SessionManager,
 ) : ViewModel() {
     val controller = NotificationsController(
@@ -26,6 +30,11 @@ class NotificationsViewModel @Inject constructor(
         sessionRepository = sessionRepository,
         departmentRepository = departmentRepository,
         publisherKind = NotificationPublisherKind.NONE,
+        // Supply the student's session/dept so the controller's STUDENT init filter passes and
+        // sync runs (otherwise sessionId is null → infinite spinner, no sync, session notices hidden).
+        audienceContext = currentStudentProvider.observeContext().map {
+            NotificationAudienceContext(sessionId = it?.sessionId, departmentId = it?.deptId)
+        },
         scope = viewModelScope,
     )
 }

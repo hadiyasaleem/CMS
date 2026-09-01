@@ -31,10 +31,6 @@ class SessionStudentsController(
     private val _importing = MutableStateFlow(false)
     val importing: StateFlow<Boolean> = _importing.asStateFlow()
 
-    init {
-        launch { repo.syncStudents(sessionId) }
-    }
-
     fun addStudent(rollNumber: String, name: String, gpa: Double?, cgpa: Double?) = launch {
         try {
             val normalizedRoll = FieldValidators.normalizeRollNumber(rollNumber)
@@ -53,7 +49,7 @@ class SessionStudentsController(
 
             repo.addStudent(sessionId, normalizedRoll, normalizedName, gpa, cgpa)
         } catch (t: Throwable) {
-            throw RuntimeException(t.userMessage("Could not add the student."), t)
+            throw IllegalStateException(t.userMessage("Could not add the student."), t)
         }
     }
 

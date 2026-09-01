@@ -28,15 +28,15 @@ class DatesheetRepositoryLocalImpl @Inject constructor(
 
     private fun syncOwnerKey(): String = sessionManager.accountKey ?: SyncCheckpointDefaults.ownerKey("anonymous-local")
 
-    override suspend fun getDatesheets(): List<Datesheet> {
-        runCatching { syncDatesheets() }
-        return datesheetDao.getDatesheets().map { DatesheetMapper.entityToDomain(it) }
+    override suspend fun getDatesheets(): List<Datesheet> =
+        datesheetDao.getDatesheets().map { DatesheetMapper.entityToDomain(it) }
+
+    override suspend fun sync() {
+        syncDatesheets()
     }
 
-    override suspend fun getSlots(datesheetId: String): List<DatesheetSlot> {
-        runCatching { syncSlots(datesheetId) }
-        return datesheetDao.getSlots(datesheetId).map { DatesheetMapper.slotEntityToDomain(it) }
-    }
+    override suspend fun getSlots(datesheetId: String): List<DatesheetSlot> =
+        datesheetDao.getSlots(datesheetId).map { DatesheetMapper.slotEntityToDomain(it) }
 
     override suspend fun createDatesheet(title: String, examType: String, sessionId: String?, instructions: String, published: Boolean, createdBy: String): String {
         val dto = DatesheetDto(
@@ -62,14 +62,31 @@ class DatesheetRepositoryLocalImpl @Inject constructor(
         }) {
             filter { eq("id", id) }
         }
-        syncDatesheets()
+        datesheetDao.getDatesheets().firstOrNull { it.datesheetId == id }?.let { cached ->
+            datesheetDao.upsertDatesheets(
+                listOf(
+                    cached.copy(
+                        title = title.trim(),
+                        examType = examType,
+                        sessionId = sessionId,
+                        instructions = instructions,
+                        published = published,
+                        updatedAt = System.currentTimeMillis(),
+                    ),
+                ),
+            )
+        }
     }
 
     override suspend fun setPublished(id: String, published: Boolean) {
         postgrest.from(SupabaseTables.DATESHEETS).update({ set("published", published) }) {
             filter { eq("id", id) }
         }
-        syncDatesheets()
+        datesheetDao.getDatesheets().firstOrNull { it.datesheetId == id }?.let { cached ->
+            datesheetDao.upsertDatesheets(
+                listOf(cached.copy(published = published, updatedAt = System.currentTimeMillis())),
+            )
+        }
     }
 
     override suspend fun deleteDatesheet(id: String) {
@@ -114,7 +131,24 @@ class DatesheetRepositoryLocalImpl @Inject constructor(
         }) {
             filter { eq("id", slot.id) }
         }
-        syncSlots(slot.datesheetId)
+        datesheetDao.getSlots(slot.datesheetId).firstOrNull { it.slotId == slot.id }?.let { cached ->
+            datesheetDao.upsertSlots(
+                listOf(
+                    cached.copy(
+                        examDate = slot.examDate,
+                        startTime = slot.startTime,
+                        endTime = slot.endTime,
+                        durationMinutes = slot.durationMinutes,
+                        courseCode = slot.courseCode,
+                        subjectName = slot.subjectName,
+                        roomNo = slot.roomNo,
+                        building = slot.building,
+                        invigilatorEmail = slot.invigilatorEmail,
+                        updatedAt = System.currentTimeMillis(),
+                    ),
+                ),
+            )
+        }
     }
 
     override suspend fun deleteSlot(id: String) {
@@ -152,7 +186,7 @@ class DatesheetRepositoryLocalImpl @Inject constructor(
         checkpointStore.upsert(SyncCheckpoint(ownerKey, SupabaseTables.DATESHEETS, scopeKey, maxUpdatedAt, PgTime.format(Instant.now()) ?: since))
     }
 
-    private suspend fun syncSlots(datesheetId: String) {
+    override suspend fun syncSlots(datesheetId: String) {
         val ownerKey = syncOwnerKey()
         val scopeKey = SyncCheckpointDefaults.scoped("datesheet" to datesheetId)
         val checkpoint = checkpointStore.get(ownerKey, SupabaseTables.DATESHEET_SLOTS, scopeKey)

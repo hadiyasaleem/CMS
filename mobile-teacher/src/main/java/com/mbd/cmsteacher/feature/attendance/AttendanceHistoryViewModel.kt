@@ -62,6 +62,9 @@ class AttendanceHistoryViewModel @Inject constructor(
             val dailyMarks = attendanceRepository.marksBetween(sessionId, courseCode, from, to)
             _marks.value = dailyMarks.groupBy { it.rollNumber }
                 .mapValues { (_, marks) -> marks.associateBy { it.date } }
+        } catch (t: Throwable) {
+            // A repository failure here would otherwise be uncaught in viewModelScope and crash the
+            // app; keep the previously loaded marks and just clear the loading flag.
         } finally {
             _loading.value = false
         }
@@ -91,17 +94,22 @@ class AttendanceHistoryViewModel @Inject constructor(
 
     fun exportCsv(context: Context) {
         viewModelScope.launch {
-            val meta = exportMeta()
-            val from = _month.value
-            val days = (0 until from.lengthOfMonth()).map { from.plusDays(it.toLong()) }
-            AttendanceExporter.exportCsv(context, meta, courseCode, monthLabel.value, days, roster.value, marks.value)
+            // File IO / share-intent failures (ActivityNotFoundException, IOException) must not crash the app.
+            runCatching {
+                val meta = exportMeta()
+                val from = _month.value
+                val days = (0 until from.lengthOfMonth()).map { from.plusDays(it.toLong()) }
+                AttendanceExporter.exportCsv(context, meta, courseCode, monthLabel.value, days, roster.value, marks.value)
+            }
         }
     }
 
     fun exportPdf(context: Context) {
         viewModelScope.launch {
-            val meta = exportMeta()
-            AttendanceExporter.exportPdf(context, meta, courseCode, monthLabel.value, roster.value, marks.value)
+            runCatching {
+                val meta = exportMeta()
+                AttendanceExporter.exportPdf(context, meta, courseCode, monthLabel.value, roster.value, marks.value)
+            }
         }
     }
 }

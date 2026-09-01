@@ -48,7 +48,7 @@ class MasterTimetableController(
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     init {
-        refresh()
+        _loading.value = false
     }
 
     fun refresh() = launch {

@@ -1,5 +1,14 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModGround
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModWarn
+import com.mbd.cmscommon.ui.theme.ModRedTint
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -53,24 +62,24 @@ private fun AttendanceStudentReportCard(student: AttendanceStudentSummary, modif
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
-        color = Color.White,
-        border = BorderStroke(1.dp, if (risk) Color(0xFFE7B9B1) else Color(0xFFE3E0D9)),
+        color = ModSurface,
+        border = BorderStroke(1.dp, if (risk) ModRedTint else ModTrack),
     ) {
         Column(Modifier.padding(18.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Column(Modifier.weight(1f)) {
                     Text(student.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                    Text("Roll ${student.rollNumber}", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                    Text("Roll ${student.rollNumber}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
                 Spacer(Modifier.width(8.dp))
                 Surface(
                     shape = RoundedCornerShape(20.dp),
-                    color = if (risk) Color(0xFFFFECE9) else Color(0xFFE8F2EA),
+                    color = if (risk) ModRedTint else ModSuccess.copy(alpha = 0.12f),
                 ) {
                     Text(
                         student.percentage?.let { "$it%" } ?: "--",
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                        color = if (risk) Color(0xFF9A3E38) else Color(0xFF2F6B4F),
+                        color = if (risk) ModAccent else ModSuccess,
                         fontWeight = FontWeight.Bold,
                     )
                 }
@@ -79,15 +88,15 @@ private fun AttendanceStudentReportCard(student: AttendanceStudentSummary, modif
             LinearProgressIndicator(
                 progress = { (student.percentage ?: 0) / 100f },
                 modifier = Modifier.fillMaxWidth(),
-                color = if (risk) Color(0xFFB9574F) else Color(0xFF3E7A5C),
-                trackColor = Color(0xFFEDEAE4),
+                color = if (risk) ModAccent else ModSuccess,
+                trackColor = ModTrack,
             )
             Spacer(Modifier.height(12.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                AttendanceCount("PRESENT", student.present, Color(0xFF2F6B4F))
-                AttendanceCount("ABSENT", student.absent, Color(0xFF9A3E38))
-                AttendanceCount("LEAVE", student.leave, Color(0xFF9A651B))
-                AttendanceCount("LATE", student.late, Color(0xFF24577A))
+                AttendanceCount("PRESENT", student.present, ModSuccess)
+                AttendanceCount("ABSENT", student.absent, ModAccent)
+                AttendanceCount("LEAVE", student.leave, ModWarn)
+                AttendanceCount("LATE", student.late, ModInk)
             }
             if (student.monthlyRates.isNotEmpty()) {
                 Spacer(Modifier.height(12.dp))
@@ -106,13 +115,13 @@ private fun AttendanceStudentReportCard(student: AttendanceStudentSummary, modif
 private fun AttendanceCount(label: String, value: Int, color: Color) {
     Column {
         Text(value.toString(), color = color, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-        Text(label, color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+        Text(label, color = ModMuted, style = CmsTextStyles.eyebrow)
     }
 }
 
 @Composable
 private fun MonthRatePill(rate: AttendanceMonthRate) {
-    Surface(shape = RoundedCornerShape(10.dp), color = Color(0xFFF5F3EE)) {
+    Surface(shape = RoundedCornerShape(10.dp), color = ModGround) {
         val displayName = rate.month.month.getDisplayName(TextStyle.SHORT, Locale.ENGLISH)
         val percentage = rate.percentage?.let { "$it%" } ?: "--"
         Text("$displayName $percentage", modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp), style = MaterialTheme.typography.labelSmall)

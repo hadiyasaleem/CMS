@@ -21,14 +21,15 @@ class StudentResultsController(
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
 
     init {
-        refresh()
+        refresh(fetchRemote = false)
     }
 
-    fun refresh() {
+    fun refresh(fetchRemote: Boolean = true) {
         clearError()
         _loading.value = true
         launch {
             try {
+                if (fetchRemote) marksRepository.syncSession(sessionId)
                 _results.value = marksRepository.getSemesterGpa(sessionId, rollNumber)
             } finally {
                 _loading.value = false

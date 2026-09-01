@@ -36,12 +36,19 @@ import com.mbd.cmscommon.domain.model.Fine
 import com.mbd.cmscommon.domain.model.StudentProfile
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModWarn
 import com.mbd.cmscommon.util.FieldValidators
 import com.mbd.cmscommon.util.Outcome
 
-private val ProfileGreen = Color(0xFF2F6B4F)
-private val ProfileGold = Color(0xFF9A651B)
-private val ProfileRed = Color(0xFFB43A31)
+private val ProfileGreen = ModSuccess
+private val ProfileGold = ModWarn
+private val ProfileRed = ModAccent
 private val FINE_CATEGORIES = listOf("ATTENDANCE", "DISCIPLINARY", "EXAM", "LIBRARY", "OTHER")
 private val GENDERS = listOf("MALE", "FEMALE")
 private val ENROLLMENTS = listOf("ACTIVE", "GRADUATED", "PROMOTED", "REPEATED", "WITHDRAWN")
@@ -175,7 +182,7 @@ fun StudentProfileWorkspace(
 
 @Composable
 private fun StudentProfileHero(profile: StudentProfile, session: AcademicSession?, completion: Int) {
-    Surface(shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
             AvatarInitials(profile.name, size = 52)
             Spacer(Modifier.width(14.dp))
@@ -194,10 +201,10 @@ private fun StudentProfileHero(profile: StudentProfile, session: AcademicSession
 
 @Composable
 private fun ProfileSectionCard(title: String, subtitle: String, content: @Composable () -> Unit) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Text(title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-            Text(subtitle, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+            Text(subtitle, color = ModMuted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(10.dp))
             content()
         }
@@ -229,7 +236,7 @@ private fun ProfileDateField(label: String, value: String, onChange: (String) ->
 @Composable
 private fun ProfileChipPicker(label: String, options: List<String>, selected: String?, allowClear: Boolean = true, onSelect: (String?) -> Unit) {
     Column(Modifier.padding(vertical = 6.dp)) {
-        Text(label, color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+        Text(label, color = ModMuted, style = CmsTextStyles.eyebrow)
         Spacer(Modifier.height(6.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (allowClear) {
@@ -242,10 +249,10 @@ private fun ProfileChipPicker(label: String, options: List<String>, selected: St
 
 @Composable
 private fun AcademicAndRolesCard(profile: StudentProfile, onToggleCr: () -> Unit, onToggleGr: () -> Unit) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Text("Academic standing & class roles", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-            Text("Grades are read-only and update from recorded results.", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+            Text("Grades are read-only and update from recorded results.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(10.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 AcademicMetric("GPA", profile.gpa?.let { "%.2f".format(it) } ?: "--")
@@ -253,7 +260,7 @@ private fun AcademicAndRolesCard(profile: StudentProfile, onToggleCr: () -> Unit
                 AcademicMetric("Account", if (profile.linkedEmail.isNotBlank()) "Linked" else "Not linked")
             }
             Spacer(Modifier.height(10.dp))
-            Text("CLASS REPRESENTATIVE ROLES", color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text("CLASS REPRESENTATIVE ROLES", color = ModMuted, style = CmsTextStyles.eyebrow)
             Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("Class Rep (CR)", modifier = Modifier.weight(1f))
                 Switch(checked = profile.isCr, onCheckedChange = { onToggleCr() })
@@ -270,24 +277,24 @@ private fun AcademicAndRolesCard(profile: StudentProfile, onToggleCr: () -> Unit
 private fun AcademicMetric(label: String, value: String) {
     Column {
         Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-        Text(label.uppercase(), color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+        Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
     }
 }
 
 @Composable
 private fun FinesWorkspaceCard(fines: List<Fine>, total: Double, onAdd: () -> Unit, onDelete: (Fine) -> Unit) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("Fines", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                    Text("Rs $total total", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                    Text("Rs $total total", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
                 TextButton(onClick = onAdd) { Text("Fine") }
             }
             if (fines.isEmpty()) {
                 Spacer(Modifier.height(6.dp))
-                Text("No active fine records", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                Text("No active fine records", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             } else {
                 Spacer(Modifier.height(6.dp))
                 fines.forEach { fine -> FineCard(fine, onDelete) }
@@ -301,7 +308,7 @@ private fun FineCard(fine: Fine, onDelete: (Fine) -> Unit) {
     Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text("${fine.category} · Rs ${fine.amount}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
-            Text(fine.reason, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+            Text(fine.reason, color = ModMuted, style = MaterialTheme.typography.bodySmall)
         }
         TextButton(onClick = { onDelete(fine) }) { Text("Remove", color = CmsTheme.colors.accent) }
     }
@@ -309,10 +316,10 @@ private fun FineCard(fine: Fine, onDelete: (Fine) -> Unit) {
 
 @Composable
 private fun ProfileSaveCard(dirty: Boolean, saving: Boolean, errors: List<String>, onSave: () -> Unit, onReset: () -> Unit) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Text(if (dirty) "Unsaved changes" else "Profile is up to date", color = if (dirty) ProfileGold else ProfileGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
-            Text(if (dirty) "Save to update the student record." else "No pending profile changes.", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+            Text(if (dirty) "Save to update the student record." else "No pending profile changes.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             if (errors.isNotEmpty()) {
                 Spacer(Modifier.height(6.dp))
                 Text("Review highlighted fields", color = ProfileRed, style = MaterialTheme.typography.bodySmall)
@@ -340,7 +347,7 @@ private fun AddProfileFineDialog(onDismiss: () -> Unit, onConfirm: (String, Doub
         title = { Text("Fine", style = MaterialTheme.typography.headlineSmall) },
         text = {
             Column {
-                Text("CATEGORY", color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+                Text("CATEGORY", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FINE_CATEGORIES.forEach { option -> CmsChip(option, selected = category == option, onClick = { category = option }) }

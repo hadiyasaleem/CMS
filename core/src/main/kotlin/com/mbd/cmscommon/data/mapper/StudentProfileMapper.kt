@@ -1,0 +1,98 @@
+package com.mbd.cmscommon.data.mapper
+
+import com.mbd.cmscommon.data.remote.PgTime
+import com.mbd.cmscommon.data.remote.dto.SessionStudentDto
+import com.mbd.cmscommon.data.remote.dto.StudentProfileDto
+import com.mbd.cmscommon.domain.model.StudentProfile
+
+object StudentProfileMapper {
+    fun dtoToDomain(
+        dto: StudentProfileDto,
+        fallbackSessionId: String = "",
+        fallbackRollNumber: String = "",
+    ): StudentProfile = StudentProfile(
+        sessionId = dto.sessionId ?: fallbackSessionId,
+        rollNumber = dto.rollNumber ?: fallbackRollNumber,
+        name = dto.name ?: "",
+        universityRollNo = dto.universityRollNo,
+        registrationNo = dto.registrationNo,
+        fatherName = dto.fatherName,
+        guardianName = dto.guardianName,
+        cnicBform = dto.cnicBform,
+        dob = dto.dob,
+        gender = dto.gender,
+        phone = dto.phone,
+        guardianPhone = dto.guardianPhone,
+        personalEmail = dto.personalEmail,
+        currentAddress = dto.currentAddress,
+        permanentAddress = dto.permanentAddress,
+        bloodGroup = dto.bloodGroup,
+        domicile = dto.domicile,
+        religion = dto.religion,
+        admissionDate = dto.admissionDate,
+        enrollmentStatus = dto.enrollmentStatus ?: "ACTIVE",
+        emergencyContactName = dto.emergencyContactName,
+        emergencyContactRelation = dto.emergencyContactRelation,
+        emergencyContactPhone = dto.emergencyContactPhone,
+        specialNeeds = dto.specialNeeds,
+        isCr = dto.isCr,
+        isGr = dto.isGr,
+        linkedEmail = dto.linkedEmail ?: "",
+        gpa = dto.gpa,
+        cgpa = dto.cgpa,
+        entityId = dto.entityId ?: 0L,
+        createdAt = PgTime.parseOrEpoch(dto.createdAt),
+        createdBy = dto.createdBy,
+        updatedAt = PgTime.parseOrEpoch(dto.updatedAt),
+        updatedBy = dto.updatedBy,
+    )
+
+    fun domainToDto(domain: StudentProfile): StudentProfileDto = StudentProfileDto(
+        sessionId = domain.sessionId,
+        rollNumber = domain.rollNumber,
+        name = domain.name,
+        universityRollNo = domain.universityRollNo,
+        registrationNo = domain.registrationNo,
+        fatherName = domain.fatherName,
+        guardianName = domain.guardianName,
+        cnicBform = domain.cnicBform,
+        dob = domain.dob,
+        gender = domain.gender,
+        phone = domain.phone,
+        guardianPhone = domain.guardianPhone,
+        personalEmail = domain.personalEmail,
+        currentAddress = domain.currentAddress,
+        permanentAddress = domain.permanentAddress,
+        bloodGroup = domain.bloodGroup,
+        domicile = domain.domicile,
+        religion = domain.religion,
+        admissionDate = domain.admissionDate,
+        enrollmentStatus = domain.enrollmentStatus,
+        emergencyContactName = domain.emergencyContactName,
+        emergencyContactRelation = domain.emergencyContactRelation,
+        emergencyContactPhone = domain.emergencyContactPhone,
+        specialNeeds = domain.specialNeeds,
+        isCr = domain.isCr,
+        isGr = domain.isGr,
+        linkedEmail = domain.linkedEmail,
+        gpa = domain.gpa,
+        cgpa = domain.cgpa,
+    )
+
+    fun rosterDto(dto: StudentProfileDto): SessionStudentDto = SessionStudentDto(
+        entityId = dto.entityId,
+        sessionId = dto.sessionId,
+        rollNumber = dto.rollNumber,
+        name = dto.name,
+        linkedEmail = dto.linkedEmail,
+        gpa = dto.gpa,
+        cgpa = dto.cgpa,
+        createdAt = dto.createdAt,
+        createdBy = dto.createdBy,
+        updatedAt = dto.updatedAt,
+        updatedBy = dto.updatedBy,
+        isDeleted = dto.isDeleted,
+        deletedAt = dto.deletedAt,
+        deletedBy = dto.deletedBy,
+    )
+}

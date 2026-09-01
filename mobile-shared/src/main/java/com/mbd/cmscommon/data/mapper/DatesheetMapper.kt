@@ -22,6 +22,9 @@ object DatesheetMapper {
         createdBy = dto.createdBy,
         updatedAt = PgTime.parseOrEpoch(dto.updatedAt).toEpochMilli(),
         updatedBy = dto.updatedBy,
+        isDeleted = dto.isDeleted,
+        deletedAt = PgTime.parse(dto.deletedAt)?.toEpochMilli(),
+        deletedBy = dto.deletedBy,
     )
 
     fun entityToDomain(entity: DatesheetEntity): Datesheet = Datesheet(
@@ -55,6 +58,9 @@ object DatesheetMapper {
         createdBy = dto.createdBy,
         updatedAt = PgTime.parseOrEpoch(dto.updatedAt).toEpochMilli(),
         updatedBy = dto.updatedBy,
+        isDeleted = dto.isDeleted,
+        deletedAt = PgTime.parse(dto.deletedAt)?.toEpochMilli(),
+        deletedBy = dto.deletedBy,
     )
 
     fun slotEntityToDomain(entity: DatesheetSlotEntity): DatesheetSlot = DatesheetSlot(

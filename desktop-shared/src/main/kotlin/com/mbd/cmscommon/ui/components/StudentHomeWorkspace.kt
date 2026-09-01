@@ -39,12 +39,21 @@ import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.domain.model.StudentHomeSnapshot
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModGround
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModWarn
+import com.mbd.cmscommon.ui.theme.ModRedTint
 
-private val StudentHomeCanvas = Color(0xFFF7F5F0)
-private val StudentHomeBlue = Color(0xFF24577A)
-private val StudentHomeGreen = Color(0xFF2F6B4F)
-private val StudentHomeGold = Color(0xFF9A651B)
-private val StudentHomeRed = Color(0xFFB43A31)
+private val StudentHomeCanvas = ModGround
+private val StudentHomeBlue = ModInk
+private val StudentHomeGreen = ModSuccess
+private val StudentHomeGold = ModWarn
+private val StudentHomeRed = ModAccent
 
 enum class StudentHomeDestination { ATTENDANCE, MARKS, TIMETABLE, FEES }
 
@@ -77,7 +86,7 @@ fun StudentHomeWorkspace(
         } else if (snapshot != null) {
             item { NextStudentClassCard(snapshot) }
             item {
-                Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+                Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
                     Column(Modifier.padding(16.dp)) {
                         StudentStandingRow("CGPA / GPA", snapshot.gpaLabel, last = false)
                         StudentStandingRow("Semester", snapshot.semesterLabel, last = false)
@@ -89,7 +98,7 @@ fun StudentHomeWorkspace(
             val weakestSubject = snapshot.weakestSubject
             if (weakestSubject != null && weakestSubject.percent < 75f) {
                 item {
-                    Surface(shape = RoundedCornerShape(14.dp), color = Color(0xFFFFEFEB), border = BorderStroke(1.dp, StudentHomeRed.copy(alpha = 0.3f))) {
+                    Surface(shape = RoundedCornerShape(14.dp), color = ModRedTint, border = BorderStroke(1.dp, StudentHomeRed.copy(alpha = 0.3f))) {
                         Text(
                             "ATTENDANCE NEEDS ATTENTION: ${weakestSubject.courseCode} at ${weakestSubject.percent.toInt()}%. Review your subject attendance before the next class.",
                             modifier = Modifier.padding(14.dp),
@@ -108,7 +117,7 @@ fun StudentHomeWorkspace(
 
 @Composable
 private fun StudentHomeHero(heroPainter: Painter, snapshot: StudentHomeSnapshot?) {
-    Surface(modifier = Modifier.fillMaxWidth().height(150.dp), shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(modifier = Modifier.fillMaxWidth().height(150.dp), shape = RoundedCornerShape(18.dp), color = ModInk) {
         Box(Modifier.fillMaxSize()) {
             Image(
                 painter = heroPainter,
@@ -139,14 +148,14 @@ private fun studentAttendanceColor(percent: Float): Color = when {
 
 @Composable
 private fun NextStudentClassCard(snapshot: StudentHomeSnapshot) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
-            Text("NEXT CLASS", color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text("NEXT CLASS", color = ModMuted, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
             val next = snapshot.nextClass
             if (next == null) {
                 Text("No upcoming lecture scheduled", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                Text("Your active timetable has no later lecture this week.", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                Text("Your active timetable has no later lecture this week.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             } else {
                 Text(next.subjectName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(6.dp))
@@ -166,7 +175,7 @@ private fun StudentClassMeta(icon: ImageVector, value: String) {
     Row(Modifier.padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
         Icon(icon, contentDescription = null, tint = StudentHomeBlue, modifier = Modifier.height(16.dp))
         Spacer(Modifier.width(8.dp))
-        Text(value, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+        Text(value, color = ModMuted, style = MaterialTheme.typography.bodySmall)
     }
 }
 
@@ -175,15 +184,15 @@ private fun StudentHomeActionCard(action: StudentHomeAction, onClick: () -> Unit
     Surface(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
-        color = Color.White,
-        border = BorderStroke(1.dp, Color(0xFFE5E0D7)),
+        color = ModSurface,
+        border = BorderStroke(1.dp, ModTrack),
     ) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(action.icon, contentDescription = null, tint = StudentHomeBlue)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(action.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                Text(action.detail, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                Text(action.detail, color = ModMuted, style = MaterialTheme.typography.bodySmall)
             }
         }
     }
@@ -192,7 +201,7 @@ private fun StudentHomeActionCard(action: StudentHomeAction, onClick: () -> Unit
 @Composable
 private fun StudentStandingRow(label: String, value: String, last: Boolean) {
     Row(Modifier.fillMaxWidth().padding(vertical = if (last) 0.dp else 4.dp)) {
-        Text(label, modifier = Modifier.weight(1f), color = Color(0xFF77716A), style = MaterialTheme.typography.bodyMedium)
+        Text(label, modifier = Modifier.weight(1f), color = ModMuted, style = MaterialTheme.typography.bodyMedium)
         Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
     }
 }

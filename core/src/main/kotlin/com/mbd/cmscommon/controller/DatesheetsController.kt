@@ -37,13 +37,17 @@ class DatesheetsController(
     val loadingSlots: StateFlow<Set<String>> = _loadingSlots.asStateFlow()
 
     init {
-        refresh()
+        refresh(fetchRemote = false)
     }
 
-    fun refresh() = launch {
+    fun refresh(fetchRemote: Boolean = true) = launch {
         clearError()
         _refreshing.value = true
         try {
+            if (fetchRemote) {
+                repo.sync()
+                repo.getDatesheets().forEach { sheet -> repo.syncSlots(sheet.id) }
+            }
             _sheets.value = normalizeSheets(repo.getDatesheets())
         } finally {
             _refreshing.value = false
@@ -81,8 +85,20 @@ class DatesheetsController(
     }
 
     fun updateDatesheet(id: String, draft: DatesheetDraft) = mutate {
-        requireCurrentSheet(id)
+        val sheet = requireCurrentSheet(id)
         validationMessage(draft)?.let { throw IllegalArgumentException(it) }
+        // Publishing via update must clear the same schedule-quality gate as the dedicated publish action.
+        if (draft.published) {
+            val proposed = sheet.copy(
+                title = draft.title.trim(),
+                examType = draft.examType.orEmpty(),
+                sessionId = draft.sessionId,
+                instructions = draft.instructions?.trim().orEmpty(),
+                published = true,
+            )
+            val quality = datesheetScheduleQuality(proposed, repo.getSlots(id))
+            require(quality.canPublish) { quality.issues.joinToString(" ") }
+        }
         repo.updateDatesheet(
             id = id,
             title = draft.title.trim(),

@@ -69,7 +69,7 @@ class DepartmentRepositoryImpl @Inject constructor(
     }
 
     override suspend fun createDepartment(department: Department) {
-        postgrest.from(SupabaseTables.DEPARTMENTS).upsert(DepartmentMapper.domainToDto(department))
+        postgrest.from(SupabaseTables.DEPARTMENTS).insert(DepartmentMapper.domainToDto(department))
         departmentDao.upsert(DepartmentMapper.domainToEntity(department))
     }
 

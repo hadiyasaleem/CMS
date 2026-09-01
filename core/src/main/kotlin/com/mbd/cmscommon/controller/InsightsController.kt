@@ -30,13 +30,14 @@ class InsightsController(
     val refreshing: StateFlow<Boolean> = _refreshing.asStateFlow()
 
     init {
-        refresh()
+        refresh(fetchRemote = false)
     }
 
-    fun refresh() = launch {
+    fun refresh(fetchRemote: Boolean = true) = launch {
         clearError()
         try {
             _refreshing.value = true
+            if (fetchRemote) repo.sync()
             coroutineScope {
                 val overviewsDeferred = async { repo.getSessionOverviews() }
                 val atRiskDeferred = async { repo.getAtRiskStudents() }

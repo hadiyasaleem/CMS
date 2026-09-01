@@ -116,5 +116,9 @@ object TeacherMapper {
         )
     }
 
-    fun dtoToEntity(dto: TeacherDto): TeacherEntity = domainToEntity(dtoToDomain(dto))
+    fun dtoToEntity(dto: TeacherDto): TeacherEntity = domainToEntity(dtoToDomain(dto)).copy(
+        isDeleted = dto.isDeleted,
+        deletedAt = PgTime.parse(dto.deletedAt)?.toEpochMilli(),
+        deletedBy = dto.deletedBy,
+    )
 }

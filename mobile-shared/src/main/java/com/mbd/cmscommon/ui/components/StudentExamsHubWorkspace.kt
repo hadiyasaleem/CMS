@@ -39,11 +39,18 @@ import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.domain.model.StudentExamsHubSnapshot
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModGround
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModWarn
 import java.time.format.DateTimeFormatter
 
-private val StudentExamsCanvas = Color(0xFFF7F5F0)
-private val StudentExamsGold = Color(0xFF9A651B)
-private val StudentExamsRed = Color(0xFFB43A31)
+private val StudentExamsCanvas = ModGround
+private val StudentExamsGold = ModWarn
+private val StudentExamsRed = ModAccent
 private val ExamDateFormat = DateTimeFormatter.ofPattern("dd MMM yyyy")
 
 enum class StudentExamsDestination { MARKS, RESULTS, DATESHEETS }
@@ -121,7 +128,7 @@ private fun buildStudentExamCards(snapshot: StudentExamsHubSnapshot): List<Stude
 
 @Composable
 private fun StudentExamsHeader(heroPainter: Painter) {
-    Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = ModInk) {
         Box(Modifier.fillMaxSize()) {
             Image(
                 painter = heroPainter,
@@ -147,15 +154,15 @@ private fun StudentExamNavigationCard(card: StudentExamCard, onClick: () -> Unit
     Surface(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
-        color = Color.White,
-        border = BorderStroke(1.dp, Color(0xFFE5E0D7)),
+        color = ModSurface,
+        border = BorderStroke(1.dp, ModTrack),
     ) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(card.icon, contentDescription = null, tint = Color(0xFF24577A))
+            Icon(card.icon, contentDescription = null, tint = ModInk)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(card.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                Text(card.subtitle, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                Text(card.subtitle, color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.height(6.dp))
                 ExamSummaryMetric(card.value, card.valueLabel)
             }
@@ -169,7 +176,7 @@ private fun ExamSummaryMetric(value: String, label: String) {
     Row(verticalAlignment = Alignment.Bottom) {
         Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
         Spacer(Modifier.width(6.dp))
-        Text(label, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+        Text(label, color = ModMuted, style = MaterialTheme.typography.bodySmall)
     }
 }
 

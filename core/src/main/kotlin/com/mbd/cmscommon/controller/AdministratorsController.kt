@@ -29,7 +29,7 @@ class AdministratorsController(
     val createdEmail: StateFlow<String?> = _createdEmail.asStateFlow()
 
     init {
-        refresh()
+        _loading.value = false
     }
 
     fun refresh() = launch {
@@ -47,7 +47,7 @@ class AdministratorsController(
             _createdEmail.value = null
 
             val normalizedEmail = FieldValidators.normalizeEmail(email)
-            require(FieldValidators.emailError(normalizedEmail, required = false) == null) {
+            require(FieldValidators.emailError(normalizedEmail, required = true) == null) {
                 "Enter a valid administrator email address."
             }
             require(administrators.value.none { it.email.trim().equals(normalizedEmail, ignoreCase = true) }) {

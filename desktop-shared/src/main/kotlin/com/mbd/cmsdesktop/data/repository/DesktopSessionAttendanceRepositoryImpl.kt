@@ -1,15 +1,19 @@
 package com.mbd.cmsdesktop.data.repository
 
+import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.mapper.DesktopSessionAttendanceMapper
 import com.mbd.cmscommon.data.remote.SupabaseTables
-import com.mbd.cmscommon.data.remote.dto.AcademicSessionDto
 import com.mbd.cmscommon.data.remote.dto.AttendanceRowDto
-import com.mbd.cmscommon.data.remote.dto.AttendanceSummaryRowDto
+import com.mbd.cmscommon.data.sync.SyncCheckpointDefaults
+import com.mbd.cmscommon.data.sync.fetchIncrementalDelta
+import com.mbd.cmscommon.data.sync.mergeIncrementalDelta
 import com.mbd.cmscommon.domain.model.AttendanceEntry
 import com.mbd.cmscommon.domain.model.AttendanceTally
 import com.mbd.cmscommon.domain.model.DailyAttendanceMark
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
+import com.mbd.cmsdesktop.data.cache.DesktopBootstrapSnapshotStore
 import io.github.jan.supabase.postgrest.Postgrest
+import io.github.jan.supabase.postgrest.query.Order
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -18,76 +22,31 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 
-/** Not in [SupabaseTables] — the constants list has no summary-view entry, so it's kept local. */
-private const val SESSION_ATTENDANCE_SUMMARY_TABLE = "session_attendance_summary"
-
-/**
- * Attendance *tallies* are backed by the server-side `session_attendance_summary` view (already
- * aggregated per session/course/roll), not by re-aggregating raw `session_attendance` rows
- * client-side — [tallies] caches [Tally] rows straight out of that view. Day-level queries
- * ([isMarkedOn], [marksBetween], [semesterMarks]) go straight to the raw `session_attendance`
- * table on every call instead; they don't read from [tallies] at all.
- */
+/** Durable cache-first raw attendance repository; tallies are derived locally. */
 @Singleton
 class DesktopSessionAttendanceRepositoryImpl @Inject constructor(
     private val postgrest: Postgrest,
+    private val store: DesktopBootstrapSnapshotStore,
+    private val sessionManager: SessionManager,
 ) : SessionAttendanceRepository {
 
-    private data class Tally(
-        val sessionId: String,
-        val courseCode: String,
-        val rollNumber: String,
-        val present: Int,
-        val absent: Int,
-        val leave: Int,
-    )
-
-    private val tallies = MutableStateFlow<List<Tally>>(emptyList())
-
-    private fun Tally.toDomain(): AttendanceTally = AttendanceTally(
-        rollNumber = rollNumber,
-        present = present,
-        absent = absent,
-        leave = leave,
-        courseCode = courseCode,
-    )
-
-    private fun AttendanceSummaryRowDto.toTally(sessionId: String): Tally = Tally(
-        sessionId = sessionId,
-        courseCode = courseCode ?: "",
-        rollNumber = rollNumber ?: "",
-        present = present,
-        absent = absent,
-        leave = leave,
-    )
+    private val rows = MutableStateFlow(cachedRows().filterNot { it.isDeleted })
 
     override fun observeStudentTallies(sessionId: String, rollNumber: String): Flow<List<AttendanceTally>> =
-        tallies.asStateFlow().map { rows -> rows.filter { it.sessionId == sessionId && it.rollNumber == rollNumber }.map { it.toDomain() } }
+        rows.asStateFlow().map { active ->
+            tallies(active.filter { it.sessionId == sessionId && it.rollNumber == rollNumber })
+        }
 
     override fun observeTallies(sessionId: String, courseCode: String): Flow<List<AttendanceTally>> =
-        tallies.asStateFlow().map { rows -> rows.filter { it.sessionId == sessionId && it.courseCode == courseCode }.map { it.toDomain() } }
+        rows.asStateFlow().map { active ->
+            tallies(active.filter { it.sessionId == sessionId && it.courseCode == courseCode })
+        }
 
     override fun observeTalliesForSession(sessionId: String): Flow<List<AttendanceTally>> =
-        tallies.asStateFlow().map { rows -> rows.filter { it.sessionId == sessionId }.map { it.toDomain() } }
+        rows.asStateFlow().map { active -> tallies(active.filter { it.sessionId == sessionId }) }
 
-    override suspend fun isMarkedOn(sessionId: String, courseCode: String, date: LocalDate): Boolean {
-        val rows = postgrest.from(SupabaseTables.SESSION_ATTENDANCE).select {
-            filter {
-                eq("session_id", sessionId)
-                eq("course_code", courseCode)
-                eq("date", date.toString())
-            }
-            limit(1)
-        }.decodeList<AttendanceRowDto>()
-        return rows.isNotEmpty()
-    }
-
-    private suspend fun currentSemesterOf(sessionId: String): Int {
-        val session = postgrest.from(SupabaseTables.ACADEMIC_SESSIONS).select {
-            filter { eq("session_id", sessionId) }
-        }.decodeList<AcademicSessionDto>().firstOrNull()
-        return session?.currentSemester ?: 1
-    }
+    override suspend fun isMarkedOn(sessionId: String, courseCode: String, date: LocalDate): Boolean =
+        rows.value.any { it.sessionId == sessionId && it.courseCode == courseCode && it.date == date.toString() }
 
     override suspend fun markAttendance(
         sessionId: String,
@@ -97,63 +56,112 @@ class DesktopSessionAttendanceRepositoryImpl @Inject constructor(
         entries: Map<String, AttendanceEntry>,
         lectureTopic: String?,
     ) {
-        val semester = currentSemesterOf(sessionId)
-        val rows = entries.map { (roll, entry) ->
+        val semester = store.readSessions().firstOrNull { it.sessionId == sessionId }?.currentSemester ?: 1
+        val inserted = entries.map { (roll, entry) ->
             DesktopSessionAttendanceMapper.entryToDto(
-                sessionId = sessionId,
-                semester = semester,
-                courseCode = courseCode,
-                date = date,
-                rollNumber = roll,
-                entry = entry,
-                teacherEmail = teacherEmail,
-                lectureTopic = lectureTopic,
+                sessionId,
+                semester,
+                courseCode,
+                date,
+                roll,
+                entry,
+                teacherEmail,
+                lectureTopic,
             )
         }
-        if (rows.isNotEmpty()) {
-            postgrest.from(SupabaseTables.SESSION_ATTENDANCE).insert(rows)
+        if (inserted.isNotEmpty()) {
+            postgrest.from(SupabaseTables.SESSION_ATTENDANCE).insert(inserted)
+            writeRows(mergeIncrementalDelta(cachedRows(), inserted, ::keyOf, AttendanceRowDto::isDeleted))
         }
-        syncSummary(sessionId, courseCode)
     }
 
-    override suspend fun marksBetween(sessionId: String, courseCode: String, from: LocalDate, to: LocalDate): List<DailyAttendanceMark> {
-        val rows = postgrest.from(SupabaseTables.SESSION_ATTENDANCE).select {
-            filter {
-                eq("session_id", sessionId)
-                eq("course_code", courseCode)
-                gte("date", from.toString())
-                lte("date", to.toString())
-            }
-        }.decodeList<AttendanceRowDto>()
-        return rows.map { DesktopSessionAttendanceMapper.dtoToDomain(it) }
-    }
+    override suspend fun marksBetween(
+        sessionId: String,
+        courseCode: String,
+        from: LocalDate,
+        to: LocalDate,
+    ): List<DailyAttendanceMark> = rows.value.filter {
+        it.sessionId == sessionId &&
+            it.courseCode == courseCode &&
+            dateOf(it) in from..to
+    }.map(DesktopSessionAttendanceMapper::dtoToDomain)
 
-    override suspend fun semesterMarks(sessionId: String, semester: Int): List<DailyAttendanceMark> {
-        val rows = postgrest.from(SupabaseTables.SESSION_ATTENDANCE).select {
-            filter {
-                eq("session_id", sessionId)
-                eq("semester", semester)
-            }
-        }.decodeList<AttendanceRowDto>()
-        return rows.map { DesktopSessionAttendanceMapper.dtoToDomain(it) }
-    }
+    override suspend fun semesterMarks(sessionId: String, semester: Int): List<DailyAttendanceMark> =
+        rows.value.filter { it.sessionId == sessionId && it.semester == semester }
+            .map(DesktopSessionAttendanceMapper::dtoToDomain)
 
     override suspend fun syncSummary(sessionId: String, courseCode: String) {
-        val rows = postgrest.from(SESSION_ATTENDANCE_SUMMARY_TABLE).select {
-            filter {
-                eq("session_id", sessionId)
-                eq("course_code", courseCode)
-            }
-        }.decodeList<AttendanceSummaryRowDto>()
-        val mapped = rows.map { it.toTally(sessionId) }
-        tallies.value = tallies.value.filterNot { it.sessionId == sessionId && it.courseCode == courseCode } + mapped
+        syncDelta(
+            SyncCheckpointDefaults.scoped("session" to sessionId, "course" to courseCode),
+        ) { since, from, to ->
+            postgrest.from(SupabaseTables.SESSION_ATTENDANCE).select {
+                filter {
+                    eq("session_id", sessionId)
+                    eq("course_code", courseCode)
+                    gte("updated_at", since)
+                }
+                order("updated_at", Order.ASCENDING)
+                order("entity_id", Order.ASCENDING)
+                range(from, to)
+            }.decodeList()
+        }
     }
 
     override suspend fun syncSession(sessionId: String) {
-        val rows = postgrest.from(SESSION_ATTENDANCE_SUMMARY_TABLE).select {
-            filter { eq("session_id", sessionId) }
-        }.decodeList<AttendanceSummaryRowDto>()
-        val mapped = rows.map { it.toTally(sessionId) }
-        tallies.value = tallies.value.filterNot { it.sessionId == sessionId } + mapped
+        syncDelta(SyncCheckpointDefaults.scoped("session" to sessionId)) { since, from, to ->
+            postgrest.from(SupabaseTables.SESSION_ATTENDANCE).select {
+                filter {
+                    eq("session_id", sessionId)
+                    gte("updated_at", since)
+                }
+                order("updated_at", Order.ASCENDING)
+                order("entity_id", Order.ASCENDING)
+                range(from, to)
+            }.decodeList()
+        }
     }
+
+    private suspend fun syncDelta(
+        scope: String,
+        fetchPage: suspend (since: String, from: Long, to: Long) -> List<AttendanceRowDto>,
+    ) {
+        val delta = fetchIncrementalDelta(
+            store,
+            ownerKey(),
+            SupabaseTables.SESSION_ATTENDANCE,
+            scope,
+            AttendanceRowDto::updatedAt,
+            fetchPage = fetchPage,
+        )
+        writeRows(mergeIncrementalDelta(cachedRows(), delta, ::keyOf, AttendanceRowDto::isDeleted))
+    }
+
+    private fun tallies(source: List<AttendanceRowDto>): List<AttendanceTally> =
+        source.groupBy { it.courseCode.orEmpty() to it.rollNumber.orEmpty() }.map { (key, grouped) ->
+            AttendanceTally(
+                rollNumber = key.second,
+                present = grouped.count { it.status == "PRESENT" },
+                absent = grouped.count { it.status == "ABSENT" },
+                leave = grouped.count { it.status == "LEAVE" },
+                courseCode = key.first,
+            )
+        }
+
+    private fun dateOf(row: AttendanceRowDto): LocalDate =
+        runCatching { LocalDate.parse(row.date) }.getOrDefault(LocalDate.EPOCH)
+
+    private fun keyOf(row: AttendanceRowDto) =
+        "${row.sessionId}|${row.courseCode}|${row.date}|${row.rollNumber}"
+
+    private fun cachedRows() = store.readRows(CACHE_FILE, AttendanceRowDto.serializer())
+
+    private fun writeRows(updated: List<AttendanceRowDto>) {
+        store.writeRows(CACHE_FILE, AttendanceRowDto.serializer(), updated)
+        rows.value = updated.filterNot { it.isDeleted }
+    }
+
+    private fun ownerKey() =
+        sessionManager.accountKey ?: SyncCheckpointDefaults.ownerKey("anonymous-local")
+
+    private companion object { const val CACHE_FILE = "session-attendance.json" }
 }

@@ -40,14 +40,22 @@ import com.mbd.cmscommon.domain.model.SemesterGpa
 import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModGround
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModWarn
 import com.mbd.cmscommon.util.Outcome
 
-private val ResultCanvas = Color(0xFFF7F5F0)
-private val ResultBorder = Color(0xFFE5E0D7)
-private val ResultGreen = Color(0xFF2F6B4F)
-private val ResultGold = Color(0xFF9A651B)
-private val ResultRed = Color(0xFFB43A31)
-private val ResultBlue = Color(0xFF24577A)
+private val ResultCanvas = ModGround
+private val ResultBorder = ModTrack
+private val ResultGreen = ModSuccess
+private val ResultGold = ModWarn
+private val ResultRed = ModAccent
+private val ResultBlue = ModInk
 private val ResultStatuses = listOf("PENDING", "PROMOTED", "PROBATION", "REPEATED")
 
 @Composable
@@ -104,8 +112,8 @@ fun SemesterResultsWorkspace(
 
         if (roster.isEmpty()) {
             item {
-                Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, ResultBorder)) {
-                    Text("Select a class to record semester results.", modifier = Modifier.padding(24.dp), color = Color(0xFF77716A), style = MaterialTheme.typography.bodyMedium)
+                Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ResultBorder)) {
+                    Text("Select a class to record semester results.", modifier = Modifier.padding(24.dp), color = ModMuted, style = MaterialTheme.typography.bodyMedium)
                 }
             }
         } else {
@@ -134,7 +142,7 @@ fun SemesterResultsWorkspace(
 
 @Composable
 private fun ResultsHeader(classLabel: String, semester: Int, averageGpa: Double?) {
-    Surface(shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Column(Modifier.padding(20.dp)) {
             Text("ACADEMIC OUTCOMES", color = ResultGold, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
@@ -174,10 +182,10 @@ private fun ResultsMetrics(total: Int, recorded: Int, missing: Int, promoted: In
 
 @Composable
 private fun ResultMetric(label: String, value: String, modifier: Modifier = Modifier, alert: Boolean = false) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, ResultBorder)) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ResultBorder)) {
         Column(Modifier.padding(14.dp)) {
-            Text(value, color = if (alert) ResultRed else Color(0xFF252321), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-            Text(label.uppercase(), color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text(value, color = if (alert) ResultRed else ModInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }
@@ -189,12 +197,12 @@ private fun StudentResultCard(student: SessionStudent, result: SemesterGpa?, onE
         "PROBATION", "REPEATED" -> ResultRed
         else -> ResultGold
     }
-    Surface(shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, ResultBorder)) {
+    Surface(shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ResultBorder)) {
         Column(Modifier.padding(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(student.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
-                    Text("Roll ${student.rollNumber}", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                    Text("Roll ${student.rollNumber}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
                 StatusBadge(result?.resultStatus ?: "MISSING", if (result == null) BadgeTone.Neutral else if (result.resultStatus == "PROMOTED") BadgeTone.Success else BadgeTone.Error)
             }
@@ -211,7 +219,7 @@ private fun StudentResultCard(student: SessionStudent, result: SemesterGpa?, onE
                 }
             } else {
                 Spacer(Modifier.height(6.dp))
-                Text("GPA, CGPA, outcome, and progression details are still missing.", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                Text("GPA, CGPA, outcome, and progression details are still missing.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             }
             Spacer(Modifier.height(8.dp))
             TextButton(onClick = onEdit) { Text(if (result == null) "Record result" else "Edit result") }
@@ -224,7 +232,7 @@ private fun ResultValue(value: String, label: String) {
     Surface(shape = RoundedCornerShape(10.dp), color = ResultBlue.copy(alpha = 0.08f)) {
         Column(Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
             Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
-            Text(label, color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text(label, color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }
@@ -275,7 +283,7 @@ private fun ResultEditorDialog(
                 Spacer(Modifier.height(10.dp))
                 OutlinedTextField(value = termLabel, onValueChange = { termLabel = it }, label = { Text("Term label (optional)") }, placeholder = { Text("Fall 2026") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 Spacer(Modifier.height(10.dp))
-                Text("RESULT", color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+                Text("RESULT", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     ResultStatuses.forEach { option -> CmsChip(option, selected = status == option, onClick = { status = option }) }
@@ -294,7 +302,7 @@ private fun ResultEditorDialog(
                 OutlinedTextField(value = remarks, onValueChange = { remarks = it }, label = { Text("Remarks (optional)") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
                 if (subjects.isNotEmpty()) {
                     Spacer(Modifier.height(10.dp))
-                    Text("SUPPLY SUBJECTS", color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+                    Text("SUPPLY SUBJECTS", color = ModMuted, style = CmsTextStyles.eyebrow)
                     Spacer(Modifier.height(6.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         subjects.forEach { code ->

@@ -34,6 +34,12 @@ import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.Teacher
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModRedTint
 import java.util.Locale
 
 @Composable
@@ -73,7 +79,7 @@ fun DepartmentDetailWorkspace(
 
         if (!errorMessage.isNullOrBlank()) {
             fullSpanItem {
-                Surface(shape = RoundedCornerShape(14.dp), color = Color(0xFFFFEFEB), border = BorderStroke(1.dp, CmsTheme.colors.accent.copy(alpha = 0.25f))) {
+                Surface(shape = RoundedCornerShape(14.dp), color = ModRedTint, border = BorderStroke(1.dp, CmsTheme.colors.accent.copy(alpha = 0.25f))) {
                     Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text(errorMessage, modifier = Modifier.weight(1f), color = CmsTheme.colors.accent, style = MaterialTheme.typography.bodyMedium)
                         TextButton(onClick = onClearError) { Text("Dismiss") }
@@ -158,7 +164,7 @@ fun DepartmentDetailWorkspace(
 
 @Composable
 private fun DepartmentIdentityCard(department: Department?, fallbackName: String, hasHod: Boolean, onEdit: () -> Unit) {
-    Surface(shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("DEPARTMENT", color = CmsTheme.colors.onInk.copy(alpha = 0.7f), style = CmsTextStyles.eyebrow)
@@ -196,7 +202,7 @@ private fun DepartmentSummary(
         Spacer(Modifier.height(10.dp))
         Text(
             if (sessionsNeedingSetup > 0) "$sessionsNeedingSetup session(s) need program or in-charge" else "Sessions and HOD configured",
-            color = if (sessionsNeedingSetup > 0 || !hasHod) CmsTheme.colors.accent else Color(0xFF2F6B4F),
+            color = if (sessionsNeedingSetup > 0 || !hasHod) CmsTheme.colors.accent else ModSuccess,
             style = MaterialTheme.typography.bodySmall,
         )
     }
@@ -204,29 +210,29 @@ private fun DepartmentSummary(
 
 @Composable
 private fun SessionMetric(label: String, value: String, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(14.dp)) {
             Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(Locale.ROOT), color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text(label.uppercase(Locale.ROOT), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }
 
 @Composable
 private fun DepartmentSessionCard(session: AcademicSession, studentCount: Int, onClick: () -> Unit) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Column {
                 Text("Session ${session.label}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                Text("${session.shift} · Semester ${session.currentSemester}", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                Text("${session.shift} · Semester ${session.currentSemester}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             }
             Spacer(Modifier.height(8.dp))
             StatusBadge(session.shift.name, if (session.shift == Session.MORNING) BadgeTone.Navy else BadgeTone.Gold)
             Spacer(Modifier.height(8.dp))
-            Text(session.programName?.takeIf { it.isNotBlank() } ?: "Program name not configured", color = Color(0xFF625E58), style = MaterialTheme.typography.bodyMedium)
-            Text(session.inchargeEmail?.takeIf { it.isNotBlank() } ?: "Session in-charge not assigned", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+            Text(session.programName?.takeIf { it.isNotBlank() } ?: "Program name not configured", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
+            Text(session.inchargeEmail?.takeIf { it.isNotBlank() } ?: "Session in-charge not assigned", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(8.dp))
-            Text("$studentCount / ${session.maxStudents} enrolled", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+            Text("$studentCount / ${session.maxStudents} enrolled", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(8.dp))
             TextButton(onClick = onClick) { Text("Open session") }
         }
@@ -235,13 +241,13 @@ private fun DepartmentSessionCard(session: AcademicSession, studentCount: Int, o
 
 @Composable
 private fun SessionEmptyState(filtered: Boolean, onAction: () -> Unit) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(if (filtered) "No matching sessions" else "No sessions yet", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(4.dp))
             Text(
                 if (filtered) "Try another year, shift, or in-charge." else "Create the first intake to add students, curriculum, timetable, and fees.",
-                color = Color(0xFF77716A),
+                color = ModMuted,
                 style = MaterialTheme.typography.bodySmall,
             )
             Spacer(Modifier.height(12.dp))
@@ -263,7 +269,7 @@ private fun AddDepartmentSessionDialog(onDismiss: () -> Unit, onConfirm: (Int, S
             Column {
                 OutlinedTextField(value = year, onValueChange = { year = it }, label = { Text("Intake year") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 Spacer(Modifier.height(10.dp))
-                Text("SHIFT", color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+                Text("SHIFT", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Session.entries.forEach { option ->

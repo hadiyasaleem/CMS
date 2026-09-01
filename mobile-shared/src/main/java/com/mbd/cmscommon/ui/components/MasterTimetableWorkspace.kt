@@ -37,15 +37,23 @@ import com.mbd.cmscommon.domain.model.SessionPeriod
 import com.mbd.cmscommon.domain.model.masterTimetableSummary
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModGround
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModWarn
 import java.time.DayOfWeek
 import java.time.format.TextStyle
 import java.util.Locale
 
-private val MasterCanvas = Color(0xFFF7F5F0)
-private val MasterGreen = Color(0xFF2F6B4F)
-private val MasterGold = Color(0xFF9A651B)
-private val MasterRed = Color(0xFFB43A31)
-private val MasterBlue = Color(0xFF24577A)
+private val MasterCanvas = ModGround
+private val MasterGreen = ModSuccess
+private val MasterGold = ModWarn
+private val MasterRed = ModAccent
+private val MasterBlue = ModInk
 private val MasterDays = listOf(
     DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
     DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY,
@@ -131,7 +139,7 @@ fun MasterTimetableWorkspace(
 
 @Composable
 private fun MasterHeader(day: DayOfWeek, shift: Session) {
-    Surface(shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Column(Modifier.padding(20.dp)) {
             Text("COLLEGE-WIDE SCHEDULE", color = MasterGold, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
@@ -158,10 +166,10 @@ private fun MasterSummary(summary: MasterTimetableSummary, loading: Boolean) {
 
 @Composable
 private fun MasterMetric(value: String, label: String, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(14.dp)) {
             Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(), color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }
@@ -172,8 +180,8 @@ private fun AssignmentNotice(teachers: Int, rooms: Int) {
     Surface(shape = RoundedCornerShape(14.dp), color = MasterRed.copy(alpha = 0.08f), border = BorderStroke(1.dp, MasterRed.copy(alpha = 0.25f))) {
         Column(Modifier.padding(14.dp)) {
             Text("Setup gaps", color = MasterRed, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
-            if (teachers > 0) Text("$teachers class(es) have no teacher assigned.", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
-            if (rooms > 0) Text("$rooms class(es) have no room assigned.", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+            if (teachers > 0) Text("$teachers class(es) have no teacher assigned.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+            if (rooms > 0) Text("$rooms class(es) have no room assigned.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
@@ -218,18 +226,18 @@ private fun MasterSessionCard(
     periods: List<SessionPeriod>,
     onOpenSession: () -> Unit,
 ) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("$departmentName · ${session.label}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                    Text(session.programName?.takeIf { it.isNotBlank() } ?: "Program not configured", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                    Text(session.programName?.takeIf { it.isNotBlank() } ?: "Program not configured", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
                 TextButton(onClick = onOpenSession) { Text("View schedule") }
             }
             Spacer(Modifier.height(8.dp))
             if (periods.isEmpty()) {
-                Text("No periods on ${day.getDisplayName(TextStyle.FULL, Locale.ENGLISH)}.", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                Text("No periods on ${day.getDisplayName(TextStyle.FULL, Locale.ENGLISH)}.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             } else {
                 periods.forEach { period ->
                     val isBreak = period.periodType == PeriodType.BREAK
@@ -240,7 +248,7 @@ private fun MasterSessionCard(
                             if (!isBreak) {
                                 Text(
                                     (period.teacherName.ifBlank { "Teacher unassigned" }) + " · Room " + (period.roomNo?.ifBlank { "--" } ?: "--"),
-                                    color = if (period.teacherId.isBlank() || period.roomNo.isNullOrBlank()) MasterGold else Color(0xFF77716A),
+                                    color = if (period.teacherId.isBlank() || period.roomNo.isNullOrBlank()) MasterGold else ModMuted,
                                     style = MaterialTheme.typography.bodySmall,
                                 )
                             }
@@ -264,11 +272,11 @@ private fun MasterNotice(message: String, onRetry: () -> Unit) {
 
 @Composable
 private fun MasterEmptyCard(title: String, detail: String) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(24.dp)) {
             Text(title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(4.dp))
-            Text(detail, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+            Text(detail, color = ModMuted, style = MaterialTheme.typography.bodySmall)
         }
     }
 }

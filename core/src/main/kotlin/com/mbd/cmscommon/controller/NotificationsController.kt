@@ -113,12 +113,7 @@ class NotificationsController(
                 }
             }
         }
-        launch {
-            context
-                .filter { !(viewerRole == NotificationTargetRole.STUDENT && it.sessionId == null) }
-                .distinctUntilChanged()
-                .collect { refreshNow(it) }
-        }
+        _loading.value = false
     }
 
     fun refresh() = launch { refreshNow(context.value) }
@@ -149,6 +144,9 @@ class NotificationsController(
                     val session = draft.sessionId
                     require(session == null || role == NotificationTargetRole.STUDENT) {
                         "Session notices can only target students."
+                    }
+                    require(dept == null || session == null) {
+                        "Choose either a department or an academic session, not both."
                     }
                     require(dept == null || role != NotificationTargetRole.ADMIN) {
                         "Admin notices are always college-wide."

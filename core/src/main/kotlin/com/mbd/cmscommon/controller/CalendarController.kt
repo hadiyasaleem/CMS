@@ -28,14 +28,15 @@ class CalendarController(
     val actionMessage: StateFlow<String?> = _actionMessage.asStateFlow()
 
     init {
-        refresh()
+        refresh(fetchRemote = false)
     }
 
-    fun refresh() {
+    fun refresh(fetchRemote: Boolean = true) {
         clearError()
         launch {
             _loading.value = true
             try {
+                if (fetchRemote) repo.sync()
                 _events.value = calendarQueueSnapshot(repo.getEvents()).events
             } finally {
                 _loading.value = false
@@ -43,25 +44,31 @@ class CalendarController(
         }
     }
 
-    fun create(event: CalendarEvent) = launch {
-        clearError()
-        _actionMessage.value = null
-        validationMessage(event)?.let { throw IllegalArgumentException(it) }
+    fun create(event: CalendarEvent) {
+        // Single-flight: set _busy synchronously before launch so a double-tap can't fire two inserts.
+        if (_busy.value) return
         _busy.value = true
-        try {
-            repo.createEvent(event, createdBy)
-            _events.value = calendarQueueSnapshot(repo.getEvents()).events
-            _actionMessage.value = "Event added to the college calendar."
-        } finally {
-            _busy.value = false
+        launch {
+            clearError()
+            _actionMessage.value = null
+            try {
+                validationMessage(event)?.let { throw IllegalArgumentException(it) }
+                repo.createEvent(event, createdBy)
+                _events.value = calendarQueueSnapshot(repo.getEvents()).events
+                _actionMessage.value = "Event added to the college calendar."
+            } finally {
+                _busy.value = false
+            }
         }
     }
 
-    fun delete(id: String) = launch {
-        clearError()
-        _actionMessage.value = null
+    fun delete(id: String) {
+        if (_busy.value) return
         _busy.value = true
-        try {
+        launch {
+            clearError()
+            _actionMessage.value = null
+            try {
             require(id.isNotBlank()) { "This event has no database ID and cannot be removed safely." }
             require(_events.value.orEmpty().any { it.id == id }) {
                 "This event is no longer in the calendar. Refresh and try again."
@@ -69,8 +76,9 @@ class CalendarController(
             repo.deleteEvent(id)
             _events.value = calendarQueueSnapshot(repo.getEvents()).events
             _actionMessage.value = "Event removed from the college calendar."
-        } finally {
-            _busy.value = false
+            } finally {
+                _busy.value = false
+            }
         }
     }
 }

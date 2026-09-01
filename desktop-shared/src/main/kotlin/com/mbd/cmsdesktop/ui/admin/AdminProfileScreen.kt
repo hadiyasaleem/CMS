@@ -1,7 +1,6 @@
 package com.mbd.cmsdesktop.ui.admin
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,7 +32,7 @@ fun AdminProfileScreen(
         administrators.firstOrNull { it.email.equals(accountKey, ignoreCase = true) }
     }
 
-    var loading by remember { mutableStateOf(true) }
+    var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var actionMessage by remember { mutableStateOf<String?>(null) }
 
@@ -48,8 +47,6 @@ fun AdminProfileScreen(
             loading = false
         }
     }
-
-    LaunchedEffect(repository) { refresh() }
 
     AdministratorProfileWorkspace(
         accountKey = accountKey,

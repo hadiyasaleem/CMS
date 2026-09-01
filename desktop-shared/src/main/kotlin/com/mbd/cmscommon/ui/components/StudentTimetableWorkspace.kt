@@ -40,14 +40,21 @@ import com.mbd.cmscommon.domain.model.StudentScheduledPeriod
 import com.mbd.cmscommon.domain.model.StudentTimetableSnapshot
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModGround
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModWarn
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 
-private val TimetableCanvas = Color(0xFFF7F5F0)
-private val TimetableBlue = Color(0xFF24577A)
-private val TimetableRed = Color(0xFFB43A31)
+private val TimetableCanvas = ModGround
+private val TimetableBlue = ModInk
+private val TimetableRed = ModAccent
 private val DayFormat = DateTimeFormatter.ofPattern("EEE, dd MMM")
 
 @Composable
@@ -81,8 +88,8 @@ fun StudentTimetableWorkspace(
                 val lectures = snapshot.periods.filter { it.period.periodType == PeriodType.LECTURE && it.period.courseCode.isNotBlank() }
                 if (lectures.isEmpty()) {
                     item {
-                        Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
-                            Text("No lectures scheduled this week.", modifier = Modifier.padding(24.dp), color = Color(0xFF77716A), style = MaterialTheme.typography.bodyMedium)
+                        Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
+                            Text("No lectures scheduled this week.", modifier = Modifier.padding(24.dp), color = ModMuted, style = MaterialTheme.typography.bodyMedium)
                         }
                     }
                 } else {
@@ -97,7 +104,7 @@ fun StudentTimetableWorkspace(
 
 @Composable
 private fun StudentTimetableHeader(heroPainter: Painter) {
-    Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = ModInk) {
         Box(Modifier.fillMaxSize()) {
             Image(
                 painter = heroPainter,
@@ -108,7 +115,7 @@ private fun StudentTimetableHeader(heroPainter: Painter) {
                 alpha = 0.35f,
             )
             Column(Modifier.align(Alignment.CenterStart).padding(20.dp)) {
-                Text("MY WEEK", color = Color(0xFF9A651B), style = CmsTextStyles.eyebrow)
+                Text("MY WEEK", color = ModWarn, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
                 Text("Timetable", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
                 Spacer(Modifier.height(4.dp))
@@ -120,9 +127,9 @@ private fun StudentTimetableHeader(heroPainter: Painter) {
 
 @Composable
 private fun TimetableOverview(snapshot: StudentTimetableSnapshot) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
-            Text("${snapshot.weekStart.format(DayFormat)} - ${snapshot.weekEnd.format(DayFormat)}", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+            Text("${snapshot.weekStart.format(DayFormat)} - ${snapshot.weekEnd.format(DayFormat)}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(10.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 ScheduleMetric(snapshot.lectureCount.toString(), "Lectures")
@@ -148,7 +155,7 @@ private fun formatDuration(minutes: Int): String {
 private fun ScheduleMetric(value: String, label: String) {
     Column {
         Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-        Text(label.uppercase(), color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+        Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
     }
 }
 
@@ -163,15 +170,15 @@ private fun NextLectureCard(item: StudentScheduledPeriod) {
         Column(Modifier.padding(14.dp)) {
             Text("NEXT CLASS", color = TimetableBlue, style = CmsTextStyles.eyebrow)
             Text(item.period.subjectName, color = TimetableBlue, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-            Text("$dayLabel · ${item.period.timeRange}", color = Color(0xFF625E58), style = MaterialTheme.typography.bodySmall)
-            Text("Know where you need to be next", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+            Text("$dayLabel · ${item.period.timeRange}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+            Text("Know where you need to be next", color = ModMuted, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
 
 @Composable
 private fun PeriodCard(item: StudentScheduledPeriod) {
-    Surface(shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
@@ -189,9 +196,9 @@ private fun PeriodCard(item: StudentScheduledPeriod) {
 @Composable
 private fun DetailRow(icon: ImageVector, text: String) {
     Row(Modifier.padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-        Icon(icon, contentDescription = null, tint = Color(0xFF77716A), modifier = Modifier.height(16.dp))
+        Icon(icon, contentDescription = null, tint = ModMuted, modifier = Modifier.height(16.dp))
         Spacer(Modifier.width(8.dp))
-        Text(text, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+        Text(text, color = ModMuted, style = MaterialTheme.typography.bodySmall)
     }
 }
 

@@ -33,11 +33,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModGround
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModAccent
 import com.mbd.cmscommon.ui.theme.CollegeInfo
 
-private val StudentAuthCanvas = Color(0xFFF7F5F0)
-private val AuthRed = Color(0xFFB43A31)
-private val AuthGreen = Color(0xFF2F6B4F)
+private val StudentAuthCanvas = ModGround
+private val AuthRed = ModAccent
+private val AuthGreen = ModSuccess
 
 data class StudentAuthUiState(
     val email: String = "",
@@ -83,11 +88,11 @@ private fun StudentAuthBrand(modifier: Modifier = Modifier) {
         Spacer(Modifier.height(6.dp))
         Text(
             "Attendance, marks, timetable and fee records in one secure student portal.",
-            color = Color(0xFF77716A),
+            color = ModMuted,
             style = MaterialTheme.typography.bodyMedium,
         )
         Spacer(Modifier.height(4.dp))
-        Text(CollegeInfo.NAME, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+        Text(CollegeInfo.NAME, color = ModMuted, style = MaterialTheme.typography.bodySmall)
     }
 }
 
@@ -95,12 +100,12 @@ private fun StudentAuthBrand(modifier: Modifier = Modifier) {
 private fun StudentAuthForm(state: StudentAuthUiState, actions: StudentAuthActions, modifier: Modifier = Modifier) {
     var showPassword by remember { mutableStateOf(false) }
 
-    Surface(modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), color = Color.White) {
+    Surface(modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), color = ModSurface) {
         Column(Modifier.padding(20.dp)) {
             Text(if (state.registerMode) "Create your account" else "Welcome back", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
             Text(
                 if (state.registerMode) "Use an email you can access. Your college record is linked after verification." else "Sign in to continue to your academic workspace.",
-                color = Color(0xFF77716A),
+                color = ModMuted,
                 style = MaterialTheme.typography.bodySmall,
             )
             Spacer(Modifier.height(16.dp))

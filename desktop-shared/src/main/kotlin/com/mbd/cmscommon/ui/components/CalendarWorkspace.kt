@@ -48,12 +48,19 @@ import com.mbd.cmscommon.domain.model.startDateOrNull
 import com.mbd.cmscommon.domain.model.validationMessage
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModGround
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModSurfaceAlt
+import com.mbd.cmscommon.ui.theme.ModTrack
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private val CalendarCanvas = Color(0xFFF7F5F0)
-private val CalendarBlue = Color(0xFF24577A)
+private val CalendarCanvas = ModGround
+private val CalendarBlue = ModInk
 private val CalendarDateFormat = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy")
 private val CalendarMonthFormat = DateTimeFormatter.ofPattern("MMM")
 
@@ -101,7 +108,7 @@ fun CalendarWorkspace(
             item { CalendarNotice(errorMessage, CmsTheme.colors.accent, action = "Retry", onAction = onRetry) }
         }
         if (!actionMessage.isNullOrBlank()) {
-            item { CalendarNotice(actionMessage, Color(0xFF2F6B4F), action = null, onAction = null) }
+            item { CalendarNotice(actionMessage, ModSuccess, action = null, onAction = null) }
         }
 
         item { CalendarSummaryRow(summary.upcoming, summary.thisMonth, summary.exams + summary.deadlines, summary.ongoing) }
@@ -168,7 +175,7 @@ fun CalendarWorkspace(
 
 @Composable
 private fun CalendarHeader(canEdit: Boolean, onAdd: () -> Unit) {
-    Surface(shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("College calendar", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
@@ -197,10 +204,10 @@ private fun CalendarSummaryRow(upcoming: Int, thisMonth: Int, examsAndDeadlines:
 
 @Composable
 private fun CalendarMetric(label: String, value: String, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(14.dp)) {
             Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(Locale.ROOT), color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text(label.uppercase(Locale.ROOT), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }
@@ -250,7 +257,7 @@ private fun CalendarEventCard(event: CalendarEvent, today: LocalDate, canDelete:
     val date = startDateOrNull(event)
     val needsReview = persistedValidationMessage(event) != null
 
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.Top) {
             CalendarDateTile(date)
             Spacer(Modifier.width(12.dp))
@@ -263,12 +270,12 @@ private fun CalendarEventCard(event: CalendarEvent, today: LocalDate, canDelete:
                 Text(eventDateStatus(event, today), color = CalendarBlue, style = MaterialTheme.typography.bodySmall)
                 val venue = event.venue
                 if (!venue.isNullOrBlank()) {
-                    Text(venue, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                    Text(venue, color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
                 val description = event.description
                 if (!description.isNullOrBlank()) {
                     Spacer(Modifier.height(6.dp))
-                    Text(description, color = Color(0xFF625E58), style = MaterialTheme.typography.bodyMedium)
+                    Text(description, color = ModMuted, style = MaterialTheme.typography.bodyMedium)
                 }
                 if (needsReview) {
                     Spacer(Modifier.height(6.dp))
@@ -285,10 +292,10 @@ private fun CalendarEventCard(event: CalendarEvent, today: LocalDate, canDelete:
 
 @Composable
 private fun CalendarDateTile(date: LocalDate?) {
-    Surface(shape = RoundedCornerShape(12.dp), color = Color(0xFFF1EEE8)) {
+    Surface(shape = RoundedCornerShape(12.dp), color = ModSurfaceAlt) {
         Column(Modifier.padding(10.dp).width(52.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(date?.dayOfMonth?.toString() ?: "--", fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.titleLarge)
-            Text(date?.format(CalendarMonthFormat)?.uppercase(Locale.ROOT) ?: "", color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text(date?.format(CalendarMonthFormat)?.uppercase(Locale.ROOT) ?: "", color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }
@@ -313,13 +320,13 @@ private fun CalendarEmptyState(
     clearLabel: String? = null,
     onClear: (() -> Unit)? = null,
 ) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(message, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(4.dp))
             Text(
                 if (clearLabel != null) "Clear the filters to return to the full calendar." else "New events will appear here when they are published for this audience.",
-                color = Color(0xFF77716A),
+                color = ModMuted,
                 style = MaterialTheme.typography.bodySmall,
             )
             Spacer(Modifier.height(12.dp))

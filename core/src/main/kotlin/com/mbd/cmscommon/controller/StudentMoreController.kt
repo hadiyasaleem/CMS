@@ -43,23 +43,33 @@ class StudentMoreController(
     private var version = 0
 
     init {
-        refresh()
+        refresh(fetchRemote = false)
     }
 
-    fun refresh() {
+    fun refresh(fetchRemote: Boolean = true) {
         version++
         val request = version
         launch {
             _loading.value = true
             _loadError.value = null
             coroutineScope {
-                val events = async { runCatching { calendarRepository.getEvents() } }
-                val fee = async { runCatching { feeRepository.getSessionFee(sessionId) } }
+                val events = async {
+                    runCatching {
+                        if (fetchRemote) calendarRepository.sync()
+                        calendarRepository.getEvents()
+                    }
+                }
+                val fee = async {
+                    runCatching {
+                        if (fetchRemote) feeRepository.syncSession(sessionId)
+                        feeRepository.getSessionFee(sessionId)
+                    }
+                }
                 val profile = async { runCatching { sessionRepository.getStudentProfile(sessionId, rollNumber) } }
                 val unread = async {
                     runCatching {
                         val audience = NotificationAudienceContext(sessionId, departmentId)
-                        notificationRepository.sync(NotificationTargetRole.STUDENT, audience)
+                        if (fetchRemote) notificationRepository.sync(NotificationTargetRole.STUDENT, audience)
                         notificationRepository.observeUnreadCount(NotificationTargetRole.STUDENT, audience).first()
                     }
                 }

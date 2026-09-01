@@ -9,7 +9,7 @@ import java.time.Instant
 
 object ExamPaperSubmissionMapper {
     private fun parseExamType(raw: String?): ExamType =
-        runCatching { ExamType.valueOf(raw ?: "") }.getOrDefault(ExamType.MIDTERM)
+        runCatching { ExamType.valueOf(raw?.trim()?.uppercase() ?: "") }.getOrDefault(ExamType.MIDTERM)
 
     fun dtoToDomain(dto: ExamPaperSubmissionDto): ExamPaperSubmission = ExamPaperSubmission(
         submissionId = dto.id ?: "",
@@ -59,5 +59,9 @@ object ExamPaperSubmissionMapper {
         updatedBy = entity.updatedBy,
     )
 
-    fun dtoToEntity(dto: ExamPaperSubmissionDto): ExamPaperSubmissionEntity = domainToEntity(dtoToDomain(dto))
+    fun dtoToEntity(dto: ExamPaperSubmissionDto): ExamPaperSubmissionEntity = domainToEntity(dtoToDomain(dto)).copy(
+        isDeleted = dto.isDeleted,
+        deletedAt = PgTime.parse(dto.deletedAt)?.toEpochMilli(),
+        deletedBy = dto.deletedBy,
+    )
 }

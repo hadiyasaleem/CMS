@@ -46,9 +46,6 @@ fun AttendanceHistoryScreen(
     val days = remember(month) { (1..month.lengthOfMonth()).map { month.atDay(it) } }
     val monthLabel = remember(month) { "${month.month.getDisplayName(TextStyle.SHORT, Locale.ENGLISH)} ${month.year}" }
 
-    LaunchedEffect(sessionId) {
-        sessionRepository.syncStudents(sessionId)
-    }
 
     LaunchedEffect(sessionId, courseCode, month) {
         loading = true

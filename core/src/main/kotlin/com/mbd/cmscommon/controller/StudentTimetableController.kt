@@ -21,10 +21,6 @@ class StudentTimetableController(
     val periods: StateFlow<List<SessionPeriod>> =
         timetableRepository.observeWeek(sessionId).stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    init {
-        refresh()
-    }
-
     fun refresh() {
         clearError()
         _refreshing.value = true

@@ -40,13 +40,21 @@ import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.domain.model.ExamsHubSnapshot
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModGround
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModWarn
 
-private val ExamCanvas = Color(0xFFF8F6F1)
-private val ExamBorder = Color(0xFFE5E0D7)
-private val ExamBlue = Color(0xFF2F6687)
-private val ExamGreen = Color(0xFF2F6B55)
-private val ExamGold = Color(0xFF9A741F)
-private val ExamRed = Color(0xFFB43A31)
+private val ExamCanvas = ModGround
+private val ExamBorder = ModTrack
+private val ExamBlue = ModInk
+private val ExamGreen = ModSuccess
+private val ExamGold = ModWarn
+private val ExamRed = ModAccent
 
 enum class ExamsDestination { MARKS, EXAM_PAPER, RESULTS, DATESHEETS }
 
@@ -113,7 +121,7 @@ fun ExamsHubWorkspace(
 
 @Composable
 private fun ExamHeader(heroPainter: Painter) {
-    Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = ModInk) {
         Box(Modifier.fillMaxSize()) {
             Image(
                 painter = heroPainter,
@@ -144,10 +152,10 @@ private fun ExamMetrics(snapshot: ExamsHubSnapshot, loading: Boolean) {
 
 @Composable
 private fun ExamMetric(value: String, label: String, modifier: Modifier = Modifier, alert: Boolean = false) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, ExamBorder)) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ExamBorder)) {
         Column(Modifier.padding(14.dp)) {
-            Text(value, color = if (alert) ExamRed else Color(0xFF252321), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(), color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text(value, color = if (alert) ExamRed else ModInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }
@@ -157,7 +165,7 @@ private fun ExamActionCard(action: ExamAction, onClick: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
-        color = Color.White,
+        color = ModSurface,
         border = BorderStroke(1.dp, action.tone.copy(alpha = 0.25f)),
     ) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -167,7 +175,7 @@ private fun ExamActionCard(action: ExamAction, onClick: () -> Unit) {
             Spacer(Modifier.size(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(action.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                Text(action.detail, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                Text(action.detail, color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.height(4.dp))
                 Text(action.status, color = action.tone, style = MaterialTheme.typography.labelMedium)
             }

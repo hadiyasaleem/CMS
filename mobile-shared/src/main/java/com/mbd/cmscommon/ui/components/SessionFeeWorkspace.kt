@@ -35,11 +35,19 @@ import com.mbd.cmscommon.domain.model.FeeType
 import com.mbd.cmscommon.domain.model.SessionFeeStructure
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModGround
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModWarn
 import java.util.Locale
 
-private val FeeGreen = Color(0xFF2F6B4F)
-private val FeeGold = Color(0xFF9A651B)
-private val FeeRed = Color(0xFFB43A31)
+private val FeeGreen = ModSuccess
+private val FeeGold = ModWarn
+private val FeeRed = ModAccent
 
 @Composable
 fun SessionFeeWorkspace(
@@ -179,7 +187,7 @@ fun SessionFeeWorkspace(
 
 @Composable
 private fun FeeHero(session: AcademicSession?) {
-    Surface(shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Column(Modifier.padding(20.dp)) {
             Text("SESSION FEES", color = FeeGold, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
@@ -192,14 +200,14 @@ private fun FeeHero(session: AcademicSession?) {
 
 @Composable
 private fun FeeSummaryCard(total: Double, average: Double, cadence: FeeType, onCadenceChange: (FeeType) -> Unit) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 FeeMetric("Total", "Rs $total", Modifier.weight(1f))
                 FeeMetric("Average", "Rs %.0f".format(average), Modifier.weight(1f))
             }
             Spacer(Modifier.height(10.dp))
-            Text("COLLECTION CADENCE", color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text("COLLECTION CADENCE", color = ModMuted, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 CmsChip("Annual collection", selected = cadence == FeeType.ANNUAL, onClick = { onCadenceChange(FeeType.ANNUAL) })
@@ -211,10 +219,10 @@ private fun FeeSummaryCard(total: Double, average: Double, cadence: FeeType, onC
 
 @Composable
 private fun FeeMetric(label: String, value: String, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = Color(0xFFF7F5F0)) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModGround) {
         Column(Modifier.padding(14.dp)) {
             Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-            Text(label.uppercase(), color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }
@@ -229,11 +237,11 @@ private fun FeeHeadCard(
     onEdit: () -> Unit,
     onRemove: () -> Unit,
 ) {
-    Surface(shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(head.label, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
-                Text("Rs ${head.amount}", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                Text("Rs ${head.amount}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             }
             TextButton(onClick = onMoveEarlier, enabled = canMoveEarlier) { Text("Up") }
             TextButton(onClick = onMoveLater, enabled = canMoveLater) { Text("Down") }
@@ -245,11 +253,11 @@ private fun FeeHeadCard(
 
 @Composable
 private fun FeeHeadsEmptyState(onAdd: () -> Unit) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text("No fee heads configured", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(4.dp))
-            Text("Add tuition, laboratory, library, or other session charges.", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+            Text("Add tuition, laboratory, library, or other session charges.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(12.dp))
             CmsPrimaryButton(text = "Add fee head", onClick = onAdd)
         }
@@ -263,7 +271,7 @@ private fun PaymentDetailsCard(
     lateFineNote: String, onLateFineNote: (String) -> Unit,
     paymentNote: String, onPaymentNote: (String) -> Unit,
 ) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Text("Payment details", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(10.dp))
@@ -280,10 +288,10 @@ private fun PaymentDetailsCard(
 
 @Composable
 private fun FeeSaveCard(dirty: Boolean, saving: Boolean, validationError: String?, onSave: () -> Unit) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Text(if (dirty) "Unsaved fee changes" else "Fee structure is up to date", color = if (dirty) FeeGold else FeeGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
-            Text(if (dirty) "Save to publish these details to students." else "No pending changes.", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+            Text(if (dirty) "Save to publish these details to students." else "No pending changes.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             if (validationError != null) {
                 Spacer(Modifier.height(6.dp))
                 Text(validationError, color = FeeRed, style = MaterialTheme.typography.bodySmall)

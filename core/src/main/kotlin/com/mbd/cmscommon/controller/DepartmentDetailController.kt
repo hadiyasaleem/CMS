@@ -36,7 +36,6 @@ class DepartmentDetailController(
 
     init {
         launch { _department.value = departmentRepository.getDepartment(deptId) }
-        launch { sessionRepository.syncSessionsForDept(deptId) }
     }
 
     fun createSession(startYear: Int, shift: Session) = launch {

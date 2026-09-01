@@ -53,6 +53,11 @@ import com.mbd.cmscommon.domain.model.AdministratorAccount
 import com.mbd.cmscommon.domain.model.administratorDirectorySnapshot
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModRedTint
 import com.mbd.cmscommon.util.FieldValidators
 import com.mbd.cmscommon.util.PasswordRule
 import java.time.Duration
@@ -153,7 +158,7 @@ fun AdministratorDirectoryWorkspace(
                 if (!errorMessage.isNullOrBlank()) {
                     item {
                         Spacer(Modifier.height(12.dp))
-                        Surface(shape = RoundedCornerShape(16.dp), color = Color(0xFFFFEFEB), border = BorderStroke(1.dp, CmsTheme.colors.accent.copy(alpha = 0.22f))) {
+                        Surface(shape = RoundedCornerShape(16.dp), color = ModRedTint, border = BorderStroke(1.dp, CmsTheme.colors.accent.copy(alpha = 0.22f))) {
                             Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Text(errorMessage, modifier = Modifier.weight(1f), color = CmsTheme.colors.accent, style = MaterialTheme.typography.bodyMedium)
                                 TextButton(onClick = onClearError) { Text("Dismiss") }
@@ -228,7 +233,7 @@ fun AdministratorDirectoryWorkspace(
 
 @Composable
 private fun AdministratorHero(count: Int, compact: Boolean, onAdd: () -> Unit, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(22.dp), color = Color(0xFF252321)) {
+    Surface(modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(22.dp), color = ModInk) {
         Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("ACCESS CONTROL", color = CmsTheme.colors.onInk.copy(alpha = 0.7f), style = CmsTextStyles.eyebrow)
@@ -246,9 +251,9 @@ private fun AdministratorHero(count: Int, compact: Boolean, onAdd: () -> Unit, m
 
 @Composable
 private fun SecurityNotice(modifier: Modifier = Modifier) {
-    Surface(modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), color = Color(0xFFF1EDFA), border = BorderStroke(1.dp, Color(0xFF5C4B8A).copy(alpha = 0.2f))) {
+    Surface(modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), color = ModInk.copy(alpha = 0.08f), border = BorderStroke(1.dp, ModInk.copy(alpha = 0.2f))) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Outlined.AdminPanelSettings, contentDescription = null, tint = Color(0xFF5C4B8A))
+            Icon(Icons.Outlined.AdminPanelSettings, contentDescription = null, tint = ModInk)
             Spacer(Modifier.size(12.dp))
             Text(
                 "Administrator accounts have full-access, college-wide permissions. Create them only for people who need this level of access.",
@@ -260,13 +265,13 @@ private fun SecurityNotice(modifier: Modifier = Modifier) {
 
 @Composable
 private fun AdministratorCreatedBanner(email: String, onDismiss: () -> Unit, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), color = Color(0xFFE8F2EA), border = BorderStroke(1.dp, Color(0xFFC8DDCD))) {
+    Surface(modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), color = ModSuccess.copy(alpha = 0.12f), border = BorderStroke(1.dp, ModSuccess.copy(alpha = 0.35f))) {
         Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Outlined.CheckCircle, contentDescription = null, tint = Color(0xFF3C6B52))
+            Icon(Icons.Outlined.CheckCircle, contentDescription = null, tint = ModSuccess)
             Spacer(Modifier.size(12.dp))
             Column(Modifier.weight(1f)) {
                 Text("Administrator created", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                Text(email, color = Color(0xFF625E58), style = MaterialTheme.typography.bodyMedium)
+                Text(email, color = ModMuted, style = MaterialTheme.typography.bodyMedium)
             }
             IconButton(onClick = onDismiss) { Icon(Icons.Filled.Close, contentDescription = "Dismiss") }
         }
@@ -280,8 +285,8 @@ private fun AdministratorSummaryCard(summary: AdministratorSummary, modifier: Mo
             Icon(summary.icon, contentDescription = null, tint = CmsTheme.colors.accent, modifier = Modifier.size(20.dp))
             Spacer(Modifier.height(10.dp))
             Text(summary.value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-            Text(summary.label.uppercase(Locale.ROOT), color = Color(0xFF716B64), style = CmsTextStyles.eyebrow)
-            Text(summary.detail, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+            Text(summary.label.uppercase(Locale.ROOT), color = ModMuted, style = CmsTextStyles.eyebrow)
+            Text(summary.detail, color = ModMuted, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
@@ -308,7 +313,7 @@ private fun AdministratorDirectoryControls(
             singleLine = true,
         )
         Spacer(Modifier.height(12.dp))
-        Text("SHOW", color = Color(0xFF716B64), style = CmsTextStyles.eyebrow)
+        Text("SHOW", color = ModMuted, style = CmsTextStyles.eyebrow)
         Spacer(Modifier.height(6.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             AdministratorFilter.entries.forEach { option ->
@@ -316,7 +321,7 @@ private fun AdministratorDirectoryControls(
             }
         }
         Spacer(Modifier.height(12.dp))
-        Text("SORT", color = Color(0xFF716B64), style = CmsTextStyles.eyebrow)
+        Text("SORT", color = ModMuted, style = CmsTextStyles.eyebrow)
         Spacer(Modifier.height(6.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             AdministratorSort.entries.forEach { option ->
@@ -324,7 +329,7 @@ private fun AdministratorDirectoryControls(
             }
         }
         Spacer(Modifier.height(10.dp))
-        Text("Showing $visibleCount of $totalCount accounts", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+        Text("Showing $visibleCount of $totalCount accounts", color = ModMuted, style = MaterialTheme.typography.bodySmall)
     }
 }
 
@@ -348,7 +353,7 @@ private fun AdministratorCard(account: AdministratorAccount, isCurrent: Boolean,
                 StatusBadge(if (isCurrent) "YOU" else "FULL ACCESS", if (isCurrent) BadgeTone.Navy else BadgeTone.Warning)
             }
             Spacer(Modifier.height(14.dp))
-            HorizontalDivider(color = Color(0xFFE7E2DA))
+            HorizontalDivider(color = ModTrack)
             Spacer(Modifier.height(13.dp))
             AdministratorDetailRow(Icons.AutoMirrored.Outlined.Login, "Last sign-in", relativeActivity(account.lastLoginAt, now))
             Spacer(Modifier.height(9.dp))
@@ -360,9 +365,9 @@ private fun AdministratorCard(account: AdministratorAccount, isCurrent: Boolean,
 @Composable
 private fun AdministratorDetailRow(icon: ImageVector, label: String, value: String, modifier: Modifier = Modifier) {
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Icon(icon, contentDescription = null, tint = Color(0xFF77716A), modifier = Modifier.size(16.dp))
+        Icon(icon, contentDescription = null, tint = ModMuted, modifier = Modifier.size(16.dp))
         Spacer(Modifier.size(8.dp))
-        Text(label, modifier = Modifier.weight(1f), color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+        Text(label, modifier = Modifier.weight(1f), color = ModMuted, style = MaterialTheme.typography.bodySmall)
         Text(value, style = MaterialTheme.typography.bodyMedium)
     }
 }
@@ -379,7 +384,7 @@ private fun AdministratorEmptyState(filtered: Boolean, onAdd: () -> Unit, onClea
             Spacer(Modifier.height(4.dp))
             Text(
                 if (filtered) "Try another email or account filter." else "Create an authorized full-access account.",
-                color = Color(0xFF77716A),
+                color = ModMuted,
                 style = MaterialTheme.typography.bodySmall,
             )
             Spacer(Modifier.height(12.dp))

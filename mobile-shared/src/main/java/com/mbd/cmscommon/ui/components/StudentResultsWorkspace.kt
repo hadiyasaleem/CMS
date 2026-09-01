@@ -27,12 +27,20 @@ import com.mbd.cmscommon.domain.model.StudentResultsSnapshot
 import com.mbd.cmscommon.domain.model.StudentSemesterResult
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModGround
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModWarn
 
-private val ResultsCanvas = Color(0xFFF7F5F0)
-private val ResultsGreen = Color(0xFF2F6B4F)
-private val ResultsGold = Color(0xFF9A651B)
-private val ResultsRed = Color(0xFFB43A31)
-private val ResultsBlue = Color(0xFF24577A)
+private val ResultsCanvas = ModGround
+private val ResultsGreen = ModSuccess
+private val ResultsGold = ModWarn
+private val ResultsRed = ModAccent
+private val ResultsBlue = ModInk
 
 @Composable
 fun StudentResultsWorkspace(
@@ -66,8 +74,8 @@ fun StudentResultsWorkspace(
             }
             if (snapshot.semesters.isEmpty()) {
                 item {
-                    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
-                        Text("No GPA recorded", modifier = Modifier.padding(24.dp), color = Color(0xFF77716A), style = MaterialTheme.typography.bodyMedium)
+                    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
+                        Text("No GPA recorded", modifier = Modifier.padding(24.dp), color = ModMuted, style = MaterialTheme.typography.bodyMedium)
                     }
                 }
             } else {
@@ -81,7 +89,7 @@ fun StudentResultsWorkspace(
 
 @Composable
 private fun StudentResultsHeader() {
-    Surface(shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Column(Modifier.padding(20.dp)) {
             Text("PROGRESSION", color = ResultsGold, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
@@ -94,12 +102,12 @@ private fun StudentResultsHeader() {
 
 @Composable
 private fun ResultsOverview(snapshot: StudentResultsSnapshot) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
-            Text("CURRENT CGPA", color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text("CURRENT CGPA", color = ModMuted, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
             Text(snapshot.currentCgpa?.let { "%.2f".format(it) } ?: "Not available", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-            snapshot.currentGpa?.let { Text("Latest semester GPA %.2f".format(it), color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall) }
+            snapshot.currentGpa?.let { Text("Latest semester GPA %.2f".format(it), color = ModMuted, style = MaterialTheme.typography.bodySmall) }
             Spacer(Modifier.height(10.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 ResultMetric(snapshot.promotedSemesters.toString(), "Promoted")
@@ -114,7 +122,7 @@ private fun ResultsOverview(snapshot: StudentResultsSnapshot) {
 private fun ResultMetric(value: String, label: String) {
     Column {
         Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-        Text(label.uppercase(), color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+        Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
     }
 }
 
@@ -125,17 +133,17 @@ private fun ResultsHighlight(snapshot: StudentResultsSnapshot) {
         Column(Modifier.padding(14.dp)) {
             Text("STRONGEST SEMESTER", color = ResultsGreen, style = CmsTextStyles.eyebrow)
             Text("Semester ${strongest.semester} · GPA %.2f".format(strongest.gpa), color = ResultsGreen, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-            Text("This reflects the latest published semester result.", color = Color(0xFF625E58), style = MaterialTheme.typography.bodySmall)
+            Text("This reflects the latest published semester result.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
 
 @Composable
 private fun SupplyCard(courses: List<String>) {
-    Surface(shape = RoundedCornerShape(14.dp), color = Color(0xFFFFF5DD), border = BorderStroke(1.dp, ResultsGold.copy(alpha = 0.3f))) {
+    Surface(shape = RoundedCornerShape(14.dp), color = ModWarn.copy(alpha = 0.14f), border = BorderStroke(1.dp, ResultsGold.copy(alpha = 0.3f))) {
         Column(Modifier.padding(14.dp)) {
             Text("Active retake courses", color = ResultsGold, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
-            Text("Retake: ${courses.joinToString(", ")}", color = Color(0xFF625E58), style = MaterialTheme.typography.bodySmall)
+            Text("Retake: ${courses.joinToString(", ")}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
@@ -148,12 +156,12 @@ private fun SemesterResultCard(row: StudentSemesterResult) {
         "PROBATION", "REPEATED" -> ResultsRed
         else -> ResultsGold
     }
-    Surface(shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("Semester ${result.semester}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
-                    Text(result.termLabel?.takeIf { it.isNotBlank() } ?: "Published result", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                    Text(result.termLabel?.takeIf { it.isNotBlank() } ?: "Published result", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
                 StatusBadge(result.resultStatus.ifBlank { "PENDING" }, if (result.resultStatus == "PROMOTED") BadgeTone.Success else if (result.resultStatus.isBlank() || result.resultStatus == "PENDING") BadgeTone.Neutral else BadgeTone.Error)
             }

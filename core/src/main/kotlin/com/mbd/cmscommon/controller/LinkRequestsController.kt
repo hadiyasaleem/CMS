@@ -66,12 +66,12 @@ class LinkRequestsController(
 
     init {
         if (permissionCheck == null) {
-            refresh()
+            _loading.value = false
         } else {
             launch {
                 try {
                     _access.value = if (permissionCheck()) LinkRequestAccess.GRANTED else LinkRequestAccess.DENIED
-                    if (_access.value == LinkRequestAccess.GRANTED) refresh()
+                    _loading.value = false
                 } finally {
                     if (_access.value == LinkRequestAccess.CHECKING) _access.value = LinkRequestAccess.DENIED
                     if (_access.value == LinkRequestAccess.DENIED) _loading.value = false

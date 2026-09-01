@@ -1,15 +1,21 @@
 package com.mbd.cmsdesktop.data.repository
 
+import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.mapper.DesktopSessionMarksMapper
 import com.mbd.cmscommon.data.remote.SupabaseTables
-import com.mbd.cmscommon.data.remote.dto.AcademicSessionDto
 import com.mbd.cmscommon.data.remote.dto.MarkRowDto
 import com.mbd.cmscommon.data.remote.dto.SemesterGpaDto
+import com.mbd.cmscommon.data.sync.SyncCheckpointDefaults
+import com.mbd.cmscommon.data.sync.fetchIncrementalDelta
+import com.mbd.cmscommon.data.sync.mergeIncrementalDelta
 import com.mbd.cmscommon.domain.model.ExamType
 import com.mbd.cmscommon.domain.model.SemesterGpa
 import com.mbd.cmscommon.domain.model.SubjectExamScore
 import com.mbd.cmscommon.domain.repository.SessionMarksRepository
+import com.mbd.cmsdesktop.data.cache.DesktopBootstrapSnapshotStore
 import io.github.jan.supabase.postgrest.Postgrest
+import io.github.jan.supabase.postgrest.query.Order
+import java.time.Instant
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -23,78 +29,37 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 
-/**
- * [marks] is one flat list of raw [Mark] rows spanning every session/course/exam ever synced —
- * the narrower `observe*` views (per course+examType, per student) filter that same list rather
- * than keeping separate caches. [sync]/[syncSession] filterNot-replace only the slice matching
- * their own scope. Semester GPA is never cached — [getSemesterGpa]/[getSemesterResults] always
- * hit `student_semester_gpa` directly, matching [SessionFeeRepositoryImpl]'s no-cache shape.
- */
+/** Durable cache-first marks and semester-result repository. */
 @Singleton
 class DesktopSessionMarksRepositoryImpl @Inject constructor(
     private val postgrest: Postgrest,
+    private val store: DesktopBootstrapSnapshotStore,
+    private val sessionManager: SessionManager,
 ) : SessionMarksRepository {
 
-    private data class Mark(
-        val sessionId: String,
-        val courseCode: String,
-        val examType: String,
-        val rollNumber: String,
-        val score: Int?,
-        val maxMarks: Int,
-        val wasAbsent: Boolean,
-        val remarks: String?,
-    )
-
-    private val marks = MutableStateFlow<List<Mark>>(emptyList())
-
-    private fun MarkRowDto.toRow(): Mark = Mark(
-        sessionId = sessionId ?: "",
-        courseCode = courseCode ?: "",
-        examType = examType ?: "",
-        rollNumber = rollNumber ?: "",
-        score = score,
-        maxMarks = maxMarks,
-        wasAbsent = wasAbsent,
-        remarks = remarks,
-    )
-
-    private fun Mark.toDto(): MarkRowDto = MarkRowDto(
-        sessionId = sessionId,
-        courseCode = courseCode,
-        examType = examType,
-        rollNumber = rollNumber,
-        score = score,
-        maxMarks = maxMarks,
-        wasAbsent = wasAbsent,
-        remarks = remarks,
-    )
+    private val marks = MutableStateFlow(markRows().filterNot { it.isDeleted })
 
     override fun observeScores(sessionId: String, courseCode: String, examType: ExamType): Flow<Map<String, Int>> =
         marks.asStateFlow().map { rows ->
             rows.filter { it.sessionId == sessionId && it.courseCode == courseCode && it.examType == examType.name }
-                .associate { it.rollNumber to (it.score ?: 0) }
+                .associate { it.rollNumber.orEmpty() to (it.score ?: 0) }
         }
 
     override fun observeAbsentRolls(sessionId: String, courseCode: String, examType: ExamType): Flow<Set<String>> =
         marks.asStateFlow().map { rows ->
-            rows.filter { it.sessionId == sessionId && it.courseCode == courseCode && it.examType == examType.name && it.wasAbsent }
-                .map { it.rollNumber }
-                .toSet()
+            rows.filter {
+                it.sessionId == sessionId &&
+                    it.courseCode == courseCode &&
+                    it.examType == examType.name &&
+                    it.wasAbsent
+            }.map { it.rollNumber.orEmpty() }.toSet()
         }
 
     override fun observeStudentMarks(sessionId: String, rollNumber: String): Flow<List<SubjectExamScore>> =
         marks.asStateFlow().map { rows ->
             rows.filter { it.sessionId == sessionId && it.rollNumber == rollNumber }
-                .mapNotNull { DesktopSessionMarksMapper.dtoToDomain(it.toDto()) }
+                .mapNotNull(DesktopSessionMarksMapper::dtoToDomain)
         }
-
-    private suspend fun currentSemesterOf(sessionId: String): Int {
-        val session = postgrest.from(SupabaseTables.ACADEMIC_SESSIONS).select {
-            filter { eq("session_id", sessionId) }
-        }.decodeList<AcademicSessionDto>().firstOrNull()
-        return session?.currentSemester ?: 1
-    }
 
     override suspend fun saveScores(
         sessionId: String,
@@ -105,7 +70,7 @@ class DesktopSessionMarksRepositoryImpl @Inject constructor(
         absentRolls: Set<String>,
         examDate: LocalDate?,
     ) {
-        val semester = currentSemesterOf(sessionId)
+        val semester = store.readSessions().firstOrNull { it.sessionId == sessionId }?.currentSemester ?: 1
         val rows = scores.map { (roll, score) ->
             DesktopSessionMarksMapper.domainToDto(
                 sessionId = sessionId,
@@ -123,28 +88,65 @@ class DesktopSessionMarksRepositoryImpl @Inject constructor(
             postgrest.from(SupabaseTables.SESSION_MARKS).upsert(rows) {
                 onConflict = "session_id,semester,course_code,exam_type,roll_number"
             }
+            writeMarks(mergeIncrementalDelta(markRows(), rows, ::markKey, MarkRowDto::isDeleted))
         }
-        sync(sessionId, courseCode, examType)
     }
 
     override suspend fun sync(sessionId: String, courseCode: String, examType: ExamType) {
-        val rows = postgrest.from(SupabaseTables.SESSION_MARKS).select {
-            filter {
-                eq("session_id", sessionId)
-                eq("course_code", courseCode)
-                eq("exam_type", examType.name)
-            }
-        }.decodeList<MarkRowDto>().filterNot { it.isDeleted }.map { it.toRow() }
-        marks.value = marks.value.filterNot {
-            it.sessionId == sessionId && it.courseCode == courseCode && it.examType == examType.name
-        } + rows
+        syncMarks(
+            SyncCheckpointDefaults.scoped(
+                "session" to sessionId,
+                "course" to courseCode,
+                "exam" to examType.name,
+            ),
+        ) { since, from, to ->
+            postgrest.from(SupabaseTables.SESSION_MARKS).select {
+                filter {
+                    eq("session_id", sessionId)
+                    eq("course_code", courseCode)
+                    eq("exam_type", examType.name)
+                    gte("updated_at", since)
+                }
+                order("updated_at", Order.ASCENDING)
+                range(from, to)
+            }.decodeList()
+        }
     }
 
     override suspend fun syncSession(sessionId: String) {
-        val rows = postgrest.from(SupabaseTables.SESSION_MARKS).select {
-            filter { eq("session_id", sessionId) }
-        }.decodeList<MarkRowDto>().filterNot { it.isDeleted }.map { it.toRow() }
-        marks.value = marks.value.filterNot { it.sessionId == sessionId } + rows
+        val scope = SyncCheckpointDefaults.scoped("session" to sessionId)
+        syncMarks(scope) { since, from, to ->
+            postgrest.from(SupabaseTables.SESSION_MARKS).select {
+                filter {
+                    eq("session_id", sessionId)
+                    gte("updated_at", since)
+                }
+                order("updated_at", Order.ASCENDING)
+                range(from, to)
+            }.decodeList()
+        }
+
+        val gpaDelta = fetchIncrementalDelta(
+            store,
+            ownerKey(),
+            SupabaseTables.STUDENT_SEMESTER_GPA,
+            scope,
+            SemesterGpaDto::updatedAt,
+        ) { since, from, to ->
+            postgrest.from(SupabaseTables.STUDENT_SEMESTER_GPA).select {
+                filter {
+                    eq("session_id", sessionId)
+                    gte("updated_at", since)
+                }
+                order("updated_at", Order.ASCENDING)
+                range(from, to)
+            }.decodeList()
+        }
+        store.writeRows(
+            GPA_CACHE_FILE,
+            SemesterGpaDto.serializer(),
+            mergeIncrementalDelta(gpaRows(), gpaDelta, ::gpaKey, SemesterGpaDto::isDeleted),
+        )
     }
 
     override suspend fun recordSemesterResult(
@@ -172,25 +174,71 @@ class DesktopSessionMarksRepositoryImpl @Inject constructor(
             putJsonArray("p_supply") { supplyCourses.forEach { add(JsonPrimitive(it)) } }
         }
         postgrest.rpc(SupabaseTables.RPC_RECORD_SEMESTER_RESULT, params)
+        val row = SemesterGpaDto(
+            sessionId = sessionId,
+            rollNumber = rollNumber,
+            semester = semester,
+            gpa = gpa,
+            cgpa = cgpa,
+            termLabel = termLabel?.trim()?.takeIf { it.isNotBlank() },
+            resultStatus = resultStatus.ifBlank { "PENDING" },
+            classPosition = classPosition,
+            remarks = remarks?.trim()?.takeIf { it.isNotBlank() },
+            supplyCourses = supplyCourses,
+            updatedAt = Instant.now().toString(),
+        )
+        store.writeRows(
+            GPA_CACHE_FILE,
+            SemesterGpaDto.serializer(),
+            mergeIncrementalDelta(gpaRows(), listOf(row), ::gpaKey, SemesterGpaDto::isDeleted),
+        )
     }
 
-    override suspend fun getSemesterGpa(sessionId: String, rollNumber: String): List<SemesterGpa> {
-        val rows = postgrest.from(SupabaseTables.STUDENT_SEMESTER_GPA).select {
-            filter {
-                eq("session_id", sessionId)
-                eq("roll_number", rollNumber)
-            }
-        }.decodeList<SemesterGpaDto>().filterNot { it.isDeleted }
-        return rows.map { DesktopSessionMarksMapper.gpaDtoToDomain(it) }
+    override suspend fun getSemesterGpa(sessionId: String, rollNumber: String): List<SemesterGpa> =
+        gpaRows().filter {
+            it.sessionId == sessionId && it.rollNumber == rollNumber && !it.isDeleted
+        }.map(DesktopSessionMarksMapper::gpaDtoToDomain)
+
+    override suspend fun getSemesterResults(sessionId: String, semester: Int): List<SemesterGpa> =
+        gpaRows().filter {
+            it.sessionId == sessionId && it.semester == semester && !it.isDeleted
+        }.map(DesktopSessionMarksMapper::gpaDtoToDomain)
+
+    private suspend fun syncMarks(
+        scope: String,
+        fetchPage: suspend (since: String, from: Long, to: Long) -> List<MarkRowDto>,
+    ) {
+        val delta = fetchIncrementalDelta(
+            store,
+            ownerKey(),
+            SupabaseTables.SESSION_MARKS,
+            scope,
+            MarkRowDto::updatedAt,
+            fetchPage = fetchPage,
+        )
+        writeMarks(mergeIncrementalDelta(markRows(), delta, ::markKey, MarkRowDto::isDeleted))
     }
 
-    override suspend fun getSemesterResults(sessionId: String, semester: Int): List<SemesterGpa> {
-        val rows = postgrest.from(SupabaseTables.STUDENT_SEMESTER_GPA).select {
-            filter {
-                eq("session_id", sessionId)
-                eq("semester", semester)
-            }
-        }.decodeList<SemesterGpaDto>().filterNot { it.isDeleted }
-        return rows.map { DesktopSessionMarksMapper.gpaDtoToDomain(it) }
+    private fun markRows() = store.readRows(MARKS_CACHE_FILE, MarkRowDto.serializer())
+
+    private fun gpaRows() = store.readRows(GPA_CACHE_FILE, SemesterGpaDto.serializer())
+
+    private fun markKey(row: MarkRowDto) =
+        "${row.sessionId}|${row.semester}|${row.courseCode}|${row.examType}|${row.rollNumber}"
+
+    private fun gpaKey(row: SemesterGpaDto) =
+        "${row.sessionId}|${row.rollNumber}|${row.semester}"
+
+    private fun writeMarks(rows: List<MarkRowDto>) {
+        store.writeRows(MARKS_CACHE_FILE, MarkRowDto.serializer(), rows)
+        marks.value = rows.filterNot { it.isDeleted }
+    }
+
+    private fun ownerKey() =
+        sessionManager.accountKey ?: SyncCheckpointDefaults.ownerKey("anonymous-local")
+
+    private companion object {
+        const val MARKS_CACHE_FILE = "session-marks.json"
+        const val GPA_CACHE_FILE = "semester-gpa.json"
     }
 }

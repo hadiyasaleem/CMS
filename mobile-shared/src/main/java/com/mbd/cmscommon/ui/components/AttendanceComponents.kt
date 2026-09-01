@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.ui.theme.ModSurface
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -23,7 +24,7 @@ fun AttendanceStatusChip(status: AttendanceStatus, modifier: Modifier = Modifier
     Text(
         label,
         modifier = modifier.background(color).padding(horizontal = 10.dp, vertical = 4.dp),
-        color = Color.White,
+        color = ModSurface,
         style = MaterialTheme.typography.labelLarge,
     )
 }
@@ -38,7 +39,7 @@ fun AttendancePercentageBadge(percentage: Float, modifier: Modifier = Modifier) 
     Text(
         "%.1f%%".format(percentage),
         modifier = modifier.background(color).padding(horizontal = 10.dp, vertical = 4.dp),
-        color = Color.White,
+        color = ModSurface,
         style = MaterialTheme.typography.labelLarge,
     )
 }

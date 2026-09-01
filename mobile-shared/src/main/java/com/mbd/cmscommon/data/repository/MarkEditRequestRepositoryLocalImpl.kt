@@ -27,6 +27,11 @@ class MarkEditRequestRepositoryLocalImpl @Inject constructor(
     private val sessionManager: SessionManager,
 ) : MarkEditRequestRepository {
 
+    override suspend fun sync() {
+        // Include reviewed rows so remote status transitions also clear the pending list.
+        syncDelta(SyncCheckpointDefaults.globalScope()) {}
+    }
+
     override suspend fun getPendingForAssignment(sessionId: String, courseCode: String, examType: ExamType): List<MarkEditRequest> {
         val scopeKey = SyncCheckpointDefaults.scoped(
             "session_id" to sessionId,
@@ -34,26 +39,11 @@ class MarkEditRequestRepositoryLocalImpl @Inject constructor(
             "exam_type" to examType.name,
             "status" to MARK_EDIT_STATUS_PENDING,
         )
-        runCatching {
-            syncDelta(scopeKey) {
-                filter {
-                    eq("session_id", sessionId)
-                    eq("course_code", courseCode)
-                    eq("exam_type", examType.name)
-                    eq("status", MARK_EDIT_STATUS_PENDING)
-                }
-            }
-        }
         return requestDao.getPendingForAssignment(sessionId, courseCode, examType.name).map { MarkEditRequestEntityMapper.entityToDomain(it) }
     }
 
     override suspend fun getPendingRequests(): List<MarkEditRequest> {
         val scopeKey = SyncCheckpointDefaults.scoped("status" to MARK_EDIT_STATUS_PENDING)
-        runCatching {
-            syncDelta(scopeKey) {
-                filter { eq("status", MARK_EDIT_STATUS_PENDING) }
-            }
-        }
         return requestDao.getPendingRequests().map { MarkEditRequestEntityMapper.entityToDomain(it) }
     }
 
@@ -85,14 +75,15 @@ class MarkEditRequestRepositoryLocalImpl @Inject constructor(
     }
 
     override suspend fun approveRequest(requestId: String, reviewedBy: String) {
-        val request = fetchRequest(requestId)
+        val request = requestDao.getById(requestId)
+            ?: error("Mark edit request is not available in the local cache. Refresh and try again.")
         postgrest.from(SupabaseTables.SESSION_MARKS).update({ set("score", request.requestedScore) }) {
             filter {
-                eq("session_id", request.sessionId ?: "")
+                eq("session_id", request.sessionId)
                 eq("semester", request.semester)
-                eq("course_code", request.courseCode ?: "")
-                eq("exam_type", request.examType ?: "")
-                eq("roll_number", request.rollNumber ?: "")
+                eq("course_code", request.courseCode)
+                eq("exam_type", request.examType)
+                eq("roll_number", request.rollNumber)
             }
         }
         updateStatus(requestId, "APPROVED", reviewedBy)
@@ -102,9 +93,6 @@ class MarkEditRequestRepositoryLocalImpl @Inject constructor(
         updateStatus(requestId, "REJECTED", reviewedBy)
     }
 
-    private suspend fun fetchRequest(requestId: String): MarkEditRequestDto =
-        postgrest.from(SupabaseTables.MARK_EDIT_REQUESTS).select { filter { eq("id", requestId) } }
-            .decodeList<MarkEditRequestDto>().first()
 
     private suspend fun updateStatus(requestId: String, status: String, reviewedBy: String) {
         postgrest.from(SupabaseTables.MARK_EDIT_REQUESTS).update({

@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface UserDao {
     @Query("SELECT * FROM users ORDER BY updatedAt DESC LIMIT 1")
-    fun observeCurrent(): Flow<UserEntity>
+    fun observeCurrent(): Flow<UserEntity?>
 
     @Query("SELECT * FROM users WHERE uid = :uid LIMIT 1")
     suspend fun getByUid(uid: String): UserEntity?

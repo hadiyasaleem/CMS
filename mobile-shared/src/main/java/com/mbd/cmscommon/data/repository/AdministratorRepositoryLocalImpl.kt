@@ -66,7 +66,7 @@ class AdministratorRepositoryLocalImpl @Inject constructor(
 
     override suspend fun sync() {
         val ownerKey = SyncCheckpointDefaults.ownerKey(sessionManager.accountKey ?: "")
-        val scopeKey = SyncCheckpointDefaults.globalScope()
+        val scopeKey = SyncCheckpointDefaults.scoped("role" to "ADMIN")
         val checkpoint = checkpointStore.get(ownerKey, SupabaseTables.PROFILES, scopeKey)
         val since = checkpoint?.lastUpdatedAt ?: SyncCheckpointDefaults.EPOCH
         var maxUpdatedAt = since
@@ -106,8 +106,21 @@ class AdministratorRepositoryLocalImpl @Inject constructor(
     }
 
     override suspend fun createAdministrator(email: String, password: String) {
-        provisioner.createAdmin(email.normalizeEmail(), password)
-        sync()
+        val normalizedEmail = email.normalizeEmail()
+        val uid = provisioner.createAdmin(normalizedEmail, password)
+        val now = System.currentTimeMillis()
+        administratorDao.applyDelta(
+            listOf(
+                AdministratorAccountEntity(
+                    id = uid,
+                    email = normalizedEmail,
+                    status = "ACTIVE",
+                    lastLoginAt = null,
+                    createdAt = now,
+                    updatedAt = now,
+                ),
+            ),
+        )
     }
 
     private companion object {

@@ -8,9 +8,11 @@ import com.mbd.cmscommon.data.remote.dto.SessionFeeDto
 import com.mbd.cmscommon.data.remote.dto.SessionFeeHeadDto
 import com.mbd.cmscommon.data.sync.SyncCheckpointDefaults
 import com.mbd.cmscommon.data.sync.SyncCheckpointStore
+import com.mbd.cmscommon.data.sync.fetchIncrementalDelta
 import com.mbd.cmscommon.domain.model.SessionFeeStructure
 import com.mbd.cmscommon.domain.repository.SessionFeeRepository
 import io.github.jan.supabase.postgrest.Postgrest
+import io.github.jan.supabase.postgrest.query.Order
 import javax.inject.Inject
 
 class SessionFeeRepositoryImpl @Inject constructor(
@@ -19,17 +21,18 @@ class SessionFeeRepositoryImpl @Inject constructor(
     private val checkpointStore: SyncCheckpointStore,
     private val sessionManager: SessionManager,
 ) : SessionFeeRepository {
-
-    private fun syncOwnerKey(): String = sessionManager.accountKey ?: SyncCheckpointDefaults.ownerKey("anonymous-local")
+    private fun syncOwnerKey() =
+        sessionManager.accountKey ?: SyncCheckpointDefaults.ownerKey("anonymous-local")
 
     override suspend fun getSessionFee(sessionId: String): SessionFeeStructure? {
-        runCatching { syncSessionFee(sessionId) }
         val fee = feeDao.getFee(sessionId) ?: return null
-        val heads = feeDao.getHeads(sessionId)
-        return SessionFeeMapper.toDomain(fee, heads)
+        return SessionFeeMapper.toDomain(fee, feeDao.getHeads(sessionId))
     }
 
     override suspend fun saveSessionFee(structure: SessionFeeStructure, updatedBy: String) {
+        require(structure.heads.all { it.label.trim().isNotBlank() }) { "Every fee head needs a label." }
+        require(structure.heads.all { it.amount > 0.0 }) { "Every fee amount must be greater than zero." }
+
         val feeDto = SessionFeeDto(
             sessionId = structure.sessionId,
             cadence = structure.cadence.name,
@@ -41,40 +44,77 @@ class SessionFeeRepositoryImpl @Inject constructor(
         )
         postgrest.from(SupabaseTables.SESSION_FEES).upsert(feeDto) { onConflict = "session_id" }
 
-        val headDtos = structure.heads.map { head ->
+        postgrest.from(SupabaseTables.SESSION_FEE_HEADS).update({
+            set("is_deleted", true)
+            set("updated_by", updatedBy)
+        }) { filter { eq("session_id", structure.sessionId) } }
+
+        val heads = structure.heads.mapIndexed { index, head ->
             SessionFeeHeadDto(
                 sessionId = structure.sessionId,
                 label = head.label,
                 amount = head.amount,
-                position = structure.heads.indexOf(head),
+                position = index,
                 updatedBy = updatedBy,
+                isDeleted = false,
             )
         }
-        postgrest.from(SupabaseTables.SESSION_FEE_HEADS).delete { filter { eq("session_id", structure.sessionId) } }
-        if (headDtos.isNotEmpty()) {
-            postgrest.from(SupabaseTables.SESSION_FEE_HEADS).insert(headDtos)
+        if (heads.isNotEmpty()) {
+            postgrest.from(SupabaseTables.SESSION_FEE_HEADS).upsert(heads) {
+                onConflict = "session_id,label"
+            }
         }
 
-        syncSessionFee(structure.sessionId)
+        val now = System.currentTimeMillis()
+        feeDao.applyFeeDelta(
+            listOf(SessionFeeMapper.feeDtoToEntity(feeDto).copy(createdAt = now, updatedAt = now)),
+            emptyList(),
+        )
+        feeDao.deleteHeadsForSession(structure.sessionId)
+        feeDao.applyHeadDelta(
+            heads.map { SessionFeeMapper.headDtoToEntity(it).copy(createdAt = now, updatedAt = now) },
+            emptyList(),
+        )
     }
 
-    private suspend fun syncSessionFee(sessionId: String) {
-        syncFeeRow(sessionId)
-        syncFeeHeads(sessionId)
-    }
-
-    private suspend fun syncFeeRow(sessionId: String) {
-        val dto = postgrest.from(SupabaseTables.SESSION_FEES).select { filter { eq("session_id", sessionId) } }
-            .decodeList<SessionFeeDto>().firstOrNull() ?: return
-        feeDao.upsertFees(listOf(SessionFeeMapper.feeDtoToEntity(dto)))
-    }
-
-    private suspend fun syncFeeHeads(sessionId: String) {
-        val rows = postgrest.from(SupabaseTables.SESSION_FEE_HEADS).select { filter { eq("session_id", sessionId) } }
-            .decodeList<SessionFeeHeadDto>()
-        feeDao.deleteHeadsForSession(sessionId)
-        if (rows.isNotEmpty()) {
-            feeDao.upsertHeads(rows.map { SessionFeeMapper.headDtoToEntity(it) })
+    override suspend fun syncSession(sessionId: String) {
+        val scope = SyncCheckpointDefaults.scoped("session" to sessionId)
+        val owner = syncOwnerKey()
+        fetchIncrementalDelta(
+            checkpointStore = checkpointStore,
+            ownerKey = owner,
+            tableName = SupabaseTables.SESSION_FEES,
+            scopeKey = scope,
+            updatedAtOf = SessionFeeDto::updatedAt,
+            applyDelta = { feeDelta ->
+                val feeEntities = feeDelta.map(SessionFeeMapper::feeDtoToEntity)
+                val (deletedFees, activeFees) = feeEntities.partition { it.isDeleted }
+                feeDao.applyFeeDelta(activeFees, deletedFees.map { it.sessionId })
+            },
+        ) { since, from, to ->
+            postgrest.from(SupabaseTables.SESSION_FEES).select {
+                filter { eq("session_id", sessionId); gte("updated_at", since) }
+                order("updated_at", Order.ASCENDING)
+                range(from, to)
+            }.decodeList()
+        }
+        fetchIncrementalDelta(
+            checkpointStore = checkpointStore,
+            ownerKey = owner,
+            tableName = SupabaseTables.SESSION_FEE_HEADS,
+            scopeKey = scope,
+            updatedAtOf = SessionFeeHeadDto::updatedAt,
+            applyDelta = { headDelta ->
+                val headEntities = headDelta.map(SessionFeeMapper::headDtoToEntity)
+                val (deletedHeads, activeHeads) = headEntities.partition { it.isDeleted }
+                feeDao.applyHeadDelta(activeHeads, deletedHeads.map { it.id })
+            },
+        ) { since, from, to ->
+            postgrest.from(SupabaseTables.SESSION_FEE_HEADS).select {
+                filter { eq("session_id", sessionId); gte("updated_at", since) }
+                order("updated_at", Order.ASCENDING)
+                range(from, to)
+            }.decodeList()
         }
     }
 }

@@ -48,25 +48,38 @@ class StudentExamsHubController(
     )
 
     init {
-        refresh()
+        refresh(fetchRemote = false)
     }
 
-    fun refresh() = launch {
+    fun refresh(fetchRemote: Boolean = true) = launch {
         clearError()
         _loading.value = true
         try {
             coroutineScope {
-                val marksSync = async { runCatching { marksRepository.syncSession(sessionId) } }
-                val resultLoad = async { runCatching { marksRepository.getSemesterGpa(sessionId, rollNumber) } }
-                val sheetLoad = async { runCatching { datesheetRepository.getDatesheets() } }
+                val marksSync = async { if (fetchRemote) runCatching { marksRepository.syncSession(sessionId) } else Result.success(Unit) }
+                val sheetLoad = async {
+                    runCatching {
+                        if (fetchRemote) datesheetRepository.sync()
+                        datesheetRepository.getDatesheets()
+                    }
+                }
 
                 marksSync.await()
+                val resultLoad = async { runCatching { marksRepository.getSemesterGpa(sessionId, rollNumber) } }
+
                 resultLoad.await().getOrNull()?.let { results.value = it }
                 val loadedSheets = sheetLoad.await().getOrDefault(emptyList())
                 sheets.value = loadedSheets
 
                 slots.value = loadedSheets
-                    .map { sheet -> async { runCatching { datesheetRepository.getSlots(sheet.id) } } }
+                    .map { sheet ->
+                        async {
+                            runCatching {
+                                if (fetchRemote) datesheetRepository.syncSlots(sheet.id)
+                                datesheetRepository.getSlots(sheet.id)
+                            }
+                        }
+                    }
                     .awaitAll()
                     .flatMap { it.getOrDefault(emptyList()) }
             }

@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
@@ -6,6 +8,25 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
 }
+
+val localProps = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+
+fun requiredSupabaseConfig(gradleProperty: String, localProperty: String, environmentVariable: String): String {
+    val value = project.findProperty(gradleProperty)?.toString()
+        ?: localProps.getProperty(localProperty)
+        ?: System.getenv(environmentVariable)
+        ?: ""
+    require(value.isNotBlank()) {
+        "Missing $localProperty. Set it in local.properties, pass -P$gradleProperty, or set $environmentVariable."
+    }
+    return value
+}
+
+val supabaseUrl = requiredSupabaseConfig("SUPABASE_URL", "supabase.url", "SUPABASE_URL")
+val supabaseAnonKey = requiredSupabaseConfig("SUPABASE_ANON_KEY", "supabase.anonKey", "SUPABASE_ANON_KEY")
 
 android {
     namespace = "com.mbd.cmscommon"
@@ -18,8 +39,8 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
 
-        buildConfigField("String", "SUPABASE_URL", "\"${project.findProperty("SUPABASE_URL") ?: ""}\"")
-        buildConfigField("String", "SUPABASE_ANON_KEY", "\"${project.findProperty("SUPABASE_ANON_KEY") ?: ""}\"")
+        buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
+        buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseAnonKey\"")
     }
 
     buildTypes {

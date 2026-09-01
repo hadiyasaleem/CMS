@@ -19,8 +19,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.AlertDialog
@@ -84,9 +84,9 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
 private val ROLL_W = 74.dp
-private val NAME_W = 140.dp
+private val NAME_W = 108.dp
 private val DAY_W = 30.dp
-private val TOT_W = 44.dp
+private val TOT_W = 38.dp
 
 /**
  * Attendance records browser: pick a department/year/shift to resolve a session, then a
@@ -126,14 +126,9 @@ fun AttendanceRecordsScreen(
     var course by remember { mutableStateOf<String?>(null) }
     var cellDetail by remember { mutableStateOf<Pair<String, DailyAttendanceMark>?>(null) }
     var actionError by remember { mutableStateOf<String?>(null) }
+    var showExport by remember { mutableStateOf(false) }
 
-    // Bootstrap: sync departments once, then sync sessions for every department so the
-    // department/year/shift pickers below have data even before the user drills in.
-    LaunchedEffect(departmentRepository, sessionRepository) {
-        runCatching { departmentRepository.sync() }
-        val depts = runCatching { departmentRepository.observeActiveDepartments().first() }.getOrDefault(emptyList())
-        depts.forEach { dept -> runCatching { sessionRepository.syncSessionsForDept(dept.deptId) } }
-    }
+
     LaunchedEffect(departmentRepository) {
         departmentRepository.observeActiveDepartments().collect { departments = it }
     }
@@ -149,9 +144,7 @@ fun AttendanceRecordsScreen(
         null
     }
 
-    // Loads roster + semester marks + the semester term (used to compute the month range for
-    // the semester summary grid) + curriculum subjects whenever the resolved session/semester
-    // changes, or when retryVersion is bumped from the error banner's "Retry" action.
+    // Reads the cached roster, attendance, term, and curriculum whenever the selected scope changes.
     LaunchedEffect(sessionId, semester, retryVersion) {
         val sid = sessionId
         val sem = semester
@@ -168,8 +161,6 @@ fun AttendanceRecordsScreen(
         loading = true
         errorMessage = null
         try {
-            sessionRepository.syncStudents(sid)
-            curriculumRepository.syncSession(sid)
             val loadedRoster = sessionRepository.observeStudents(sid).firstOrNull().orEmpty()
             val loadedRaw = attendanceRepository.semesterMarks(sid, sem)
             val loadedTerm = curriculumRepository.getSemesterTerm(sid, sem)
@@ -287,22 +278,22 @@ fun AttendanceRecordsScreen(
         SectionHeader("Attendance Records", "Reporting", "Department → session → semester → shift")
 
         Surface(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
             shape = RoundedCornerShape(18.dp),
             color = MaterialTheme.colorScheme.surfaceContainerLowest,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         ) {
-            Column(Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
+            Column(Modifier.padding(horizontal = 12.dp, vertical = 4.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = if (!expanded || !ready) "Build report" else crumb,
+                        text = if (!expanded && ready) crumb else "Build report",
                         modifier = Modifier.weight(1f),
                         color = MaterialTheme.colorScheme.onSurface,
-                        style = if (!expanded || !ready) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleSmall,
+                        style = if (!expanded && ready) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
                     )
                     if (ready) {
-                        TextButton(onClick = ::exportCsv) { Text("Export CSV") }
-                        TextButton(onClick = ::exportPdf) { Text("Export PDF") }
+                        TextButton(onClick = { showExport = true }) { Text("Export") }
                     }
                     IconButton(onClick = { expanded = !expanded }) {
                         Icon(
@@ -369,7 +360,7 @@ fun AttendanceRecordsScreen(
                             }
                         }
                     }
-                    Spacer(Modifier.height(10.dp))
+                    Spacer(Modifier.height(8.dp))
                 }
             }
         }
@@ -422,6 +413,26 @@ fun AttendanceRecordsScreen(
         }
     }
 
+    if (showExport && payload != null) {
+        AlertDialog(
+            onDismissRequest = { showExport = false },
+            title = { Text("Export ${mode.label}", style = MaterialTheme.typography.titleLarge) },
+            text = { Text("Choose a format.", style = MaterialTheme.typography.bodyMedium) },
+            confirmButton = {
+                TextButton(onClick = {
+                    exportCsv()
+                    showExport = false
+                }) { Text("Excel (CSV)") }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    exportPdf()
+                    showExport = false
+                }) { Text("PDF") }
+            },
+        )
+    }
+
     cellDetail?.let { (name, mark) ->
         AlertDialog(
             onDismissRequest = { cellDetail = null },
@@ -441,7 +452,7 @@ fun AttendanceRecordsScreen(
     actionError?.let { message ->
         AlertDialog(
             onDismissRequest = { actionError = null },
-            confirmButton = { TextButton(onClick = { actionError = null }) { Text("OK") } },
+            confirmButton = { TextButton(onClick = { actionError = null }) { Text("Close") } },
             title = { Text("Export failed") },
             text = { Text(message) },
         )
@@ -463,8 +474,8 @@ private fun reportMarks(
 private fun AttendanceSummaryStrip(marks: List<DailyAttendanceMark>, roster: List<SessionStudent>) {
     val summary: AttendanceReportSummary = attendanceReportSummary(marks, roster)
     Row(
-        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         AttendanceMetric("Students", summary.studentCount.toString())
         AttendanceMetric("Marked entries", summary.markedEntries.toString())
@@ -477,14 +488,14 @@ private fun AttendanceSummaryStrip(marks: List<DailyAttendanceMark>, roster: Lis
 @Composable
 private fun AttendanceMetric(label: String, value: String, alert: Boolean = false) {
     Surface(
-        modifier = Modifier.width(168.dp),
+        modifier = Modifier.width(132.dp),
         shape = RoundedCornerShape(14.dp),
         color = if (alert) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.surfaceContainerLowest,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
-        Column(Modifier.padding(14.dp)) {
+        Column(Modifier.padding(12.dp)) {
             Text(value, fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(Locale.ROOT), color = MaterialTheme.colorScheme.onSurfaceVariant, style = CmsTextStyles.eyebrow)
+            Text(label.uppercase(), color = MaterialTheme.colorScheme.onSurfaceVariant, style = CmsTextStyles.eyebrow)
         }
     }
 }
@@ -492,7 +503,7 @@ private fun AttendanceMetric(label: String, value: String, alert: Boolean = fals
 @Composable
 fun DetailLine(label: String, value: String) {
     Row(Modifier.fillMaxWidth().padding(vertical = 3.dp)) {
-        Text(label, modifier = Modifier.width(88.dp), color = CmsTheme.colors.muted, style = MaterialTheme.typography.labelLarge)
+        Text(label, modifier = Modifier.width(88.dp), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelLarge)
         Text(value, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodyMedium)
     }
 }
@@ -550,13 +561,21 @@ private fun MonthNav(months: List<YearMonth>, selected: YearMonth?, onSelect: (Y
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(onClick = { if (idx > 0) onSelect(months[idx - 1]) }, enabled = idx > 0) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Previous month")
+            Icon(
+                Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                contentDescription = "Previous month",
+                tint = MaterialTheme.colorScheme.onSurface,
+            )
         }
         val label = selected?.let { "${it.month.getDisplayName(JTextStyle.SHORT, Locale.ENGLISH)} ${it.year}" } ?: "—"
         Text(label, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
         val hasNext = idx in 0 until months.lastIndex
         IconButton(onClick = { if (hasNext) onSelect(months[idx + 1]) }, enabled = hasNext) {
-            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Next month")
+            Icon(
+                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = "Next month",
+                tint = MaterialTheme.colorScheme.onSurface,
+            )
         }
     }
 }

@@ -1,22 +1,15 @@
 package com.mbd.cmsdesktop.ui.admin
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.Badge
 import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationRail
-import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -43,6 +36,7 @@ import com.mbd.cmscommon.ui.components.MoreDestination
 import com.mbd.cmscommon.ui.components.NotificationControllerWorkspace
 import com.mbd.cmscommon.ui.components.PeopleDestination
 import com.mbd.cmscommon.ui.components.RecordsDestination
+import com.mbd.cmscommon.ui.components.RefreshBox
 import com.mbd.cmscommon.ui.theme.CmsTheme
 import com.mbd.cmsdesktop.di.DesktopAppComponent
 import com.mbd.cmsdesktop.ui.parity.desktopBackHandler
@@ -50,9 +44,10 @@ import com.mbd.cmsdesktop.ui.shared.DatesheetsScreen
 import com.mbd.cmsdesktop.ui.shared.InsightsScreen
 import com.mbd.cmsdesktop.ui.shared.NotificationsScreen
 import kotlinx.coroutines.launch
+import java.awt.event.WindowEvent
 
 /**
- * Root shell for the admin desktop app: a [NavigationRail] of the 5 [AdminTab]s, each rooted
+ * Root shell for the admin desktop app: a mobile-parity [NavigationBar] of the 5 [AdminTab]s, each rooted
  * at an [AdminScreen], plus a manually-kept backstack for the drill-down chain
  * (department -> session -> semester/timetable/fees -> student profile). There is no Compose
  * Navigation dependency here, matching the rest of this codebase's manual-controller-construction
@@ -76,9 +71,6 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
         notificationRepository.observeUnreadCount(NotificationTargetRole.ADMIN)
     }.collectAsState(initial = 0)
 
-    LaunchedEffect(notificationRepository, role) {
-        notificationRepository.sync(NotificationTargetRole.ADMIN)
-    }
 
     fun push(destination: AdminScreen) {
         backStack.add(destination)
@@ -106,43 +98,52 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
         TeacherAssignmentsProvider(component.sessionManager(), component.sessionTimetableRepository(), component.academicSessionRepository(), component.departmentRepository())
     }
 
-    Column(Modifier.fillMaxSize()) {
-        CmsTopBar(
-            onBack = if (backStack.size > 1) {
-                { backStack.removeAt(backStack.lastIndex) }
-            } else {
-                null
-            },
-            onRefresh = ::refreshShell,
-            isRefreshing = shellRefreshing,
-            onNotifications = { push(AdminScreen.Notifications) },
-            notificationCount = unreadCount,
-            goldWordmark = true,
-        )
-        Row(
-            Modifier.weight(1f).fillMaxWidth().desktopBackHandler(enabled = backStack.size > 1) { backStack.removeAt(backStack.lastIndex) },
-        ) {
-            NavigationRail(containerColor = CmsTheme.colors.ink, contentColor = CmsTheme.colors.onInk) {
-                Spacer(Modifier.height(16.dp))
+    Scaffold(
+        topBar = {
+            CmsTopBar(
+                title = "GGC-MBD",
+                onBack = {
+                    if (backStack.size > 1) {
+                        backStack.removeAt(backStack.lastIndex)
+                    } else {
+                        window.dispatchEvent(WindowEvent(window, WindowEvent.WINDOW_CLOSING))
+                    }
+                },
+                onRefresh = ::refreshShell,
+                isRefreshing = shellRefreshing,
+                onNotifications = { push(AdminScreen.Notifications) },
+                notificationCount = unreadCount,
+            )
+        },
+        bottomBar = {
+            NavigationBar(containerColor = CmsTheme.colors.ink, contentColor = CmsTheme.colors.onInk) {
                 AdminTab.entries.forEach { tab ->
-                    NavigationRailItem(
+                    NavigationBarItem(
                         selected = selectedTab == tab && backStack.size == 1,
                         onClick = { popOrSwitchTab(tab) },
-                        icon = {
-                            if (tab == AdminTab.More && unreadCount > 0) {
-                                BadgedBox(badge = { Badge { Text(unreadCount.coerceAtMost(99).toString()) } }) {
-                                    Icon(tab.icon, contentDescription = tab.label)
-                                }
-                            } else {
-                                Icon(tab.icon, contentDescription = tab.label)
-                            }
-                        },
+                        icon = { Icon(tab.icon, contentDescription = tab.label) },
                         label = { Text(tab.label) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = CmsTheme.colors.onInk,
+                            selectedTextColor = CmsTheme.colors.onInk,
+                            unselectedIconColor = CmsTheme.colors.onInkMuted,
+                            unselectedTextColor = CmsTheme.colors.onInkMuted,
+                            indicatorColor = CmsTheme.colors.accent,
+                        ),
                     )
                 }
             }
-
-            Box(Modifier.weight(1f).fillMaxHeight().padding(horizontal = 24.dp)) {
+        },
+    ) { padding ->
+        RefreshBox(
+            isRefreshing = shellRefreshing,
+            onRefresh = ::refreshShell,
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .desktopBackHandler(enabled = backStack.size > 1) { backStack.removeAt(backStack.lastIndex) },
+        ) {
+            Box(Modifier.fillMaxSize()) {
                 when (val current = screen) {
                     AdminScreen.Dashboard -> DashboardScreen(
                         departmentRepository = component.departmentRepository(),
@@ -194,7 +195,7 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                                 RecordsDestination.CALENDAR -> push(AdminScreen.Calendar)
                                 RecordsDestination.DATESHEETS -> push(AdminScreen.Datesheets)
                                 RecordsDestination.TIMETABLE -> push(AdminScreen.MasterTimetable)
-                                RecordsDestination.FEES -> {}
+                                RecordsDestination.FEES -> push(AdminScreen.FeesPicker)
                                 RecordsDestination.INSIGHTS -> push(AdminScreen.Insights)
                             }
                         },
@@ -269,6 +270,14 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         sessionRepository = component.academicSessionRepository(),
                         timetableRepository = component.sessionTimetableRepository(),
                         onOpenSession = { sessionId -> push(AdminScreen.SessionDetail(sessionId)) },
+                    )
+
+                    AdminScreen.FeesPicker -> DepartmentsScreen(
+                        repository = component.departmentRepository(),
+                        sessionRepository = component.academicSessionRepository(),
+                        teacherRepository = component.teacherRepository(),
+                        createdBy = accountKey,
+                        onOpenDepartment = { deptId -> push(AdminScreen.DeptDetail(deptId)) },
                     )
 
                     AdminScreen.Insights -> InsightsScreen(

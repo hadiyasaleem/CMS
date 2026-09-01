@@ -55,6 +55,15 @@ fun main() = application {
         }
     }
 
+    LaunchedEffect(role?.uid) {
+        if (role == null) return@LaunchedEffect
+        roleRefreshInProgress = true
+        try {
+            component.adminDataBootstrapper().refreshAll()
+        } finally {
+            roleRefreshInProgress = false
+        }
+    }
     fun signOut() {
         component.sessionManager().signOut()
         role = null

@@ -15,6 +15,7 @@ class CalendarRepositoryImpl @Inject constructor(
 
     override suspend fun getEvents(): List<CalendarEvent> {
         val rows = postgrest.from(SupabaseTables.CALENDAR_EVENTS).select {
+            filter { eq("is_deleted", false) }
             order("start_date", Order.ASCENDING)
         }.decodeList<CalendarEventDto>()
         return rows.map { it.toDomain() }
@@ -39,7 +40,7 @@ class CalendarRepositoryImpl @Inject constructor(
     }
 
     override suspend fun deleteEvent(id: String) {
-        postgrest.from(SupabaseTables.CALENDAR_EVENTS).delete {
+        postgrest.from(SupabaseTables.CALENDAR_EVENTS).update({ set("is_deleted", true) }) {
             filter { eq("id", id) }
         }
     }

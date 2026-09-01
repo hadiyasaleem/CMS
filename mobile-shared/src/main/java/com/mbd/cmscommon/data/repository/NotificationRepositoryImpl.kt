@@ -67,8 +67,8 @@ class NotificationRepositoryImpl @Inject constructor(
             val page = postgrest.from(SupabaseTables.NOTIFICATIONS).select {
                 filter {
                     or {
-                        eq("targetRole", role.name)
-                        eq("targetRole", "ALL")
+                        eq("target_role", role.name)
+                        eq("target_role", "ALL")
                     }
                     gte("updated_at", since)
                 }
@@ -99,7 +99,7 @@ class NotificationRepositoryImpl @Inject constructor(
         while (true) {
             val page = postgrest.from(SupabaseTables.NOTIFICATIONS).select {
                 filter {
-                    eq("createdByEmail", uid)
+                    eq("created_by_email", uid)
                     gte("updated_at", since)
                 }
                 order("updated_at", Order.ASCENDING)

@@ -10,10 +10,10 @@ import java.time.Instant
 
 object NotificationMapper {
     private fun parseRole(raw: String?): NotificationTargetRole? =
-        raw?.let { runCatching { NotificationTargetRole.valueOf(it) }.getOrNull() }
+        raw?.let { runCatching { NotificationTargetRole.valueOf(it.trim().uppercase()) }.getOrNull() }
 
     private fun parsePriority(raw: String?): NotificationPriority =
-        runCatching { NotificationPriority.valueOf(raw ?: "") }.getOrDefault(NotificationPriority.NORMAL)
+        runCatching { NotificationPriority.valueOf(raw?.trim()?.uppercase() ?: "") }.getOrDefault(NotificationPriority.NORMAL)
 
     fun dtoToDomain(dto: NotificationDto): Notification = Notification(
         notificationId = dto.id ?: "",
@@ -83,5 +83,9 @@ object NotificationMapper {
         updatedBy = entity.updatedBy,
     )
 
-    fun dtoToEntity(dto: NotificationDto): NotificationEntity = domainToEntity(dtoToDomain(dto))
+    fun dtoToEntity(dto: NotificationDto): NotificationEntity = domainToEntity(dtoToDomain(dto)).copy(
+        isDeleted = dto.isDeleted,
+        deletedAt = PgTime.parse(dto.deletedAt)?.toEpochMilli(),
+        deletedBy = dto.deletedBy,
+    )
 }

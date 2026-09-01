@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.sync.StartupBootstrapTracker
-import com.mbd.cmscommon.data.sync.SyncEngine
+import com.mbd.cmscommon.data.sync.AdminDataBootstrapper
 import com.mbd.cmscommon.domain.model.UserRole
 import com.mbd.cmscommon.domain.repository.UserRepository
 import com.mbd.cmsstudent.feature.common.CurrentStudentProvider
@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
 class AppRootViewModel @Inject constructor(
     private val sessionManager: SessionManager,
     private val userRepository: UserRepository,
-    private val syncEngine: SyncEngine,
+    private val dataBootstrapper: AdminDataBootstrapper,
     private val currentStudentProvider: CurrentStudentProvider,
     private val startupBootstrapTracker: StartupBootstrapTracker,
 ) : ViewModel() {
@@ -53,15 +53,9 @@ class AppRootViewModel @Inject constructor(
 
             runCatching { userRepository.resolveRole(accountKey) }
 
-            val bootstrapComplete = runCatching {
-                startupBootstrapTracker.isComplete(StartupBootstrapTracker.REFERENCE_DATA, accountKey)
-            }.getOrDefault(false)
-            if (!bootstrapComplete) {
-                val hasCachedData = runCatching { syncEngine.hasCachedReferenceData() }.getOrDefault(false)
-                val completed = if (hasCachedData) true else runCatching { syncEngine.refreshReferenceData() }.getOrDefault(false)
-                if (completed) {
-                    runCatching { startupBootstrapTracker.markComplete(StartupBootstrapTracker.REFERENCE_DATA, accountKey) }
-                }
+            val completed = runCatching { dataBootstrapper.refreshAll() }.getOrDefault(false)
+            if (completed) {
+                runCatching { startupBootstrapTracker.markComplete(StartupBootstrapTracker.REFERENCE_DATA, accountKey) }
             }
             _authChecked.value = true
         }
@@ -74,13 +68,7 @@ class AppRootViewModel @Inject constructor(
     }
 
     private suspend fun ensureStudentSession(accountKey: String, studentId: String) {
-        val bootstrapComplete = runCatching {
-            startupBootstrapTracker.isComplete(StartupBootstrapTracker.STUDENT_SESSION, accountKey)
-        }.getOrDefault(false)
-        if (bootstrapComplete) return
-
-        val hasCachedSession = runCatching { currentStudentProvider.hasCachedSession(studentId) }.getOrDefault(false)
-        val completed = if (hasCachedSession) true else runCatching { currentStudentProvider.syncMySession(studentId) }.getOrDefault(false)
+        val completed = runCatching { currentStudentProvider.syncMySession(studentId) }.getOrDefault(false)
         if (completed) {
             runCatching { startupBootstrapTracker.markComplete(StartupBootstrapTracker.STUDENT_SESSION, accountKey) }
         }

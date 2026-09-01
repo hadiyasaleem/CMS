@@ -24,7 +24,7 @@ import com.mbd.cmscommon.data.local.dao.TableSyncStateDao
 import com.mbd.cmscommon.data.local.dao.TeacherDao
 import com.mbd.cmscommon.data.local.dao.UserDao
 
-const val CMS_DATABASE_VERSION = 31
+const val CMS_DATABASE_VERSION = 33
 
 abstract class CmsDatabase : RoomDatabase() {
     abstract fun departmentDao(): DepartmentDao
@@ -65,4 +65,6 @@ val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_28_29,
     MIGRATION_29_30,
     MIGRATION_30_31,
+    MIGRATION_31_32,
+    MIGRATION_32_33,
 )

@@ -37,10 +37,6 @@ class TeacherScheduleController(
     private val _refreshState = MutableStateFlow<Outcome<Unit>?>(null)
     val refreshState: StateFlow<Outcome<Unit>?> = _refreshState.asStateFlow()
 
-    init {
-        refresh()
-    }
-
     fun selectDay(day: DayOfWeek) {
         if (day.value <= DayOfWeek.SATURDAY.value) {
             _selectedDay.value = day

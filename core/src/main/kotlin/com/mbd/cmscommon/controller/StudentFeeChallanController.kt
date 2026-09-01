@@ -20,14 +20,15 @@ class StudentFeeChallanController(
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
 
     init {
-        load()
+        load(fetchRemote = false)
     }
 
-    private fun load() {
+    private fun load(fetchRemote: Boolean) {
         clearError()
         launch {
             _loading.value = true
             try {
+                if (fetchRemote) feeRepository.syncSession(sessionId)
                 _fee.value = feeRepository.getSessionFee(sessionId)
             } finally {
                 _loading.value = false
@@ -36,6 +37,6 @@ class StudentFeeChallanController(
     }
 
     fun refresh() {
-        load()
+        load(fetchRemote = true)
     }
 }

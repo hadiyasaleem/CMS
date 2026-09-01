@@ -33,9 +33,11 @@ class CalendarRepositoryLocalImpl @Inject constructor(
     private val sessionManager: SessionManager,
 ) : CalendarRepository {
 
-    override suspend fun getEvents(): List<CalendarEvent> {
-        runCatching { syncEvents() }
-        return calendarEventDao.getAll().map { CalendarEventMapper.entityToDomain(it) }
+    override suspend fun getEvents(): List<CalendarEvent> =
+        calendarEventDao.getAll().map { CalendarEventMapper.entityToDomain(it) }
+
+    override suspend fun sync() {
+        syncEvents()
     }
 
     override suspend fun createEvent(event: CalendarEvent, createdBy: String) {
@@ -100,9 +102,11 @@ class FineRepositoryLocalImpl @Inject constructor(
     private val sessionManager: SessionManager,
 ) : FineRepository {
 
-    override suspend fun getFines(sessionId: String, rollNumber: String): List<Fine> {
-        runCatching { syncFines(sessionId, rollNumber) }
-        return fineDao.getForStudent(sessionId, rollNumber).map { FineMapper.entityToDomain(it) }
+    override suspend fun getFines(sessionId: String, rollNumber: String): List<Fine> =
+        fineDao.getForStudent(sessionId, rollNumber).map { FineMapper.entityToDomain(it) }
+
+    override suspend fun sync(sessionId: String, rollNumber: String) {
+        syncFines(sessionId, rollNumber)
     }
 
     override suspend fun issueFine(sessionId: String, rollNumber: String, category: String, amount: Double, reason: String, issuedBy: String) {

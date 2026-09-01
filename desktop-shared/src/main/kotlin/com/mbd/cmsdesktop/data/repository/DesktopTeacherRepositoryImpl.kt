@@ -1,14 +1,20 @@
 package com.mbd.cmsdesktop.data.repository
 
 import com.mbd.cmscommon.auth.AdminUserProvisioner
+import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.mapper.DesktopTeacherMapper
 import com.mbd.cmscommon.data.remote.SupabaseTables
 import com.mbd.cmscommon.data.remote.dto.TeacherDto
+import com.mbd.cmscommon.data.sync.SyncCheckpointDefaults
+import com.mbd.cmscommon.data.sync.fetchIncrementalDelta
+import com.mbd.cmscommon.data.sync.mergeIncrementalDelta
 import com.mbd.cmscommon.domain.model.Teacher
 import com.mbd.cmscommon.domain.model.TeacherStatus
 import com.mbd.cmscommon.domain.repository.TeacherRepository
 import com.mbd.cmsdesktop.data.cache.DesktopBootstrapSnapshotStore
 import io.github.jan.supabase.postgrest.Postgrest
+import io.github.jan.supabase.postgrest.query.Order
+import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
@@ -17,66 +23,99 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 
-/**
- * Desktop repos are always-online: [sync]/[syncSelf] re-fetch into an in-memory cache that is
- * seeded on startup from [DesktopBootstrapSnapshotStore] (JSON-file offline cache) and persisted
- * back to it after every mutation, so the last-known teacher roster survives a restart even
- * without connectivity.
- */
 @Singleton
 class DesktopTeacherRepositoryImpl @Inject constructor(
     private val postgrest: Postgrest,
     private val provisioner: AdminUserProvisioner,
     private val snapshotStore: DesktopBootstrapSnapshotStore,
+    private val sessionManager: SessionManager,
 ) : TeacherRepository {
-
-    private val cache = MutableStateFlow(snapshotStore.readTeachers().map { DesktopTeacherMapper.dtoToDomain(it) })
+    private val cache = MutableStateFlow(cachedRows().map(DesktopTeacherMapper::dtoToDomain))
 
     override fun observeTeacher(teacherId: String): Flow<Teacher> =
         cache.asStateFlow().map { list -> list.find { it.teacherId == teacherId } }.filterNotNull()
 
     override fun observeActiveTeachers(): Flow<List<Teacher>> = cache.asStateFlow()
-
     override suspend fun getTeacher(teacherId: String): Teacher? = cache.value.find { it.teacherId == teacherId }
-
-    override suspend fun resolveNameOrFallback(teacherId: String): String =
-        getTeacher(teacherId)?.name ?: "Deleted Teacher"
+    override suspend fun resolveNameOrFallback(teacherId: String): String = getTeacher(teacherId)?.name ?: "Deleted Teacher"
 
     override suspend fun sync() {
-        val rows = postgrest.from(SupabaseTables.TEACHERS).select().decodeList<TeacherDto>()
-        snapshotStore.writeTeachers(rows)
-        cache.value = rows.map { DesktopTeacherMapper.dtoToDomain(it) }
+        val delta = fetchIncrementalDelta(
+            snapshotStore, ownerKey(), SupabaseTables.TEACHERS,
+            SyncCheckpointDefaults.globalScope(), TeacherDto::updatedAt,
+        ) { since, from, to ->
+            postgrest.from(SupabaseTables.TEACHERS).select {
+                filter { gte("updated_at", since) }
+                order("updated_at", Order.ASCENDING)
+                range(from, to)
+            }.decodeList()
+        }
+        writeMerged(delta)
     }
 
     override suspend fun syncSelf(teacherId: String) {
-        val dto = postgrest.from(SupabaseTables.TEACHERS).select { filter { eq("email", teacherId) } }
-            .decodeList<TeacherDto>().firstOrNull() ?: return
-        val teacher = DesktopTeacherMapper.dtoToDomain(dto)
-        cache.value = cache.value.filterNot { it.teacherId == teacher.teacherId } + teacher
-        snapshotStore.writeTeachers(cache.value.map { DesktopTeacherMapper.domainToDto(it) })
+        val rows = postgrest.from(SupabaseTables.TEACHERS).select {
+            filter { eq("email", teacherId) }
+        }.decodeList<TeacherDto>()
+        writeMerged(rows)
     }
 
     override suspend fun createTeacherAccount(email: String, password: String, teacher: Teacher) {
         val key = email.trim().lowercase()
         provisioner.createTeacher(key, password, teacher.name, teacher.deptId, teacher.designation, teacher.phone)
-        val teacherWithId = teacher.copy(teacherId = key, email = key)
-        postgrest.from(SupabaseTables.TEACHERS).upsert(DesktopTeacherMapper.domainToDto(teacherWithId)) { onConflict = "email" }
-        sync()
+        val rows = postgrest.from(SupabaseTables.TEACHERS).upsert(
+            DesktopTeacherMapper.domainToDto(teacher.copy(teacherId = key, email = key)),
+        ) {
+            onConflict = "email"
+            select()
+        }.decodeList<TeacherDto>()
+        writeMerged(rows)
     }
 
     override suspend fun updateTeacher(teacher: Teacher) {
-        postgrest.from(SupabaseTables.TEACHERS).upsert(DesktopTeacherMapper.domainToDto(teacher)) { onConflict = "email" }
-        sync()
+        val rows = postgrest.from(SupabaseTables.TEACHERS)
+            .upsert(DesktopTeacherMapper.domainToDto(teacher)) {
+                onConflict = "email"
+                select()
+            }.decodeList<TeacherDto>()
+        writeMerged(rows)
     }
 
     override suspend fun deleteTeacher(teacherId: String) {
         provisioner.setTeacherStatus(teacherId, "DELETE")
-        cache.value = cache.value.filterNot { it.teacherId == teacherId }
-        snapshotStore.writeTeachers(cache.value.map { DesktopTeacherMapper.domainToDto(it) })
+        snapshotStore.writeTeachers(cachedRows().filterNot { it.email == teacherId })
+        reloadCache()
     }
 
     override suspend fun setStatus(teacherId: String, status: TeacherStatus) {
         provisioner.setTeacherStatus(teacherId, status.name)
-        syncSelf(teacherId)
+        cachedRows().firstOrNull { it.email == teacherId }?.let { cached ->
+            writeMerged(
+                listOf(
+                    cached.copy(
+                        status = status.name,
+                        isActive = status == TeacherStatus.ACTIVE,
+                        updatedAt = Instant.now().toString(),
+                    ),
+                ),
+            )
+        }
     }
+
+    private fun cachedRows() = snapshotStore.readTeachers().filterNot { it.isDeleted }
+
+    private fun writeMerged(delta: List<TeacherDto>) {
+        val merged = mergeIncrementalDelta(
+            snapshotStore.readTeachers(), delta, { it.email.orEmpty() }, TeacherDto::isDeleted,
+        )
+        snapshotStore.writeTeachers(merged)
+        cache.value = merged.map(DesktopTeacherMapper::dtoToDomain)
+    }
+
+    private fun reloadCache() {
+        cache.value = cachedRows().map(DesktopTeacherMapper::dtoToDomain)
+    }
+
+    private fun ownerKey() =
+        sessionManager.accountKey ?: SyncCheckpointDefaults.ownerKey("anonymous-local")
 }

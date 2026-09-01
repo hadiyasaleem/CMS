@@ -39,7 +39,7 @@ fun EventsScreen(
         viewer = currentViewer,
         departments = departments,
         sessions = sessions,
-        canEdit = currentViewer.role == CalendarViewerRole.ADMIN || currentViewer.role == CalendarViewerRole.TEACHER,
+        canEdit = currentViewer.role == CalendarViewerRole.ADMIN,
         loading = loading,
         busy = busy,
         errorMessage = error,

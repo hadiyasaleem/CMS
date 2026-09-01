@@ -97,7 +97,15 @@ class TeacherRepositoryImpl @Inject constructor(
 
     override suspend fun setStatus(teacherId: String, status: TeacherStatus) {
         provisioner.setTeacherStatus(teacherId, status.name)
-        syncSelf(teacherId)
+        teacherDao.getById(teacherId)?.let { cached ->
+            teacherDao.upsert(
+                cached.copy(
+                    status = status.name,
+                    isActive = status == TeacherStatus.ACTIVE,
+                    updatedAt = System.currentTimeMillis(),
+                ),
+            )
+        }
     }
 
     private companion object {

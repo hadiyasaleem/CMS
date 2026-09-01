@@ -44,13 +44,21 @@ import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.teacher.ResolvedAssignment
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModGround
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModWarn
 import com.mbd.cmscommon.util.Outcome
 
-private val MarksCanvas = Color(0xFFF7F5F0)
-private val MarksGreen = Color(0xFF2F6B4F)
-private val MarksGold = Color(0xFF9A651B)
-private val MarksRed = Color(0xFFB43A31)
-private val MarksBlue = Color(0xFF24577A)
+private val MarksCanvas = ModGround
+private val MarksGreen = ModSuccess
+private val MarksGold = ModWarn
+private val MarksRed = ModAccent
+private val MarksBlue = ModInk
 
 @Composable
 fun MarksEntryWorkspace(
@@ -104,8 +112,8 @@ fun MarksEntryWorkspace(
 
         if (roster.isEmpty()) {
             item {
-                Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
-                    Text("Select a class to begin marks entry.", modifier = Modifier.padding(24.dp), color = Color(0xFF77716A), style = MaterialTheme.typography.bodyMedium)
+                Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
+                    Text("Select a class to begin marks entry.", modifier = Modifier.padding(24.dp), color = ModMuted, style = MaterialTheme.typography.bodyMedium)
                 }
             }
         } else {
@@ -143,7 +151,7 @@ fun MarksEntryWorkspace(
 
 @Composable
 private fun MarksHeader(selected: ResolvedAssignment?, examType: ExamType, average: Double?) {
-    Surface(shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Column(Modifier.padding(20.dp)) {
             Text("ASSESSMENT WORKSPACE", color = MarksGold, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
@@ -194,10 +202,10 @@ private fun MarksMetrics(total: Int, locked: Int, ready: Int, absent: Int, pendi
 
 @Composable
 private fun MarkMetric(label: String, value: String, modifier: Modifier = Modifier, alert: Boolean = false) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(14.dp)) {
-            Text(value, color = if (alert) MarksRed else Color(0xFF252321), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-            Text(label.uppercase(), color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text(value, color = if (alert) MarksRed else ModInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }
@@ -215,12 +223,12 @@ private fun StudentMarkCard(
     onToggleAbsent: () -> Unit,
     onRequestEdit: () -> Unit,
 ) {
-    Surface(shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(student.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
-                    Text("Roll ${student.rollNumber}", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                    Text("Roll ${student.rollNumber}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
                 if (savedAbsent) StatusPill("Saved as absent", MarksGold)
                 if (locked) StatusPill("Saved and locked", MarksBlue)
@@ -228,7 +236,7 @@ private fun StudentMarkCard(
             }
             Spacer(Modifier.height(8.dp))
             if (locked) {
-                Text("Score locked (${rawScore.ifBlank { "--" }}/$maxMarks).", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                Text("Score locked (${rawScore.ifBlank { "--" }}/$maxMarks).", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 if (pending != null) {
                     Text("Pending review | requested ${pending.requestedScore}", color = MarksGold, style = MaterialTheme.typography.bodySmall)
                 } else {
@@ -263,11 +271,11 @@ private fun StatusPill(label: String, tone: Color) {
 
 @Composable
 private fun SaveMarksCard(examType: ExamType, ready: Int, invalid: Int, outcome: Outcome<Unit>, onSave: () -> Unit) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Text(
                 if (invalid > 0) "Enter a score or mark a student absent to enable saving." else "Ready to save $examType marks for $ready student(s).",
-                color = Color(0xFF77716A),
+                color = ModMuted,
                 style = MaterialTheme.typography.bodyMedium,
             )
             Spacer(Modifier.height(10.dp))
@@ -317,7 +325,7 @@ private fun RequestMarkEditDialog(
         title = { Text("Request edit", style = MaterialTheme.typography.headlineSmall) },
         text = {
             Column {
-                Text("Current score: ${currentScore ?: "--"}", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                Text("Current score: ${currentScore ?: "--"}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
                     value = newScore,
@@ -335,7 +343,7 @@ private fun RequestMarkEditDialog(
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 2,
                 )
-                Text("Maximum 500 characters", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                Text("Maximum 500 characters", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             }
         },
         confirmButton = {

@@ -42,6 +42,7 @@ class EventsViewModel @Inject constructor(
         assignmentsProvider.observeMyAssignments(),
     ) { role, teacher, teaching ->
         when (role) {
+            null -> null
             is UserRole.Admin -> CalendarViewerContext(CalendarViewerRole.ADMIN)
             is UserRole.Teacher -> CalendarViewerContext(
                 CalendarViewerRole.TEACHER,

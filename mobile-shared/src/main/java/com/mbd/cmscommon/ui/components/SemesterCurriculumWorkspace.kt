@@ -38,11 +38,17 @@ import com.mbd.cmscommon.domain.model.SemesterTerm
 import com.mbd.cmscommon.domain.model.SubjectType
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModWarn
 import java.time.LocalDate
 
-private val CurriculumBlue = Color(0xFF24577A)
-private val CurriculumGold = Color(0xFF9A651B)
-private val CurriculumRed = Color(0xFFB43A31)
+private val CurriculumBlue = ModInk
+private val CurriculumGold = ModWarn
+private val CurriculumRed = ModAccent
 
 @Composable
 fun SemesterCurriculumWorkspace(
@@ -137,7 +143,7 @@ fun SemesterCurriculumWorkspace(
 
 @Composable
 private fun CurriculumHero(session: AcademicSession?, semester: Int, subjectCount: Int, totalCredits: Int, onAdd: () -> Unit) {
-    Surface(shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("SESSION CURRICULUM", color = CurriculumGold, style = CmsTextStyles.eyebrow)
@@ -166,10 +172,10 @@ private fun CurriculumSummaryCard(subjectCount: Int, totalCredits: Int, elective
 
 @Composable
 private fun CurriculumMetric(label: String, value: String, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(14.dp)) {
             Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(), color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }
@@ -177,13 +183,13 @@ private fun CurriculumMetric(label: String, value: String, modifier: Modifier = 
 @Composable
 private fun TermReadinessCard(term: SemesterTerm?, onClick: () -> Unit) {
     val configured = term?.startDate != null && term.endDate != null
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("Class term", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                 Text(
                     if (configured) "${term?.startDate} — ${term?.endDate}" else "Start and end dates are not fully configured",
-                    color = if (configured) Color(0xFF77716A) else CurriculumRed,
+                    color = if (configured) ModMuted else CurriculumRed,
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
@@ -195,11 +201,11 @@ private fun TermReadinessCard(term: SemesterTerm?, onClick: () -> Unit) {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SubjectCurriculumCard(subject: SemesterSubject, onEdit: () -> Unit, onRemove: () -> Unit) {
-    Surface(shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(14.dp)) {
             Column {
                 Text(subject.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
-                Text("${subject.courseCode} · ${subject.creditHours} credit(s)", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                Text("${subject.courseCode} · ${subject.creditHours} credit(s)", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             }
             Spacer(Modifier.height(8.dp))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -209,7 +215,7 @@ private fun SubjectCurriculumCard(subject: SemesterSubject, onEdit: () -> Unit, 
                 }
             }
             Spacer(Modifier.height(6.dp))
-            Text(subject.outline?.takeIf { it.isNotBlank() } ?: "No course outline has been added.", color = Color(0xFF625E58), style = MaterialTheme.typography.bodySmall)
+            Text(subject.outline?.takeIf { it.isNotBlank() } ?: "No course outline has been added.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(8.dp))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = onEdit) { Text("Edit") }
@@ -228,13 +234,13 @@ private fun ValidationMessage(message: String) {
 
 @Composable
 private fun CurriculumEmptyState(hasSubjects: Boolean, onAdd: () -> Unit, onClear: () -> Unit) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(if (hasSubjects) "No matching subjects" else "No subjects configured", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(4.dp))
             Text(
                 if (hasSubjects) "Clear the search and filters to see the complete curriculum." else "Add the first subject to make it available in timetable and assessment workflows.",
-                color = Color(0xFF77716A),
+                color = ModMuted,
                 style = MaterialTheme.typography.bodySmall,
             )
             Spacer(Modifier.height(12.dp))
@@ -277,7 +283,7 @@ private fun SubjectEditorDialog(
                 Spacer(Modifier.height(10.dp))
                 OutlinedTextField(value = credits, onValueChange = { credits = it }, label = { Text("Credit hours") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 Spacer(Modifier.height(10.dp))
-                Text("SUBJECT TYPE", color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+                Text("SUBJECT TYPE", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     SubjectType.entries.forEach { option -> CmsChip(option.name, selected = type == option, onClick = { type = option }) }
@@ -325,7 +331,7 @@ private fun TermDatesEditorDialog(
         title = { Text("Class term", style = MaterialTheme.typography.headlineSmall) },
         text = {
             Column {
-                Text("Set the semester start and end dates. Leave both blank to clear the term.", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                Text("Set the semester start and end dates. Leave both blank to clear the term.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.height(10.dp))
                 CmsDateField(value = start, onValueChange = { start = it }, label = "Start date", optional = true)
                 Spacer(Modifier.height(10.dp))

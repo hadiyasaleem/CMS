@@ -68,8 +68,11 @@ object RecordsExporter {
             cells.forEachIndexed { i, c ->
                 val x = colX(i)
                 canvas.drawRect(x, top, x + width(i), bottom, gridPaint)   // cell border
-                val maxChars = if (i < 2) 24 else 6
-                canvas.drawText(c.take(maxChars), x + 3f, baseline, if (headerRow) headText else bodyPaint)
+                // Fit text to the actual column width instead of a hardcoded char cap, so money
+                // ("125,000") and dates ("2026-08-31") aren't silently truncated to a wrong value.
+                val paint = if (headerRow) headText else bodyPaint
+                val fit = paint.breakText(c, true, width(i) - 6f, null)
+                canvas.drawText(c.substring(0, fit), x + 3f, baseline, paint)
             }
             return bottom
         }

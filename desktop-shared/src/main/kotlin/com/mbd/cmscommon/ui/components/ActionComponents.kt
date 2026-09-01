@@ -1,6 +1,7 @@
 package com.mbd.cmscommon.ui.components
 
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModSurface
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -70,7 +71,7 @@ fun PalSegment(
             } else {
                 MaterialTheme.colorScheme.surfaceContainerLowest
             }
-            val fg = if (isSelected) Color.White else CmsTheme.colors.muted
+            val fg = if (isSelected) ModSurface else CmsTheme.colors.muted
 
             Box(
                 modifier = Modifier

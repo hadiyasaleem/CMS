@@ -15,17 +15,18 @@ class DepartmentsActionController(
 
     fun create(name: String, code: String, hodEmail: String? = null, description: String? = null) = launch {
         FieldValidators.nameError(name, "Department name")?.let { throw IllegalArgumentException(it) }
-        FieldValidators.departmentCodeError(code)?.let { throw IllegalArgumentException(it) }
+        val normalizedCode = code.trim().uppercase(Locale.ROOT)
+        FieldValidators.departmentCodeError(normalizedCode)?.let { throw IllegalArgumentException(it) }
         require(FieldValidators.emailError(hodEmail ?: "", false) == null) { "Choose a valid head of department." }
         require((description ?: "").trim().length <= 500) { "Department description must not exceed 500 characters." }
 
-        val deptId = Regex("[^a-z0-9-]").replace(code.trim().lowercase(Locale.ROOT), "-")
+        val deptId = Regex("[^a-z0-9-]").replace(normalizedCode.lowercase(Locale.ROOT), "-")
         val now = Instant.now()
         repo.createDepartment(
             Department(
                 deptId = deptId,
                 name = name.trim(),
-                code = code.trim(),
+                code = normalizedCode,
                 hodEmail = hodEmail?.trim()?.takeIf { it.isNotBlank() },
                 description = description?.trim()?.takeIf { it.isNotBlank() },
                 createdAt = now,

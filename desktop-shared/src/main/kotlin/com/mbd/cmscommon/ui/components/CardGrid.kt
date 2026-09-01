@@ -12,11 +12,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 /**
- * Number of entity cards shown per row in the app's card grids. Desktop shows 4 across; the
- * mobile-shared copy of this file sets 2. Single source of truth so every directory screen
+ * Number of entity cards shown per row in the app's card grids. Mobile and desktop both show
+ * 2 across so the centered desktop mobile canvas preserves exact layout parity. Single source
+ * of truth so every directory screen
  * (departments, sessions, teachers, students, subjects) stays consistent.
  */
-const val CardGridColumns = 4
+const val CardGridColumns = 2
 
 /**
  * A full-width row inside a [CardGrid] — used for heroes, summaries, search/filter bars, section

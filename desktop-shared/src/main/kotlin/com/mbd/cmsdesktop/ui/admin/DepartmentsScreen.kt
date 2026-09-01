@@ -8,17 +8,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -80,7 +79,7 @@ fun DepartmentsScreen(
     val departmentStats by statsFlow.collectAsState(initial = emptyMap<String, DepartmentPortfolioStats>())
 
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var loading by remember { mutableStateOf(true) }
+    var loading by remember { mutableStateOf(false) }
     var showAddDialog by remember { mutableStateOf(false) }
     var editingDepartment by remember { mutableStateOf<Department?>(null) }
     var pendingDelete by remember { mutableStateOf<Department?>(null) }
@@ -110,19 +109,24 @@ fun DepartmentsScreen(
         }
     }
 
-    LaunchedEffect(repository, sessionRepository) { refresh() }
-
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopStart) {
-        when {
-            loading && departments.isEmpty() -> SkeletonList()
-
-            errorMessage == null || departments.isNotEmpty() -> {
-                Column(Modifier.fillMaxSize()) {
-                    errorMessage?.let { message ->
-                        InlineErrorCard(message, "Retry", { scope.launch { refresh() } }, Modifier.padding(12.dp, 8.dp))
-                    }
+    Scaffold(
+        floatingActionButton = {
+            CmsFab(onClick = { showAddDialog = true }, contentDescription = "Add department")
+        },
+        containerColor = MaterialTheme.colorScheme.background,
+    ) { padding ->
+        Box(Modifier.fillMaxSize().padding(padding)) {
+            when {
+                loading -> SkeletonList()
+                errorMessage != null -> ErrorBanner(errorMessage!!, onRetry = { scope.launch { refresh() } })
+                else -> Column(Modifier.fillMaxSize()) {
                     actionError?.let { message ->
-                        InlineErrorCard(message, "Dismiss", actionController::clearError, Modifier.padding(12.dp, 8.dp))
+                        InlineErrorCard(
+                            message = message,
+                            actionLabel = "Dismiss",
+                            onAction = actionController::clearError,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        )
                     }
                     DepartmentPortfolio(
                         departments = departments,
@@ -136,15 +140,7 @@ fun DepartmentsScreen(
                     )
                 }
             }
-
-            else -> ErrorBanner(errorMessage!!, onRetry = { scope.launch { refresh() } })
         }
-
-        CmsFab(
-            onClick = { showAddDialog = true },
-            modifier = Modifier.align(Alignment.BottomEnd).padding(18.dp),
-            contentDescription = "Add department",
-        )
     }
 
     if (showAddDialog) {

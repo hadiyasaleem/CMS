@@ -51,6 +51,13 @@ data class SemesterTermDto(
     val semester: Int = 0,
     val startDate: String? = null,
     val endDate: String? = null,
+    val createdAt: String? = null,
+    val createdBy: String? = null,
+    val updatedAt: String? = null,
+    val updatedBy: String? = null,
+    val isDeleted: Boolean = false,
+    val deletedAt: String? = null,
+    val deletedBy: String? = null,
 )
 
 @Serializable

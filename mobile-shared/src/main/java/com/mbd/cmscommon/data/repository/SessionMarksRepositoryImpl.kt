@@ -184,6 +184,7 @@ class SessionMarksRepositoryImpl @Inject constructor(
                 range(offset, offset + PAGE_SIZE - 1)
             }.decodeList<MarkRowDto>()
         }
+        syncGpaForSession(sessionId)
     }
 
     private suspend fun syncMarksDelta(scopeKey: String, fetchPage: suspend (since: String, offset: Long) -> List<MarkRowDto>) {
@@ -234,17 +235,43 @@ class SessionMarksRepositoryImpl @Inject constructor(
             putJsonArray("p_supply") { supplyCourses.forEach { add(JsonPrimitive(it)) } }
         }
         postgrest.rpc(SupabaseTables.RPC_RECORD_SEMESTER_RESULT, params)
-        syncGpaForStudent(sessionId, rollNumber)
+        val now = System.currentTimeMillis()
+        gpaDao.upsertAll(
+            listOf(
+                SemesterGpaDto(
+                    sessionId = sessionId,
+                    rollNumber = rollNumber,
+                    semester = semester,
+                    gpa = gpa,
+                    cgpa = cgpa,
+                    termLabel = termLabel?.trim()?.takeIf { it.isNotBlank() },
+                    resultStatus = resultStatus.ifBlank { "PENDING" },
+                    classPosition = classPosition,
+                    remarks = remarks?.trim()?.takeIf { it.isNotBlank() },
+                    supplyCourses = supplyCourses,
+                ).toEntity().copy(createdAt = now, updatedAt = now),
+            ),
+        )
     }
 
-    override suspend fun getSemesterGpa(sessionId: String, rollNumber: String): List<SemesterGpa> {
-        runCatching { syncGpaForStudent(sessionId, rollNumber) }
-        return gpaDao.getForStudent(sessionId, rollNumber).map { it.toDomain() }
-    }
+    override suspend fun getSemesterGpa(sessionId: String, rollNumber: String): List<SemesterGpa> =
+        gpaDao.getForStudent(sessionId, rollNumber).map { it.toDomain() }
 
-    override suspend fun getSemesterResults(sessionId: String, semester: Int): List<SemesterGpa> {
-        runCatching { syncGpaForSemester(sessionId, semester) }
-        return gpaDao.getForSemester(sessionId, semester).map { it.toDomain() }
+    override suspend fun getSemesterResults(sessionId: String, semester: Int): List<SemesterGpa> =
+        gpaDao.getForSemester(sessionId, semester).map { it.toDomain() }
+
+    private suspend fun syncGpaForSession(sessionId: String) {
+        val scopeKey = SyncCheckpointDefaults.scoped("session_id" to sessionId)
+        syncGpaDelta(scopeKey) { since, offset ->
+            postgrest.from(SupabaseTables.STUDENT_SEMESTER_GPA).select {
+                filter {
+                    eq("session_id", sessionId)
+                    gte("updated_at", since)
+                }
+                order("updated_at", Order.ASCENDING)
+                range(offset, offset + PAGE_SIZE - 1)
+            }.decodeList<SemesterGpaDto>()
+        }
     }
 
     private suspend fun syncGpaForStudent(sessionId: String, rollNumber: String) {

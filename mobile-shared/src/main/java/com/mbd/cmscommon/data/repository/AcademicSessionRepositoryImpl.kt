@@ -7,6 +7,7 @@ import com.mbd.cmscommon.data.local.dao.SessionStudentDao
 import com.mbd.cmscommon.data.local.entity.AcademicSessionEntity
 import com.mbd.cmscommon.data.local.entity.SessionStudentEntity
 import com.mbd.cmscommon.data.mapper.AcademicStructureMapper
+import com.mbd.cmscommon.data.mapper.StudentProfileMapper
 import com.mbd.cmscommon.data.remote.PgTime
 import com.mbd.cmscommon.data.remote.SupabaseTables
 import com.mbd.cmscommon.data.remote.dto.AcademicSessionDto
@@ -28,6 +29,9 @@ import java.time.Instant
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 class AcademicSessionRepositoryImpl @Inject constructor(
     private val postgrest: Postgrest,
@@ -37,6 +41,11 @@ class AcademicSessionRepositoryImpl @Inject constructor(
     private val checkpointStore: SyncCheckpointStore,
     private val sessionManager: SessionManager,
 ) : AcademicSessionRepository {
+
+    private val profileJson = Json {
+        ignoreUnknownKeys = true
+        encodeDefaults = true
+    }
 
     private fun syncOwnerKey(): String = sessionManager.accountKey ?: SyncCheckpointDefaults.ownerKey("anonymous-local")
 
@@ -63,6 +72,10 @@ class AcademicSessionRepositoryImpl @Inject constructor(
                 updatedAt = PgTime.parseOrEpoch(updatedAt),
                 updatedBy = updatedBy,
             ),
+        ).copy(
+            isDeleted = isDeleted,
+            deletedAt = PgTime.parse(deletedAt)?.toEpochMilli(),
+            deletedBy = deletedBy,
         )
     }
 
@@ -85,7 +98,15 @@ class AcademicSessionRepositoryImpl @Inject constructor(
         createdBy = createdBy,
         updatedAt = PgTime.parseOrEpoch(updatedAt).toEpochMilli(),
         updatedBy = updatedBy,
+        isDeleted = isDeleted,
+        deletedAt = PgTime.parse(deletedAt)?.toEpochMilli(),
+        deletedBy = deletedBy,
     )
+
+    private fun StudentProfileDto.toEntity(sessionId: String, deptId: String): SessionStudentEntity =
+        StudentProfileMapper.rosterDto(this).toEntity(sessionId, deptId).copy(
+            profileJson = profileJson.encodeToString(this),
+        )
 
     override fun observeSessionsForDept(deptId: String): Flow<List<AcademicSession>> =
         sessionDao.observeSessionsForDept(deptId).map { rows -> rows.map { AcademicStructureMapper.sessionEntityToDomain(it) } }
@@ -146,7 +167,16 @@ class AcademicSessionRepositoryImpl @Inject constructor(
         }) {
             filter { eq("session_id", sessionId) }
         }
-        syncSessionsForDept(deptOf(sessionId))
+        sessionDao.getById(sessionId)?.let { cached ->
+            sessionDao.upsert(
+                cached.copy(
+                    programName = programName?.trim()?.takeIf { it.isNotBlank() },
+                    inchargeEmail = inchargeEmail?.trim()?.takeIf { it.isNotBlank() },
+                    maxStudents = clampedMax,
+                    updatedAt = System.currentTimeMillis(),
+                ),
+            )
+        }
     }
 
     override suspend fun deleteSession(sessionId: String) {
@@ -160,7 +190,10 @@ class AcademicSessionRepositoryImpl @Inject constructor(
 
     override suspend fun addStudent(sessionId: String, rollNumber: String, name: String, gpa: Double?, cgpa: Double?) {
         val deptId = deptOf(sessionId)
-        val maxStudents = sessionDao.getById(sessionId)?.maxStudents ?: 50
+        // A freshly created session stores maxStudents = 0 (cap not set yet). Treat a non-positive
+        // cap as "unset" and fall back to the default so students can be added before the admin
+        // configures a real capacity (otherwise count >= 0 always rejects with "Session is full").
+        val maxStudents = sessionDao.getById(sessionId)?.maxStudents?.takeIf { it > 0 } ?: 50
         val count = studentDao.countForSession(sessionId)
         if (count >= maxStudents) {
             error("Session is full ($maxStudents students max).")
@@ -195,51 +228,19 @@ class AcademicSessionRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getStudentProfile(sessionId: String, rollNumber: String): StudentProfile? {
-        val dto = postgrest.from(SupabaseTables.SESSION_STUDENTS).select {
-            filter {
-                eq("session_id", sessionId)
-                eq("roll_number", rollNumber)
-            }
-        }.decodeList<StudentProfileDto>().firstOrNull() ?: return null
-
-        return StudentProfile(
-            sessionId = sessionId,
-            rollNumber = rollNumber,
-            name = dto.name ?: "",
-            universityRollNo = dto.universityRollNo,
-            registrationNo = dto.registrationNo,
-            fatherName = dto.fatherName,
-            guardianName = dto.guardianName,
-            cnicBform = dto.cnicBform,
-            dob = dto.dob,
-            gender = dto.gender,
-            phone = dto.phone,
-            guardianPhone = dto.guardianPhone,
-            personalEmail = dto.personalEmail,
-            currentAddress = dto.currentAddress,
-            permanentAddress = dto.permanentAddress,
-            bloodGroup = dto.bloodGroup,
-            domicile = dto.domicile,
-            religion = dto.religion,
-            admissionDate = dto.admissionDate,
-            enrollmentStatus = dto.enrollmentStatus ?: "ACTIVE",
-            emergencyContactName = dto.emergencyContactName,
-            emergencyContactRelation = dto.emergencyContactRelation,
-            emergencyContactPhone = dto.emergencyContactPhone,
-            specialNeeds = dto.specialNeeds,
-            isCr = dto.isCr,
-            isGr = dto.isGr,
-            linkedEmail = dto.linkedEmail ?: "",
-            gpa = dto.gpa,
-            cgpa = dto.cgpa,
-            entityId = dto.entityId ?: 0L,
-            createdAt = PgTime.parseOrEpoch(dto.createdAt),
-            createdBy = dto.createdBy,
-            updatedAt = PgTime.parseOrEpoch(dto.updatedAt),
-            updatedBy = dto.updatedBy,
+        val cached = studentDao.findByRoll(sessionId, rollNumber) ?: return null
+        val dto = cached.profileJson?.let { encoded ->
+            runCatching { profileJson.decodeFromString<StudentProfileDto>(encoded) }.getOrNull()
+        } ?: StudentProfileDto(
+            sessionId = cached.sessionId,
+            rollNumber = cached.rollNumber,
+            name = cached.name,
+            linkedEmail = cached.linkedEmail,
+            gpa = cached.gpa,
+            cgpa = cached.cgpa,
         )
+        return StudentProfileMapper.dtoToDomain(dto, cached.sessionId, cached.rollNumber)
     }
-
     override suspend fun saveStudentProfile(profile: StudentProfile) {
         val dto = StudentProfileDto(
             sessionId = profile.sessionId,
@@ -278,7 +279,21 @@ class AcademicSessionRepositoryImpl @Inject constructor(
                 eq("roll_number", profile.rollNumber)
             }
         }
-        syncStudents(profile.sessionId)
+        val cached = studentDao.findByRoll(profile.sessionId, profile.rollNumber)
+        if (cached != null) {
+            studentDao.upsert(
+                cached.copy(
+                    name = profile.name,
+                    linkedEmail = profile.linkedEmail,
+                    gpa = profile.gpa,
+                    cgpa = profile.cgpa,
+                    profileJson = profileJson.encodeToString(dto),
+                    updatedAt = System.currentTimeMillis(),
+                ),
+            )
+        } else {
+            studentDao.upsert(dto.toEntity(profile.sessionId, deptOf(profile.sessionId)))
+        }
     }
 
     override suspend fun syncSessionsForDept(deptId: String) {
@@ -329,7 +344,7 @@ class AcademicSessionRepositoryImpl @Inject constructor(
                 }
                 order("updated_at", Order.ASCENDING)
                 range(offset, offset + PAGE_SIZE - 1)
-            }.decodeList<SessionStudentDto>()
+            }.decodeList<StudentProfileDto>()
             if (page.isEmpty()) break
 
             val entities = page.map { it.toEntity(sessionId, deptId) }

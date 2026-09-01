@@ -3,6 +3,7 @@ package com.mbd.cmsdesktop.di
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
+import com.mbd.cmscommon.data.sync.SyncCheckpointStore
 import com.mbd.cmsdesktop.data.cache.DesktopBootstrapSnapshotStore
 import dagger.Module
 import dagger.Provides
@@ -37,4 +38,8 @@ object PreferencesModule {
     @Provides
     @Singleton
     fun provideBootstrapSnapshotStore(): DesktopBootstrapSnapshotStore = DesktopBootstrapSnapshotStore(baseDir())
+
+    @Provides
+    @Singleton
+    fun provideSyncCheckpointStore(store: DesktopBootstrapSnapshotStore): SyncCheckpointStore = store
 }

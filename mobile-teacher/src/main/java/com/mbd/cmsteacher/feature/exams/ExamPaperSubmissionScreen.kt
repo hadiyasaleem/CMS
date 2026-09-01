@@ -12,7 +12,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.mbd.cmscommon.ui.components.ExamPaperSubmissionWorkspace
 import com.mbd.cmscommon.util.Outcome
 import com.mbd.cmscommon.util.FileOpener
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun ExamPaperSubmissionScreen(viewModel: ExamPaperSubmissionViewModel = hiltViewModel()) {
@@ -29,12 +31,20 @@ fun ExamPaperSubmissionScreen(viewModel: ExamPaperSubmissionViewModel = hiltView
         if (uri == null) return@rememberLauncherForActivityResult
         scope.launch {
             val resolver = context.contentResolver
-            var name = "paper.pdf"
-            resolver.query(uri, null, null, null, null)?.use { cursor ->
-                val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                if (index >= 0 && cursor.moveToFirst()) name = cursor.getString(index)
+            // Resolve the display name and read bytes off the main thread (files can approach the
+            // 5 MB cap; reading on Main risks an ANR).
+            val (bytes, name) = withContext(Dispatchers.IO) {
+                var displayName = "paper.pdf"
+                resolver.query(uri, null, null, null, null)?.use { cursor ->
+                    val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    if (index >= 0 && cursor.moveToFirst()) {
+                        cursor.getString(index)?.let { displayName = it }
+                    }
+                }
+                val read = resolver.openInputStream(uri)?.use { it.readBytes() }
+                read to displayName
             }
-            val bytes = resolver.openInputStream(uri)?.use { it.readBytes() } ?: return@launch
+            if (bytes == null) return@launch
             controller.upload(bytes, name)
         }
     }
@@ -44,7 +54,7 @@ fun ExamPaperSubmissionScreen(viewModel: ExamPaperSubmissionViewModel = hiltView
         selected = selected,
         examType = examType,
         submissions = submissions,
-        outcome = uploadState ?: Outcome.Success(Unit),
+        outcome = uploadState,
         onSelect = controller::select,
         onExamType = controller::selectExamType,
         onChooseFile = { pickFile.launch("application/pdf") },

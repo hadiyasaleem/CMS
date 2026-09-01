@@ -38,10 +38,17 @@ import com.mbd.cmscommon.domain.model.NotificationPriority
 import com.mbd.cmscommon.domain.model.NotificationTargetRole
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModWarn
 
-private val NoticeGreen = Color(0xFF2F6B4F)
-private val NoticeGold = Color(0xFF9A651B)
-private val NoticeRed = Color(0xFFB43A31)
+private val NoticeGreen = ModSuccess
+private val NoticeGold = ModWarn
+private val NoticeRed = ModAccent
 
 enum class NoticeTab(val label: String) {
     INBOX("Inbox"),
@@ -134,7 +141,7 @@ fun NotificationControllerWorkspace(controller: NotificationsController, modifie
 
 @Composable
 private fun NotificationHero(viewerRole: NotificationTargetRole, inboxCount: Int, canPublish: Boolean, onCompose: () -> Unit) {
-    Surface(shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("ACCOUNT & COMMUNICATIONS", color = NoticeGold, style = CmsTextStyles.eyebrow)
@@ -161,10 +168,10 @@ private fun NotificationSummaryCard(inbox: Int, sent: Int, urgent: Int) {
 
 @Composable
 private fun NoticeMetric(label: String, value: String, modifier: Modifier = Modifier, alert: Boolean = false) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(14.dp)) {
-            Text(value, color = if (alert) NoticeRed else Color(0xFF252321), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(), color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text(value, color = if (alert) NoticeRed else ModInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }
@@ -178,7 +185,7 @@ private fun NotificationCard(
     rowError: String?,
     onDelete: () -> Unit,
 ) {
-    Surface(shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(14.dp)) {
             NotificationListItem(notification, modifier = Modifier.padding(0.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -209,11 +216,11 @@ private fun NotificationNotice(message: String, color: Color, onDismiss: () -> U
 
 @Composable
 private fun NotificationEmpty(tab: NoticeTab) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Text(
             if (tab == NoticeTab.INBOX) "No notifications right now." else "You have not sent any notifications yet.",
             modifier = Modifier.padding(24.dp),
-            color = Color(0xFF77716A),
+            color = ModMuted,
             style = MaterialTheme.typography.bodyMedium,
         )
     }
@@ -249,7 +256,7 @@ private fun ComposeNotificationDialog(
                 OutlinedTextField(value = body, onValueChange = { body = it }, label = { Text("Message") }, modifier = Modifier.fillMaxWidth(), minLines = 3)
                 if (!teacherAudience) {
                     Spacer(Modifier.height(10.dp))
-                    Text("AUDIENCE", color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+                    Text("AUDIENCE", color = ModMuted, style = CmsTextStyles.eyebrow)
                     Spacer(Modifier.height(6.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         NotificationTargetRole.entries.forEach { role ->
@@ -288,7 +295,7 @@ private fun ComposeNotificationDialog(
                     )
                 }
                 Spacer(Modifier.height(10.dp))
-                Text("PRIORITY", color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+                Text("PRIORITY", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     NotificationPriority.entries.forEach { option ->

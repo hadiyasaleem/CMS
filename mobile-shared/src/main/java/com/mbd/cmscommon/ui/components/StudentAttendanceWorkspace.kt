@@ -32,12 +32,20 @@ import com.mbd.cmscommon.controller.SubjectAttendanceRow
 import com.mbd.cmscommon.domain.model.SubjectType
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModGround
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModSuccess
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModWarn
 
-private val AttendanceCanvas = Color(0xFFF7F5F0)
-private val AttendanceGreen = Color(0xFF2F6B4F)
-private val AttendanceGold = Color(0xFF9A651B)
-private val AttendanceRed = Color(0xFFB43A31)
-private val AttendanceBlue = Color(0xFF24577A)
+private val AttendanceCanvas = ModGround
+private val AttendanceGreen = ModSuccess
+private val AttendanceGold = ModWarn
+private val AttendanceRed = ModAccent
+private val AttendanceBlue = ModInk
 
 @Composable
 fun StudentAttendanceWorkspace(
@@ -59,11 +67,11 @@ fun StudentAttendanceWorkspace(
             item { EligibilityTracker(snapshot) }
             if (snapshot.rows.isEmpty()) {
                 item {
-                    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+                    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
                         Text(
                             "Your subject-wise attendance will appear here as teachers record classes.",
                             modifier = Modifier.padding(24.dp),
-                            color = Color(0xFF77716A),
+                            color = ModMuted,
                             style = MaterialTheme.typography.bodyMedium,
                         )
                     }
@@ -87,7 +95,7 @@ private fun AttendanceHero(heroPainter: Painter, snapshot: StudentAttendanceSnap
         else -> AttendanceRed
     }
 
-    Surface(modifier = Modifier.fillMaxWidth().height(150.dp), shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(modifier = Modifier.fillMaxWidth().height(150.dp), shape = RoundedCornerShape(18.dp), color = ModInk) {
         Box(Modifier.fillMaxSize()) {
             Image(
                 painter = heroPainter,
@@ -132,12 +140,12 @@ private fun EligibilityTracker(snapshot: StudentAttendanceSnapshot) {
         else -> "Overall attendance is ${percent.toInt()}%. Protect your 75% attendance by attending upcoming lectures."
     }
 
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, tone.copy(alpha = 0.3f))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, tone.copy(alpha = 0.3f))) {
         Column(Modifier.padding(16.dp)) {
-            Text("ELIGIBILITY TRACKER", color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text("ELIGIBILITY TRACKER", color = ModMuted, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
             Text(headline, color = tone, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-            Text(guidance, color = Color(0xFF625E58), style = MaterialTheme.typography.bodyMedium)
+            Text(guidance, color = ModMuted, style = MaterialTheme.typography.bodyMedium)
             Spacer(Modifier.height(10.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 AttendanceCount("Total", snapshot.markedLectures, AttendanceBlue)
@@ -146,7 +154,7 @@ private fun EligibilityTracker(snapshot: StudentAttendanceSnapshot) {
             }
             snapshot.weakestSubject?.let { weakest ->
                 Spacer(Modifier.height(8.dp))
-                Text("Lowest recorded subject: ${weakest.subjectName} (${weakest.percentage.toInt()}%)", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                Text("Lowest recorded subject: ${weakest.subjectName} (${weakest.percentage.toInt()}%)", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             }
         }
     }
@@ -156,7 +164,7 @@ private fun EligibilityTracker(snapshot: StudentAttendanceSnapshot) {
 private fun AttendanceCount(label: String, value: Int, color: Color) {
     Column {
         Text(value.toString(), color = color, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-        Text(label.uppercase(), color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+        Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
     }
 }
 
@@ -168,14 +176,14 @@ private fun SubjectAttendanceCard(row: SubjectAttendanceRow) {
         row.percentage >= 70f -> AttendanceGold
         else -> AttendanceRed
     }
-    Surface(shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(row.subjectName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
                     Text(
                         listOfNotNull(row.courseCode, row.semester?.let { "Semester $it" }, row.subjectType?.let { if (it == SubjectType.LAB) "Lab" else "Theory" }).joinToString(" · "),
-                        color = Color(0xFF77716A),
+                        color = ModMuted,
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }
@@ -183,7 +191,7 @@ private fun SubjectAttendanceCard(row: SubjectAttendanceRow) {
             }
             if (row.total == 0) {
                 Spacer(Modifier.height(6.dp))
-                Text("Attendance has not been marked for this subject yet.", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                Text("Attendance has not been marked for this subject yet.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             } else {
                 Spacer(Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -198,7 +206,7 @@ private fun SubjectAttendanceCard(row: SubjectAttendanceRow) {
                     } else {
                         "Attend the next ${row.lecturesNeededFor75} lecture(s) to reach 75%."
                     },
-                    color = Color(0xFF77716A),
+                    color = ModMuted,
                     style = MaterialTheme.typography.bodySmall,
                 )
             }

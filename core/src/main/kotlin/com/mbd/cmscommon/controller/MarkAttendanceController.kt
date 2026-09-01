@@ -76,8 +76,6 @@ class MarkAttendanceController(
         _lectureTopic.value = ""
         _alreadyMarked.value = false
         launch {
-            runCatching { sessionRepository.syncStudents(assignment.sessionId) }
-            runCatching { attendanceRepository.syncSummary(assignment.sessionId, assignment.courseCode) }
             _alreadyMarked.value = runCatching {
                 attendanceRepository.isMarkedOn(assignment.sessionId, assignment.courseCode, LocalDate.now())
             }.getOrDefault(false)
@@ -106,6 +104,7 @@ class MarkAttendanceController(
     fun submit() {
         val assignment = _selected.value ?: return
         if (_alreadyMarked.value) return
+        if (_submitState.value is Outcome.Loading) return // single-flight: block a double-tap
 
         val statuses = _statuses.value
         val students = roster.value
@@ -132,6 +131,7 @@ class MarkAttendanceController(
                 remark = remarks[student.rollNumber],
             )
         }
+        _submitState.value = Outcome.Loading // set before launch so the guard above sees it synchronously
         submitRecords(assignment, records)
     }
 

@@ -38,16 +38,22 @@ class SessionFeesController(
 
     private val _saving = MutableStateFlow(false)
     val saving: StateFlow<Boolean> = _saving.asStateFlow()
+    private var structureVersion = 0
+
 
     init {
         load()
     }
 
-    private fun load() = launch {
-        try {
-            _structure.value = repo.getSessionFee(sessionId)
-        } finally {
-            _loading.value = false
+    private fun load() {
+        val loadVersion = structureVersion
+        launch {
+            try {
+                val loaded = repo.getSessionFee(sessionId)
+                if (loadVersion == structureVersion) _structure.value = loaded
+            } finally {
+                _loading.value = false
+            }
         }
     }
 
@@ -82,6 +88,7 @@ class SessionFeesController(
                 paymentNote = paymentNote.trim().takeIf { it.isNotBlank() },
             )
             repo.saveSessionFee(updated, updatedBy)
+            structureVersion++
             _structure.value = updated
             _saved.value = true
         } finally {

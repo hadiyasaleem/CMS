@@ -9,6 +9,7 @@ import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
 import com.mbd.cmscommon.domain.repository.SessionTimetableRepository
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
@@ -77,9 +78,9 @@ fun nextClassFrom(periods: List<SessionPeriod>, date: LocalDate = LocalDate.now(
         val dayOfWeek = date.dayOfWeek.plus(offset.toLong())
         val candidate = activeLectures(periods, day)
             .filter { it.day == dayOfWeek }
-            .sortedBy { it.startTime }
+            .sortedBy { parseScheduleTime(it.startTime) ?: LocalTime.MAX }
             .firstOrNull { period ->
-                val start = runCatching { LocalTime.parse(period.startTime) }.getOrNull() ?: return@firstOrNull false
+                val start = parseScheduleTime(period.startTime) ?: return@firstOrNull false
                 offset != 0 || start.isAfter(time)
             } ?: continue
 
@@ -97,3 +98,7 @@ fun nextClassFrom(periods: List<SessionPeriod>, date: LocalDate = LocalDate.now(
     }
     return null
 }
+private val scheduleTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("H:mm")
+
+private fun parseScheduleTime(value: String?): LocalTime? =
+    value?.trim()?.let { runCatching { LocalTime.parse(it, scheduleTimeFormatter) }.getOrNull() }

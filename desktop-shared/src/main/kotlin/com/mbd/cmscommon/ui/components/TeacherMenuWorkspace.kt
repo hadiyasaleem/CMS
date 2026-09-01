@@ -47,9 +47,15 @@ import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.domain.model.TeacherMenuSnapshot
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModGround
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModWarn
 
-private val MenuCanvas = Color(0xFFF7F5F0)
-private val MenuBlue = Color(0xFF24577A)
+private val MenuCanvas = ModGround
+private val MenuBlue = ModInk
 
 private data class TeacherMenuItem(
     val label: String,
@@ -120,7 +126,7 @@ fun TeacherMenuWorkspace(
 
 @Composable
 private fun TeacherMenuHeader(heroPainter: Painter, snapshot: TeacherMenuSnapshot, onSignOut: () -> Unit) {
-    Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = ModInk) {
         Box(Modifier.fillMaxSize()) {
             Image(
                 painter = heroPainter,
@@ -132,7 +138,7 @@ private fun TeacherMenuHeader(heroPainter: Painter, snapshot: TeacherMenuSnapsho
             )
             Row(Modifier.align(Alignment.CenterStart).padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("MENU", color = Color(0xFF9A651B), style = CmsTextStyles.eyebrow)
+                    Text("MENU", color = ModWarn, style = CmsTextStyles.eyebrow)
                     Spacer(Modifier.height(6.dp))
                     Text(snapshot.teacherName, color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
                 }
@@ -147,15 +153,15 @@ private fun TeacherMenuCard(item: TeacherMenuItem) {
     Surface(
         modifier = Modifier.fillMaxWidth().clickable(onClick = item.onClick),
         shape = RoundedCornerShape(16.dp),
-        color = Color.White,
-        border = BorderStroke(1.dp, Color(0xFFE5E0D7)),
+        color = ModSurface,
+        border = BorderStroke(1.dp, ModTrack),
     ) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(item.icon, contentDescription = null, tint = MenuBlue)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(item.label, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                Text(item.detail, color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                Text(item.detail, color = ModMuted, style = MaterialTheme.typography.bodySmall)
             }
             if (item.badge != null && item.badgeTone != null) {
                 StatusBadge(item.badge, item.badgeTone)

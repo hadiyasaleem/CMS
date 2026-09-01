@@ -46,10 +46,10 @@ class PeopleHubController(
     private var cachedEdits: List<MarkEditRequest> = emptyList()
 
     init {
-        refresh()
+        refresh(fetchRemote = false)
     }
 
-    fun refresh() {
+    fun refresh(fetchRemote: Boolean = true) {
         loadVersion++
         val version = loadVersion
         launch {
@@ -58,24 +58,38 @@ class PeopleHubController(
             supervisorScope {
                 val administratorsDeferred = async {
                     runCatching {
-                        administratorRepository.sync()
+                        if (fetchRemote) administratorRepository.sync()
                         administratorRepository.observeAdministrators().first()
                     }
                 }
                 val teachersDeferred = async {
                     runCatching {
-                        teacherRepository.sync()
+                        if (fetchRemote) teacherRepository.sync()
                         teacherRepository.observeActiveTeachers().first()
                     }
                 }
-                val studentsDeferred = async { runCatching { sessionRepository.observeTotalStudentCount().first() } }
+                val studentsDeferred = async {
+                    runCatching {
+                        if (fetchRemote) {
+                            sessionRepository.observeAllSessions().first().forEach { session ->
+                                sessionRepository.syncStudents(session.sessionId)
+                            }
+                        }
+                        sessionRepository.observeTotalStudentCount().first()
+                    }
+                }
                 val linksDeferred = async {
                     runCatching {
-                        linkRequestRepository.sync()
+                        if (fetchRemote) linkRequestRepository.sync()
                         linkRequestRepository.observePendingRequests().first()
                     }
                 }
-                val editsDeferred = async { runCatching { markEditRequestRepository.getPendingRequests() } }
+                val editsDeferred = async {
+                    runCatching {
+                        if (fetchRemote) markEditRequestRepository.sync()
+                        markEditRequestRepository.getPendingRequests()
+                    }
+                }
 
                 val administratorsResult = administratorsDeferred.await()
                 val teachersResult = teachersDeferred.await()

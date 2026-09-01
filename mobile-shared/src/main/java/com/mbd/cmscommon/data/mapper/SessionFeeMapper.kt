@@ -24,6 +24,9 @@ object SessionFeeMapper {
         createdBy = dto.createdBy,
         updatedAt = PgTime.parseOrEpoch(dto.updatedAt).toEpochMilli(),
         updatedBy = dto.updatedBy,
+        isDeleted = dto.isDeleted,
+        deletedAt = PgTime.parse(dto.deletedAt)?.toEpochMilli(),
+        deletedBy = dto.deletedBy,
     )
 
     fun headDtoToEntity(dto: SessionFeeHeadDto): SessionFeeHeadEntity = SessionFeeHeadEntity(
@@ -37,6 +40,9 @@ object SessionFeeMapper {
         createdBy = dto.createdBy,
         updatedAt = PgTime.parseOrEpoch(dto.updatedAt).toEpochMilli(),
         updatedBy = dto.updatedBy,
+        isDeleted = dto.isDeleted,
+        deletedAt = PgTime.parse(dto.deletedAt)?.toEpochMilli(),
+        deletedBy = dto.deletedBy,
     )
 
     fun toDomain(fee: SessionFeeEntity, heads: List<SessionFeeHeadEntity>): SessionFeeStructure {

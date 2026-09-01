@@ -37,11 +37,15 @@ class StudentExamsHubViewModel @Inject constructor(
         .distinctUntilChangedBy { it?.studentId }
         .flatMapLatest { context ->
             if (context == null) {
+                _loading.value = false // unlinked/no student: resolve loading so the UI can show an empty state
                 flowOf<StudentExamsHubSnapshot?>(null)
             } else {
                 _refreshTrigger.map {
                     _loading.value = true
                     try {
+                        // Pull remote marks before reading local cache (mirrors StudentExamsHubController.refresh),
+                        // otherwise the hub only ever shows stale/empty cached data.
+                        runCatching { marksRepository.syncSession(context.sessionId) }
                         val scores = runCatching { marksRepository.observeStudentMarks(context.sessionId, context.rollNumber).first() }.getOrDefault(emptyList())
                         val results = runCatching { marksRepository.getSemesterGpa(context.sessionId, context.rollNumber) }.getOrDefault(emptyList())
                         val datesheets = runCatching { datesheetRepository.getDatesheets() }.getOrDefault(emptyList())

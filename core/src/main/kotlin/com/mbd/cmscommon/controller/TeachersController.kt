@@ -61,7 +61,7 @@ class TeachersController(
     val notice: StateFlow<String?> = _notice.asStateFlow()
 
     init {
-        refresh()
+        _loading.value = false
     }
 
     fun refresh() = launch {

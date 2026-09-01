@@ -151,6 +151,7 @@ data class SessionStudentEntity(
     val linkedEmail: String?,
     val gpa: Double?,
     val cgpa: Double?,
+    val profileJson: String? = null,
     val entityId: Long = 0L,
     val createdAt: Long = 0L,
     val createdBy: String? = null,

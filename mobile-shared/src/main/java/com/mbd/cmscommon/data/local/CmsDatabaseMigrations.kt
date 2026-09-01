@@ -423,3 +423,36 @@ val MIGRATION_30_31: Migration = object : Migration(30, 31) {
         db.execSQL("DROP TABLE IF EXISTS `documents`")
     }
 }
+
+/**
+ * Persists an independent high-water mark for each Supabase table and query scope. The
+ * startup-bootstrap marker deliberately remains in sync_state: completing one bootstrap must
+ * never advance a table that failed part-way through an incremental refresh.
+ */
+val MIGRATION_31_32: Migration = object : Migration(31, 32) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `table_sync_state` (
+                `owner_key` TEXT NOT NULL,
+                `table_name` TEXT NOT NULL,
+                `scope_key` TEXT NOT NULL,
+                `last_updated_at` TEXT NOT NULL,
+                `last_successful_sync_at` TEXT NOT NULL,
+                `created_at` INTEGER NOT NULL,
+                `created_by` TEXT,
+                `updated_at` INTEGER NOT NULL,
+                `updated_by` TEXT,
+                PRIMARY KEY(`owner_key`, `table_name`, `scope_key`)
+            )
+            """.trimIndent(),
+        )
+    }
+}
+
+/** Adds a compact durable copy of the full student profile returned by session_students. */
+val MIGRATION_32_33: Migration = object : Migration(32, 33) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `session_students` ADD COLUMN `profileJson` TEXT")
+    }
+}

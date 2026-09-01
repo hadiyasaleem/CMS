@@ -35,15 +35,21 @@ import com.mbd.cmscommon.domain.model.SessionPeriod
 import com.mbd.cmscommon.domain.model.Teacher
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModInk
+import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModSurface
+import com.mbd.cmscommon.ui.theme.ModAccent
+import com.mbd.cmscommon.ui.theme.ModWarn
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.TextStyle
 import java.util.Locale
 
-private val TimetableGold = Color(0xFF9A651B)
-private val TimetableRed = Color(0xFFB43A31)
-private val TimetableBlue = Color(0xFF24577A)
+private val TimetableGold = ModWarn
+private val TimetableRed = ModAccent
+private val TimetableBlue = ModInk
 private val TIMETABLE_DAYS = listOf(
     DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
     DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY,
@@ -161,7 +167,7 @@ private fun conflictingPeriodIds(periods: List<SessionPeriod>): Set<String> {
 
 @Composable
 private fun TimetableHero(session: AcademicSession?, onAdd: () -> Unit) {
-    Surface(shape = RoundedCornerShape(18.dp), color = Color(0xFF252321)) {
+    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("WEEKLY TIMETABLE", color = TimetableGold, style = CmsTextStyles.eyebrow)
@@ -187,10 +193,10 @@ private fun TimetableSummaryCard(periodCount: Int, rooms: Int, teachers: Int, is
 
 @Composable
 private fun TimetableMetric(label: String, value: String, modifier: Modifier = Modifier, alert: Boolean = false) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(14.dp)) {
-            Text(value, color = if (alert) TimetableRed else Color(0xFF252321), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(), color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+            Text(value, color = if (alert) TimetableRed else ModInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }
@@ -200,8 +206,8 @@ private fun SchedulePeriodCard(period: SessionPeriod, hasConflict: Boolean, onEd
     val isBreak = period.periodType == PeriodType.BREAK
     Surface(
         shape = RoundedCornerShape(14.dp),
-        color = Color.White,
-        border = BorderStroke(1.dp, if (hasConflict) TimetableRed.copy(alpha = 0.4f) else Color(0xFFE5E0D7)),
+        color = ModSurface,
+        border = BorderStroke(1.dp, if (hasConflict) TimetableRed.copy(alpha = 0.4f) else ModTrack),
     ) {
         Column(Modifier.padding(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -213,9 +219,9 @@ private fun SchedulePeriodCard(period: SessionPeriod, hasConflict: Boolean, onEd
             }
             if (!isBreak) {
                 Spacer(Modifier.height(4.dp))
-                Text(period.teacherName.ifBlank { "Teacher not assigned" }, color = if (period.teacherId.isBlank()) TimetableGold else Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                Text(period.teacherName.ifBlank { "Teacher not assigned" }, color = if (period.teacherId.isBlank()) TimetableGold else ModMuted, style = MaterialTheme.typography.bodySmall)
                 if (!period.roomNo.isNullOrBlank() || !period.building.isNullOrBlank()) {
-                    Text(listOfNotNull(period.building, period.roomNo).joinToString(" / "), color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+                    Text(listOfNotNull(period.building, period.roomNo).joinToString(" / "), color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
             }
             Spacer(Modifier.height(8.dp))
@@ -229,11 +235,11 @@ private fun SchedulePeriodCard(period: SessionPeriod, hasConflict: Boolean, onEd
 
 @Composable
 private fun TimetableEmptyState(onAdd: () -> Unit) {
-    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFE5E0D7))) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text("No periods scheduled", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(4.dp))
-            Text("Keep as a free day or add a period.", color = Color(0xFF77716A), style = MaterialTheme.typography.bodySmall)
+            Text("Keep as a free day or add a period.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(12.dp))
             CmsPrimaryButton(text = "Add period", onClick = onAdd)
         }
@@ -275,7 +281,7 @@ private fun PeriodEditorDialog(
                     OutlinedTextField(value = end, onValueChange = { end = it }, label = { Text("End") }, placeholder = { Text("HH:MM") }, modifier = Modifier.weight(1f), singleLine = true)
                 }
                 Spacer(Modifier.height(10.dp))
-                Text("PERIOD TYPE", color = Color(0xFF77716A), style = CmsTextStyles.eyebrow)
+                Text("PERIOD TYPE", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     PeriodType.entries.forEach { option -> CmsChip(option.name, selected = type == option, onClick = { type = option }) }

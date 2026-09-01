@@ -42,7 +42,7 @@ object AttendanceExporter {
     ).joinToString(" · ")
 
     private fun csv(v: String): String =
-        if (!v.contains(',') && !v.contains('"')) v else "\"${v.replace("\"", "\"\"")}\""
+        if (!v.contains(',') && !v.contains('"') && !v.contains('\n') && !v.contains('\r')) v else "\"${v.replace("\"", "\"\"")}\""
 
     private fun fileName(course: String, month: String, ext: String): String =
         "attendance_${course}_$month".replace(Regex("[^A-Za-z0-9_]"), "_") + ".$ext"
