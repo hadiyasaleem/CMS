@@ -69,10 +69,10 @@ interface SemesterSubjectDao {
     @Query("DELETE FROM semester_subjects WHERE id IN (:ids)")
     suspend fun deleteByIds(ids: List<String>)
 
-    @Query("DELETE FROM semester_subjects WHERE sessionId = :sessionId AND semester = :semester")
     @Query("DELETE FROM semester_subjects WHERE sessionId = :sessionId AND semester = :semester AND courseCode = :courseCode")
     suspend fun deleteByCourseCode(sessionId: String, semester: Int, courseCode: String)
 
+    @Query("DELETE FROM semester_subjects WHERE sessionId = :sessionId AND semester = :semester")
     suspend fun deleteForSemester(sessionId: String, semester: Int)
 
     @Query("DELETE FROM semester_subjects WHERE sessionId = :sessionId")
