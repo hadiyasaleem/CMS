@@ -21,7 +21,6 @@ import com.mbd.cmscommon.domain.repository.StudentLinkRequestRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
 import com.mbd.cmscommon.domain.repository.UserRepository
 import com.mbd.cmsdesktop.auth.DesktopRoleResolver
-import com.mbd.cmsdesktop.data.cache.DesktopBootstrapSnapshotStore
 import dagger.Component
 import io.github.jan.supabase.auth.Auth
 import javax.inject.Singleton
@@ -33,11 +32,10 @@ import javax.inject.Singleton
  * `hiltViewModel()` equivalent on desktop — see the "manual navigation" pattern in [[cmsdesktop-project]]).
  */
 @Singleton
-@Component(modules = [SupabaseModule::class, RepositoryModule::class, PreferencesModule::class])
+@Component(modules = [SupabaseModule::class, RepositoryModule::class, DesktopRoomModule::class])
 interface DesktopAppComponent {
 
     fun adminDataBootstrapper(): AdminDataBootstrapper
-    fun bootstrapSnapshotStore(): DesktopBootstrapSnapshotStore
     fun auth(): Auth
     fun sessionManager(): SessionManager
     fun roleResolver(): DesktopRoleResolver

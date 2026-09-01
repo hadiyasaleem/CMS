@@ -1,13 +1,13 @@
 package com.mbd.cmsdesktop.di
 
-import com.russhwolf.settings.Settings
+import com.mbd.cmsdesktop.auth.RoomAuthCodeVerifierCache
+import com.mbd.cmsdesktop.auth.RoomAuthSessionManager
+import com.mbd.cmsdesktop.data.local.DesktopDatabase
 import dagger.Module
 import dagger.Provides
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.auth.Auth
-import io.github.jan.supabase.auth.SettingsCodeVerifierCache
-import io.github.jan.supabase.auth.SettingsSessionManager
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.functions.Functions
 import io.github.jan.supabase.functions.functions
@@ -26,8 +26,7 @@ import kotlinx.serialization.json.JsonNamingStrategy
  * `cms.supabase.anonKey`, falling back to `SUPABASE_URL`/`SUPABASE_ANON_KEY` env vars) — there's no
  * `BuildConfig` on a plain-JVM module. The Auth session/PKCE-verifier caches are keyed per
  * `cms.desktop.appId` so admin/teacher/student desktop apps don't clobber each other's login state
- * when run side by side on the same machine; a one-time migration copies over the legacy
- * "shared"-scoped settings the first time a per-app id is introduced.
+ * when run side by side on the same machine. The durable session and PKCE state are stored in Room.
  */
 @Module
 object SupabaseModule {
@@ -48,27 +47,10 @@ object SupabaseModule {
         return url to key
     }
 
-    private fun migrateSetting(settings: Settings, oldKey: String, newKey: String) {
-        val existing = settings.getStringOrNull(newKey)
-        if (existing == null) {
-            val legacyValue = settings.getStringOrNull(oldKey)
-            if (legacyValue != null) {
-                settings.putString(newKey, legacyValue)
-            }
-        }
-    }
-
-    private fun migrateLegacySharedAuthSettings(appId: String) {
-        if (appId == "shared") return
-        val settings = Settings()
-        migrateSetting(settings, "cmsdesktop-shared-session", "cmsdesktop-$appId-session")
-        migrateSetting(settings, "cmsdesktop-shared-code-verifier", "cmsdesktop-$appId-code-verifier")
-    }
-
     @OptIn(ExperimentalSerializationApi::class)
     @Provides
     @Singleton
-    fun provideSupabaseClient(): SupabaseClient {
+    fun provideSupabaseClient(database: DesktopDatabase): SupabaseClient {
         val (url, key) = readConfig()
         return createSupabaseClient(supabaseUrl = url, supabaseKey = key) {
             defaultSerializer = KotlinXSerializer(
@@ -84,9 +66,8 @@ object SupabaseModule {
             )
             install(Auth) {
                 val appId = this@SupabaseModule.appId()
-                migrateLegacySharedAuthSettings(appId)
-                sessionManager = SettingsSessionManager(key = "cmsdesktop-$appId-session")
-                codeVerifierCache = SettingsCodeVerifierCache(key = "cmsdesktop-$appId-code-verifier")
+                sessionManager = RoomAuthSessionManager(database.desktopAuthSessionDao())
+                codeVerifierCache = RoomAuthCodeVerifierCache(database.desktopAuthCodeVerifierDao())
             }
             install(Postgrest)
             install(Storage)

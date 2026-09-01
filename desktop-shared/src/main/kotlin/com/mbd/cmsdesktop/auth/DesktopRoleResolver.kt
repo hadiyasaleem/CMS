@@ -9,9 +9,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Desktop has no local Room cache to observe (mobile's `RoleResolver` combines `UserDao`/`TeacherDao`
- * flows) — role resolution here is two plain Postgrest lookups: `profiles` by email/uid, then
- * `teachers` by email when the profile is a teacher, to pick up permission flags.
+ * Resolves the current server role during sign-in. The Room-backed [UserRepository] persists the
+ * resolved role and the mobile-compatible repository layer serves subsequent cached reads.
  */
 @Singleton
 class DesktopRoleResolver @Inject constructor(

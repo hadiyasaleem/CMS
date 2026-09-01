@@ -1,11 +1,22 @@
 package com.mbd.cmsdesktop.di
 
-import com.mbd.cmscommon.data.repository.DesktopAdministratorRepository
-import com.mbd.cmscommon.data.repository.DesktopCalendarRepository
-import com.mbd.cmscommon.data.repository.DesktopDatesheetRepository
-import com.mbd.cmscommon.data.repository.DesktopFineRepository
-import com.mbd.cmscommon.data.repository.DesktopInsightsRepository
-import com.mbd.cmscommon.data.repository.DesktopMarkEditRequestRepository
+import com.mbd.cmscommon.data.repository.AcademicSessionRepositoryImpl
+import com.mbd.cmscommon.data.repository.AdministratorRepositoryLocalImpl
+import com.mbd.cmscommon.data.repository.CalendarRepositoryLocalImpl
+import com.mbd.cmscommon.data.repository.CurriculumRepositoryImpl
+import com.mbd.cmscommon.data.repository.DatesheetRepositoryLocalImpl
+import com.mbd.cmscommon.data.repository.DepartmentRepositoryImpl
+import com.mbd.cmscommon.data.repository.ExamPaperSubmissionRepositoryImpl
+import com.mbd.cmscommon.data.repository.FineRepositoryLocalImpl
+import com.mbd.cmscommon.data.repository.InsightsRepositoryLocalImpl
+import com.mbd.cmscommon.data.repository.MarkEditRequestRepositoryLocalImpl
+import com.mbd.cmscommon.data.repository.SessionAttendanceRepositoryImpl
+import com.mbd.cmscommon.data.repository.SessionFeeRepositoryImpl
+import com.mbd.cmscommon.data.repository.SessionMarksRepositoryImpl
+import com.mbd.cmscommon.data.repository.SessionTimetableRepositoryImpl
+import com.mbd.cmscommon.data.repository.StudentLinkRequestRepositoryImpl
+import com.mbd.cmscommon.data.repository.TeacherRepositoryImpl
+import com.mbd.cmscommon.data.repository.UserRepositoryImpl
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.AdministratorRepository
 import com.mbd.cmscommon.domain.repository.CalendarRepository
@@ -24,18 +35,7 @@ import com.mbd.cmscommon.domain.repository.SessionTimetableRepository
 import com.mbd.cmscommon.domain.repository.StudentLinkRequestRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
 import com.mbd.cmscommon.domain.repository.UserRepository
-import com.mbd.cmsdesktop.data.repository.DesktopAcademicSessionRepositoryImpl
-import com.mbd.cmsdesktop.data.repository.DesktopCurriculumRepositoryImpl
-import com.mbd.cmsdesktop.data.repository.DesktopDepartmentRepositoryImpl
-import com.mbd.cmsdesktop.data.repository.DesktopExamPaperSubmissionRepository
-import com.mbd.cmsdesktop.data.repository.DesktopNotificationRepositoryImpl
-import com.mbd.cmsdesktop.data.repository.DesktopSessionAttendanceRepositoryImpl
-import com.mbd.cmsdesktop.data.repository.DesktopSessionFeeRepositoryImpl
-import com.mbd.cmsdesktop.data.repository.DesktopSessionMarksRepositoryImpl
-import com.mbd.cmsdesktop.data.repository.DesktopSessionTimetableRepositoryImpl
-import com.mbd.cmsdesktop.data.repository.DesktopStudentLinkRequestRepositoryImpl
-import com.mbd.cmsdesktop.data.repository.DesktopTeacherRepositoryImpl
-import com.mbd.cmsdesktop.data.repository.DesktopUserRepositoryImpl
+import com.mbd.cmsdesktop.data.repository.DesktopNotificationRepository
 import dagger.Binds
 import dagger.Module
 import javax.inject.Singleton
@@ -43,22 +43,22 @@ import javax.inject.Singleton
 /** Desktop repository bindings use durable/cache-first adapters for all read-heavy screens. */
 @Module
 abstract class RepositoryModule {
-    @Singleton @Binds abstract fun bindDatesheetRepository(impl: DesktopDatesheetRepository): DatesheetRepository
-    @Singleton @Binds abstract fun bindInsightsRepository(impl: DesktopInsightsRepository): InsightsRepository
-    @Singleton @Binds abstract fun bindUserRepository(impl: DesktopUserRepositoryImpl): UserRepository
-    @Singleton @Binds abstract fun bindAdministratorRepository(impl: DesktopAdministratorRepository): AdministratorRepository
-    @Singleton @Binds abstract fun bindNotificationRepository(impl: DesktopNotificationRepositoryImpl): NotificationRepository
-    @Singleton @Binds abstract fun bindTeacherRepository(impl: DesktopTeacherRepositoryImpl): TeacherRepository
-    @Singleton @Binds abstract fun bindDepartmentRepository(impl: DesktopDepartmentRepositoryImpl): DepartmentRepository
-    @Singleton @Binds abstract fun bindMarkEditRequestRepository(impl: DesktopMarkEditRequestRepository): MarkEditRequestRepository
-    @Singleton @Binds abstract fun bindCalendarRepository(impl: DesktopCalendarRepository): CalendarRepository
-    @Singleton @Binds abstract fun bindAcademicSessionRepository(impl: DesktopAcademicSessionRepositoryImpl): AcademicSessionRepository
-    @Singleton @Binds abstract fun bindCurriculumRepository(impl: DesktopCurriculumRepositoryImpl): CurriculumRepository
-    @Singleton @Binds abstract fun bindSessionFeeRepository(impl: DesktopSessionFeeRepositoryImpl): SessionFeeRepository
-    @Singleton @Binds abstract fun bindSessionTimetableRepository(impl: DesktopSessionTimetableRepositoryImpl): SessionTimetableRepository
-    @Singleton @Binds abstract fun bindStudentLinkRequestRepository(impl: DesktopStudentLinkRequestRepositoryImpl): StudentLinkRequestRepository
-    @Singleton @Binds abstract fun bindSessionAttendanceRepository(impl: DesktopSessionAttendanceRepositoryImpl): SessionAttendanceRepository
-    @Singleton @Binds abstract fun bindSessionMarksRepository(impl: DesktopSessionMarksRepositoryImpl): SessionMarksRepository
-    @Singleton @Binds abstract fun bindFineRepository(impl: DesktopFineRepository): FineRepository
-    @Singleton @Binds abstract fun bindExamPaperSubmissionRepository(impl: DesktopExamPaperSubmissionRepository): ExamPaperSubmissionRepository
+    @Singleton @Binds abstract fun bindDatesheetRepository(impl: DatesheetRepositoryLocalImpl): DatesheetRepository
+    @Singleton @Binds abstract fun bindInsightsRepository(impl: InsightsRepositoryLocalImpl): InsightsRepository
+    @Singleton @Binds abstract fun bindUserRepository(impl: UserRepositoryImpl): UserRepository
+    @Singleton @Binds abstract fun bindAdministratorRepository(impl: AdministratorRepositoryLocalImpl): AdministratorRepository
+    @Singleton @Binds abstract fun bindNotificationRepository(impl: DesktopNotificationRepository): NotificationRepository
+    @Singleton @Binds abstract fun bindTeacherRepository(impl: TeacherRepositoryImpl): TeacherRepository
+    @Singleton @Binds abstract fun bindDepartmentRepository(impl: DepartmentRepositoryImpl): DepartmentRepository
+    @Singleton @Binds abstract fun bindMarkEditRequestRepository(impl: MarkEditRequestRepositoryLocalImpl): MarkEditRequestRepository
+    @Singleton @Binds abstract fun bindCalendarRepository(impl: CalendarRepositoryLocalImpl): CalendarRepository
+    @Singleton @Binds abstract fun bindAcademicSessionRepository(impl: AcademicSessionRepositoryImpl): AcademicSessionRepository
+    @Singleton @Binds abstract fun bindCurriculumRepository(impl: CurriculumRepositoryImpl): CurriculumRepository
+    @Singleton @Binds abstract fun bindSessionFeeRepository(impl: SessionFeeRepositoryImpl): SessionFeeRepository
+    @Singleton @Binds abstract fun bindSessionTimetableRepository(impl: SessionTimetableRepositoryImpl): SessionTimetableRepository
+    @Singleton @Binds abstract fun bindStudentLinkRequestRepository(impl: StudentLinkRequestRepositoryImpl): StudentLinkRequestRepository
+    @Singleton @Binds abstract fun bindSessionAttendanceRepository(impl: SessionAttendanceRepositoryImpl): SessionAttendanceRepository
+    @Singleton @Binds abstract fun bindSessionMarksRepository(impl: SessionMarksRepositoryImpl): SessionMarksRepository
+    @Singleton @Binds abstract fun bindFineRepository(impl: FineRepositoryLocalImpl): FineRepository
+    @Singleton @Binds abstract fun bindExamPaperSubmissionRepository(impl: ExamPaperSubmissionRepositoryImpl): ExamPaperSubmissionRepository
 }
