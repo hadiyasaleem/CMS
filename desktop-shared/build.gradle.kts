@@ -23,16 +23,19 @@ sourceSets {
         )
         // Android migration classes target Android's SQLite API. Desktop starts with its own
         // Room database and uses the JVM bundled SQLite driver instead.
+        // NOTE: kotlin.exclude filters compileKotlin but NOT the kspKotlin task, so any excluded
+        // file here is still fed to KSP (Dagger/Room). Only exclude files that KSP can process
+        // without error. NotificationRepositoryImpl is reused as-is (its DataStore dependency is
+        // supplied below) rather than excluded, because excluding it left Dagger's
+        // InjectProcessingStep generating a factory for a file compileKotlin never compiled.
         kotlin.exclude(
             "CmsDatabase.kt",
             "CmsDatabaseMigrations.kt",
             "Converters.kt",
-            "NotificationRepositoryImpl.kt",
             "AdminDataBootstrapper.kt",
             "**/CmsDatabase.kt",
             "**/CmsDatabaseMigrations.kt",
             "**/Converters.kt",
-            "**/NotificationRepositoryImpl.kt",
             // Desktop keeps its identical bootstrapper so this source root does not define it twice.
             "**/AdminDataBootstrapper.kt",
         )
@@ -57,6 +60,12 @@ dependencies {
     api(libs.desktop.room.runtime)
     api(libs.desktop.sqlite.bundled)
     ksp(libs.desktop.room.compiler)
+
+    // The reused mobile NotificationRepositoryImpl persists the notifications "last viewed" marker
+    // via DataStore<Preferences>. Desktop binds DesktopNotificationRepository instead, so this is
+    // only needed so the reused file (and the Dagger factory KSP generates for it) resolves the
+    // DataStore type. datastore-preferences-core is the pure-JVM/KMP core (no Android runtime).
+    implementation("androidx.datastore:datastore-preferences-core:1.1.1")
 
     testImplementation(libs.junit)
 }
