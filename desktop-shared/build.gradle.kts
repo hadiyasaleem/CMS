@@ -32,12 +32,15 @@ sourceSets {
             "CmsDatabase.kt",
             "CmsDatabaseMigrations.kt",
             "Converters.kt",
-            "AdminDataBootstrapper.kt",
             "**/CmsDatabase.kt",
             "**/CmsDatabaseMigrations.kt",
             "**/Converters.kt",
-            // Desktop keeps its identical bootstrapper so this source root does not define it twice.
-            "**/AdminDataBootstrapper.kt",
+            // Desktop keeps its identical bootstrapper so the reused mobile source root does not
+            // define it twice. This pattern is intentionally root-anchored (no "**/"): the mobile
+            // copy sits at the root of the added data/sync srcDir, while the desktop copy is nested
+            // under com/mbd/cmscommon/data/sync in src/main/kotlin. A "**/AdminDataBootstrapper.kt"
+            // pattern would match at any depth and wrongly exclude the desktop copy too.
+            "AdminDataBootstrapper.kt",
         )
     }
 }
