@@ -73,7 +73,6 @@ class StudentProfileEditController(
             require(edited.sessionId == sessionId && edited.rollNumber == rollNumber) {
                 "Student identity cannot be changed from this profile."
             }
-            validateStudentProfile(normalized)?.let { throw IllegalArgumentException(it) }
             val normalized = edited.copy(
                 name = edited.name.trim(),
                 fatherName = edited.fatherName?.trim(),
@@ -86,8 +85,7 @@ class StudentProfileEditController(
                 emergencyContactRelation = edited.emergencyContactRelation?.trim(),
                 specialNeeds = edited.specialNeeds?.trim(),
             )
-
-
+            validateStudentProfile(normalized)?.let { throw IllegalArgumentException(it) }
             sessionRepository.saveStudentProfile(normalized)
             _saveState.value = Outcome.Success(Unit)
             _profile.value = normalized
