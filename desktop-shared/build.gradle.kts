@@ -22,17 +22,18 @@ sourceSets {
             "../mobile-shared/src/main/java/com/mbd/cmscommon/data/sync",
         )
         // Android migration classes target Android's SQLite API. Desktop starts with its own
-        // Room database and uses the JVM bundled SQLite driver instead.
+        // Room database and uses the JVM bundled SQLite driver instead. CmsDatabase.kt itself has
+        // no Android-specific dependency (just the abstract DAO accessor list + version const, with
+        // CMS_DATABASE_MIGRATIONS living in the excluded CmsDatabaseMigrations.kt instead), so it is
+        // reused as-is: DesktopDatabase extends it instead of redeclaring its DAO accessors.
         // NOTE: kotlin.exclude filters compileKotlin but NOT the kspKotlin task, so any excluded
         // file here is still fed to KSP (Dagger/Room). Only exclude files that KSP can process
         // without error. NotificationRepositoryImpl is reused as-is (its DataStore dependency is
         // supplied below) rather than excluded, because excluding it left Dagger's
         // InjectProcessingStep generating a factory for a file compileKotlin never compiled.
         kotlin.exclude(
-            "CmsDatabase.kt",
             "CmsDatabaseMigrations.kt",
             "Converters.kt",
-            "**/CmsDatabase.kt",
             "**/CmsDatabaseMigrations.kt",
             "**/Converters.kt",
             // Desktop keeps its identical bootstrapper so the reused mobile source root does not

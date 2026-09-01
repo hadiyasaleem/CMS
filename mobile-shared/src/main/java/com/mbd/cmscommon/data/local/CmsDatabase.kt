@@ -50,21 +50,3 @@ abstract class CmsDatabase : RoomDatabase() {
     abstract fun studentSemesterGpaDao(): StudentSemesterGpaDao
     abstract fun sessionFeeDao(): SessionFeeDao
 }
-
-val CMS_DATABASE_MIGRATIONS = arrayOf(
-    MIGRATION_18_19,
-    MIGRATION_19_20,
-    MIGRATION_20_21,
-    MIGRATION_21_22,
-    MIGRATION_22_23,
-    MIGRATION_23_24,
-    MIGRATION_24_25,
-    MIGRATION_25_26,
-    MIGRATION_26_27,
-    MIGRATION_27_28,
-    MIGRATION_28_29,
-    MIGRATION_29_30,
-    MIGRATION_30_31,
-    MIGRATION_31_32,
-    MIGRATION_32_33,
-)
