@@ -1,6 +1,7 @@
 package com.mbd.cmscommon.data.remote.dto
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 
 @Serializable
 data class ProfileDto(
@@ -11,6 +12,9 @@ data class ProfileDto(
     val linkedSessionId: String? = null,
     val linkedRoll: String? = null,
     val status: String? = null,
+    // jsonb, default '{}' — no defined shape or consumer yet anywhere in the app; kept as a raw
+    // passthrough so decoding/round-tripping a profile row doesn't silently drop the column.
+    val notificationPrefs: JsonElement? = null,
     val entityId: Long? = null,
     val createdAt: String? = null,
     val createdBy: String? = null,

@@ -49,6 +49,10 @@ object DesktopRoomModule {
     fun provideDatabase(): DesktopDatabase =
         Room.databaseBuilder<DesktopDatabase>(name = databaseFile().absolutePath)
             .setDriver(BundledSQLiteDriver())
+            // No real migrations are tracked for this local cache (see DesktopDatabase's
+            // exportSchema note) — a version bump wipes and recreates rather than crashing on
+            // Room's schema-identity-hash check.
+            .fallbackToDestructiveMigration(dropAllTables = true)
             .build()
 
     @Provides fun departmentDao(db: DesktopDatabase): DepartmentDao = db.departmentDao()

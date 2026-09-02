@@ -457,6 +457,17 @@ val MIGRATION_32_33: Migration = object : Migration(32, 33) {
     }
 }
 
+/** Adds the teachers columns (auth_uid/is_admin/is_hod/photo_path) that already existed on the
+ * Postgres table but had no local Room representation. */
+val MIGRATION_33_34: Migration = object : Migration(33, 34) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `teachers` ADD COLUMN `authUid` TEXT")
+        db.execSQL("ALTER TABLE `teachers` ADD COLUMN `isAdmin` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE `teachers` ADD COLUMN `isHod` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE `teachers` ADD COLUMN `photoPath` TEXT")
+    }
+}
+
 val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_18_19,
     MIGRATION_19_20,
@@ -473,4 +484,5 @@ val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_30_31,
     MIGRATION_31_32,
     MIGRATION_32_33,
+    MIGRATION_33_34,
 )
