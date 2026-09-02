@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.remote.dto
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -10,7 +11,7 @@ data class StudentLinkRequestDto(
     val rollNumberClaimed: String? = null,
     val sessionId: String? = null,
     val nameClaimed: String? = null,
-    val cnicClaimed: String? = null,
+    @SerialName("cnic_bform_claimed") val cnicClaimed: String? = null,
     val dobClaimed: String? = null,
     val universityRollClaimed: String? = null,
     val registrationNoClaimed: String? = null,

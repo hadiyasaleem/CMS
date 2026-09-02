@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.remote.dto
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -123,7 +124,7 @@ data class StudentProfileDto(
 data class TimetablePeriodDto(
     val entityId: Long? = null,
     val id: String? = null,
-    val sessionId: String? = null,
+    @SerialName("primary_session_id") val sessionId: String? = null,
     val day: String? = null,
     val startTime: String? = null,
     val endTime: String? = null,
