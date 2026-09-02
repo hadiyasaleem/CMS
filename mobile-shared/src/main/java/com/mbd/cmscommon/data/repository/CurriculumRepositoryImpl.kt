@@ -106,7 +106,12 @@ class CurriculumRepositoryImpl @Inject constructor(
     }
 
     override suspend fun saveSemesterTerm(sessionId: String, semester: Int, startDate: LocalDate?, endDate: LocalDate?) {
-        val dto = SemesterTermDto(sessionId, semester, startDate?.toString(), endDate?.toString())
+        val dto = SemesterTermDto(
+            sessionId = sessionId,
+            semester = semester,
+            startDate = startDate?.toString(),
+            endDate = endDate?.toString(),
+        )
         postgrest.from(SupabaseTables.SEMESTER_TERMS).upsert(dto) { onConflict = "session_id,semester" }
         terms[termKey(sessionId, semester)] = dto
     }

@@ -272,6 +272,9 @@ class AcademicSessionRepositoryImpl @Inject constructor(
             linkedEmail = profile.linkedEmail,
             gpa = profile.gpa,
             cgpa = profile.cgpa,
+            isActive = profile.isActive,
+            archivedAt = profile.archivedAt,
+            photoPath = profile.photoPath,
         )
         postgrest.from(SupabaseTables.SESSION_STUDENTS).update(dto) {
             filter {

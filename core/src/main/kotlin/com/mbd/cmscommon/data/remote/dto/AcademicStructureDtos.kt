@@ -48,6 +48,7 @@ data class SemesterSubjectDto(
 
 @Serializable
 data class SemesterTermDto(
+    val entityId: Long? = null,
     val sessionId: String? = null,
     val semester: Int = 0,
     val startDate: String? = null,
@@ -111,6 +112,9 @@ data class StudentProfileDto(
     val linkedEmail: String? = null,
     val gpa: Double? = null,
     val cgpa: Double? = null,
+    val isActive: Boolean = true,
+    val archivedAt: String? = null,
+    val photoPath: String? = null,
     val createdAt: String? = null,
     val createdBy: String? = null,
     val updatedAt: String? = null,
