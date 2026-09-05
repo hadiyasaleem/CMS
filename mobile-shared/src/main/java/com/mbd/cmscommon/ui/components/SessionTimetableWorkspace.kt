@@ -8,10 +8,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -25,7 +27,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.domain.model.AcademicSession
@@ -49,7 +50,6 @@ import java.util.Locale
 
 private val TimetableGold = ModWarn
 private val TimetableRed = ModAccent
-private val TimetableBlue = ModInk
 private val TIMETABLE_DAYS = listOf(
     DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
     DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY,
@@ -67,19 +67,19 @@ fun SessionTimetableWorkspace(
     onClearError: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var selectedDay by remember { mutableStateOf(DayOfWeek.MONDAY) }
     var editorState by remember { mutableStateOf<SessionPeriod?>(null) }
-    var addingPeriod by remember { mutableStateOf(false) }
+    var addingPeriodDay by remember { mutableStateOf<DayOfWeek?>(null) }
     var pendingRemove by remember { mutableStateOf<SessionPeriod?>(null) }
+    var detailPeriod by remember { mutableStateOf<SessionPeriod?>(null) }
 
     val roomsConfigured = periods.count { !it.roomNo.isNullOrBlank() }
     val teacherIds = periods.filter { it.periodType != PeriodType.BREAK }.map { it.teacherId }.filter { it.isNotBlank() }.distinct()
     val conflictIds = conflictingPeriodIds(periods)
-
-    val dayPeriods = periods.filter { it.day == selectedDay }.sortedBy { it.startTime }
+    val periodByDayAndSlot = periods.associateBy { it.day to it.timeRange }
+    val timeSlots = periods.map { it.timeRange }.distinct().sortedBy { it.substringBefore('–') }
 
     LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { TimetableHero(session, onAdd = { addingPeriod = true }) }
+        item { TimetableHero(session, onAdd = { addingPeriodDay = DayOfWeek.MONDAY }) }
 
         if (!errorMessage.isNullOrBlank()) {
             item {
@@ -94,23 +94,35 @@ fun SessionTimetableWorkspace(
 
         item { TimetableSummaryCard(periods.size, roomsConfigured, teacherIds.size, conflictIds.size) }
 
-        item {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TIMETABLE_DAYS.forEach { day ->
-                    CmsChip(day.getDisplayName(TextStyle.SHORT, Locale.ENGLISH), selected = selectedDay == day, onClick = { selectedDay = day })
-                }
-            }
-        }
-
-        if (dayPeriods.isEmpty()) {
-            item { TimetableEmptyState(onAdd = { addingPeriod = true }) }
+        if (periods.isEmpty()) {
+            item { TimetableEmptyState(onAdd = { addingPeriodDay = DayOfWeek.MONDAY }) }
         } else {
-            items(dayPeriods, key = { it.id }) { period ->
-                SchedulePeriodCard(
-                    period = period,
-                    hasConflict = period.id in conflictIds,
-                    onEdit = { editorState = period },
-                    onRequestRemove = { pendingRemove = period },
+            item {
+                TimetableGrid(
+                    timeSlots = timeSlots,
+                    rows = TIMETABLE_DAYS.map { day ->
+                        GridRow(
+                            key = day.name,
+                            label = day.getDisplayName(TextStyle.SHORT, Locale.ENGLISH),
+                            cells = timeSlots.associateWith { slot ->
+                                periodByDayAndSlot[day to slot]?.let { period ->
+                                    val isBreak = period.periodType == PeriodType.BREAK
+                                    GridCell(
+                                        title = if (isBreak) "BREAK" else period.subjectName.ifBlank { period.courseCode },
+                                        subtitle = if (isBreak) "" else period.teacherName.ifBlank { "Unassigned" },
+                                        meta = if (isBreak) "" else period.roomNo?.ifBlank { null } ?: "No room",
+                                        isBreak = isBreak,
+                                        isAlert = period.id in conflictIds,
+                                    )
+                                }
+                            },
+                        )
+                    },
+                    onCellClick = { dayKey, slot ->
+                        val day = DayOfWeek.valueOf(dayKey)
+                        val period = periodByDayAndSlot[day to slot]
+                        if (period != null) detailPeriod = period else addingPeriodDay = day
+                    },
                 )
             }
         }
@@ -118,18 +130,28 @@ fun SessionTimetableWorkspace(
         item { Spacer(Modifier.height(72.dp)) }
     }
 
-    if (addingPeriod || editorState != null) {
+    if (addingPeriodDay != null || editorState != null) {
         PeriodEditorDialog(
-            day = selectedDay,
+            day = editorState?.day ?: addingPeriodDay ?: DayOfWeek.MONDAY,
             existing = editorState,
             subjects = subjects,
             teachers = teachers,
-            onDismiss = { addingPeriod = false; editorState = null },
+            onDismiss = { addingPeriodDay = null; editorState = null },
             onSave = { day, start, end, subject, teacher, type, room, building, notes, from, to ->
                 onSavePeriod(day, start, end, subject, teacher, type, room, building, notes, from, to, editorState)
-                addingPeriod = false
+                addingPeriodDay = null
                 editorState = null
             },
+        )
+    }
+
+    detailPeriod?.let { period ->
+        SessionPeriodDetailDialog(
+            period = period,
+            hasConflict = period.id in conflictIds,
+            onEdit = { detailPeriod = null; editorState = period },
+            onRequestRemove = { detailPeriod = null; pendingRemove = period },
+            onDismiss = { detailPeriod = null },
         )
     }
 
@@ -202,34 +224,49 @@ private fun TimetableMetric(label: String, value: String, modifier: Modifier = M
 }
 
 @Composable
-private fun SchedulePeriodCard(period: SessionPeriod, hasConflict: Boolean, onEdit: () -> Unit, onRequestRemove: () -> Unit) {
+private fun SessionPeriodDetailDialog(
+    period: SessionPeriod,
+    hasConflict: Boolean,
+    onEdit: () -> Unit,
+    onRequestRemove: () -> Unit,
+    onDismiss: () -> Unit,
+) {
     val isBreak = period.periodType == PeriodType.BREAK
-    Surface(
-        shape = RoundedCornerShape(14.dp),
-        color = ModSurface,
-        border = BorderStroke(1.dp, if (hasConflict) TimetableRed.copy(alpha = 0.4f) else ModTrack),
-    ) {
-        Column(Modifier.padding(14.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(if (isBreak) "BREAK" else period.subjectName.ifBlank { period.courseCode }, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
-                    Text("${period.startTime} - ${period.endTime}", color = TimetableBlue, style = MaterialTheme.typography.bodySmall)
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(if (isBreak) "Break" else period.subjectName.ifBlank { period.courseCode }) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                if (hasConflict) {
+                    StatusBadge("TIME CONFLICT", BadgeTone.Error)
+                    Spacer(Modifier.height(4.dp))
                 }
-                if (hasConflict) StatusBadge("TIME CONFLICT", BadgeTone.Error)
-            }
-            if (!isBreak) {
-                Spacer(Modifier.height(4.dp))
-                Text(period.teacherName.ifBlank { "Teacher not assigned" }, color = if (period.teacherId.isBlank()) TimetableGold else ModMuted, style = MaterialTheme.typography.bodySmall)
-                if (!period.roomNo.isNullOrBlank() || !period.building.isNullOrBlank()) {
-                    Text(listOfNotNull(period.building, period.roomNo).joinToString(" / "), color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                DetailRow("Day", period.day.getDisplayName(TextStyle.FULL, Locale.ENGLISH))
+                DetailRow("Time", period.timeRange)
+                if (!isBreak) {
+                    DetailRow("Subject code", period.courseCode)
+                    DetailRow("Teacher", period.teacherName.ifBlank { "Unassigned" })
+                    DetailRow("Room", period.roomNo?.ifBlank { null } ?: "Not assigned")
+                    period.building?.takeIf { it.isNotBlank() }?.let { DetailRow("Building", it) }
+                    period.notes?.takeIf { it.isNotBlank() }?.let { DetailRow("Notes", it) }
                 }
             }
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = onEdit) { Text("Edit") }
+        },
+        confirmButton = { TextButton(onClick = onEdit) { Text("Edit") } },
+        dismissButton = {
+            Row {
                 TextButton(onClick = onRequestRemove) { Text("Remove", color = CmsTheme.colors.accent) }
+                TextButton(onClick = onDismiss) { Text("Close") }
             }
-        }
+        },
+    )
+}
+
+@Composable
+private fun DetailRow(label: String, value: String) {
+    Column {
+        Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
+        Text(value, style = MaterialTheme.typography.bodyMedium)
     }
 }
 
@@ -255,6 +292,7 @@ private fun PeriodEditorDialog(
     onDismiss: () -> Unit,
     onSave: (DayOfWeek, String, String, SemesterSubject?, Teacher?, PeriodType, String, String, String, LocalDate?, LocalDate?) -> Unit,
 ) {
+    var selectedDay by remember { mutableStateOf(day) }
     var start by remember { mutableStateOf(existing?.startTime ?: "") }
     var end by remember { mutableStateOf(existing?.endTime ?: "") }
     var type by remember { mutableStateOf(existing?.periodType ?: PeriodType.LECTURE) }
@@ -275,7 +313,15 @@ private fun PeriodEditorDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (existing == null) "Timetable period" else "Edit period", style = MaterialTheme.typography.headlineSmall) },
         text = {
-            Column {
+            Column(Modifier.heightIn(max = 460.dp).verticalScroll(rememberScrollState())) {
+                Text("DAY", color = ModMuted, style = CmsTextStyles.eyebrow)
+                Spacer(Modifier.height(6.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TIMETABLE_DAYS.forEach { option ->
+                        CmsChip(option.getDisplayName(TextStyle.SHORT, Locale.ENGLISH), selected = selectedDay == option, onClick = { selectedDay = option })
+                    }
+                }
+                Spacer(Modifier.height(10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     OutlinedTextField(value = start, onValueChange = { start = it }, label = { Text("Start") }, placeholder = { Text("HH:MM") }, modifier = Modifier.weight(1f), singleLine = true)
                     OutlinedTextField(value = end, onValueChange = { end = it }, label = { Text("End") }, placeholder = { Text("HH:MM") }, modifier = Modifier.weight(1f), singleLine = true)
@@ -328,7 +374,7 @@ private fun PeriodEditorDialog(
                     val subject = subjects.firstOrNull { it.courseCode == subjectCode }
                     val teacher = teachers.firstOrNull { it.teacherId == teacherId }
                     onSave(
-                        day, start.trim(), end.trim(), subject, teacher, type, room.trim(), building.trim(), notes.trim(),
+                        selectedDay, start.trim(), end.trim(), subject, teacher, type, room.trim(), building.trim(), notes.trim(),
                         runCatching { LocalDate.parse(effectiveFrom.trim()) }.getOrNull(),
                         runCatching { LocalDate.parse(effectiveTo.trim()) }.getOrNull(),
                     )

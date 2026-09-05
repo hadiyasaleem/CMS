@@ -12,16 +12,13 @@ import com.mbd.cmsteacher.R
 fun ScheduleScreen(viewModel: ScheduleViewModel = hiltViewModel()) {
     val periods by viewModel.periods.collectAsState()
     val sessions by viewModel.sessions.collectAsState()
-    val selectedDay by viewModel.selectedDay.collectAsState()
     val outcome by viewModel.outcome.collectAsState()
 
     TeacherScheduleWorkspace(
         heroPainter = painterResource(R.drawable.teacher_schedule_hero),
         periods = periods,
         sessions = sessions,
-        selectedDay = selectedDay,
         outcome = outcome,
-        onSelectDay = viewModel::selectDay,
         onRefresh = viewModel::refresh,
     )
 }

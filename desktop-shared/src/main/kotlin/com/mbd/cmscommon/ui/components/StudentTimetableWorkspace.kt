@@ -18,18 +18,21 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -47,10 +50,16 @@ import com.mbd.cmscommon.ui.theme.ModGround
 import com.mbd.cmscommon.ui.theme.ModSurface
 import com.mbd.cmscommon.ui.theme.ModAccent
 import com.mbd.cmscommon.ui.theme.ModWarn
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
+
+private val TimetableDays = listOf(
+    DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
+    DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY,
+)
 
 private val TimetableCanvas = ModGround
 private val TimetableBlue = ModInk
@@ -66,6 +75,8 @@ fun StudentTimetableWorkspace(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var detailItem by remember { mutableStateOf<StudentScheduledPeriod?>(null) }
+
     LazyColumn(
         modifier = modifier.fillMaxWidth().background(TimetableCanvas),
         contentPadding = PaddingValues(16.dp),
@@ -93,12 +104,38 @@ fun StudentTimetableWorkspace(
                         }
                     }
                 } else {
-                    items(lectures, key = { it.period.id }) { item -> PeriodCard(item) }
+                    val byDayAndSlot = lectures.associateBy { it.period.day to it.period.timeRange }
+                    val timeSlots = lectures.map { it.period.timeRange }.distinct().sortedBy { it.substringBefore('–') }
+                    item {
+                        TimetableGrid(
+                            timeSlots = timeSlots,
+                            rows = TimetableDays.map { day ->
+                                GridRow(
+                                    key = day.name,
+                                    label = day.getDisplayName(TextStyle.SHORT, Locale.ENGLISH),
+                                    cells = timeSlots.associateWith { slot ->
+                                        byDayAndSlot[day to slot]?.let { item ->
+                                            GridCell(
+                                                title = item.period.subjectName,
+                                                subtitle = item.period.teacherName.ifBlank { "Unassigned" },
+                                                meta = listOfNotNull(item.period.building, item.period.roomNo).joinToString(" / ").ifBlank { "No room" },
+                                            )
+                                        }
+                                    },
+                                )
+                            },
+                            onCellClick = { dayKey, slot -> detailItem = byDayAndSlot[DayOfWeek.valueOf(dayKey) to slot] },
+                        )
+                    }
                 }
             }
         }
 
         item { Spacer(Modifier.height(72.dp)) }
+    }
+
+    detailItem?.let { item ->
+        StudentPeriodDetailDialog(item, onDismiss = { detailItem = null })
     }
 }
 
@@ -177,20 +214,25 @@ private fun NextLectureCard(item: StudentScheduledPeriod) {
 }
 
 @Composable
-private fun PeriodCard(item: StudentScheduledPeriod) {
-    Surface(shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Column(Modifier.padding(14.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(item.period.subjectName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
-                    Text("${item.date.format(DayFormat)} · ${item.period.timeRange}", color = TimetableBlue, style = MaterialTheme.typography.bodySmall)
+private fun StudentPeriodDetailDialog(item: StudentScheduledPeriod, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(item.period.subjectName) },
+        text = {
+            Column {
+                DetailRow(Icons.Filled.Person, item.period.teacherName.ifBlank { "Teacher not assigned" })
+                DetailRow(Icons.Filled.LocationOn, listOfNotNull(item.period.building, item.period.roomNo).joinToString(" / ").ifBlank { "Location not assigned" })
+                Spacer(Modifier.height(6.dp))
+                Text("${item.date.format(DayFormat)} · ${item.period.timeRange}", color = TimetableBlue, style = MaterialTheme.typography.bodySmall)
+                Text("Subject code: ${item.period.courseCode}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                item.period.notes?.takeIf { it.isNotBlank() }?.let {
+                    Spacer(Modifier.height(6.dp))
+                    Text("Notes: $it", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
             }
-            Spacer(Modifier.height(6.dp))
-            DetailRow(Icons.Filled.Person, item.period.teacherName.ifBlank { "Teacher not assigned" })
-            DetailRow(Icons.Filled.LocationOn, listOfNotNull(item.period.building, item.period.roomNo).joinToString(" / ").ifBlank { "Location not assigned" })
-        }
-    }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } },
+    )
 }
 
 @Composable

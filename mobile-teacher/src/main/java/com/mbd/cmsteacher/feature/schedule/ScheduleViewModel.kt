@@ -8,7 +8,6 @@ import com.mbd.cmscommon.domain.repository.SessionTimetableRepository
 import com.mbd.cmscommon.util.Outcome
 import com.mbd.cmscommon.util.userMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.time.DayOfWeek
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -33,15 +32,8 @@ class ScheduleViewModel @Inject constructor(
     val sessions = sessionRepository.observeAllSessions()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    private val _selectedDay = MutableStateFlow(DayOfWeek.MONDAY)
-    val selectedDay: StateFlow<DayOfWeek> = _selectedDay.asStateFlow()
-
     private val _outcome = MutableStateFlow<Outcome<Unit>>(Outcome.Success(Unit))
     val outcome: StateFlow<Outcome<Unit>> = _outcome.asStateFlow()
-
-    fun selectDay(day: DayOfWeek) {
-        _selectedDay.value = day
-    }
 
     fun refresh() {
         viewModelScope.launch {

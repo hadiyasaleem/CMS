@@ -7,8 +7,6 @@ import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.SessionTimetableRepository
 import com.mbd.cmscommon.util.Outcome
 import com.mbd.cmscommon.util.userMessage
-import java.time.DayOfWeek
-import java.time.LocalDate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -31,17 +29,8 @@ class TeacherScheduleController(
     val sessions: StateFlow<List<AcademicSession>> =
         sessionRepository.observeAllSessions().stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    private val _selectedDay = MutableStateFlow(defaultScheduleDay())
-    val selectedDay: StateFlow<DayOfWeek> = _selectedDay.asStateFlow()
-
     private val _refreshState = MutableStateFlow<Outcome<Unit>?>(null)
     val refreshState: StateFlow<Outcome<Unit>?> = _refreshState.asStateFlow()
-
-    fun selectDay(day: DayOfWeek) {
-        if (day.value <= DayOfWeek.SATURDAY.value) {
-            _selectedDay.value = day
-        }
-    }
 
     fun refresh() = launch {
         _refreshState.value = Outcome.Loading
@@ -61,9 +50,4 @@ class TeacherScheduleController(
             ?.let { Outcome.Error(it.userMessage("Could not refresh your schedule."), it) }
             ?: Outcome.Success(Unit)
     }
-}
-
-private fun defaultScheduleDay(): DayOfWeek {
-    val today = LocalDate.now().dayOfWeek
-    return if (today.value <= 6) today else DayOfWeek.MONDAY
 }

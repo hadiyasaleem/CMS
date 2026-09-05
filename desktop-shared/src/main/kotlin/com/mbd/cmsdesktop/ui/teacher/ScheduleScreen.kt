@@ -26,16 +26,13 @@ fun ScheduleScreen(
     }
     val periods by controller.periods.collectAsState()
     val sessions by controller.sessions.collectAsState()
-    val selectedDay by controller.selectedDay.collectAsState()
     val refreshState by controller.refreshState.collectAsState()
 
     TeacherScheduleWorkspace(
         heroPainter = painterResource("teacher-schedule-hero.jpg"),
         periods = periods,
         sessions = sessions,
-        selectedDay = selectedDay,
         outcome = refreshState ?: com.mbd.cmscommon.util.Outcome.Success(Unit),
-        onSelectDay = controller::selectDay,
         onRefresh = controller::refresh,
     )
 }

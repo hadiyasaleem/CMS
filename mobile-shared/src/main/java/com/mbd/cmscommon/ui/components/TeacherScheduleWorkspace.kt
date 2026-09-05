@@ -14,13 +14,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -62,9 +66,7 @@ fun TeacherScheduleWorkspace(
     heroPainter: Painter,
     periods: List<SessionPeriod>,
     sessions: List<AcademicSession>,
-    selectedDay: DayOfWeek,
     outcome: Outcome<Unit>,
-    onSelectDay: (DayOfWeek) -> Unit,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -78,7 +80,9 @@ fun TeacherScheduleWorkspace(
     val rooms = teachingPeriods.mapNotNull { it.roomNo?.takeIf { r -> r.isNotBlank() } }.distinct().size
     val busiest = ScheduleDays.maxByOrNull { day -> teachingPeriods.count { it.day == day } }
 
-    val dayPeriods = teachingPeriods.filter { it.day == selectedDay }.sortedBy { scheduleTime(it.startTime) ?: java.time.LocalTime.MAX }
+    var detailPeriod by remember { mutableStateOf<SessionPeriod?>(null) }
+    val periodByDayAndSlot = teachingPeriods.associateBy { it.day to it.timeRange }
+    val timeSlots = teachingPeriods.map { it.timeRange }.distinct().sortedBy { it.substringBefore('–') }
 
     LazyColumn(
         modifier = modifier.fillMaxWidth().background(ScheduleCanvas),
@@ -93,17 +97,11 @@ fun TeacherScheduleWorkspace(
 
         item { ScheduleMetrics(teachingPeriods.size, classDays, totalMinutes, rooms, busiest) }
 
-        item {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ScheduleDays.forEach { day -> CmsChip(day.getDisplayName(TextStyle.SHORT, Locale.ENGLISH), selected = selectedDay == day, onClick = { onSelectDay(day) }) }
-            }
-        }
-
-        if (dayPeriods.isEmpty()) {
+        if (teachingPeriods.isEmpty()) {
             item {
                 Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ScheduleBorder)) {
                     Text(
-                        if (teachingPeriods.isEmpty()) "No periods are assigned to you yet." else "No periods are scheduled for ${selectedDay.getDisplayName(TextStyle.FULL, Locale.ENGLISH)}.",
+                        "No periods are assigned to you yet.",
                         modifier = Modifier.padding(24.dp),
                         color = ModMuted,
                         style = MaterialTheme.typography.bodyMedium,
@@ -111,12 +109,34 @@ fun TeacherScheduleWorkspace(
                 }
             }
         } else {
-            items(dayPeriods, key = { it.id }) { period ->
-                SchedulePeriodCard(period, sessions.firstOrNull { it.sessionId == period.sessionId })
+            item {
+                TimetableGrid(
+                    timeSlots = timeSlots,
+                    rows = ScheduleDays.map { day ->
+                        GridRow(
+                            key = day.name,
+                            label = day.getDisplayName(TextStyle.SHORT, Locale.ENGLISH),
+                            cells = timeSlots.associateWith { slot ->
+                                periodByDayAndSlot[day to slot]?.let { period ->
+                                    GridCell(
+                                        title = period.subjectName,
+                                        subtitle = sessions.firstOrNull { it.sessionId == period.sessionId }?.label ?: period.sessionId,
+                                        meta = period.roomNo?.ifBlank { null } ?: "No room",
+                                    )
+                                }
+                            },
+                        )
+                    },
+                    onCellClick = { dayKey, slot -> detailPeriod = periodByDayAndSlot[DayOfWeek.valueOf(dayKey) to slot] },
+                )
             }
         }
 
         item { Spacer(Modifier.height(72.dp)) }
+    }
+
+    detailPeriod?.let { period ->
+        TeacherPeriodDetailDialog(period, sessions.firstOrNull { it.sessionId == period.sessionId }, onDismiss = { detailPeriod = null })
     }
 }
 
@@ -174,19 +194,29 @@ private fun ScheduleMetric(value: String, label: String, modifier: Modifier = Mo
 }
 
 @Composable
-private fun SchedulePeriodCard(period: SessionPeriod, session: AcademicSession?) {
-    Surface(shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ScheduleBorder)) {
-        Column(Modifier.padding(14.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(period.subjectName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
-                    Text(session?.label ?: period.sessionId, color = ModMuted, style = MaterialTheme.typography.bodySmall)
-                }
-                StatusBadge(period.timeRange, BadgeTone.Navy)
+private fun TeacherPeriodDetailDialog(period: SessionPeriod, session: AcademicSession?, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(period.subjectName) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                ScheduleDetailRow("Session", session?.label ?: period.sessionId)
+                ScheduleDetailRow("Day", period.day.getDisplayName(TextStyle.FULL, Locale.ENGLISH))
+                ScheduleDetailRow("Time", period.timeRange)
+                ScheduleDetailRow("Subject code", period.courseCode)
+                ScheduleDetailRow("Room", listOfNotNull(period.building, period.roomNo).joinToString(" / ").ifBlank { "Not assigned" })
+                period.notes?.takeIf { it.isNotBlank() }?.let { ScheduleDetailRow("Notes", it) }
             }
-            Spacer(Modifier.height(6.dp))
-            Text("Room ${listOfNotNull(period.building, period.roomNo).joinToString(" / ").ifBlank { "not assigned" }}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
-        }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } },
+    )
+}
+
+@Composable
+private fun ScheduleDetailRow(label: String, value: String) {
+    Column {
+        Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
+        Text(value, style = MaterialTheme.typography.bodyMedium)
     }
 }
 
