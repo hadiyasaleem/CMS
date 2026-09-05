@@ -23,6 +23,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
@@ -325,7 +326,9 @@ private fun TeacherCard(
     onRequestStatus: (TeacherStatus) -> Unit,
     onRequestDelete: () -> Unit,
 ) {
-    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
+    var menuExpanded by remember { mutableStateOf(false) }
+
+    Surface(modifier = Modifier.clickable(onClick = onEdit), shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 AvatarInitials(teacher.name, size = 42)
@@ -333,6 +336,19 @@ private fun TeacherCard(
                 Column(Modifier.weight(1f)) {
                     Text(teacher.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                     Text(department?.name ?: "Department not assigned", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                }
+                Box {
+                    IconButton(onClick = { menuExpanded = true }, enabled = !busy) { Icon(Icons.Filled.MoreVert, contentDescription = "More") }
+                    DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                        when (teacher.status) {
+                            TeacherStatus.ACTIVE -> DropdownMenuItem(text = { Text("Disable") }, onClick = { menuExpanded = false; onRequestStatus(TeacherStatus.DISABLED) })
+                            else -> DropdownMenuItem(text = { Text("Reactivate") }, onClick = { menuExpanded = false; onRequestStatus(TeacherStatus.ACTIVE) })
+                        }
+                        DropdownMenuItem(
+                            text = { Text("Remove", color = CmsTheme.colors.accent) },
+                            onClick = { menuExpanded = false; onRequestDelete() },
+                        )
+                    }
                 }
             }
             Spacer(Modifier.height(8.dp))
@@ -350,18 +366,6 @@ private fun TeacherCard(
             if (completeness < 100) {
                 Spacer(Modifier.height(4.dp))
                 Text("Contact and specialization not completed", color = TeacherGold, style = MaterialTheme.typography.bodySmall)
-            }
-            Spacer(Modifier.height(10.dp))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = onEdit, enabled = !busy) { Text("Manage") }
-                when (teacher.status) {
-                    TeacherStatus.ACTIVE -> TextButton(onClick = { onRequestStatus(TeacherStatus.DISABLED) }, enabled = !busy) { Text("Disable") }
-                    else -> TextButton(onClick = { onRequestStatus(TeacherStatus.ACTIVE) }, enabled = !busy) { Text("Reactivate") }
-                }
-                if (teacher.status != TeacherStatus.BANNED) {
-                    TextButton(onClick = { onRequestStatus(TeacherStatus.BANNED) }, enabled = !busy) { Text("Ban", color = CmsTheme.colors.accent) }
-                }
-                TextButton(onClick = onRequestDelete, enabled = !busy) { Text("Remove", color = CmsTheme.colors.accent) }
             }
         }
     }
