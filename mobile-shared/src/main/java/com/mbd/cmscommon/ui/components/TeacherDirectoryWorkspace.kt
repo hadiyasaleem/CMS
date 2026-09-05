@@ -8,6 +8,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
@@ -364,6 +365,34 @@ private fun TeacherAvatar(name: String, photoPath: String?, size: Int, onLoadPho
     }
 }
 
+/**
+ * Like [TeacherAvatar], but sized entirely by [modifier] (e.g. `fillMaxWidth().aspectRatio(1f)`)
+ * instead of a fixed dp size -- for the card header, where the avatar should grow to fill the
+ * card's width as a perfect circle rather than sit at a small fixed size next to empty space.
+ */
+@Composable
+private fun TeacherCardAvatar(name: String, photoPath: String?, onLoadPhoto: suspend (String) -> ImageBitmap?, modifier: Modifier = Modifier, cacheKey: Any = Unit) {
+    val initials = name.trim().split(" ").filter { it.isNotEmpty() }.take(2).joinToString("") { it.first().uppercase() }.ifEmpty { "?" }
+
+    if (photoPath.isNullOrBlank()) {
+        Box(modifier.clip(CircleShape).background(CmsTheme.colors.accent), contentAlignment = Alignment.Center) {
+            Text(initials, color = CmsTheme.colors.onInk, fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.headlineSmall)
+        }
+        return
+    }
+    val bitmap by produceState<ImageBitmap?>(initialValue = null, photoPath, cacheKey) {
+        value = runCatching { onLoadPhoto(photoPath) }.getOrNull()
+    }
+    val current = bitmap
+    if (current != null) {
+        Image(bitmap = current, contentDescription = name, modifier = modifier.clip(CircleShape), contentScale = ContentScale.Crop)
+    } else {
+        Box(modifier.clip(CircleShape).background(CmsTheme.colors.accent), contentAlignment = Alignment.Center) {
+            Text(initials, color = CmsTheme.colors.onInk, fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.headlineSmall)
+        }
+    }
+}
+
 @Composable
 private fun TeacherMetric(label: String, value: String, modifier: Modifier = Modifier, alert: Boolean = false) {
     Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
@@ -391,22 +420,13 @@ private fun TeacherCard(
 
     Surface(modifier = Modifier.clickable(onClick = onEdit), shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                TeacherAvatar(teacher.name, teacher.photoPath, size = 64, onLoadPhoto = onLoadPhoto, cacheKey = teacher.updatedAt)
-                Box {
-                    IconButton(onClick = { menuExpanded = true }, enabled = !busy) { Icon(Icons.Filled.MoreVert, contentDescription = "More") }
-                    DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                        when (teacher.status) {
-                            TeacherStatus.ACTIVE -> DropdownMenuItem(text = { Text("Disable") }, onClick = { menuExpanded = false; onRequestStatus(TeacherStatus.DISABLED) })
-                            else -> DropdownMenuItem(text = { Text("Reactivate") }, onClick = { menuExpanded = false; onRequestStatus(TeacherStatus.ACTIVE) })
-                        }
-                        DropdownMenuItem(
-                            text = { Text("Remove", color = CmsTheme.colors.accent) },
-                            onClick = { menuExpanded = false; onRequestDelete() },
-                        )
-                    }
-                }
-            }
+            TeacherCardAvatar(
+                name = teacher.name,
+                photoPath = teacher.photoPath,
+                onLoadPhoto = onLoadPhoto,
+                cacheKey = teacher.updatedAt,
+                modifier = Modifier.fillMaxWidth().aspectRatio(1f),
+            )
             Spacer(Modifier.height(8.dp))
             Text(teacher.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Spacer(Modifier.height(2.dp))
@@ -432,6 +452,21 @@ private fun TeacherCard(
             if (completeness < 100) {
                 Spacer(Modifier.height(4.dp))
                 Text("Contact and specialization not completed", color = TeacherGold, style = MaterialTheme.typography.bodySmall)
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                Box {
+                    IconButton(onClick = { menuExpanded = true }, enabled = !busy) { Icon(Icons.Filled.MoreVert, contentDescription = "More") }
+                    DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                        when (teacher.status) {
+                            TeacherStatus.ACTIVE -> DropdownMenuItem(text = { Text("Disable") }, onClick = { menuExpanded = false; onRequestStatus(TeacherStatus.DISABLED) })
+                            else -> DropdownMenuItem(text = { Text("Reactivate") }, onClick = { menuExpanded = false; onRequestStatus(TeacherStatus.ACTIVE) })
+                        }
+                        DropdownMenuItem(
+                            text = { Text("Remove", color = CmsTheme.colors.accent) },
+                            onClick = { menuExpanded = false; onRequestDelete() },
+                        )
+                    }
+                }
             }
         }
     }
