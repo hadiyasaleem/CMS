@@ -2,6 +2,7 @@ package com.mbd.cmscommon.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,14 +12,24 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -32,20 +43,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.CalendarEvent
 import com.mbd.cmscommon.domain.model.CalendarViewerContext
 import com.mbd.cmscommon.domain.model.Department
-import com.mbd.cmscommon.domain.model.calendarEventKey
 import com.mbd.cmscommon.domain.model.calendarSummary
-import com.mbd.cmscommon.domain.model.endDateOrStart
 import com.mbd.cmscommon.domain.model.isOngoingOn
 import com.mbd.cmscommon.domain.model.isVisibleTo
-import com.mbd.cmscommon.domain.model.persistedValidationMessage
-import com.mbd.cmscommon.domain.model.startDateOrNull
 import com.mbd.cmscommon.domain.model.validationMessage
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
@@ -54,16 +63,13 @@ import com.mbd.cmscommon.ui.theme.ModInk
 import com.mbd.cmscommon.ui.theme.ModMuted
 import com.mbd.cmscommon.ui.theme.ModSuccess
 import com.mbd.cmscommon.ui.theme.ModSurface
-import com.mbd.cmscommon.ui.theme.ModSurfaceAlt
 import com.mbd.cmscommon.ui.theme.ModTrack
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 private val CalendarCanvas = ModGround
-private val CalendarBlue = ModInk
-private val CalendarDateFormat = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy")
-private val CalendarMonthFormat = DateTimeFormatter.ofPattern("MMM")
 
 private val EVENT_TYPES = listOf("EVENT", "HOLIDAY", "EXAM", "DEADLINE")
 private val AUDIENCES = listOf("ALL", "ADMIN", "TEACHER", "STUDENT")
@@ -84,19 +90,14 @@ fun CalendarWorkspace(
     onDelete: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var query by remember { mutableStateOf("") }
-    var selectedType by remember { mutableStateOf<String?>(null) }
-    var showCreate by remember { mutableStateOf(false) }
+    var visibleMonth by remember { mutableStateOf(YearMonth.from(LocalDate.now())) }
+    var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
+    var creatingEventDate by remember { mutableStateOf<String?>(null) }
     var pendingDelete by remember { mutableStateOf<CalendarEvent?>(null) }
 
     val today = LocalDate.now()
     val relevant = events.filter { isVisibleTo(it, viewer) }
     val summary = calendarSummary(relevant, today)
-
-    val visible = relevant
-        .filter { selectedType == null || it.eventType.equals(selectedType, ignoreCase = true) }
-        .filter { query.isBlank() || it.title.contains(query, ignoreCase = true) || (it.venue ?: "").contains(query, ignoreCase = true) }
-        .sortedWith(compareBy({ startDateOrNull(it) ?: LocalDate.MAX }, { it.title }))
 
     Box(modifier.fillMaxSize()) {
     LazyColumn(
@@ -115,39 +116,19 @@ fun CalendarWorkspace(
 
         item { CalendarSummaryRow(summary.upcoming, summary.thisMonth, summary.exams + summary.deadlines, summary.ongoing) }
 
-        item {
-            CalendarFilters(
-                query = query,
-                onQueryChange = { query = it },
-                selectedType = selectedType,
-                onTypeChange = { selectedType = it },
-            )
-        }
+        item { CalendarLegend() }
 
-        when {
-            loading -> items(3) { SkeletonRow() }
-            relevant.isEmpty() -> item {
-                CalendarEmptyState(
-                    "No relevant events are scheduled",
-                    canEdit,
-                    onAdd = { showCreate = true },
-                )
-            }
-            visible.isEmpty() -> item {
-                CalendarEmptyState(
-                    "No events match these filters",
-                    canEdit = false,
-                    onAdd = {},
-                    clearLabel = "Clear filters",
-                    onClear = { query = ""; selectedType = null },
-                )
-            }
-            else -> items(visible, key = { calendarEventKey(it) }) { event ->
-                CalendarEventCard(
-                    event = event,
+        if (loading) {
+            items(3) { SkeletonRow() }
+        } else {
+            item {
+                MonthCalendarGrid(
+                    month = visibleMonth,
                     today = today,
-                    canDelete = canEdit,
-                    onDelete = { pendingDelete = event },
+                    events = relevant,
+                    onPreviousMonth = { visibleMonth = visibleMonth.minusMonths(1) },
+                    onNextMonth = { visibleMonth = visibleMonth.plusMonths(1) },
+                    onDaySelected = { date -> selectedDate = date },
                 )
             }
         }
@@ -156,20 +137,32 @@ fun CalendarWorkspace(
     }
         if (canEdit) {
             CmsFab(
-                onClick = { showCreate = true },
+                onClick = { creatingEventDate = today.toString() },
                 contentDescription = "Add event",
                 modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
             )
         }
     }
 
-    if (showCreate) {
+    selectedDate?.let { date ->
+        DayDetailDialog(
+            date = date,
+            events = relevant.filter { isOngoingOn(it, date) }.sortedBy { it.title },
+            canEdit = canEdit,
+            onAddEvent = { creatingEventDate = date.toString() },
+            onDeleteEvent = { pendingDelete = it },
+            onDismiss = { selectedDate = null },
+        )
+    }
+
+    creatingEventDate?.let { date ->
         CreateCalendarEventDialog(
+            initialDate = date,
             departments = departments,
             sessions = sessions,
             busy = busy,
-            onDismiss = { showCreate = false },
-            onConfirm = { event -> onCreate(event); showCreate = false },
+            onDismiss = { creatingEventDate = null },
+            onConfirm = { event -> onCreate(event); creatingEventDate = null; selectedDate = null },
         )
     }
 
@@ -177,7 +170,7 @@ fun CalendarWorkspace(
         ConfirmDestructiveActionDialog(
             title = "Remove event",
             dependentSummary = "Remove \"${event.title}\" from the calendar?",
-            onConfirm = { onDelete(event.id); pendingDelete = null },
+            onConfirm = { onDelete(event.id); pendingDelete = null; selectedDate = null },
             onDismiss = { pendingDelete = null },
         )
     }
@@ -218,20 +211,177 @@ private fun CalendarMetric(label: String, value: String, modifier: Modifier = Mo
 }
 
 @Composable
-private fun CalendarFilters(query: String, onQueryChange: (String) -> Unit, selectedType: String?, onTypeChange: (String?) -> Unit) {
-    Column(Modifier.fillMaxWidth()) {
-        OutlinedTextField(
-            value = query,
-            onValueChange = onQueryChange,
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Search events or venue") },
-            singleLine = true,
-        )
-        Spacer(Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            CmsChip("All types", selected = selectedType == null, onClick = { onTypeChange(null) })
+private fun CalendarLegend() {
+    Surface(shape = RoundedCornerShape(12.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 14.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
             EVENT_TYPES.forEach { type ->
-                CmsChip(type, selected = selectedType == type, onClick = { onTypeChange(type) })
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Box(Modifier.size(8.dp).clip(CircleShape).background(eventTypeDotColor(type)))
+                    Text(type.lowercase(Locale.ROOT).replaceFirstChar { it.uppercase() }, color = ModMuted, style = MaterialTheme.typography.labelSmall)
+                }
+            }
+        }
+    }
+}
+
+private fun eventTypeDotColor(type: String): Color = when (type.uppercase(Locale.ROOT)) {
+    "EXAM" -> Color(0xFFEF4444)
+    "DEADLINE" -> Color(0xFFA855F7)
+    "HOLIDAY" -> Color(0xFFEAB308)
+    else -> Color(0xFF3B82F6)
+}
+
+private val CalendarMonthYearFormat = DateTimeFormatter.ofPattern("MMMM yyyy")
+private val CALENDAR_DAY_HEADERS = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+
+@Composable
+private fun MonthCalendarGrid(
+    month: YearMonth,
+    today: LocalDate,
+    events: List<CalendarEvent>,
+    onPreviousMonth: () -> Unit,
+    onNextMonth: () -> Unit,
+    onDaySelected: (LocalDate) -> Unit,
+) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
+        Column(Modifier.padding(14.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    month.format(CalendarMonthYearFormat),
+                    modifier = Modifier.weight(1f),
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                IconButton(onClick = onPreviousMonth) { Icon(Icons.Filled.ChevronLeft, contentDescription = "Previous month") }
+                IconButton(onClick = onNextMonth) { Icon(Icons.Filled.ChevronRight, contentDescription = "Next month") }
+            }
+            Spacer(Modifier.height(8.dp))
+            Row(Modifier.fillMaxWidth()) {
+                CALENDAR_DAY_HEADERS.forEach { label ->
+                    Text(
+                        label,
+                        modifier = Modifier.weight(1f),
+                        textAlign = TextAlign.Center,
+                        color = ModMuted,
+                        style = CmsTextStyles.eyebrow,
+                    )
+                }
+            }
+            Spacer(Modifier.height(6.dp))
+
+            val offset = month.atDay(1).dayOfWeek.value % 7
+            val daysInMonth = month.lengthOfMonth()
+            val rowCount = (offset + daysInMonth + 6) / 7
+            repeat(rowCount) { rowIndex ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    repeat(7) { colIndex ->
+                        val dayNumber = rowIndex * 7 + colIndex - offset + 1
+                        if (dayNumber < 1 || dayNumber > daysInMonth) {
+                            Spacer(Modifier.weight(1f).height(52.dp))
+                        } else {
+                            val date = month.atDay(dayNumber)
+                            val dayEvents = events.filter { isOngoingOn(it, date) }
+                            CalendarDayCell(
+                                date = date,
+                                isToday = date == today,
+                                dotColors = dayEvents.map { eventTypeDotColor(it.eventType) }.distinct().take(4),
+                                onClick = { onDaySelected(date) },
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(4.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun CalendarDayCell(date: LocalDate, isToday: Boolean, dotColors: List<Color>, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier.height(52.dp),
+        shape = RoundedCornerShape(10.dp),
+        color = if (isToday) CmsTheme.colors.accent.copy(alpha = 0.12f) else ModGround,
+        border = if (isToday) BorderStroke(1.5.dp, CmsTheme.colors.accent) else null,
+    ) {
+        Column(Modifier.fillMaxSize().padding(4.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.SpaceBetween) {
+            Text(
+                date.dayOfMonth.toString(),
+                color = if (isToday) CmsTheme.colors.accent else CmsTheme.colors.ink,
+                fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
+                style = MaterialTheme.typography.bodySmall,
+            )
+            if (dotColors.isNotEmpty()) {
+                Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                    dotColors.forEach { color -> Box(Modifier.size(5.dp).clip(CircleShape).background(color)) }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DayDetailDialog(
+    date: LocalDate,
+    events: List<CalendarEvent>,
+    canEdit: Boolean,
+    onAddEvent: () -> Unit,
+    onDeleteEvent: (CalendarEvent) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val dayFormat = remember { DateTimeFormatter.ofPattern("EEEE, dd MMMM yyyy") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(date.format(dayFormat)) },
+        text = {
+            Column(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                if (events.isEmpty()) {
+                    Text("No events on this day.", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
+                } else {
+                    events.forEach { event ->
+                        DayDetailEventRow(event, canDelete = canEdit, onDelete = { onDeleteEvent(event) })
+                    }
+                }
+                if (canEdit) {
+                    Spacer(Modifier.height(4.dp))
+                    TextButton(onClick = onAddEvent) { Text("+ Add event") }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } },
+    )
+}
+
+@Composable
+private fun DayDetailEventRow(event: CalendarEvent, canDelete: Boolean, onDelete: () -> Unit) {
+    Surface(shape = RoundedCornerShape(12.dp), color = ModGround, border = BorderStroke(1.dp, ModTrack)) {
+        Column(Modifier.padding(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(event.title, modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
+                StatusBadge(event.eventType.uppercase(Locale.ROOT), eventTypeTone(event.eventType))
+            }
+            val time = listOfNotNull(event.startTime, event.endTime.takeIf { !it.isNullOrBlank() }).joinToString(" - ").ifBlank { null }
+            if (time != null) {
+                Spacer(Modifier.height(2.dp))
+                Text(time, color = ModMuted, style = MaterialTheme.typography.bodySmall)
+            }
+            val venue = event.venue
+            if (!venue.isNullOrBlank()) {
+                Text(venue, color = ModMuted, style = MaterialTheme.typography.bodySmall)
+            }
+            val description = event.description
+            if (!description.isNullOrBlank()) {
+                Spacer(Modifier.height(4.dp))
+                Text(description, color = ModMuted, style = MaterialTheme.typography.bodySmall)
+            }
+            if (canDelete) {
+                Spacer(Modifier.height(6.dp))
+                TextButton(onClick = onDelete) { Text("Remove", color = CmsTheme.colors.accent) }
             }
         }
     }
@@ -242,67 +392,6 @@ private fun eventTypeTone(type: String): BadgeTone = when (type.uppercase(Locale
     "DEADLINE" -> BadgeTone.Warning
     "HOLIDAY" -> BadgeTone.Gold
     else -> BadgeTone.Navy
-}
-
-private fun eventDateStatus(event: CalendarEvent, today: LocalDate): String {
-    val start = startDateOrNull(event) ?: return "Date needs review"
-    val end = endDateOrStart(event) ?: start
-    return when {
-        isOngoingOn(event, today) && end != start -> "Ongoing | ends in ${java.time.temporal.ChronoUnit.DAYS.between(today, end)}d"
-        start.isEqual(today) -> "Today"
-        start.isEqual(today.plusDays(1)) -> "Tomorrow"
-        start.isEqual(today.minusDays(1)) -> "Yesterday"
-        start.isAfter(today) -> "In ${java.time.temporal.ChronoUnit.DAYS.between(today, start)}d"
-        else -> "Ended"
-    }
-}
-
-@Composable
-private fun CalendarEventCard(event: CalendarEvent, today: LocalDate, canDelete: Boolean, onDelete: () -> Unit) {
-    val date = startDateOrNull(event)
-    val needsReview = persistedValidationMessage(event) != null
-
-    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.Top) {
-            CalendarDateTile(date)
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(event.title, modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                    StatusBadge(event.eventType.uppercase(Locale.ROOT), eventTypeTone(event.eventType))
-                }
-                Spacer(Modifier.height(4.dp))
-                Text(eventDateStatus(event, today), color = CalendarBlue, style = MaterialTheme.typography.bodySmall)
-                val venue = event.venue
-                if (!venue.isNullOrBlank()) {
-                    Text(venue, color = ModMuted, style = MaterialTheme.typography.bodySmall)
-                }
-                val description = event.description
-                if (!description.isNullOrBlank()) {
-                    Spacer(Modifier.height(6.dp))
-                    Text(description, color = ModMuted, style = MaterialTheme.typography.bodyMedium)
-                }
-                if (needsReview) {
-                    Spacer(Modifier.height(6.dp))
-                    Text("NEEDS REVIEW", color = CmsTheme.colors.accent, style = CmsTextStyles.eyebrow)
-                }
-                if (canDelete) {
-                    Spacer(Modifier.height(8.dp))
-                    TextButton(onClick = onDelete) { Text("Remove", color = CmsTheme.colors.accent) }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun CalendarDateTile(date: LocalDate?) {
-    Surface(shape = RoundedCornerShape(12.dp), color = ModSurfaceAlt) {
-        Column(Modifier.padding(10.dp).width(52.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(date?.dayOfMonth?.toString() ?: "--", fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.titleLarge)
-            Text(date?.format(CalendarMonthFormat)?.uppercase(Locale.ROOT) ?: "", color = ModMuted, style = CmsTextStyles.eyebrow)
-        }
-    }
 }
 
 @Composable
@@ -318,34 +407,8 @@ private fun CalendarNotice(message: String, color: Color, action: String?, onAct
 }
 
 @Composable
-private fun CalendarEmptyState(
-    message: String,
-    canEdit: Boolean,
-    onAdd: () -> Unit,
-    clearLabel: String? = null,
-    onClear: (() -> Unit)? = null,
-) {
-    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(message, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(4.dp))
-            Text(
-                if (clearLabel != null) "Clear the filters to return to the full calendar." else "New events will appear here when they are published for this audience.",
-                color = ModMuted,
-                style = MaterialTheme.typography.bodySmall,
-            )
-            Spacer(Modifier.height(12.dp))
-            if (clearLabel != null && onClear != null) {
-                CmsPrimaryButton(text = clearLabel, onClick = onClear)
-            } else if (canEdit) {
-                CmsPrimaryButton(text = "Add first event", onClick = onAdd)
-            }
-        }
-    }
-}
-
-@Composable
 private fun CreateCalendarEventDialog(
+    initialDate: String = "",
     departments: List<Department>,
     sessions: List<AcademicSession>,
     busy: Boolean,
@@ -357,7 +420,7 @@ private fun CreateCalendarEventDialog(
     var audience by remember { mutableStateOf("ALL") }
     var deptId by remember { mutableStateOf<String?>(null) }
     var sessionId by remember { mutableStateOf<String?>(null) }
-    var startDate by remember { mutableStateOf("") }
+    var startDate by remember { mutableStateOf(initialDate) }
     var endDate by remember { mutableStateOf("") }
     var startTime by remember { mutableStateOf("") }
     var endTime by remember { mutableStateOf("") }
