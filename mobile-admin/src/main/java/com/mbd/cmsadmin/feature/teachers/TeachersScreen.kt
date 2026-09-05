@@ -1,5 +1,7 @@
 package com.mbd.cmsadmin.feature.teachers
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
@@ -9,10 +11,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.mbd.cmscommon.domain.model.MAX_TEACHER_PHOTO_BYTES
 import com.mbd.cmscommon.domain.model.Teacher
 import com.mbd.cmscommon.ui.components.TeacherDirectoryWorkspace
+import java.io.ByteArrayOutputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -30,15 +37,14 @@ fun TeachersScreen(viewModel: TeachersViewModel = hiltViewModel()) {
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var pendingPhotoTeacher by remember { mutableStateOf<Teacher?>(null) }
+    var pendingOnPicked by remember { mutableStateOf<((ImageBitmap) -> Unit)?>(null) }
     val pickPhoto = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        val teacher = pendingPhotoTeacher
-        if (uri != null && teacher != null) {
+        val onPicked = pendingOnPicked
+        if (uri != null && onPicked != null) {
             scope.launch {
-                val resolver = context.contentResolver
-                val mimeType = resolver.getType(uri) ?: "image/jpeg"
-                val bytes = withContext(Dispatchers.IO) { resolver.openInputStream(uri)?.use { it.readBytes() } }
-                if (bytes != null) viewModel.uploadPhoto(teacher, bytes, mimeType)
+                val bytes = withContext(Dispatchers.IO) { context.contentResolver.openInputStream(uri)?.use { it.readBytes() } }
+                val bitmap = bytes?.let { BitmapFactory.decodeByteArray(it, 0, it.size)?.asImageBitmap() }
+                if (bitmap != null) onPicked(bitmap)
             }
         }
     }
@@ -57,9 +63,29 @@ fun TeachersScreen(viewModel: TeachersViewModel = hiltViewModel()) {
         onUpdate = viewModel::updateTeacher,
         onSetStatus = viewModel::setStatus,
         onDelete = viewModel::deleteTeacher,
-        onPickPhoto = { teacher -> pendingPhotoTeacher = teacher; pickPhoto.launch("image/*") },
+        onPickPhoto = { onPicked -> pendingOnPicked = onPicked; pickPhoto.launch("image/*") },
+        onUploadCroppedPhoto = { teacher: Teacher, cropped: ImageBitmap ->
+            scope.launch {
+                val bytes = withContext(Dispatchers.Default) { compressToJpeg(cropped) }
+                viewModel.uploadPhoto(teacher, bytes, "image/jpeg")
+            }
+        },
         onLoadPhoto = viewModel::loadPhoto,
         onConsumeNotice = viewModel::consumeNotice,
         onClearError = viewModel::clearError,
     )
+}
+
+/** Re-encodes the cropped avatar as JPEG, stepping quality down until it fits the bucket's 1 MB cap. */
+private fun compressToJpeg(bitmap: ImageBitmap): ByteArray {
+    val androidBitmap = bitmap.asAndroidBitmap()
+    var quality = 90
+    var bytes: ByteArray
+    do {
+        val stream = ByteArrayOutputStream()
+        androidBitmap.compress(Bitmap.CompressFormat.JPEG, quality, stream)
+        bytes = stream.toByteArray()
+        quality -= 15
+    } while (bytes.size > MAX_TEACHER_PHOTO_BYTES && quality > 10)
+    return bytes
 }

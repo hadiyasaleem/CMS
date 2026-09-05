@@ -110,7 +110,8 @@ fun TeacherDirectoryWorkspace(
     onUpdate: (Teacher, TeacherAccountDraft) -> Unit,
     onSetStatus: (Teacher, TeacherStatus) -> Unit,
     onDelete: (Teacher) -> Unit,
-    onPickPhoto: (Teacher) -> Unit,
+    onPickPhoto: (onPicked: (ImageBitmap) -> Unit) -> Unit,
+    onUploadCroppedPhoto: (Teacher, ImageBitmap) -> Unit,
     onLoadPhoto: suspend (String) -> ImageBitmap?,
     onConsumeNotice: () -> Unit,
     onClearError: () -> Unit,
@@ -235,6 +236,7 @@ fun TeacherDirectoryWorkspace(
             onDismiss = { showCreateDialog = false },
             onConfirm = { draft -> onCreate(draft); showCreateDialog = false },
             onPickPhoto = null,
+            onCropped = null,
             photoBusy = false,
             onLoadPhoto = onLoadPhoto,
         )
@@ -248,7 +250,8 @@ fun TeacherDirectoryWorkspace(
             busy = busy,
             onDismiss = { editingTeacher = null },
             onConfirm = { draft -> onUpdate(teacher, draft); editingTeacher = null },
-            onPickPhoto = { onPickPhoto(teacher) },
+            onPickPhoto = onPickPhoto,
+            onCropped = { bitmap -> onUploadCroppedPhoto(teacher, bitmap) },
             photoBusy = busyTeacherId == teacher.teacherId,
             onLoadPhoto = onLoadPhoto,
         )
@@ -375,7 +378,7 @@ private fun TeacherCard(
     Surface(modifier = Modifier.clickable(onClick = onEdit), shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                TeacherAvatar(teacher.name, teacher.photoPath, size = 42, onLoadPhoto = onLoadPhoto)
+                TeacherAvatar(teacher.name, teacher.photoPath, size = 64, onLoadPhoto = onLoadPhoto)
                 Box {
                     IconButton(onClick = { menuExpanded = true }, enabled = !busy) { Icon(Icons.Filled.MoreVert, contentDescription = "More") }
                     DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
@@ -466,10 +469,12 @@ private fun TeacherActionDialog(
     busy: Boolean,
     onDismiss: () -> Unit,
     onConfirm: (TeacherAccountDraft) -> Unit,
-    onPickPhoto: (() -> Unit)?,
+    onPickPhoto: ((onPicked: (ImageBitmap) -> Unit) -> Unit)?,
+    onCropped: ((ImageBitmap) -> Unit)?,
     photoBusy: Boolean,
     onLoadPhoto: suspend (String) -> ImageBitmap?,
 ) {
+    var pendingCrop by remember { mutableStateOf<ImageBitmap?>(null) }
     var name by remember { mutableStateOf(existing?.name ?: "") }
     var email by remember { mutableStateOf(existing?.email ?: "") }
     var phone by remember { mutableStateOf(existing?.phone ?: "") }
@@ -503,7 +508,7 @@ private fun TeacherActionDialog(
                         Box(contentAlignment = Alignment.BottomEnd) {
                             TeacherAvatar(existing.name, existing.photoPath, size = 72, onLoadPhoto = onLoadPhoto)
                             Surface(
-                                modifier = Modifier.clickable(enabled = !photoBusy, onClick = onPickPhoto),
+                                modifier = Modifier.clickable(enabled = !photoBusy) { onPickPhoto { bitmap -> pendingCrop = bitmap } },
                                 shape = CircleShape,
                                 color = CmsTheme.colors.accent,
                             ) {
@@ -589,6 +594,14 @@ private fun TeacherActionDialog(
         },
         dismissButton = { TextButton(onClick = onDismiss, enabled = !busy) { Text("Cancel") } },
     )
+
+    pendingCrop?.let { source ->
+        PhotoCropDialog(
+            source = source,
+            onCancel = { pendingCrop = null },
+            onCropped = { cropped -> pendingCrop = null; onCropped?.invoke(cropped) },
+        )
+    }
 }
 
 @Composable
