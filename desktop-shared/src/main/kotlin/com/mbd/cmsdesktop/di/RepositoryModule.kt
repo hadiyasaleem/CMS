@@ -2,6 +2,7 @@ package com.mbd.cmsdesktop.di
 
 import com.mbd.cmscommon.data.repository.AcademicSessionRepositoryImpl
 import com.mbd.cmscommon.data.repository.AdministratorRepositoryLocalImpl
+import com.mbd.cmscommon.data.repository.BuildingRepositoryImpl
 import com.mbd.cmscommon.data.repository.CalendarRepositoryLocalImpl
 import com.mbd.cmscommon.data.repository.CurriculumRepositoryImpl
 import com.mbd.cmscommon.data.repository.DatesheetRepositoryLocalImpl
@@ -10,6 +11,7 @@ import com.mbd.cmscommon.data.repository.ExamPaperSubmissionRepositoryImpl
 import com.mbd.cmscommon.data.repository.FineRepositoryLocalImpl
 import com.mbd.cmscommon.data.repository.InsightsRepositoryLocalImpl
 import com.mbd.cmscommon.data.repository.MarkEditRequestRepositoryLocalImpl
+import com.mbd.cmscommon.data.repository.RoomRepositoryImpl
 import com.mbd.cmscommon.data.repository.SessionAttendanceRepositoryImpl
 import com.mbd.cmscommon.data.repository.SessionFeeRepositoryImpl
 import com.mbd.cmscommon.data.repository.SessionMarksRepositoryImpl
@@ -19,6 +21,7 @@ import com.mbd.cmscommon.data.repository.TeacherRepositoryImpl
 import com.mbd.cmscommon.data.repository.UserRepositoryImpl
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.AdministratorRepository
+import com.mbd.cmscommon.domain.repository.BuildingRepository
 import com.mbd.cmscommon.domain.repository.CalendarRepository
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.DatesheetRepository
@@ -28,6 +31,7 @@ import com.mbd.cmscommon.domain.repository.FineRepository
 import com.mbd.cmscommon.domain.repository.InsightsRepository
 import com.mbd.cmscommon.domain.repository.MarkEditRequestRepository
 import com.mbd.cmscommon.domain.repository.NotificationRepository
+import com.mbd.cmscommon.domain.repository.RoomRepository
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
 import com.mbd.cmscommon.domain.repository.SessionFeeRepository
 import com.mbd.cmscommon.domain.repository.SessionMarksRepository
@@ -50,6 +54,8 @@ abstract class RepositoryModule {
     @Singleton @Binds abstract fun bindNotificationRepository(impl: DesktopNotificationRepository): NotificationRepository
     @Singleton @Binds abstract fun bindTeacherRepository(impl: TeacherRepositoryImpl): TeacherRepository
     @Singleton @Binds abstract fun bindDepartmentRepository(impl: DepartmentRepositoryImpl): DepartmentRepository
+    @Singleton @Binds abstract fun bindBuildingRepository(impl: BuildingRepositoryImpl): BuildingRepository
+    @Singleton @Binds abstract fun bindRoomRepository(impl: RoomRepositoryImpl): RoomRepository
     @Singleton @Binds abstract fun bindMarkEditRequestRepository(impl: MarkEditRequestRepositoryLocalImpl): MarkEditRequestRepository
     @Singleton @Binds abstract fun bindCalendarRepository(impl: CalendarRepositoryLocalImpl): CalendarRepository
     @Singleton @Binds abstract fun bindAcademicSessionRepository(impl: AcademicSessionRepositoryImpl): AcademicSessionRepository

@@ -3,6 +3,7 @@ package com.mbd.cmscommon.data.sync
 import com.mbd.cmscommon.domain.model.NotificationTargetRole
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.AdministratorRepository
+import com.mbd.cmscommon.domain.repository.BuildingRepository
 import com.mbd.cmscommon.domain.repository.CalendarRepository
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.DatesheetRepository
@@ -12,6 +13,7 @@ import com.mbd.cmscommon.domain.repository.FineRepository
 import com.mbd.cmscommon.domain.repository.InsightsRepository
 import com.mbd.cmscommon.domain.repository.MarkEditRequestRepository
 import com.mbd.cmscommon.domain.repository.NotificationRepository
+import com.mbd.cmscommon.domain.repository.RoomRepository
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
 import com.mbd.cmscommon.domain.repository.SessionFeeRepository
 import com.mbd.cmscommon.domain.repository.SessionMarksRepository
@@ -35,6 +37,8 @@ class AdminDataBootstrapper @Inject constructor(
     private val markEditRequestRepository: MarkEditRequestRepository,
     private val examPaperRepository: ExamPaperSubmissionRepository,
     private val departmentRepository: DepartmentRepository,
+    private val buildingRepository: BuildingRepository,
+    private val roomRepository: RoomRepository,
     private val teacherRepository: TeacherRepository,
     private val sessionRepository: AcademicSessionRepository,
     private val curriculumRepository: CurriculumRepository,
@@ -57,6 +61,8 @@ class AdminDataBootstrapper @Inject constructor(
             listOf(
                 async { runCatching { administratorRepository.sync() }.isSuccess },
                 async { runCatching { departmentRepository.sync() }.isSuccess },
+                async { runCatching { buildingRepository.sync() }.isSuccess },
+                async { runCatching { roomRepository.sync() }.isSuccess },
                 async { runCatching { teacherRepository.sync() }.isSuccess },
                 async { runCatching { calendarRepository.sync() }.isSuccess },
                 async { runCatching { datesheetRepository.sync() }.isSuccess },

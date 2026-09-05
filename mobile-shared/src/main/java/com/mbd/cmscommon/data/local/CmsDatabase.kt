@@ -3,6 +3,7 @@ package com.mbd.cmscommon.data.local
 import androidx.room.RoomDatabase
 import com.mbd.cmscommon.data.local.dao.AcademicSessionDao
 import com.mbd.cmscommon.data.local.dao.AdministratorAccountDao
+import com.mbd.cmscommon.data.local.dao.BuildingDao
 import com.mbd.cmscommon.data.local.dao.CalendarEventDao
 import com.mbd.cmscommon.data.local.dao.DatesheetDao
 import com.mbd.cmscommon.data.local.dao.DepartmentDao
@@ -11,6 +12,7 @@ import com.mbd.cmscommon.data.local.dao.FineDao
 import com.mbd.cmscommon.data.local.dao.InsightsDao
 import com.mbd.cmscommon.data.local.dao.MarkEditRequestDao
 import com.mbd.cmscommon.data.local.dao.NotificationDao
+import com.mbd.cmscommon.data.local.dao.RoomDao
 import com.mbd.cmscommon.data.local.dao.SemesterSubjectDao
 import com.mbd.cmscommon.data.local.dao.SessionAttendanceDao
 import com.mbd.cmscommon.data.local.dao.SessionFeeDao
@@ -24,10 +26,12 @@ import com.mbd.cmscommon.data.local.dao.TableSyncStateDao
 import com.mbd.cmscommon.data.local.dao.TeacherDao
 import com.mbd.cmscommon.data.local.dao.UserDao
 
-const val CMS_DATABASE_VERSION = 39
+const val CMS_DATABASE_VERSION = 40
 
 abstract class CmsDatabase : RoomDatabase() {
     abstract fun departmentDao(): DepartmentDao
+    abstract fun buildingDao(): BuildingDao
+    abstract fun roomDao(): RoomDao
     abstract fun administratorAccountDao(): AdministratorAccountDao
     abstract fun teacherDao(): TeacherDao
     abstract fun userDao(): UserDao

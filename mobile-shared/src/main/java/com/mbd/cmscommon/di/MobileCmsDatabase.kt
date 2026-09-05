@@ -7,6 +7,7 @@ import com.mbd.cmscommon.data.local.CmsDatabase
 import com.mbd.cmscommon.data.local.Converters
 import com.mbd.cmscommon.data.local.entity.AcademicSessionEntity
 import com.mbd.cmscommon.data.local.entity.AdministratorAccountEntity
+import com.mbd.cmscommon.data.local.entity.BuildingEntity
 import com.mbd.cmscommon.data.local.entity.CalendarEventEntity
 import com.mbd.cmscommon.data.local.entity.DatesheetEntity
 import com.mbd.cmscommon.data.local.entity.DatesheetSlotEntity
@@ -18,6 +19,7 @@ import com.mbd.cmscommon.data.local.entity.InsightExamStatEntity
 import com.mbd.cmscommon.data.local.entity.InsightSessionOverviewEntity
 import com.mbd.cmscommon.data.local.entity.MarkEditRequestEntity
 import com.mbd.cmscommon.data.local.entity.NotificationEntity
+import com.mbd.cmscommon.data.local.entity.RoomEntity
 import com.mbd.cmscommon.data.local.entity.SemesterSubjectEntity
 import com.mbd.cmscommon.data.local.entity.SessionAttendanceTallyEntity
 import com.mbd.cmscommon.data.local.entity.SessionAttendanceRowEntity
@@ -57,6 +59,7 @@ import com.mbd.cmscommon.data.local.entity.UserEntity
         FineEntity::class, CalendarEventEntity::class, MarkEditRequestEntity::class,
         InsightSessionOverviewEntity::class, InsightAtRiskStudentEntity::class, InsightExamStatEntity::class,
         DatesheetEntity::class, DatesheetSlotEntity::class,
+        BuildingEntity::class, RoomEntity::class,
     ],
     version = CMS_DATABASE_VERSION,
     exportSchema = true,

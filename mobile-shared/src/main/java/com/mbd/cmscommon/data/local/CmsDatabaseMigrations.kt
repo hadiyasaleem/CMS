@@ -1446,6 +1446,50 @@ val MIGRATION_38_39: Migration = object : Migration(38, 39) {
     }
 }
 
+val MIGRATION_39_40: Migration = object : Migration(39, 40) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `buildings` (
+                `buildingId` TEXT NOT NULL,
+                `name` TEXT NOT NULL,
+                `code` TEXT,
+                `isActive` INTEGER NOT NULL DEFAULT 1,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `createdBy` TEXT,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedBy` TEXT,
+                `isDeleted` INTEGER NOT NULL DEFAULT 0,
+                `deletedAt` INTEGER,
+                `deletedBy` TEXT,
+                PRIMARY KEY(`buildingId`)
+            )
+            """.trimIndent(),
+        )
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `rooms` (
+                `roomId` TEXT NOT NULL,
+                `buildingId` TEXT NOT NULL,
+                `roomNo` TEXT NOT NULL,
+                `name` TEXT,
+                `capacity` INTEGER,
+                `isOffice` INTEGER NOT NULL DEFAULT 0,
+                `isActive` INTEGER NOT NULL DEFAULT 1,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `createdBy` TEXT,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedBy` TEXT,
+                `isDeleted` INTEGER NOT NULL DEFAULT 0,
+                `deletedAt` INTEGER,
+                `deletedBy` TEXT,
+                PRIMARY KEY(`roomId`)
+            )
+            """.trimIndent(),
+        )
+    }
+}
+
 val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_18_19,
     MIGRATION_19_20,
@@ -1468,4 +1512,5 @@ val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_36_37,
     MIGRATION_37_38,
     MIGRATION_38_39,
+    MIGRATION_39_40,
 )

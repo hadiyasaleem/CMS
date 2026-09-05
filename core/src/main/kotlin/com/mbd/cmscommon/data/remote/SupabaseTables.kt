@@ -2,6 +2,8 @@ package com.mbd.cmscommon.data.remote
 
 object SupabaseTables {
     const val DEPARTMENTS = "departments"
+    const val BUILDINGS = "buildings"
+    const val ROOMS = "rooms"
     const val TEACHERS = "teachers"
     const val PROFILES = "profiles"
     const val ACADEMIC_SESSIONS = "academic_sessions"

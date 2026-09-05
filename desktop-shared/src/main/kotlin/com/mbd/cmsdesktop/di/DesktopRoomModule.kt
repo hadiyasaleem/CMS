@@ -4,6 +4,7 @@ import androidx.room.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.mbd.cmscommon.data.local.dao.AcademicSessionDao
 import com.mbd.cmscommon.data.local.dao.AdministratorAccountDao
+import com.mbd.cmscommon.data.local.dao.BuildingDao
 import com.mbd.cmscommon.data.local.dao.CalendarEventDao
 import com.mbd.cmscommon.data.local.dao.DatesheetDao
 import com.mbd.cmscommon.data.local.dao.DepartmentDao
@@ -12,6 +13,7 @@ import com.mbd.cmscommon.data.local.dao.FineDao
 import com.mbd.cmscommon.data.local.dao.InsightsDao
 import com.mbd.cmscommon.data.local.dao.MarkEditRequestDao
 import com.mbd.cmscommon.data.local.dao.NotificationDao
+import com.mbd.cmscommon.data.local.dao.RoomDao
 import com.mbd.cmscommon.data.local.dao.SemesterSubjectDao
 import com.mbd.cmscommon.data.local.dao.SessionAttendanceDao
 import com.mbd.cmscommon.data.local.dao.SessionFeeDao
@@ -56,6 +58,8 @@ object DesktopRoomModule {
             .build()
 
     @Provides fun departmentDao(db: DesktopDatabase): DepartmentDao = db.departmentDao()
+    @Provides fun buildingDao(db: DesktopDatabase): BuildingDao = db.buildingDao()
+    @Provides fun roomDao(db: DesktopDatabase): RoomDao = db.roomDao()
     @Provides fun administratorAccountDao(db: DesktopDatabase): AdministratorAccountDao = db.administratorAccountDao()
     @Provides fun teacherDao(db: DesktopDatabase): TeacherDao = db.teacherDao()
     @Provides fun userDao(db: DesktopDatabase): UserDao = db.userDao()

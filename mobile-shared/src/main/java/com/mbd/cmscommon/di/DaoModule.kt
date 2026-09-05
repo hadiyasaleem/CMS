@@ -3,6 +3,7 @@ package com.mbd.cmscommon.di
 import com.mbd.cmscommon.data.local.CmsDatabase
 import com.mbd.cmscommon.data.local.dao.AcademicSessionDao
 import com.mbd.cmscommon.data.local.dao.AdministratorAccountDao
+import com.mbd.cmscommon.data.local.dao.BuildingDao
 import com.mbd.cmscommon.data.local.dao.CalendarEventDao
 import com.mbd.cmscommon.data.local.dao.DatesheetDao
 import com.mbd.cmscommon.data.local.dao.DepartmentDao
@@ -11,6 +12,7 @@ import com.mbd.cmscommon.data.local.dao.FineDao
 import com.mbd.cmscommon.data.local.dao.InsightsDao
 import com.mbd.cmscommon.data.local.dao.MarkEditRequestDao
 import com.mbd.cmscommon.data.local.dao.NotificationDao
+import com.mbd.cmscommon.data.local.dao.RoomDao
 import com.mbd.cmscommon.data.local.dao.SemesterSubjectDao
 import com.mbd.cmscommon.data.local.dao.SessionAttendanceDao
 import com.mbd.cmscommon.data.local.dao.SessionFeeDao
@@ -35,6 +37,12 @@ import dagger.hilt.components.SingletonComponent
 object DaoModule {
     @Provides
     fun provideDepartmentDao(db: CmsDatabase): DepartmentDao = db.departmentDao()
+
+    @Provides
+    fun provideBuildingDao(db: CmsDatabase): BuildingDao = db.buildingDao()
+
+    @Provides
+    fun provideRoomDao(db: CmsDatabase): RoomDao = db.roomDao()
 
     @Provides
     fun provideAdministratorAccountDao(db: CmsDatabase): AdministratorAccountDao = db.administratorAccountDao()
