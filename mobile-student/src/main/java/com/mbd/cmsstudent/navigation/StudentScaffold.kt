@@ -57,9 +57,11 @@ fun StudentScaffold(onSignedOut: () -> Unit) {
                         selected = currentRoute == destination.route,
                         onClick = {
                             navController.navigate(destination.route) {
-                                popUpTo(StudentDestination.Home.route) { saveState = true }
+                                // Always reset to this tab's root screen, discarding any drill-down --
+                                // no saveState/restoreState, which would otherwise restore that
+                                // drill-down instead of the tab root.
+                                popUpTo(StudentDestination.Home.route)
                                 launchSingleTop = true
-                                restoreState = true
                             }
                         },
                         icon = { Icon(destination.navIcon!!, contentDescription = destination.navLabel) },

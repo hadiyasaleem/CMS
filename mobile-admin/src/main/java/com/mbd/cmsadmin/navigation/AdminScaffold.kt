@@ -61,9 +61,11 @@ fun AdminScaffold(onSignedOut: () -> Unit) {
                         selected = currentRoute == tab.route,
                         onClick = {
                             navController.navigate(tab.route) {
-                                popUpTo(AdminTab.Dashboard.route) { saveState = true }
+                                // Always reset to this tab's root screen, discarding any drill-down
+                                // (e.g. Teachers opened from People) -- no saveState/restoreState, which
+                                // would otherwise restore that drill-down instead of the tab root.
+                                popUpTo(AdminTab.Dashboard.route)
                                 launchSingleTop = true
-                                restoreState = true
                             }
                         },
                         icon = { Icon(tab.icon, contentDescription = tab.label) },
