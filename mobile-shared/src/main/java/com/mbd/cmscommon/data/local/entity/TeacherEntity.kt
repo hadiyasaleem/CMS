@@ -26,7 +26,6 @@ data class TeacherEntity(
     val canManageDatesheets: Boolean = false,
     val status: String,
     val isActive: Boolean = true,
-    val archivedAt: Long? = null,
     val createdAt: Long = 0L,
     val createdBy: String? = null,
     val updatedAt: Long = 0L,

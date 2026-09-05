@@ -30,7 +30,6 @@ Deno.serve(handle(async (req) => {
 
   if (status === "DELETE") {
     update.is_active = false;
-    update.archived_at = new Date().toISOString();
     update.status = "DISABLED";
   } else if (status) {
     if (!["ACTIVE", "DISABLED", "BANNED"].includes(status)) {

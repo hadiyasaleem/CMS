@@ -1665,7 +1665,6 @@ export type Database = {
       }
       teachers: {
         Row: {
-          archived_at: string | null
           auth_uid: string | null
           can_approve_link_requests: boolean
           can_edit_timetable: boolean
@@ -1695,7 +1694,6 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
-          archived_at?: string | null
           auth_uid?: string | null
           can_approve_link_requests?: boolean
           can_edit_timetable?: boolean
@@ -1725,7 +1723,6 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
-          archived_at?: string | null
           auth_uid?: string | null
           can_approve_link_requests?: boolean
           can_edit_timetable?: boolean

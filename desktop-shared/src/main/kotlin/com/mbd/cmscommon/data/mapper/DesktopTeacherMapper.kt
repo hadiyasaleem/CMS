@@ -39,7 +39,6 @@ object DesktopTeacherMapper {
             permissions = permissions,
             status = status,
             isActive = dto.isActive,
-            archivedAt = PgTime.parse(dto.archivedAt),
             entityId = dto.entityId ?: 0L,
             createdAt = PgTime.parseOrEpoch(dto.createdAt),
             createdBy = dto.createdBy ?: "",

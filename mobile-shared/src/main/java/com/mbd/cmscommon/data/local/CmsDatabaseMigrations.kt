@@ -565,6 +565,67 @@ val MIGRATION_35_36: Migration = object : Migration(35, 36) {
     }
 }
 
+/** Drops archived_at from teachers too — it was write-only (set on delete, never read anywhere)
+ * and, per the same audit, is_active/status already do the actual lifecycle work. */
+val MIGRATION_36_37: Migration = object : Migration(36, 37) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE `teachers_new` (
+                `teacherId` TEXT NOT NULL,
+                `entityId` INTEGER NOT NULL DEFAULT 0,
+                `name` TEXT NOT NULL,
+                `email` TEXT NOT NULL,
+                `phone` TEXT,
+                `deptId` TEXT,
+                `designation` TEXT,
+                `qualification` TEXT,
+                `specialization` TEXT,
+                `officeRoom` TEXT,
+                `gender` TEXT,
+                `authUid` TEXT,
+                `isAdmin` INTEGER NOT NULL DEFAULT 0,
+                `isHod` INTEGER NOT NULL DEFAULT 0,
+                `photoPath` TEXT,
+                `canApproveLinkRequests` INTEGER NOT NULL DEFAULT 0,
+                `canEditTimetable` INTEGER NOT NULL DEFAULT 0,
+                `canSendNotifications` INTEGER NOT NULL DEFAULT 0,
+                `canManageDatesheets` INTEGER NOT NULL DEFAULT 0,
+                `status` TEXT NOT NULL,
+                `isActive` INTEGER NOT NULL DEFAULT 1,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `createdBy` TEXT,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedBy` TEXT,
+                `isDeleted` INTEGER NOT NULL DEFAULT 0,
+                `deletedAt` INTEGER,
+                `deletedBy` TEXT,
+                PRIMARY KEY(`teacherId`)
+            )
+            """.trimIndent(),
+        )
+        db.execSQL(
+            """
+            INSERT INTO `teachers_new`
+            (`teacherId`,`entityId`,`name`,`email`,`phone`,`deptId`,`designation`,`qualification`,
+             `specialization`,`officeRoom`,`gender`,`authUid`,`isAdmin`,`isHod`,`photoPath`,
+             `canApproveLinkRequests`,`canEditTimetable`,`canSendNotifications`,`canManageDatesheets`,
+             `status`,`isActive`,`createdAt`,`createdBy`,`updatedAt`,`updatedBy`,
+             `isDeleted`,`deletedAt`,`deletedBy`)
+            SELECT
+             `teacherId`,`entityId`,`name`,`email`,`phone`,`deptId`,`designation`,`qualification`,
+             `specialization`,`officeRoom`,`gender`,`authUid`,`isAdmin`,`isHod`,`photoPath`,
+             `canApproveLinkRequests`,`canEditTimetable`,`canSendNotifications`,`canManageDatesheets`,
+             `status`,`isActive`,`createdAt`,`createdBy`,`updatedAt`,`updatedBy`,
+             `isDeleted`,`deletedAt`,`deletedBy`
+            FROM `teachers`
+            """.trimIndent(),
+        )
+        db.execSQL("DROP TABLE `teachers`")
+        db.execSQL("ALTER TABLE `teachers_new` RENAME TO `teachers`")
+    }
+}
+
 val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_18_19,
     MIGRATION_19_20,
@@ -584,4 +645,5 @@ val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_33_34,
     MIGRATION_34_35,
     MIGRATION_35_36,
+    MIGRATION_36_37,
 )

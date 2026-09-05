@@ -24,7 +24,6 @@ data class TeacherDto(
     val canManageDatesheets: Boolean = false,
     val status: String? = null,
     val isActive: Boolean = true,
-    val archivedAt: String? = null,
     val createdAt: String? = null,
     val createdBy: String? = null,
     val updatedAt: String? = null,
