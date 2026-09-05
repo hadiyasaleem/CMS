@@ -3,6 +3,7 @@ package com.mbd.cmscommon.ui.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,9 +12,11 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,7 +28,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.Composable
@@ -40,6 +42,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.controller.DepartmentPortfolioStats
 import com.mbd.cmscommon.domain.model.Department
@@ -179,11 +182,22 @@ private fun DepartmentPortfolioCard(
         "No active sessions"
     }
 
-    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Column(Modifier.padding(16.dp)) {
+    Surface(
+        modifier = Modifier.fillMaxHeight().clickable(onClick = onOpen),
+        shape = RoundedCornerShape(16.dp),
+        color = ModSurface,
+        border = BorderStroke(1.dp, ModTrack),
+    ) {
+        Column(Modifier.padding(16.dp).heightIn(min = 208.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(department.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        department.name,
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                     Text("Code ${department.code}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
                 Box {
@@ -197,15 +211,19 @@ private fun DepartmentPortfolioCard(
             Spacer(Modifier.height(8.dp))
             StatusBadge(if (hasHod) "HOD ASSIGNED" else "HOD NOT ASSIGNED", if (hasHod) BadgeTone.Success else BadgeTone.Warning)
             Spacer(Modifier.height(8.dp))
-            Text(department.description?.takeIf { it.isNotBlank() } ?: "No department description added yet.", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
+            Text(
+                department.description?.takeIf { it.isNotBlank() } ?: "No department description added yet.",
+                color = ModMuted,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
             Spacer(Modifier.height(10.dp))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 StatusBadge("${stats.studentCount} students", BadgeTone.Neutral)
                 StatusBadge("${stats.activeSessions} sessions", BadgeTone.Neutral)
                 StatusBadge(semesterSummary, BadgeTone.Navy)
             }
-            Spacer(Modifier.height(10.dp))
-            TextButton(onClick = onOpen) { Text("Open ${department.name}") }
         }
     }
 }
