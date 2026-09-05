@@ -3,12 +3,14 @@ package com.mbd.cmscommon.ui.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -123,62 +125,67 @@ fun TeacherDirectoryWorkspace(
         TeacherSort.NEWEST -> filtered.sortedByDescending { it.createdAt }
     }
 
-    CardGrid(modifier.fillMaxWidth()) {
-        fullSpanItem { TeacherHero(teachers.size) { showCreateDialog = true } }
+    Box(modifier.fillMaxSize()) {
+        CardGrid(Modifier.fillMaxWidth()) {
+            if (!errorMessage.isNullOrBlank()) {
+                fullSpanItem { TeacherNotice(errorMessage, TeacherRed, onClearError) }
+            }
+            if (!notice.isNullOrBlank()) {
+                fullSpanItem { TeacherNotice(notice, TeacherGreen, onConsumeNotice) }
+            }
 
-        if (!errorMessage.isNullOrBlank()) {
-            fullSpanItem { TeacherNotice(errorMessage, TeacherRed, onClearError) }
-        }
-        if (!notice.isNullOrBlank()) {
-            fullSpanItem { TeacherNotice(notice, TeacherGreen, onConsumeNotice) }
-        }
+            fullSpanItem { TeacherSummaryCard(teachers.size, teachers.count { it.status == TeacherStatus.ACTIVE }, assignments.values.sumOf { it.size }, teachers.count { completeness(it) < 100 }) }
 
-        fullSpanItem { TeacherSummaryCard(teachers.size, teachers.count { it.status == TeacherStatus.ACTIVE }, assignments.values.sumOf { it.size }, teachers.count { completeness(it) < 100 }) }
-
-        fullSpanItem {
-            Column(Modifier.fillMaxWidth()) {
-                OutlinedTextField(
-                    value = query,
-                    onValueChange = { query = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Search profiles, review workloads, and manage access") },
-                    singleLine = true,
-                )
-                Spacer(Modifier.height(8.dp))
-                Text("SHOW", color = ModMuted, style = CmsTextStyles.eyebrow)
-                Spacer(Modifier.height(6.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TeacherFilter.entries.forEach { option -> CmsChip(option.label, selected = filter == option, onClick = { filter = option }) }
-                }
-                Spacer(Modifier.height(8.dp))
-                Text("SORT", color = ModMuted, style = CmsTextStyles.eyebrow)
-                Spacer(Modifier.height(6.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TeacherSort.entries.forEach { option -> CmsChip(option.label, selected = sort == option, onClick = { sort = option }) }
+            fullSpanItem {
+                Column(Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = query,
+                        onValueChange = { query = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("Search profiles, review workloads, and manage access") },
+                        singleLine = true,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text("SHOW", color = ModMuted, style = CmsTextStyles.eyebrow)
+                    Spacer(Modifier.height(6.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TeacherFilter.entries.forEach { option -> CmsChip(option.label, selected = filter == option, onClick = { filter = option }) }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Text("SORT", color = ModMuted, style = CmsTextStyles.eyebrow)
+                    Spacer(Modifier.height(6.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TeacherSort.entries.forEach { option -> CmsChip(option.label, selected = sort == option, onClick = { sort = option }) }
+                    }
                 }
             }
-        }
 
-        when {
-            loading -> fullSpanItems(3) { SkeletonRow() }
-            teachers.isEmpty() -> fullSpanItem { TeacherEmptyState(filtered = false, onAdd = { showCreateDialog = true }, onClearFilters = {}) }
-            visible.isEmpty() -> fullSpanItem { TeacherEmptyState(filtered = true, onAdd = {}, onClearFilters = { query = ""; filter = TeacherFilter.ALL }) }
-            else -> items(visible, key = { it.teacherId }) { teacher ->
-                val dept = departments.firstOrNull { it.deptId == teacher.deptId }
-                TeacherCard(
-                    teacher = teacher,
-                    department = dept,
-                    assignments = assignments[teacher.teacherId].orEmpty(),
-                    completeness = completeness(teacher),
-                    busy = busyTeacherId == teacher.teacherId,
-                    onEdit = { editingTeacher = teacher },
-                    onRequestStatus = { status -> pendingStatus = teacher to status },
-                    onRequestDelete = { pendingDelete = teacher },
-                )
+            when {
+                loading -> fullSpanItems(3) { SkeletonRow() }
+                teachers.isEmpty() -> fullSpanItem { TeacherEmptyState(filtered = false, onAdd = { showCreateDialog = true }, onClearFilters = {}) }
+                visible.isEmpty() -> fullSpanItem { TeacherEmptyState(filtered = true, onAdd = {}, onClearFilters = { query = ""; filter = TeacherFilter.ALL }) }
+                else -> items(visible, key = { it.teacherId }) { teacher ->
+                    val dept = departments.firstOrNull { it.deptId == teacher.deptId }
+                    TeacherCard(
+                        teacher = teacher,
+                        department = dept,
+                        assignments = assignments[teacher.teacherId].orEmpty(),
+                        completeness = completeness(teacher),
+                        busy = busyTeacherId == teacher.teacherId,
+                        onEdit = { editingTeacher = teacher },
+                        onRequestStatus = { status -> pendingStatus = teacher to status },
+                        onRequestDelete = { pendingDelete = teacher },
+                    )
+                }
             }
-        }
 
-        fullSpanItem { Spacer(Modifier.height(72.dp)) }
+            fullSpanItem { Spacer(Modifier.height(72.dp)) }
+        }
+        CmsFab(
+            onClick = { showCreateDialog = true },
+            contentDescription = "Add teacher",
+            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+        )
     }
 
     if (showCreateDialog) {
@@ -225,22 +232,6 @@ fun TeacherDirectoryWorkspace(
             onConfirm = { onDelete(teacher); pendingDelete = null },
             onDismiss = { pendingDelete = null },
         )
-    }
-}
-
-@Composable
-private fun TeacherHero(count: Int, onAdd: () -> Unit) {
-    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text("FACULTY DIRECTORY", color = TeacherGold, style = CmsTextStyles.eyebrow)
-                Spacer(Modifier.height(6.dp))
-                Text("Faculty", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                Spacer(Modifier.height(4.dp))
-                Text("$count faculty record(s)", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
-            }
-            CmsPrimaryButton(text = "Add teacher", onClick = onAdd)
-        }
     }
 }
 
