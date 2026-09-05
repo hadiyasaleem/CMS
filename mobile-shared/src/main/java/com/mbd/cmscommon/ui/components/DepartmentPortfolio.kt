@@ -126,19 +126,20 @@ private fun DepartmentHero(heroPainter: Painter, departmentCount: Int) {
             Box(
                 Modifier.fillMaxSize().background(
                     Brush.horizontalGradient(
-                        0f to ModWarn.copy(alpha = 0.12f),
-                        0.6f to ModWarn.copy(alpha = 0.92f),
+                        0f to ModSurface.copy(alpha = 0.82f),
+                        0.55f to ModSurface.copy(alpha = 0.6f),
+                        0.8f to ModSurface.copy(alpha = 0.1f),
                         1f to Color.Transparent,
                     ),
                 ),
             )
             Row(Modifier.align(Alignment.CenterStart).padding(24.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.fillMaxWidth(0.6f)) {
-                    Text("ACADEMIC STRUCTURE", color = ModMuted, style = CmsTextStyles.eyebrow)
+                    Text("ACADEMIC STRUCTURE", color = ModInk.copy(alpha = 0.78f), style = CmsTextStyles.eyebrow)
                     Spacer(Modifier.height(6.dp))
                     Text("Department portfolio", color = ModInk, fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.headlineMedium)
                     Spacer(Modifier.height(4.dp))
-                    Text("$departmentCount departments across the college", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
+                    Text("$departmentCount departments across the college", color = ModInk.copy(alpha = 0.78f), style = MaterialTheme.typography.bodyMedium)
                 }
             }
         }
