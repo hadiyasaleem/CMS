@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.domain.model.AcademicSession
+import com.mbd.cmscommon.domain.model.SemesterTerm
 import com.mbd.cmscommon.domain.model.SessionFeeStructure
 import com.mbd.cmscommon.domain.model.SessionPeriod
 import com.mbd.cmscommon.domain.model.SessionStudent
@@ -69,6 +70,8 @@ fun SessionOperationsWorkspace(
     periods: List<SessionPeriod>,
     fee: SessionFeeStructure?,
     feeLoading: Boolean,
+    currentSemesterTerm: SemesterTerm?,
+    canPromote: Boolean,
     errorMessage: String?,
     teachers: List<Teacher>,
     onPromoteSession: () -> Unit,
@@ -108,7 +111,17 @@ fun SessionOperationsWorkspace(
             }
         }
 
-        item { SessionProgressCard(session, students.size, gpaRecorded, configuredSemesters, onPromoteClick = { showPromoteConfirm = true }) }
+        item {
+            SessionProgressCard(
+                session,
+                students.size,
+                gpaRecorded,
+                configuredSemesters,
+                currentSemesterTerm = currentSemesterTerm,
+                canPromote = canPromote,
+                onPromoteClick = { showPromoteConfirm = true },
+            )
+        }
 
         item { WorkspaceSection("Operational areas", "Roster, timetable, and fee tools for this intake") }
         items(actions) { action -> SessionActionCard(action) }
@@ -191,7 +204,15 @@ private fun SessionIdentityCard(session: AcademicSession?, onEdit: () -> Unit) {
 }
 
 @Composable
-private fun SessionProgressCard(session: AcademicSession?, studentCount: Int, gpaRecorded: Int, configuredSemesters: Int, onPromoteClick: () -> Unit) {
+private fun SessionProgressCard(
+    session: AcademicSession?,
+    studentCount: Int,
+    gpaRecorded: Int,
+    configuredSemesters: Int,
+    currentSemesterTerm: SemesterTerm?,
+    canPromote: Boolean,
+    onPromoteClick: () -> Unit,
+) {
     val maxStudents = session?.maxStudents ?: 0
     val capacityUsed = if (maxStudents == 0) 0f else (studentCount.toFloat() / maxStudents).coerceIn(0f, 1f)
     val gpaPercent = if (studentCount == 0) 0f else gpaRecorded.toFloat() / studentCount
@@ -210,8 +231,14 @@ private fun SessionProgressCard(session: AcademicSession?, studentCount: Int, gp
             ProgressLine("Curriculum coverage", curriculumPercent, "$configuredSemesters / 8 semesters configured")
             Spacer(Modifier.height(10.dp))
             if (session?.isActive == true) {
-                TextButton(onClick = onPromoteClick) {
-                    Text(if (session.currentSemester >= 8) "Mark as graduated" else "Promote semester")
+                if (canPromote) {
+                    TextButton(onClick = onPromoteClick) {
+                        Text(if (session.currentSemester >= 8) "Mark as graduated" else "Promote semester")
+                    }
+                } else {
+                    val hint = currentSemesterTerm?.endDate?.let { "Available after semester ends on $it." }
+                        ?: "Set this semester's end date in Curriculum to enable promotion."
+                    Text(hint, color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
             } else if (session != null) {
                 Text("This class has graduated.", color = ModMuted, style = MaterialTheme.typography.bodySmall)

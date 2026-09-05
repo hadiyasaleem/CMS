@@ -37,6 +37,8 @@ fun SessionDetailScreen(
     val periods by controller.periods.collectAsState()
     val fee by controller.fee.collectAsState()
     val feeLoading by controller.feeLoading.collectAsState()
+    val currentSemesterTerm by controller.currentSemesterTerm.collectAsState()
+    val canPromote by controller.canPromote.collectAsState()
     val errorMessage by controller.error.collectAsState()
     val teachers by teacherRepository.observeActiveTeachers().collectAsState(initial = emptyList())
 
@@ -47,6 +49,8 @@ fun SessionDetailScreen(
         periods = periods,
         fee = fee,
         feeLoading = feeLoading,
+        currentSemesterTerm = currentSemesterTerm,
+        canPromote = canPromote,
         errorMessage = errorMessage,
         teachers = teachers,
         onPromoteSession = controller::promoteSession,

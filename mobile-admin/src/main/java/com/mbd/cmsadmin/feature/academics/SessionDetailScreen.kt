@@ -44,6 +44,8 @@ class SessionDetailViewModel @Inject constructor(
     val periods = controller.periods
     val fee = controller.fee
     val feeLoading = controller.feeLoading
+    val currentSemesterTerm = controller.currentSemesterTerm
+    val canPromote = controller.canPromote
     val error = controller.error
     val teachers = teacherRepository.observeActiveTeachers()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -70,6 +72,8 @@ fun SessionDetailScreen(
     val periods by viewModel.periods.collectAsState()
     val fee by viewModel.fee.collectAsState()
     val feeLoading by viewModel.feeLoading.collectAsState()
+    val currentSemesterTerm by viewModel.currentSemesterTerm.collectAsState()
+    val canPromote by viewModel.canPromote.collectAsState()
     val errorMessage by viewModel.error.collectAsState()
     val teachers by viewModel.teachers.collectAsState()
 
@@ -80,6 +84,8 @@ fun SessionDetailScreen(
         periods = periods,
         fee = fee,
         feeLoading = feeLoading,
+        currentSemesterTerm = currentSemesterTerm,
+        canPromote = canPromote,
         errorMessage = errorMessage,
         teachers = teachers,
         onPromoteSession = viewModel::promoteSession,
