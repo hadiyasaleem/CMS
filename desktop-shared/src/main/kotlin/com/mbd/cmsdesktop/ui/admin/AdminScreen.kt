@@ -15,6 +15,7 @@ sealed interface AdminScreen {
     data object Teachers : AdminScreen
     data object LinkRequests : AdminScreen
     data object MarkEditRequests : AdminScreen
+    data object ExamPaperReview : AdminScreen
     data object AttendanceRecords : AdminScreen
     data object Calendar : AdminScreen
     data object Datesheets : AdminScreen

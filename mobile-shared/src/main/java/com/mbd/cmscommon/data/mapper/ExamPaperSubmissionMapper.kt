@@ -3,6 +3,7 @@ package com.mbd.cmscommon.data.mapper
 import com.mbd.cmscommon.data.local.entity.ExamPaperSubmissionEntity
 import com.mbd.cmscommon.data.remote.PgTime
 import com.mbd.cmscommon.data.remote.dto.ExamPaperSubmissionDto
+import com.mbd.cmscommon.domain.model.ExamPaperReviewStatus
 import com.mbd.cmscommon.domain.model.ExamPaperSubmission
 import com.mbd.cmscommon.domain.model.ExamType
 import java.time.Instant
@@ -10,6 +11,9 @@ import java.time.Instant
 object ExamPaperSubmissionMapper {
     private fun parseExamType(raw: String?): ExamType =
         runCatching { ExamType.valueOf(raw?.trim()?.uppercase() ?: "") }.getOrDefault(ExamType.MIDTERM)
+
+    private fun parseReviewStatus(raw: String?): ExamPaperReviewStatus =
+        runCatching { ExamPaperReviewStatus.valueOf(raw?.trim()?.uppercase() ?: "") }.getOrDefault(ExamPaperReviewStatus.SUBMITTED)
 
     fun dtoToDomain(dto: ExamPaperSubmissionDto): ExamPaperSubmission = ExamPaperSubmission(
         submissionId = dto.id ?: "",
@@ -20,6 +24,12 @@ object ExamPaperSubmissionMapper {
         storagePath = dto.storagePath ?: "",
         fileName = dto.fileName ?: "",
         uploadedAt = PgTime.parseOrEpoch(dto.uploadedAt),
+        mimeType = dto.mimeType,
+        reviewStatus = parseReviewStatus(dto.reviewStatus),
+        reviewedBy = dto.reviewedBy,
+        reviewedAt = PgTime.parse(dto.reviewedAt),
+        teacherNotes = dto.teacherNotes,
+        keyStoragePath = dto.keyStoragePath,
         entityId = dto.entityId ?: 0L,
         createdAt = PgTime.parseOrEpoch(dto.createdAt),
         createdBy = dto.createdBy ?: "",
@@ -36,6 +46,12 @@ object ExamPaperSubmissionMapper {
         storagePath = domain.storagePath,
         fileName = domain.fileName,
         uploadedAt = domain.uploadedAt.toEpochMilli(),
+        mimeType = domain.mimeType,
+        keyStoragePath = domain.keyStoragePath,
+        teacherNotes = domain.teacherNotes,
+        reviewStatus = domain.reviewStatus.name,
+        reviewedBy = domain.reviewedBy,
+        reviewedAt = domain.reviewedAt?.toEpochMilli(),
         createdBy = domain.createdBy,
         entityId = domain.entityId,
         createdAt = domain.createdAt.toEpochMilli(),
@@ -52,6 +68,12 @@ object ExamPaperSubmissionMapper {
         storagePath = entity.storagePath ?: "",
         fileName = entity.fileName ?: "",
         uploadedAt = Instant.ofEpochMilli(entity.uploadedAt),
+        mimeType = entity.mimeType,
+        reviewStatus = parseReviewStatus(entity.reviewStatus),
+        reviewedBy = entity.reviewedBy,
+        reviewedAt = entity.reviewedAt?.let { Instant.ofEpochMilli(it) },
+        teacherNotes = entity.teacherNotes,
+        keyStoragePath = entity.keyStoragePath,
         entityId = entity.entityId,
         createdAt = Instant.ofEpochMilli(entity.createdAt),
         createdBy = entity.createdBy ?: "",

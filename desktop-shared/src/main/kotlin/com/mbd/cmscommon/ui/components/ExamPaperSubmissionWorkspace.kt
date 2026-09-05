@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.mbd.cmscommon.domain.model.ExamPaperReviewStatus
 import com.mbd.cmscommon.domain.model.ExamPaperSubmission
 import com.mbd.cmscommon.domain.model.ExamType
 import com.mbd.cmscommon.teacher.ResolvedAssignment
@@ -212,18 +213,28 @@ private fun UploadPaperCard(examType: ExamType, outcome: Outcome<Unit>, onChoose
 @Composable
 private fun SubmissionCard(submission: ExamPaperSubmission, onOpen: () -> Unit, onDelete: () -> Unit) {
     Surface(shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(submission.fileName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
-                Text(
-                    "Uploaded ${submission.uploadedAt.atZone(ZoneId.systemDefault()).format(PaperDateFormat)}",
-                    color = ModMuted,
-                    style = MaterialTheme.typography.bodySmall,
-                )
+        Column(Modifier.padding(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(submission.fileName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        "Uploaded ${submission.uploadedAt.atZone(ZoneId.systemDefault()).format(PaperDateFormat)}",
+                        color = ModMuted,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                StatusBadge(submission.examType.name, BadgeTone.Navy)
+                TextButton(onClick = onOpen) { Text("Open") }
+                TextButton(onClick = onDelete) { Text("Remove", color = CmsTheme.colors.accent) }
             }
-            StatusBadge(submission.examType.name, BadgeTone.Navy)
-            TextButton(onClick = onOpen) { Text("Open") }
-            TextButton(onClick = onDelete) { Text("Remove", color = CmsTheme.colors.accent) }
+            if (submission.reviewStatus == ExamPaperReviewStatus.REVIEWED) {
+                Spacer(Modifier.height(6.dp))
+                StatusBadge("REVIEWED", BadgeTone.Success)
+                if (!submission.teacherNotes.isNullOrBlank()) {
+                    Spacer(Modifier.height(4.dp))
+                    Text("Admin feedback: ${submission.teacherNotes}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                }
+            }
         }
     }
 }

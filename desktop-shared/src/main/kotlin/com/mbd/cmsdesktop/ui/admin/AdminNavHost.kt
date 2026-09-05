@@ -173,6 +173,7 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         sessionRepository = component.academicSessionRepository(),
                         linkRequestRepository = component.studentLinkRequestRepository(),
                         markEditRequestRepository = component.markEditRequestRepository(),
+                        examPaperSubmissionRepository = component.examPaperRepository(),
                         onOpen = { destination ->
                             when (destination) {
                                 PeopleDestination.ADMINISTRATORS -> push(AdminScreen.Administrators)
@@ -180,6 +181,7 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                                 PeopleDestination.STUDENTS -> popOrSwitchTab(AdminTab.Academics)
                                 PeopleDestination.LINK_REQUESTS -> push(AdminScreen.LinkRequests)
                                 PeopleDestination.MARK_EDIT_REQUESTS -> push(AdminScreen.MarkEditRequests)
+                                PeopleDestination.EXAM_PAPER_REVIEW -> push(AdminScreen.ExamPaperReview)
                             }
                         },
                     )
@@ -239,6 +241,12 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         departmentRepository = component.departmentRepository(),
                         teacherRepository = component.teacherRepository(),
                         reviewedBy = accountKey,
+                    )
+
+                    AdminScreen.ExamPaperReview -> ExamPaperReviewScreen(
+                        examPaperRepository = component.examPaperRepository(),
+                        reviewedBy = accountKey,
+                        window = window,
                     )
 
                     AdminScreen.AttendanceRecords -> AttendanceRecordsScreen(

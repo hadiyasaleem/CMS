@@ -9,6 +9,7 @@ import androidx.compose.ui.res.painterResource
 import com.mbd.cmscommon.controller.PeopleHubController
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.AdministratorRepository
+import com.mbd.cmscommon.domain.repository.ExamPaperSubmissionRepository
 import com.mbd.cmscommon.domain.repository.MarkEditRequestRepository
 import com.mbd.cmscommon.domain.repository.StudentLinkRequestRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
@@ -22,11 +23,12 @@ fun PeopleHubScreen(
     sessionRepository: AcademicSessionRepository,
     linkRequestRepository: StudentLinkRequestRepository,
     markEditRequestRepository: MarkEditRequestRepository,
+    examPaperSubmissionRepository: ExamPaperSubmissionRepository,
     onOpen: (PeopleDestination) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    val controller = remember(administratorRepository, teacherRepository, sessionRepository, linkRequestRepository, markEditRequestRepository) {
-        PeopleHubController(administratorRepository, teacherRepository, sessionRepository, linkRequestRepository, markEditRequestRepository, scope)
+    val controller = remember(administratorRepository, teacherRepository, sessionRepository, linkRequestRepository, markEditRequestRepository, examPaperSubmissionRepository) {
+        PeopleHubController(administratorRepository, teacherRepository, sessionRepository, linkRequestRepository, markEditRequestRepository, examPaperSubmissionRepository, scope)
     }
     val snapshot by controller.snapshot.collectAsState()
     val loading by controller.loading.collectAsState()

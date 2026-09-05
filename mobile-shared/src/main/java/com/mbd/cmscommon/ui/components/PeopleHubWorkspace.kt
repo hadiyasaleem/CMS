@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AdminPanelSettings
+import androidx.compose.material.icons.outlined.Assignment
 import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.HowToReg
@@ -57,7 +58,7 @@ private val PeopleGreen = ModSuccess
 private val PeopleGold = ModWarn
 private val PeopleRed = ModAccent
 
-enum class PeopleDestination { ADMINISTRATORS, TEACHERS, STUDENTS, LINK_REQUESTS, MARK_EDIT_REQUESTS }
+enum class PeopleDestination { ADMINISTRATORS, TEACHERS, STUDENTS, LINK_REQUESTS, MARK_EDIT_REQUESTS, EXAM_PAPER_REVIEW }
 
 private data class PeopleCard(
     val destination: PeopleDestination,
@@ -180,6 +181,12 @@ private fun peopleCards(snapshot: PeopleHubSnapshot): List<PeopleCard> = listOf(
         "Review teacher requests to change locked assessment scores.",
         "${snapshot.pendingMarkEdits} awaiting review",
         Icons.Outlined.EditNote, if (snapshot.pendingMarkEdits > 0) PeopleGold else PeopleGreen,
+    ),
+    PeopleCard(
+        PeopleDestination.EXAM_PAPER_REVIEW, "Exam Paper Review",
+        "Review teacher-submitted exam papers and attach answer keys.",
+        "${snapshot.pendingExamReviews} awaiting review",
+        Icons.Outlined.Assignment, if (snapshot.pendingExamReviews > 0) PeopleGold else PeopleGreen,
     ),
 )
 

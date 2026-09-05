@@ -468,6 +468,19 @@ val MIGRATION_33_34: Migration = object : Migration(33, 34) {
     }
 }
 
+/** Adds the exam-paper review columns (review_status/reviewed_by/reviewed_at/teacher_notes/
+ * key_storage_path/mime_type) that back the admin review workflow. */
+val MIGRATION_34_35: Migration = object : Migration(34, 35) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `exam_paper_submissions` ADD COLUMN `mimeType` TEXT")
+        db.execSQL("ALTER TABLE `exam_paper_submissions` ADD COLUMN `keyStoragePath` TEXT")
+        db.execSQL("ALTER TABLE `exam_paper_submissions` ADD COLUMN `teacherNotes` TEXT")
+        db.execSQL("ALTER TABLE `exam_paper_submissions` ADD COLUMN `reviewStatus` TEXT NOT NULL DEFAULT 'SUBMITTED'")
+        db.execSQL("ALTER TABLE `exam_paper_submissions` ADD COLUMN `reviewedBy` TEXT")
+        db.execSQL("ALTER TABLE `exam_paper_submissions` ADD COLUMN `reviewedAt` INTEGER")
+    }
+}
+
 val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_18_19,
     MIGRATION_19_20,
@@ -485,4 +498,5 @@ val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_31_32,
     MIGRATION_32_33,
     MIGRATION_33_34,
+    MIGRATION_34_35,
 )

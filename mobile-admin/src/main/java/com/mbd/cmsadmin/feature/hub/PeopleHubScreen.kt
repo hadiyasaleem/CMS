@@ -11,6 +11,7 @@ import com.mbd.cmsadmin.R
 import com.mbd.cmscommon.controller.PeopleHubController
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.AdministratorRepository
+import com.mbd.cmscommon.domain.repository.ExamPaperSubmissionRepository
 import com.mbd.cmscommon.domain.repository.MarkEditRequestRepository
 import com.mbd.cmscommon.domain.repository.StudentLinkRequestRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
@@ -26,6 +27,7 @@ class PeopleHubViewModel @Inject constructor(
     sessionRepository: AcademicSessionRepository,
     linkRequestRepository: StudentLinkRequestRepository,
     markEditRequestRepository: MarkEditRequestRepository,
+    examPaperSubmissionRepository: ExamPaperSubmissionRepository,
 ) : ViewModel() {
     private val controller = PeopleHubController(
         administratorRepository,
@@ -33,6 +35,7 @@ class PeopleHubViewModel @Inject constructor(
         sessionRepository,
         linkRequestRepository,
         markEditRequestRepository,
+        examPaperSubmissionRepository,
         viewModelScope,
     )
 

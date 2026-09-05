@@ -39,7 +39,6 @@ fun main() = application {
     var bootstrapRequest by remember { mutableStateOf(0) }
     var bootstrapAccountKey by remember { mutableStateOf<String?>(null) }
     var roleRefreshInProgress by remember { mutableStateOf(false) }
-    val bootstrapStore = remember(component) { component.bootstrapSnapshotStore() }
 
     suspend fun loadAdminData(): Boolean = runCatching {
         withTimeoutOrNull(180_000) {
@@ -86,9 +85,7 @@ fun main() = application {
         if (bootstrapRequest == 0) return@LaunchedEffect
         val accountKey = bootstrapAccountKey ?: return@LaunchedEffect
         try {
-            if (loadAdminData()) {
-                bootstrapStore.markBootstrapComplete(ADMIN_BOOTSTRAP_SCOPE, accountKey)
-            }
+            loadAdminData()
         } finally {
             bootstrapInProgress = false
         }
@@ -149,5 +146,4 @@ fun main() = application {
     }
 }
 
-private const val ADMIN_BOOTSTRAP_SCOPE = "admin-data"
 private val ADMIN_MOBILE_CANVAS_WIDTH = 412.dp

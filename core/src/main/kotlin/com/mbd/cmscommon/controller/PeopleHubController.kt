@@ -8,6 +8,7 @@ import com.mbd.cmscommon.domain.model.Teacher
 import com.mbd.cmscommon.domain.model.peopleHubSnapshot
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.AdministratorRepository
+import com.mbd.cmscommon.domain.repository.ExamPaperSubmissionRepository
 import com.mbd.cmscommon.domain.repository.MarkEditRequestRepository
 import com.mbd.cmscommon.domain.repository.StudentLinkRequestRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
@@ -26,6 +27,7 @@ class PeopleHubController(
     private val sessionRepository: AcademicSessionRepository,
     private val linkRequestRepository: StudentLinkRequestRepository,
     private val markEditRequestRepository: MarkEditRequestRepository,
+    private val examPaperSubmissionRepository: ExamPaperSubmissionRepository,
     scope: CoroutineScope,
 ) : ScreenController(scope) {
 
@@ -44,6 +46,7 @@ class PeopleHubController(
     private var cachedStudentCount: Int = 0
     private var cachedLinks: List<StudentLinkRequest> = emptyList()
     private var cachedEdits: List<MarkEditRequest> = emptyList()
+    private var cachedExamReviews: Int = 0
 
     init {
         refresh(fetchRemote = false)
@@ -90,12 +93,16 @@ class PeopleHubController(
                         markEditRequestRepository.getPendingRequests()
                     }
                 }
+                val examReviewsDeferred = async {
+                    runCatching { examPaperSubmissionRepository.getPendingReview().size }
+                }
 
                 val administratorsResult = administratorsDeferred.await()
                 val teachersResult = teachersDeferred.await()
                 val studentsResult = studentsDeferred.await()
                 val linksResult = linksDeferred.await()
                 val editsResult = editsDeferred.await()
+                val examReviewsResult = examReviewsDeferred.await()
 
                 if (version == loadVersion) {
                     administratorsResult.getOrNull()?.let { cachedAdministrators = it }
@@ -103,9 +110,17 @@ class PeopleHubController(
                     studentsResult.getOrNull()?.let { cachedStudentCount = it }
                     linksResult.getOrNull()?.let { cachedLinks = it }
                     editsResult.getOrNull()?.let { cachedEdits = it }
+                    examReviewsResult.getOrNull()?.let { cachedExamReviews = it }
 
-                    _snapshot.value = peopleHubSnapshot(cachedAdministrators, cachedTeachers, cachedStudentCount, cachedLinks, cachedEdits)
-                    _loadError.value = listOf(administratorsResult, teachersResult, studentsResult, linksResult, editsResult)
+                    _snapshot.value = peopleHubSnapshot(
+                        cachedAdministrators,
+                        cachedTeachers,
+                        cachedStudentCount,
+                        cachedLinks,
+                        cachedEdits,
+                        cachedExamReviews,
+                    )
+                    _loadError.value = listOf(administratorsResult, teachersResult, studentsResult, linksResult, editsResult, examReviewsResult)
                         .firstNotNullOfOrNull { it.exceptionOrNull() }
                         ?.userMessage("Some people summaries could not be loaded.")
                     _loading.value = false

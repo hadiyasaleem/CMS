@@ -19,6 +19,8 @@ lifecycleRuntimeKtx = "2.8.7"
 hilt = "2.52"
 hiltNavigationCompose = "1.2.0"
 room = "2.6.1"
+desktopRoom = "2.8.4"
+sqlite = "2.6.2"
 coroutines = "1.9.0"
 coilCompose = "2.7.0"
 datastorePreferences = "1.1.1"
@@ -59,6 +61,9 @@ hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-com
 room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+desktop-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "desktopRoom" }
+desktop-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "desktopRoom" }
+desktop-sqlite-bundled = { group = "androidx.sqlite", name = "sqlite-bundled", version.ref = "sqlite" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 # ── Supabase (BOM-managed module versions) ──

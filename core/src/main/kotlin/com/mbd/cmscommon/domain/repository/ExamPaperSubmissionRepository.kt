@@ -12,4 +12,9 @@ interface ExamPaperSubmissionRepository {
     suspend fun downloadTo(submission: ExamPaperSubmission, targetDir: File): File
     suspend fun deleteSubmission(id: String)
     suspend fun sync(offeringId: String, subjectId: String)
+
+    /** All submissions still awaiting review, across every session — for the admin review queue. */
+    suspend fun getPendingReview(): List<ExamPaperSubmission>
+    suspend fun markReviewed(submissionId: String, reviewedBy: String, notes: String?)
+    suspend fun uploadAnswerKey(submission: ExamPaperSubmission, fileBytes: ByteArray, fileName: String)
 }

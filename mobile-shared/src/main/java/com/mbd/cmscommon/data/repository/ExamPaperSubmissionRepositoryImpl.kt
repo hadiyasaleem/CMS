@@ -81,6 +81,55 @@ class ExamPaperSubmissionRepositoryImpl @Inject constructor(
         submissionDao.deleteById(id)
     }
 
+    override suspend fun getPendingReview(): List<ExamPaperSubmission> {
+        val rows = postgrest.from(SupabaseTables.EXAM_PAPER_SUBMISSIONS).select {
+            filter {
+                eq("review_status", "SUBMITTED")
+                eq("is_deleted", false)
+            }
+            order("uploaded_at", Order.ASCENDING)
+        }.decodeList<ExamPaperSubmissionDto>()
+        return rows.map { ExamPaperSubmissionMapper.dtoToDomain(it) }
+    }
+
+    override suspend fun markReviewed(submissionId: String, reviewedBy: String, notes: String?) {
+        postgrest.from(SupabaseTables.EXAM_PAPER_SUBMISSIONS).update({
+            set("review_status", "REVIEWED")
+            set("reviewed_by", reviewedBy)
+            set("reviewed_at", Instant.now().toString())
+            if (notes != null) set("teacher_notes", notes)
+        }) {
+            filter { eq("id", submissionId) }
+        }
+        submissionDao.getById(submissionId)?.let { cached ->
+            submissionDao.upsertAll(
+                listOf(
+                    cached.copy(
+                        reviewStatus = "REVIEWED",
+                        reviewedBy = reviewedBy,
+                        reviewedAt = System.currentTimeMillis(),
+                        teacherNotes = notes ?: cached.teacherNotes,
+                    ),
+                ),
+            )
+        }
+    }
+
+    override suspend fun uploadAnswerKey(submission: ExamPaperSubmission, fileBytes: ByteArray, fileName: String) {
+        val ext = fileName.substringAfterLast('.', "").lowercase(Locale.ROOT)
+        val keyPath = "${submission.offeringId}/${submission.subjectId}/${submission.examType.name.lowercase(Locale.ROOT)}/key_${submission.submissionId}.$ext"
+        storage.from(SupabaseTables.BUCKET_EXAM_PAPERS).upload(keyPath, fileBytes) { upsert = true }
+
+        postgrest.from(SupabaseTables.EXAM_PAPER_SUBMISSIONS).update({
+            set("key_storage_path", keyPath)
+        }) {
+            filter { eq("id", submission.submissionId) }
+        }
+        submissionDao.getById(submission.submissionId)?.let { cached ->
+            submissionDao.upsertAll(listOf(cached.copy(keyStoragePath = keyPath)))
+        }
+    }
+
     override suspend fun sync(offeringId: String, subjectId: String) {
         val ownerKey = syncOwnerKey()
         val scopeKey = SyncCheckpointDefaults.scoped("offering" to offeringId, "subject" to subjectId)
