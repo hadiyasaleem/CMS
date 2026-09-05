@@ -139,11 +139,21 @@ fun SessionTimetableWorkspace(
             currentSemesterTerm = currentSemesterTerm,
             onDismiss = { addingPeriodDay = null; editorState = null },
             onSave = { days, start, end, subject, teacher, type, room, building, notes, from, to ->
-                // Multiple days can be checked at once: the day being edited (if any) carries the
-                // "replaces" reference so its old row is removed/repositioned; every other checked
-                // day is a brand-new row sharing the same subject/time/room/etc.
+                // Multiple days can be checked at once. Each checked day resolves its own "replaces"
+                // row independently: the day being edited replaces itself, and any OTHER checked day
+                // that already has a sibling row from the same original multi-day group (same course
+                // and original time) replaces that sibling instead of inserting a duplicate -- which
+                // previously read as a self-conflict when re-saving a day that was already scheduled.
+                val original = editorState
                 days.forEach { day ->
-                    val replaces = editorState?.takeIf { it.day == day } ?: editorState?.takeIf { day == days.first() }
+                    val replaces = when {
+                        original != null && original.day == day -> original
+                        original != null -> periods.firstOrNull {
+                            it.day == day && it.courseCode == original.courseCode &&
+                                it.startTime == original.startTime && it.endTime == original.endTime
+                        }
+                        else -> null
+                    }
                     onSavePeriod(day, start, end, subject, teacher, type, room, building, notes, from, to, replaces)
                 }
                 addingPeriodDay = null

@@ -127,7 +127,7 @@ fun GridCellBox(cell: GridCell?, width: Dp, onClick: (() -> Unit)? = null) {
         when {
             cell != null && cell.isBreak -> {
                 Box(
-                    Modifier.fillMaxWidth().heightIn(min = 44.dp).background(CmsTheme.colors.track),
+                    Modifier.fillMaxWidth().heightIn(min = 44.dp).then(clickMod).background(CmsTheme.colors.track),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text("BREAK", color = CmsTheme.colors.muted, style = MaterialTheme.typography.labelSmall)
