@@ -330,13 +330,8 @@ private fun TeacherCard(
 
     Surface(modifier = Modifier.clickable(onClick = onEdit), shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                 AvatarInitials(teacher.name, size = 42)
-                Spacer(Modifier.width(10.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(teacher.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                    Text(department?.name ?: "Department not assigned", color = ModMuted, style = MaterialTheme.typography.bodySmall)
-                }
                 Box {
                     IconButton(onClick = { menuExpanded = true }, enabled = !busy) { Icon(Icons.Filled.MoreVert, contentDescription = "More") }
                     DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
@@ -351,6 +346,16 @@ private fun TeacherCard(
                     }
                 }
             }
+            Spacer(Modifier.height(8.dp))
+            Text(teacher.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(2.dp))
+            Text(
+                department?.name ?: "Department not assigned",
+                color = ModMuted,
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
             Spacer(Modifier.height(8.dp))
             TeacherContactLine(teacher)
             Spacer(Modifier.height(8.dp))
@@ -377,6 +382,8 @@ private fun TeacherContactLine(teacher: Teacher) {
         listOfNotNull(teacher.email, teacher.phone?.takeIf { it.isNotBlank() }).joinToString(" · "),
         color = ModMuted,
         style = MaterialTheme.typography.bodySmall,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
     )
 }
 
