@@ -22,24 +22,33 @@ fun MasterTimetableScreen(
     val controller = remember(departmentRepository, sessionRepository, timetableRepository) {
         MasterTimetableController(departmentRepository, sessionRepository, timetableRepository, scope)
     }
-    val day by controller.day.collectAsState()
-    val shift by controller.shift.collectAsState()
     val departments by controller.departments.collectAsState()
     val sessions by controller.sessions.collectAsState()
+    val sessionsInDepartment by controller.sessionsInDepartment.collectAsState()
+    val shiftsForSelection by controller.shiftsForSelection.collectAsState()
+    val selectedDeptId by controller.selectedDeptId.collectAsState()
+    val selectedStartYear by controller.selectedStartYear.collectAsState()
+    val selectedShift by controller.selectedShift.collectAsState()
+    val resolvedSession by controller.resolvedSession.collectAsState()
     val periods by controller.periods.collectAsState()
     val loading by controller.loading.collectAsState()
     val errorMessage by controller.refreshError.collectAsState()
 
     MasterTimetableWorkspace(
-        day = day,
-        shift = shift,
         departments = departments,
         sessions = sessions,
+        sessionsInDepartment = sessionsInDepartment,
+        shiftsForSelection = shiftsForSelection,
+        selectedDeptId = selectedDeptId,
+        selectedStartYear = selectedStartYear,
+        selectedShift = selectedShift,
+        resolvedSession = resolvedSession,
         periods = periods,
         loading = loading,
         errorMessage = errorMessage,
-        onDayChange = controller::selectDay,
-        onShiftChange = controller::selectShift,
+        onSelectDepartment = controller::selectDepartment,
+        onSelectStartYear = controller::selectStartYear,
+        onSelectShift = controller::selectShift,
         onRetry = controller::refresh,
         onOpenSession = onOpenSession,
     )
