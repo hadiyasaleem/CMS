@@ -2,13 +2,14 @@ package com.mbd.cmscommon.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -68,78 +69,84 @@ fun DepartmentDetailWorkspace(
         .filter { query.isBlank() || it.label.contains(query, ignoreCase = true) || (it.programName ?: "").contains(query, ignoreCase = true) }
         .sortedByDescending { it.startYear }
 
-    CardGrid(modifier.fillMaxWidth()) {
-        fullSpanItem {
-            DepartmentIdentityCard(
-                department = department,
-                fallbackName = fallbackName,
-                hasHod = !department?.hodEmail.isNullOrBlank(),
-                onEdit = { showEditDepartment = true },
-            )
-        }
-
-        if (!errorMessage.isNullOrBlank()) {
+    Box(modifier.fillMaxSize()) {
+        CardGrid(Modifier.fillMaxWidth()) {
             fullSpanItem {
-                Surface(shape = RoundedCornerShape(14.dp), color = ModRedTint, border = BorderStroke(1.dp, CmsTheme.colors.accent.copy(alpha = 0.25f))) {
-                    Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(errorMessage, modifier = Modifier.weight(1f), color = CmsTheme.colors.accent, style = MaterialTheme.typography.bodyMedium)
-                        TextButton(onClick = onClearError) { Text("Dismiss") }
-                    }
-                }
-            }
-        }
-
-        fullSpanItem {
-            DepartmentSummary(
-                sessionCount = snapshot.sessions.size,
-                studentCount = snapshot.studentCount,
-                totalCapacity = snapshot.totalCapacity,
-                remainingSeats = snapshot.remainingSeats,
-                occupiedPercent = snapshot.occupancyPercent,
-                sessionsNeedingSetup = snapshot.sessionsNeedingSetup,
-                hasHod = !department?.hodEmail.isNullOrBlank(),
-                onCreateSession = { showAddSession = true },
-            )
-        }
-
-        fullSpanItem {
-            Text("Current intakes", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-        }
-
-        fullSpanItem {
-            Column(Modifier.fillMaxWidth()) {
-                OutlinedTextField(
-                    value = query,
-                    onValueChange = { query = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Search intakes or programs") },
-                    singleLine = true,
+                DepartmentIdentityCard(
+                    department = department,
+                    fallbackName = fallbackName,
+                    hasHod = !department?.hodEmail.isNullOrBlank(),
+                    onEdit = { showEditDepartment = true },
                 )
-                Spacer(Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    CmsChip("All shifts", selected = shiftFilter == null, onClick = { shiftFilter = null })
-                    Session.entries.forEach { shift ->
-                        CmsChip(shift.name, selected = shiftFilter == shift, onClick = { shiftFilter = shift })
+            }
+
+            if (!errorMessage.isNullOrBlank()) {
+                fullSpanItem {
+                    Surface(shape = RoundedCornerShape(14.dp), color = ModRedTint, border = BorderStroke(1.dp, CmsTheme.colors.accent.copy(alpha = 0.25f))) {
+                        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text(errorMessage, modifier = Modifier.weight(1f), color = CmsTheme.colors.accent, style = MaterialTheme.typography.bodyMedium)
+                            TextButton(onClick = onClearError) { Text("Dismiss") }
+                        }
                     }
                 }
             }
-        }
 
-        if (snapshot.sessions.isEmpty()) {
             fullSpanItem {
-                SessionEmptyState(filtered = false, onAction = { showAddSession = true })
+                DepartmentSummary(
+                    sessionCount = snapshot.sessions.size,
+                    studentCount = snapshot.studentCount,
+                    totalCapacity = snapshot.totalCapacity,
+                    remainingSeats = snapshot.remainingSeats,
+                    occupiedPercent = snapshot.occupancyPercent,
+                    sessionsNeedingSetup = snapshot.sessionsNeedingSetup,
+                    hasHod = !department?.hodEmail.isNullOrBlank(),
+                )
             }
-        } else if (filtered.isEmpty()) {
-            fullSpanItem {
-                SessionEmptyState(filtered = true, onAction = { query = ""; shiftFilter = null })
-            }
-        } else {
-            items(filtered, key = { it.sessionId }) { session ->
-                DepartmentSessionCard(session, studentCounts[session.sessionId] ?: 0, onClick = { onOpenSession(session.sessionId) })
-            }
-        }
 
-        fullSpanItem { Spacer(Modifier.height(72.dp)) }
+            fullSpanItem {
+                Text("Current intakes", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+            }
+
+            fullSpanItem {
+                Column(Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = query,
+                        onValueChange = { query = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("Search intakes or programs") },
+                        singleLine = true,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        CmsChip("All shifts", selected = shiftFilter == null, onClick = { shiftFilter = null })
+                        Session.entries.forEach { shift ->
+                            CmsChip(shift.name, selected = shiftFilter == shift, onClick = { shiftFilter = shift })
+                        }
+                    }
+                }
+            }
+
+            if (snapshot.sessions.isEmpty()) {
+                fullSpanItem {
+                    SessionEmptyState(filtered = false, onAction = { showAddSession = true })
+                }
+            } else if (filtered.isEmpty()) {
+                fullSpanItem {
+                    SessionEmptyState(filtered = true, onAction = { query = ""; shiftFilter = null })
+                }
+            } else {
+                items(filtered, key = { it.sessionId }) { session ->
+                    DepartmentSessionCard(session, studentCounts[session.sessionId] ?: 0, onClick = { onOpenSession(session.sessionId) })
+                }
+            }
+
+            fullSpanItem { Spacer(Modifier.height(72.dp)) }
+        }
+        CmsFab(
+            onClick = { showAddSession = true },
+            contentDescription = "Create session",
+            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+        )
     }
 
     if (showAddSession) {
@@ -189,7 +196,6 @@ private fun DepartmentSummary(
     occupiedPercent: Float,
     sessionsNeedingSetup: Int,
     hasHod: Boolean,
-    onCreateSession: () -> Unit,
 ) {
     Column(Modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -198,11 +204,7 @@ private fun DepartmentSummary(
             SessionMetric("Seats left", remainingSeats.toString(), Modifier.weight(1f))
         }
         Spacer(Modifier.height(10.dp))
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            CapacityBar(count = studentCount, max = totalCapacity.coerceAtLeast(1), modifier = Modifier.weight(1f))
-            Spacer(Modifier.width(12.dp))
-            CmsPrimaryButton(text = "Create session", onClick = onCreateSession, modifier = Modifier.width(168.dp))
-        }
+        CapacityBar(count = studentCount, max = totalCapacity.coerceAtLeast(1))
         Spacer(Modifier.height(10.dp))
         Text(
             if (sessionsNeedingSetup > 0) "$sessionsNeedingSetup session(s) need program or in-charge" else "Sessions and HOD configured",
