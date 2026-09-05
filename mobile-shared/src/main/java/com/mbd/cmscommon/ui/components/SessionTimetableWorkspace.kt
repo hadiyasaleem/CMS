@@ -86,17 +86,6 @@ fun SessionTimetableWorkspace(
     LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { TimetableHero(session, onAdd = { addingPeriodDay = DayOfWeek.MONDAY }) }
 
-        if (!errorMessage.isNullOrBlank()) {
-            item {
-                Surface(shape = RoundedCornerShape(14.dp), color = TimetableRed.copy(alpha = 0.1f), border = BorderStroke(1.dp, TimetableRed.copy(alpha = 0.25f))) {
-                    Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(errorMessage, modifier = Modifier.weight(1f), color = TimetableRed, style = MaterialTheme.typography.bodyMedium)
-                        TextButton(onClick = onClearError) { Text("Dismiss") }
-                    }
-                }
-            }
-        }
-
         item { TimetableSummaryCard(periods.size, roomsConfigured, teacherIds.size, conflictIds.size) }
 
         if (periods.isEmpty()) {
@@ -173,6 +162,15 @@ fun SessionTimetableWorkspace(
             dependentSummary = "Removes ${period.subjectName.ifBlank { period.periodType.name }} at ${period.startTime} on ${period.day}.",
             onConfirm = { onRemovePeriod(period); pendingRemove = null },
             onDismiss = { pendingRemove = null },
+        )
+    }
+
+    if (!errorMessage.isNullOrBlank()) {
+        AlertDialog(
+            onDismissRequest = onClearError,
+            title = { Text("Couldn't save period") },
+            text = { Text(errorMessage, color = TimetableRed) },
+            confirmButton = { TextButton(onClick = onClearError) { Text("OK") } },
         )
     }
 }
