@@ -2,6 +2,8 @@ package com.mbd.cmscommon.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,13 +16,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -40,6 +47,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.controller.TeacherAccountDraft
 import com.mbd.cmscommon.domain.model.Department
@@ -96,6 +104,7 @@ fun TeacherDirectoryWorkspace(
 ) {
     var query by remember { mutableStateOf("") }
     var filter by remember { mutableStateOf(TeacherFilter.ALL) }
+    var deptFilter by remember { mutableStateOf<String?>(null) }
     var sort by remember { mutableStateOf(TeacherSort.NAME) }
     var showCreateDialog by remember { mutableStateOf(false) }
     var editingTeacher by remember { mutableStateOf<Teacher?>(null) }
@@ -116,7 +125,8 @@ fun TeacherDirectoryWorkspace(
             TeacherFilter.UNASSIGNED -> teacherAssignments.isEmpty()
             TeacherFilter.INCOMPLETE -> completeness(teacher) < 100
         }
-        matchesQuery && matchesFilter
+        val matchesDept = deptFilter == null || teacher.deptId == deptFilter
+        matchesQuery && matchesFilter && matchesDept
     }
 
     val visible = when (sort) {
@@ -142,19 +152,26 @@ fun TeacherDirectoryWorkspace(
                         value = query,
                         onValueChange = { query = it },
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Search profiles, review workloads, and manage access") },
+                        placeholder = { Text("Search by name or email", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                         singleLine = true,
                     )
                     Spacer(Modifier.height(8.dp))
                     Text("SHOW", color = ModMuted, style = CmsTextStyles.eyebrow)
                     Spacer(Modifier.height(6.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
                         TeacherFilter.entries.forEach { option -> CmsChip(option.label, selected = filter == option, onClick = { filter = option }) }
+                        DepartmentFilterChip(departments, deptFilter, onSelect = { deptFilter = it })
                     }
                     Spacer(Modifier.height(8.dp))
                     Text("SORT", color = ModMuted, style = CmsTextStyles.eyebrow)
                     Spacer(Modifier.height(6.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
                         TeacherSort.entries.forEach { option -> CmsChip(option.label, selected = sort == option, onClick = { sort = option }) }
                     }
                 }
@@ -163,7 +180,13 @@ fun TeacherDirectoryWorkspace(
             when {
                 loading -> fullSpanItems(3) { SkeletonRow() }
                 teachers.isEmpty() -> fullSpanItem { TeacherEmptyState(filtered = false, onAdd = { showCreateDialog = true }, onClearFilters = {}) }
-                visible.isEmpty() -> fullSpanItem { TeacherEmptyState(filtered = true, onAdd = {}, onClearFilters = { query = ""; filter = TeacherFilter.ALL }) }
+                visible.isEmpty() -> fullSpanItem {
+                    TeacherEmptyState(
+                        filtered = true,
+                        onAdd = {},
+                        onClearFilters = { query = ""; filter = TeacherFilter.ALL; deptFilter = null },
+                    )
+                }
                 else -> items(visible, key = { it.teacherId }) { teacher ->
                     val dept = departments.firstOrNull { it.deptId == teacher.deptId }
                     TeacherCard(
@@ -237,11 +260,46 @@ fun TeacherDirectoryWorkspace(
 
 @Composable
 private fun TeacherSummaryCard(total: Int, active: Int, classes: Int, incomplete: Int) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        TeacherMetric("Faculty", total.toString(), Modifier.weight(1f))
-        TeacherMetric("Active", active.toString(), Modifier.weight(1f))
-        TeacherMetric("Classes", classes.toString(), Modifier.weight(1f))
-        TeacherMetric("Incomplete", incomplete.toString(), Modifier.weight(1f), alert = incomplete > 0)
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            TeacherMetric("Faculty", total.toString(), Modifier.weight(1f))
+            TeacherMetric("Active", active.toString(), Modifier.weight(1f))
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            TeacherMetric("Classes", classes.toString(), Modifier.weight(1f))
+            TeacherMetric("Incomplete", incomplete.toString(), Modifier.weight(1f), alert = incomplete > 0)
+        }
+    }
+}
+
+@Composable
+private fun DepartmentFilterChip(departments: List<Department>, selectedDeptId: String?, onSelect: (String?) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    val selectedName = departments.firstOrNull { it.deptId == selectedDeptId }?.name
+
+    Box {
+        Surface(
+            modifier = Modifier.clickable { expanded = true },
+            shape = RoundedCornerShape(100),
+            color = if (selectedDeptId != null) CmsTheme.colors.ink else MaterialTheme.colorScheme.surfaceContainerLowest,
+            contentColor = if (selectedDeptId != null) CmsTheme.colors.onInk else MaterialTheme.colorScheme.onSurface,
+            border = if (selectedDeptId != null) null else BorderStroke(2.dp, CmsTheme.colors.rule),
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(selectedName ?: "All departments", style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Icon(Icons.Filled.ArrowDropDown, contentDescription = null, modifier = Modifier.size(18.dp))
+            }
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuItem(text = { Text("All departments") }, onClick = { onSelect(null); expanded = false })
+            departments.sortedBy { it.name }.forEach { dept ->
+                DropdownMenuItem(text = { Text(dept.name) }, onClick = { onSelect(dept.deptId); expanded = false })
+            }
+        }
     }
 }
 
