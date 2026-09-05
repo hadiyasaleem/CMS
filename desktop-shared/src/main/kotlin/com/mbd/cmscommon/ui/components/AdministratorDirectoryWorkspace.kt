@@ -1,6 +1,8 @@
 package com.mbd.cmscommon.ui.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -315,7 +317,10 @@ private fun AdministratorDirectoryControls(
         Spacer(Modifier.height(12.dp))
         Text("SHOW", color = ModMuted, style = CmsTextStyles.eyebrow)
         Spacer(Modifier.height(6.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             AdministratorFilter.entries.forEach { option ->
                 CmsChip(option.label, selected = filter == option, onClick = { onFilterChange(option) })
             }
@@ -323,7 +328,10 @@ private fun AdministratorDirectoryControls(
         Spacer(Modifier.height(12.dp))
         Text("SORT", color = ModMuted, style = CmsTextStyles.eyebrow)
         Spacer(Modifier.height(6.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             AdministratorSort.entries.forEach { option ->
                 CmsChip(option.label, selected = sort == option, onClick = { onSortChange(option) })
             }

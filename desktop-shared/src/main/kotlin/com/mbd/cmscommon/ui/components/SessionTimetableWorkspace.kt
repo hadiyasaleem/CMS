@@ -1,6 +1,7 @@
 package com.mbd.cmscommon.ui.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -316,7 +317,10 @@ private fun PeriodEditorDialog(
             Column(Modifier.heightIn(max = 460.dp).verticalScroll(rememberScrollState())) {
                 Text("DAY", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     TIMETABLE_DAYS.forEach { option ->
                         CmsChip(option.getDisplayName(TextStyle.SHORT, Locale.ENGLISH), selected = selectedDay == option, onClick = { selectedDay = option })
                     }
@@ -329,7 +333,10 @@ private fun PeriodEditorDialog(
                 Spacer(Modifier.height(10.dp))
                 Text("PERIOD TYPE", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     PeriodType.entries.forEach { option -> CmsChip(option.name, selected = type == option, onClick = { type = option }) }
                 }
                 if (needsSubject) {
