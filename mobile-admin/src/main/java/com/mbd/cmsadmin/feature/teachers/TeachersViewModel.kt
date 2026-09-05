@@ -8,6 +8,7 @@ import com.mbd.cmscommon.controller.TeachersController
 import com.mbd.cmscommon.domain.model.Teacher
 import com.mbd.cmscommon.domain.model.TeacherStatus
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
+import com.mbd.cmscommon.domain.repository.RoomRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
 import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,12 +18,14 @@ import javax.inject.Inject
 class TeachersViewModel @Inject constructor(
     private val teacherRepository: TeacherRepository,
     departmentRepository: DepartmentRepository,
+    roomRepository: RoomRepository,
     assignmentsProvider: TeacherAssignmentsProvider,
     sessionManager: SessionManager,
 ) : ViewModel() {
     private val controller = TeachersController(
         teacherRepository = teacherRepository,
         departmentRepository = departmentRepository,
+        roomRepository = roomRepository,
         assignmentsProvider = assignmentsProvider,
         editedBy = sessionManager.accountKey.orEmpty(),
         scope = viewModelScope,
@@ -30,6 +33,7 @@ class TeachersViewModel @Inject constructor(
 
     val teachers = controller.teachers
     val departments = controller.departments
+    val rooms = controller.rooms
     val assignments = controller.assignments
     val loading = controller.loading
     val creating = controller.creating

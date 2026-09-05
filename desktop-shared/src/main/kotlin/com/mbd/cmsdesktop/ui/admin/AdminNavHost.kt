@@ -224,6 +224,7 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                     AdminScreen.Teachers -> TeachersScreen(
                         repository = component.teacherRepository(),
                         departmentRepository = component.departmentRepository(),
+                        roomRepository = component.roomRepository(),
                         createdBy = accountKey,
                         assignmentsProvider = teacherAssignmentsProvider,
                         window = window,
@@ -368,6 +369,8 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         curriculumRepository = component.curriculumRepository(),
                         teacherRepository = component.teacherRepository(),
                         timetableRepository = component.sessionTimetableRepository(),
+                        buildingRepository = component.buildingRepository(),
+                        roomRepository = component.roomRepository(),
                     )
 
                     is AdminScreen.SemesterSubjectsRoute -> SemesterSubjectsScreen(

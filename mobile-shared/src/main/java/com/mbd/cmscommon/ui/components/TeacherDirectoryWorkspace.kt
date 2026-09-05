@@ -64,6 +64,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.controller.TeacherAccountDraft
 import com.mbd.cmscommon.domain.model.Department
+import com.mbd.cmscommon.domain.model.Room
 import com.mbd.cmscommon.domain.model.Teacher
 import com.mbd.cmscommon.domain.model.TeacherPermissions
 import com.mbd.cmscommon.domain.model.TeacherStatus
@@ -98,6 +99,7 @@ enum class TeacherSort(val label: String) {
 fun TeacherDirectoryWorkspace(
     teachers: List<Teacher>,
     departments: List<Department>,
+    rooms: List<Room>,
     assignments: Map<String, List<ResolvedAssignment>>,
     loading: Boolean,
     busy: Boolean,
@@ -224,6 +226,7 @@ fun TeacherDirectoryWorkspace(
             title = "Create teacher",
             existing = null,
             departments = departments,
+            rooms = rooms,
             busy = busy,
             onDismiss = { showCreateDialog = false },
             onConfirm = { draft -> onCreate(draft); showCreateDialog = false },
@@ -239,6 +242,7 @@ fun TeacherDirectoryWorkspace(
             title = "Manage ${teacher.name}",
             existing = teacher,
             departments = departments,
+            rooms = rooms,
             busy = busy,
             onDismiss = { editingTeacher = null },
             onConfirm = { draft -> onUpdate(teacher, draft); editingTeacher = null },
@@ -485,6 +489,7 @@ private fun TeacherActionDialog(
     title: String,
     existing: Teacher?,
     departments: List<Department>,
+    rooms: List<Room>,
     busy: Boolean,
     onDismiss: () -> Unit,
     onConfirm: (TeacherAccountDraft) -> Unit,
@@ -503,6 +508,8 @@ private fun TeacherActionDialog(
     var qualification by remember { mutableStateOf(existing?.qualification ?: "") }
     var specialization by remember { mutableStateOf(existing?.specialization ?: "") }
     var officeRoom by remember { mutableStateOf(existing?.officeRoom ?: "") }
+    val officeRooms = remember(rooms) { rooms.filter { it.isOffice } }
+    var selectedOfficeRoomId by remember { mutableStateOf(officeRooms.firstOrNull { it.roomNo == existing?.officeRoom }?.roomId) }
     var gender by remember { mutableStateOf(existing?.gender ?: "") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -599,7 +606,17 @@ private fun TeacherActionDialog(
                 Spacer(Modifier.height(10.dp))
                 OutlinedTextField(value = specialization, onValueChange = { specialization = it }, label = { Text("Specialization") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 Spacer(Modifier.height(10.dp))
-                OutlinedTextField(value = officeRoom, onValueChange = { officeRoom = it }, label = { Text("Office") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                CmsEntityPicker(
+                    label = "Office",
+                    selectedId = selectedOfficeRoomId,
+                    options = officeRooms.map { CmsEntityOption(it.roomId, it.roomNo, it.name) },
+                    onSelected = { id ->
+                        selectedOfficeRoomId = id
+                        officeRoom = officeRooms.firstOrNull { it.roomId == id }?.roomNo ?: ""
+                    },
+                    optional = true,
+                    emptyLabel = "Not assigned",
+                )
                 Spacer(Modifier.height(10.dp))
                 Text("GENDER", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))

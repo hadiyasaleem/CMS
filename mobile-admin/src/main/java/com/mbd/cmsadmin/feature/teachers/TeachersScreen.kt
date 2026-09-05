@@ -29,6 +29,7 @@ import kotlinx.coroutines.withContext
 fun TeachersScreen(viewModel: TeachersViewModel = hiltViewModel()) {
     val teachers by viewModel.teachers.collectAsState()
     val departments by viewModel.departments.collectAsState()
+    val rooms by viewModel.rooms.collectAsState()
     val assignments by viewModel.assignments.collectAsState()
     val loading by viewModel.loading.collectAsState()
     val creating by viewModel.creating.collectAsState()
@@ -54,6 +55,7 @@ fun TeachersScreen(viewModel: TeachersViewModel = hiltViewModel()) {
     TeacherDirectoryWorkspace(
         teachers = teachers,
         departments = departments,
+        rooms = rooms,
         assignments = assignments,
         loading = loading,
         busy = creating,

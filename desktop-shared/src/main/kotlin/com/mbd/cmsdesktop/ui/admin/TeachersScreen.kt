@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.toComposeImageBitmap
 import com.mbd.cmscommon.controller.TeachersController
 import com.mbd.cmscommon.domain.model.TEACHER_PHOTO_COMPRESSED_TARGET_BYTES
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
+import com.mbd.cmscommon.domain.repository.RoomRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
 import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider
 import com.mbd.cmscommon.ui.components.TeacherDirectoryWorkspace
@@ -27,16 +28,18 @@ import org.jetbrains.skia.Image
 fun TeachersScreen(
     repository: TeacherRepository,
     departmentRepository: DepartmentRepository,
+    roomRepository: RoomRepository,
     createdBy: String?,
     assignmentsProvider: TeacherAssignmentsProvider,
     window: ComposeWindow,
 ) {
     val scope = rememberCoroutineScope()
-    val controller = remember(repository, departmentRepository, assignmentsProvider, createdBy) {
-        TeachersController(repository, departmentRepository, assignmentsProvider, createdBy.orEmpty(), scope)
+    val controller = remember(repository, departmentRepository, roomRepository, assignmentsProvider, createdBy) {
+        TeachersController(repository, departmentRepository, roomRepository, assignmentsProvider, createdBy.orEmpty(), scope)
     }
     val teachers by controller.teachers.collectAsState()
     val departments by controller.departments.collectAsState()
+    val rooms by controller.rooms.collectAsState()
     val assignments by controller.assignments.collectAsState()
     val loading by controller.loading.collectAsState()
     val creating by controller.creating.collectAsState()
@@ -48,6 +51,7 @@ fun TeachersScreen(
     TeacherDirectoryWorkspace(
         teachers = teachers,
         departments = departments,
+        rooms = rooms,
         assignments = assignments,
         loading = loading,
         busy = creating,

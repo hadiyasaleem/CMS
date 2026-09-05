@@ -1,9 +1,11 @@
 package com.mbd.cmscommon.controller
 
 import com.mbd.cmscommon.domain.model.Department
+import com.mbd.cmscommon.domain.model.Room
 import com.mbd.cmscommon.domain.model.Teacher
 import com.mbd.cmscommon.domain.model.TeacherStatus
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
+import com.mbd.cmscommon.domain.repository.RoomRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
 import com.mbd.cmscommon.teacher.ResolvedAssignment
 import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider
@@ -27,6 +29,7 @@ import kotlinx.coroutines.flow.stateIn
 class TeachersController(
     private val teacherRepository: TeacherRepository,
     private val departmentRepository: DepartmentRepository,
+    private val roomRepository: RoomRepository,
     private val assignmentsProvider: TeacherAssignmentsProvider,
     private val editedBy: String,
     scope: CoroutineScope,
@@ -37,6 +40,9 @@ class TeachersController(
 
     val departments: StateFlow<List<Department>> =
         departmentRepository.observeActiveDepartments().stateIn(scope, SharingStarted.Eagerly, emptyList())
+
+    val rooms: StateFlow<List<Room>> =
+        roomRepository.observeActiveRooms().stateIn(scope, SharingStarted.Eagerly, emptyList())
 
     val assignments: StateFlow<Map<String, List<ResolvedAssignment>>> = teachers
         .flatMapLatest { roster ->
@@ -71,6 +77,7 @@ class TeachersController(
                 listOf(
                     async { teacherRepository.sync() },
                     async { departmentRepository.sync() },
+                    async { roomRepository.sync() },
                 ).awaitAll()
             }
         } finally {

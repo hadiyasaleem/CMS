@@ -33,7 +33,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.domain.model.AcademicSession
+import com.mbd.cmscommon.domain.model.Building
 import com.mbd.cmscommon.domain.model.PeriodType
+import com.mbd.cmscommon.domain.model.Room
 import com.mbd.cmscommon.domain.model.SemesterSubject
 import com.mbd.cmscommon.domain.model.SemesterTerm
 import com.mbd.cmscommon.domain.model.SessionPeriod
@@ -65,6 +67,8 @@ fun SessionTimetableWorkspace(
     periods: List<SessionPeriod>,
     subjects: List<SemesterSubject>,
     teachers: List<Teacher>,
+    buildings: List<Building>,
+    rooms: List<Room>,
     currentSemesterTerm: SemesterTerm?,
     errorMessage: String?,
     onSavePeriod: (DayOfWeek, String, String, SemesterSubject?, Teacher?, PeriodType, String, String, String, LocalDate?, LocalDate?, SessionPeriod?) -> Unit,
@@ -130,6 +134,8 @@ fun SessionTimetableWorkspace(
             existing = editorState,
             subjects = subjects,
             teachers = teachers,
+            buildings = buildings,
+            rooms = rooms,
             currentSemesterTerm = currentSemesterTerm,
             onDismiss = { addingPeriodDay = null; editorState = null },
             onSave = { days, start, end, subject, teacher, type, room, building, notes, from, to ->
@@ -299,6 +305,8 @@ private fun PeriodEditorDialog(
     existing: SessionPeriod?,
     subjects: List<SemesterSubject>,
     teachers: List<Teacher>,
+    buildings: List<Building>,
+    rooms: List<Room>,
     currentSemesterTerm: SemesterTerm?,
     onDismiss: () -> Unit,
     onSave: (Set<DayOfWeek>, String, String, SemesterSubject?, Teacher?, PeriodType, String, String, String, LocalDate?, LocalDate?) -> Unit,
@@ -311,6 +319,10 @@ private fun PeriodEditorDialog(
     var teacherId by remember { mutableStateOf(existing?.teacherId ?: "") }
     var room by remember { mutableStateOf(existing?.roomNo ?: "") }
     var building by remember { mutableStateOf(existing?.building ?: "") }
+    var selectedBuildingId by remember { mutableStateOf(buildings.firstOrNull { it.name == existing?.building }?.buildingId) }
+    var selectedRoomId by remember {
+        mutableStateOf(rooms.firstOrNull { it.roomNo == existing?.roomNo && (selectedBuildingId == null || it.buildingId == selectedBuildingId) }?.roomId)
+    }
     var notes by remember { mutableStateOf(existing?.notes ?: "") }
     var effectiveFrom by remember { mutableStateOf(existing?.effectiveFrom?.toString() ?: "") }
     var effectiveTo by remember { mutableStateOf(existing?.effectiveTo?.toString() ?: "") }
@@ -383,8 +395,40 @@ private fun PeriodEditorDialog(
                     )
                     Spacer(Modifier.height(10.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        OutlinedTextField(value = room, onValueChange = { room = it }, label = { Text("Room (optional)") }, modifier = Modifier.weight(1f), singleLine = true)
-                        OutlinedTextField(value = building, onValueChange = { building = it }, label = { Text("Building (optional)") }, modifier = Modifier.weight(1f), singleLine = true)
+                        CmsEntityPicker(
+                            label = "Building (optional)",
+                            selectedId = selectedBuildingId,
+                            options = buildings.map { CmsEntityOption(it.buildingId, it.name) },
+                            onSelected = { id ->
+                                selectedBuildingId = id
+                                building = buildings.firstOrNull { it.buildingId == id }?.name ?: ""
+                                if (selectedRoomId != null && rooms.firstOrNull { it.roomId == selectedRoomId }?.buildingId != id) {
+                                    selectedRoomId = null
+                                    room = ""
+                                }
+                            },
+                            optional = true,
+                            emptyLabel = "Any building",
+                            modifier = Modifier.weight(1f),
+                        )
+                        CmsEntityPicker(
+                            label = "Room (optional)",
+                            selectedId = selectedRoomId,
+                            options = rooms.filter { selectedBuildingId == null || it.buildingId == selectedBuildingId }
+                                .map { CmsEntityOption(it.roomId, it.roomNo, it.name) },
+                            onSelected = { id ->
+                                selectedRoomId = id
+                                val picked = rooms.firstOrNull { it.roomId == id }
+                                room = picked?.roomNo ?: ""
+                                if (picked != null) {
+                                    selectedBuildingId = picked.buildingId
+                                    building = buildings.firstOrNull { it.buildingId == picked.buildingId }?.name ?: building
+                                }
+                            },
+                            optional = true,
+                            emptyLabel = "Not assigned",
+                            modifier = Modifier.weight(1f),
+                        )
                     }
                 }
                 Spacer(Modifier.height(10.dp))

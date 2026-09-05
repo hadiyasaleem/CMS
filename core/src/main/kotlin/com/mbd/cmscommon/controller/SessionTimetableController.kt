@@ -1,13 +1,17 @@
 package com.mbd.cmscommon.controller
 
 import com.mbd.cmscommon.domain.model.AcademicSession
+import com.mbd.cmscommon.domain.model.Building
 import com.mbd.cmscommon.domain.model.PeriodType
+import com.mbd.cmscommon.domain.model.Room
 import com.mbd.cmscommon.domain.model.SemesterSubject
 import com.mbd.cmscommon.domain.model.SemesterTerm
 import com.mbd.cmscommon.domain.model.SessionPeriod
 import com.mbd.cmscommon.domain.model.Teacher
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
+import com.mbd.cmscommon.domain.repository.BuildingRepository
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
+import com.mbd.cmscommon.domain.repository.RoomRepository
 import com.mbd.cmscommon.domain.repository.SessionTimetableRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
 import java.time.DayOfWeek
@@ -26,6 +30,8 @@ class SessionTimetableController(
     sessionRepository: AcademicSessionRepository,
     curriculumRepository: CurriculumRepository,
     teacherRepository: TeacherRepository,
+    buildingRepository: BuildingRepository,
+    roomRepository: RoomRepository,
     scope: CoroutineScope,
 ) : ScreenController(scope) {
 
@@ -41,6 +47,12 @@ class SessionTimetableController(
 
     val teachers: StateFlow<List<Teacher>> =
         teacherRepository.observeActiveTeachers().stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val buildings: StateFlow<List<Building>> =
+        buildingRepository.observeActiveBuildings().stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val rooms: StateFlow<List<Room>> =
+        roomRepository.observeActiveRooms().stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     /** The current semester's configured term dates for this session, if set -- offered as a shortcut for effective from/to. */
     val currentSemesterTerm: StateFlow<SemesterTerm?> = session
