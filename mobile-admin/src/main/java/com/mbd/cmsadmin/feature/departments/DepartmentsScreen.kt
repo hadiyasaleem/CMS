@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -17,6 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -47,38 +47,36 @@ fun DepartmentsScreen(onOpenDepartment: (String) -> Unit, viewModel: Departments
     var editingDepartment by remember { mutableStateOf<Department?>(null) }
     var pendingDelete by remember { mutableStateOf<Department?>(null) }
 
-    Scaffold(
-        floatingActionButton = {
-            CmsFab(onClick = { showAddDialog = true }, contentDescription = "Add department")
-        },
-        containerColor = MaterialTheme.colorScheme.background,
-    ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
-            when (val state = items) {
-                is Outcome.Loading -> SkeletonList()
-                is Outcome.Error -> ErrorBanner(state.message, onRetry = viewModel::refresh)
-                is Outcome.Success -> Column(Modifier.fillMaxSize()) {
-                    actionError?.let { message ->
-                        InlineErrorCard(
-                            message = message,
-                            actionLabel = "Dismiss",
-                            onAction = viewModel::clearActionError,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                        )
-                    }
-                    DepartmentPortfolio(
-                        departments = state.data,
-                        stats = stats,
-                        heroPainter = painterResource(R.drawable.departments_hero),
-                        onOpenDepartment = onOpenDepartment,
-                        onEditDepartment = { editingDepartment = it },
-                        onDeleteDepartment = { pendingDelete = it },
-                        onAddDepartment = { showAddDialog = true },
-                        modifier = Modifier.weight(1f),
+    Box(modifier = Modifier.fillMaxSize()) {
+        when (val state = items) {
+            is Outcome.Loading -> SkeletonList()
+            is Outcome.Error -> ErrorBanner(state.message, onRetry = viewModel::refresh)
+            is Outcome.Success -> Column(Modifier.fillMaxSize()) {
+                actionError?.let { message ->
+                    InlineErrorCard(
+                        message = message,
+                        actionLabel = "Dismiss",
+                        onAction = viewModel::clearActionError,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                     )
                 }
+                DepartmentPortfolio(
+                    departments = state.data,
+                    stats = stats,
+                    heroPainter = painterResource(R.drawable.departments_hero),
+                    onOpenDepartment = onOpenDepartment,
+                    onEditDepartment = { editingDepartment = it },
+                    onDeleteDepartment = { pendingDelete = it },
+                    onAddDepartment = { showAddDialog = true },
+                    modifier = Modifier.weight(1f),
+                )
             }
         }
+        CmsFab(
+            onClick = { showAddDialog = true },
+            contentDescription = "Add department",
+            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+        )
     }
 
     if (showAddDialog) {
