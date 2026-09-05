@@ -53,7 +53,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -73,12 +72,10 @@ import com.mbd.cmscommon.ui.theme.ModInk
 import com.mbd.cmscommon.ui.theme.ModMuted
 import com.mbd.cmscommon.ui.theme.ModTrack
 import com.mbd.cmscommon.ui.theme.ModSurface
-import com.mbd.cmscommon.ui.theme.ModSuccess
 import com.mbd.cmscommon.ui.theme.ModAccent
 import com.mbd.cmscommon.ui.theme.ModWarn
 import com.mbd.cmscommon.util.FieldValidators
 
-private val TeacherGreen = ModSuccess
 private val TeacherGold = ModWarn
 private val TeacherRed = ModAccent
 
@@ -152,13 +149,6 @@ fun TeacherDirectoryWorkspace(
 
     Box(modifier.fillMaxSize()) {
         CardGrid(Modifier.fillMaxWidth()) {
-            if (!errorMessage.isNullOrBlank()) {
-                fullSpanItem { TeacherNotice(errorMessage, TeacherRed, onClearError) }
-            }
-            if (!notice.isNullOrBlank()) {
-                fullSpanItem { TeacherNotice(notice, TeacherGreen, onConsumeNotice) }
-            }
-
             fullSpanItem { TeacherSummaryCard(teachers.size, teachers.count { it.status == TeacherStatus.ACTIVE }, assignments.values.sumOf { it.size }, teachers.count { completeness(it) < 100 }) }
 
             fullSpanItem {
@@ -236,7 +226,7 @@ fun TeacherDirectoryWorkspace(
             onDismiss = { showCreateDialog = false },
             onConfirm = { draft -> onCreate(draft); showCreateDialog = false },
             onPickPhoto = null,
-            onCropped = null,
+            onSavePhoto = null,
             photoBusy = false,
             onLoadPhoto = onLoadPhoto,
         )
@@ -251,8 +241,8 @@ fun TeacherDirectoryWorkspace(
             onDismiss = { editingTeacher = null },
             onConfirm = { draft -> onUpdate(teacher, draft); editingTeacher = null },
             onPickPhoto = onPickPhoto,
-            onCropped = { bitmap -> onUploadCroppedPhoto(teacher, bitmap) },
-            photoBusy = busyTeacherId == teacher.teacherId,
+            onSavePhoto = { bitmap -> onUploadCroppedPhoto(teacher, bitmap) },
+            photoBusy = busy || busyTeacherId == teacher.teacherId,
             onLoadPhoto = onLoadPhoto,
         )
     }
@@ -278,6 +268,24 @@ fun TeacherDirectoryWorkspace(
             dependentSummary = "Removes ${teacher.name}'s faculty account and revokes access.",
             onConfirm = { onDelete(teacher); pendingDelete = null },
             onDismiss = { pendingDelete = null },
+        )
+    }
+
+    if (!errorMessage.isNullOrBlank()) {
+        AlertDialog(
+            onDismissRequest = onClearError,
+            title = { Text("Something went wrong", style = MaterialTheme.typography.headlineSmall) },
+            text = { Text(errorMessage) },
+            confirmButton = { TextButton(onClick = onClearError) { Text("OK") } },
+        )
+    }
+
+    if (!notice.isNullOrBlank()) {
+        AlertDialog(
+            onDismissRequest = onConsumeNotice,
+            title = { Text("Success", style = MaterialTheme.typography.headlineSmall) },
+            text = { Text(notice) },
+            confirmButton = { TextButton(onClick = onConsumeNotice) { Text("OK") } },
         )
     }
 }
@@ -327,14 +335,19 @@ private fun DepartmentFilterChip(departments: List<Department>, selectedDeptId: 
     }
 }
 
-/** Shows the teacher's uploaded photo (downloaded lazily via [onLoadPhoto]), falling back to initials. */
+/**
+ * Shows the teacher's uploaded photo (downloaded lazily via [onLoadPhoto]), falling back to
+ * initials. [cacheKey] should change whenever the underlying photo might have (e.g. the record's
+ * updatedAt) so a re-upload under the same storage path is picked up instead of showing the stale
+ * cached image indefinitely.
+ */
 @Composable
-private fun TeacherAvatar(name: String, photoPath: String?, size: Int, onLoadPhoto: suspend (String) -> ImageBitmap?, modifier: Modifier = Modifier) {
+private fun TeacherAvatar(name: String, photoPath: String?, size: Int, onLoadPhoto: suspend (String) -> ImageBitmap?, modifier: Modifier = Modifier, cacheKey: Any = Unit) {
     if (photoPath.isNullOrBlank()) {
         AvatarInitials(name, modifier, size)
         return
     }
-    val bitmap by produceState<ImageBitmap?>(initialValue = null, photoPath) {
+    val bitmap by produceState<ImageBitmap?>(initialValue = null, photoPath, cacheKey) {
         value = runCatching { onLoadPhoto(photoPath) }.getOrNull()
     }
     val current = bitmap
@@ -378,7 +391,7 @@ private fun TeacherCard(
     Surface(modifier = Modifier.clickable(onClick = onEdit), shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                TeacherAvatar(teacher.name, teacher.photoPath, size = 64, onLoadPhoto = onLoadPhoto)
+                TeacherAvatar(teacher.name, teacher.photoPath, size = 64, onLoadPhoto = onLoadPhoto, cacheKey = teacher.updatedAt)
                 Box {
                     IconButton(onClick = { menuExpanded = true }, enabled = !busy) { Icon(Icons.Filled.MoreVert, contentDescription = "More") }
                     DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
@@ -435,16 +448,6 @@ private fun TeacherContactLine(teacher: Teacher) {
 }
 
 @Composable
-private fun TeacherNotice(message: String, color: Color, onDismiss: () -> Unit) {
-    Surface(shape = RoundedCornerShape(14.dp), color = color.copy(alpha = 0.1f), border = BorderStroke(1.dp, color.copy(alpha = 0.25f))) {
-        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(message, modifier = Modifier.weight(1f), color = color, style = MaterialTheme.typography.bodyMedium)
-            TextButton(onClick = onDismiss) { Text("Dismiss", color = color) }
-        }
-    }
-}
-
-@Composable
 private fun TeacherEmptyState(filtered: Boolean, onAdd: () -> Unit, onClearFilters: () -> Unit) {
     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -470,11 +473,12 @@ private fun TeacherActionDialog(
     onDismiss: () -> Unit,
     onConfirm: (TeacherAccountDraft) -> Unit,
     onPickPhoto: ((onPicked: (ImageBitmap) -> Unit) -> Unit)?,
-    onCropped: ((ImageBitmap) -> Unit)?,
+    onSavePhoto: ((ImageBitmap) -> Unit)?,
     photoBusy: Boolean,
     onLoadPhoto: suspend (String) -> ImageBitmap?,
 ) {
     var pendingCrop by remember { mutableStateOf<ImageBitmap?>(null) }
+    var pendingPhoto by remember { mutableStateOf<ImageBitmap?>(null) }
     var name by remember { mutableStateOf(existing?.name ?: "") }
     var email by remember { mutableStateOf(existing?.email ?: "") }
     var phone by remember { mutableStateOf(existing?.phone ?: "") }
@@ -504,9 +508,19 @@ private fun TeacherActionDialog(
                     Spacer(Modifier.height(10.dp))
                 }
                 if (existing != null && onPickPhoto != null) {
-                    Box(Modifier.padding(bottom = 12.dp), contentAlignment = Alignment.Center) {
+                    Box(Modifier.padding(bottom = 4.dp), contentAlignment = Alignment.Center) {
                         Box(contentAlignment = Alignment.BottomEnd) {
-                            TeacherAvatar(existing.name, existing.photoPath, size = 72, onLoadPhoto = onLoadPhoto)
+                            val pending = pendingPhoto
+                            if (pending != null) {
+                                Image(
+                                    bitmap = pending,
+                                    contentDescription = existing.name,
+                                    modifier = Modifier.size(72.dp).clip(CircleShape),
+                                    contentScale = ContentScale.Crop,
+                                )
+                            } else {
+                                TeacherAvatar(existing.name, existing.photoPath, size = 72, onLoadPhoto = onLoadPhoto, cacheKey = existing.updatedAt)
+                            }
                             Surface(
                                 modifier = Modifier.clickable(enabled = !photoBusy) { onPickPhoto { bitmap -> pendingCrop = bitmap } },
                                 shape = CircleShape,
@@ -521,6 +535,14 @@ private fun TeacherActionDialog(
                                 }
                             }
                         }
+                    }
+                    if (pendingPhoto != null) {
+                        Text(
+                            "New photo ready -- tap Save changes to upload it.",
+                            color = ModMuted,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(bottom = 10.dp),
+                        )
                     }
                 }
                 OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Teacher name") }, isError = name.isNotBlank() && nameError != null, modifier = Modifier.fillMaxWidth(), singleLine = true)
@@ -588,6 +610,7 @@ private fun TeacherActionDialog(
                             password, permissions, isAdmin,
                         ),
                     )
+                    pendingPhoto?.let { onSavePhoto?.invoke(it) }
                 },
                 enabled = valid && !busy,
             ) { Text(if (busy) (if (existing == null) "Creating" else "Saving") else if (existing == null) "Create teacher" else "Save changes") }
@@ -599,7 +622,7 @@ private fun TeacherActionDialog(
         PhotoCropDialog(
             source = source,
             onCancel = { pendingCrop = null },
-            onCropped = { cropped -> pendingCrop = null; onCropped?.invoke(cropped) },
+            onCropped = { cropped -> pendingCrop = null; pendingPhoto = cropped },
         )
     }
 }

@@ -10,12 +10,13 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asSkiaBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import com.mbd.cmscommon.controller.TeachersController
-import com.mbd.cmscommon.domain.model.MAX_TEACHER_PHOTO_BYTES
+import com.mbd.cmscommon.domain.model.TEACHER_PHOTO_COMPRESSED_TARGET_BYTES
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
 import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider
 import com.mbd.cmscommon.ui.components.TeacherDirectoryWorkspace
 import com.mbd.cmsdesktop.platform.AwtDesktopPlatformServices
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -42,6 +43,7 @@ fun TeachersScreen(
     val busyTeacherId by controller.busyTeacherId.collectAsState()
     val notice by controller.notice.collectAsState()
     val errorMessage by controller.error.collectAsState()
+    val photoCacheDir = remember { File(System.getProperty("java.io.tmpdir"), "cms_teacher_photos").apply { mkdirs() } }
 
     TeacherDirectoryWorkspace(
         teachers = teachers,
@@ -68,20 +70,35 @@ fun TeachersScreen(
             scope.launch {
                 val bytes = withContext(Dispatchers.Default) { compressToJpeg(cropped) }
                 controller.uploadPhoto(teacher, bytes, "image/jpeg")
+                // The remote storage path is deterministic (teachers/{email}.jpg), so pre-warm the
+                // local cache with what we just uploaded instead of waiting to re-download it.
+                withContext(Dispatchers.IO) {
+                    runCatching { cacheFileFor(photoCacheDir, "teachers/${teacher.teacherId}.jpg").writeBytes(bytes) }
+                }
             }
         },
-        onLoadPhoto = { path -> loadPhotoAsImageBitmap(repository, path) },
+        onLoadPhoto = { path -> loadPhotoCached(photoCacheDir, path, repository) },
         onConsumeNotice = controller::consumeNotice,
         onClearError = controller::clearError,
     )
 }
 
-private suspend fun loadPhotoAsImageBitmap(repository: TeacherRepository, photoPath: String): ImageBitmap? {
-    val bytes = repository.downloadPhoto(photoPath) ?: return null
+private fun cacheFileFor(cacheDir: File, photoPath: String): File = File(cacheDir, photoPath.replace('/', '_'))
+
+/** Local-first photo load: serves the cached file if present, otherwise downloads once and caches it. */
+private suspend fun loadPhotoCached(cacheDir: File, photoPath: String, repository: TeacherRepository): ImageBitmap? {
+    val cacheFile = cacheFileFor(cacheDir, photoPath)
+    val bytes = withContext(Dispatchers.IO) {
+        if (cacheFile.exists()) {
+            cacheFile.readBytes()
+        } else {
+            repository.downloadPhoto(photoPath)?.also { runCatching { cacheFile.writeBytes(it) } }
+        }
+    } ?: return null
     return runCatching { Image.makeFromEncoded(bytes).toComposeImageBitmap() }.getOrNull()
 }
 
-/** Re-encodes the cropped avatar as JPEG, stepping quality down until it fits the bucket's 1 MB cap. */
+/** Re-encodes the cropped avatar as JPEG, stepping quality down until it's comfortably under 100 KB. */
 private fun compressToJpeg(bitmap: ImageBitmap): ByteArray {
     val image = Image.makeFromBitmap(bitmap.asSkiaBitmap())
     var quality = 90
@@ -89,6 +106,6 @@ private fun compressToJpeg(bitmap: ImageBitmap): ByteArray {
     do {
         bytes = image.encodeToData(EncodedImageFormat.JPEG, quality)?.bytes ?: ByteArray(0)
         quality -= 15
-    } while (bytes.size > MAX_TEACHER_PHOTO_BYTES && quality > 10)
+    } while (bytes.size > TEACHER_PHOTO_COMPRESSED_TARGET_BYTES && quality > 10)
     return bytes
 }

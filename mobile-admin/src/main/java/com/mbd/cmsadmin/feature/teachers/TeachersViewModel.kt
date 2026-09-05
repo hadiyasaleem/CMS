@@ -1,8 +1,5 @@
 package com.mbd.cmsadmin.feature.teachers
 
-import android.graphics.BitmapFactory
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.auth.SessionManager
@@ -46,10 +43,7 @@ class TeachersViewModel @Inject constructor(
     fun setStatus(teacher: Teacher, status: TeacherStatus) = controller.setStatus(teacher, status)
     fun deleteTeacher(teacher: Teacher) = controller.deleteTeacher(teacher)
     fun uploadPhoto(teacher: Teacher, imageBytes: ByteArray, mimeType: String) = controller.uploadPhoto(teacher, imageBytes, mimeType)
-    suspend fun loadPhoto(photoPath: String): ImageBitmap? {
-        val bytes = teacherRepository.downloadPhoto(photoPath) ?: return null
-        return BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
-    }
+    suspend fun downloadPhotoBytes(photoPath: String): ByteArray? = teacherRepository.downloadPhoto(photoPath)
     fun consumeNotice() = controller.consumeNotice()
     fun clearError() = controller.clearError()
 }
