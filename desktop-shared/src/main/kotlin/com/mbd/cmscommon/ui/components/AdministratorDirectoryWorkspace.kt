@@ -59,7 +59,6 @@ import com.mbd.cmscommon.ui.theme.ModInk
 import com.mbd.cmscommon.ui.theme.ModMuted
 import com.mbd.cmscommon.ui.theme.ModTrack
 import com.mbd.cmscommon.ui.theme.ModSuccess
-import com.mbd.cmscommon.ui.theme.ModRedTint
 import com.mbd.cmscommon.util.FieldValidators
 import com.mbd.cmscommon.util.PasswordRule
 import java.time.Duration
@@ -157,18 +156,6 @@ fun AdministratorDirectoryWorkspace(
                     }
                 }
 
-                if (!errorMessage.isNullOrBlank()) {
-                    item {
-                        Spacer(Modifier.height(12.dp))
-                        Surface(shape = RoundedCornerShape(16.dp), color = ModRedTint, border = BorderStroke(1.dp, CmsTheme.colors.accent.copy(alpha = 0.22f))) {
-                            Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Text(errorMessage, modifier = Modifier.weight(1f), color = CmsTheme.colors.accent, style = MaterialTheme.typography.bodyMedium)
-                                TextButton(onClick = onClearError) { Text("Dismiss") }
-                            }
-                        }
-                    }
-                }
-
                 item {
                     Spacer(Modifier.height(12.dp))
                     SecurityNotice()
@@ -229,6 +216,15 @@ fun AdministratorDirectoryWorkspace(
                 onCreate(email, password)
                 showCreateDialog = false
             },
+        )
+    }
+
+    if (!errorMessage.isNullOrBlank()) {
+        AlertDialog(
+            onDismissRequest = onClearError,
+            title = { Text("Something went wrong") },
+            text = { Text(errorMessage, color = CmsTheme.colors.accent) },
+            confirmButton = { TextButton(onClick = onClearError) { Text("OK") } },
         )
     }
 }
