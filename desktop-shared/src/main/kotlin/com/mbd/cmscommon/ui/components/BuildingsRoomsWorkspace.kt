@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -68,9 +69,9 @@ fun BuildingsRoomsWorkspace(
 
     val roomsByBuilding = rooms.groupBy { it.buildingId }
 
-    Box(modifier.fillMaxWidth()) {
+    Box(modifier.fillMaxSize()) {
         LazyColumn(Modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            item { BuildingsRoomsHero(buildings.size, rooms.size, onAdd = { showAddBuilding = true }) }
+            item { BuildingsRoomsHero(buildings.size, rooms.size) }
 
             if (buildings.isEmpty()) {
                 item {
@@ -99,6 +100,11 @@ fun BuildingsRoomsWorkspace(
 
             item { Spacer(Modifier.height(72.dp)) }
         }
+        CmsFab(
+            onClick = { showAddBuilding = true },
+            contentDescription = "Add building",
+            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+        )
     }
 
     if (showAddBuilding) {
@@ -168,17 +174,14 @@ fun BuildingsRoomsWorkspace(
 }
 
 @Composable
-private fun BuildingsRoomsHero(buildingCount: Int, roomCount: Int, onAdd: () -> Unit) {
+private fun BuildingsRoomsHero(buildingCount: Int, roomCount: Int) {
     Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text("CAMPUS", color = CmsTheme.colors.onInk.copy(alpha = 0.7f), style = CmsTextStyles.eyebrow)
-                Spacer(Modifier.height(6.dp))
-                Text("Buildings & rooms", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                Spacer(Modifier.height(4.dp))
-                Text("$buildingCount building(s), $roomCount room(s)", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
-            }
-            CmsPrimaryButton(text = "Add building", onClick = onAdd)
+        Column(Modifier.padding(20.dp)) {
+            Text("CAMPUS", color = CmsTheme.colors.onInk.copy(alpha = 0.7f), style = CmsTextStyles.eyebrow)
+            Spacer(Modifier.height(6.dp))
+            Text("Buildings & rooms", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+            Spacer(Modifier.height(4.dp))
+            Text("$buildingCount building(s), $roomCount room(s)", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }

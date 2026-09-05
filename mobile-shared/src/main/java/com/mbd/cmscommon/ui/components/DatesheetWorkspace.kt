@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -126,12 +128,13 @@ fun DatesheetWorkspace(
         matchesQuery && matchesSession && matchesStatus
     }
 
+    Box(modifier.fillMaxSize()) {
     LazyColumn(
-        modifier = modifier.fillMaxWidth().background(DatesheetCanvas),
+        modifier = Modifier.fillMaxWidth().background(DatesheetCanvas),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { DatesheetHeader(viewer.canManage) { showCreate = true } }
+        item { DatesheetHeader() }
 
         if (!errorMessage.isNullOrBlank()) {
             item { DatesheetNotice(errorMessage, CmsTheme.colors.accent, action = "Retry", onAction = onRetry) }
@@ -194,6 +197,14 @@ fun DatesheetWorkspace(
         }
 
         item { Spacer(Modifier.height(72.dp)) }
+    }
+        if (viewer.canManage) {
+            CmsFab(
+                onClick = { showCreate = true },
+                contentDescription = "New datesheet",
+                modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+            )
+        }
     }
 
     if (showCreate || editingSheet != null) {
@@ -258,20 +269,15 @@ fun DatesheetWorkspace(
 }
 
 @Composable
-private fun DatesheetHeader(canManage: Boolean, onAdd: () -> Unit) {
+private fun DatesheetHeader() {
     Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text("Exam Datesheets", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                Text(
-                    "Published schedules, venues and paper timings in one place.",
-                    color = CmsTheme.colors.onInkMuted,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-            if (canManage) {
-                CmsPrimaryButton(text = "New datesheet", onClick = onAdd)
-            }
+        Column(Modifier.padding(20.dp)) {
+            Text("Exam Datesheets", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+            Text(
+                "Published schedules, venues and paper timings in one place.",
+                color = CmsTheme.colors.onInkMuted,
+                style = MaterialTheme.typography.bodyMedium,
+            )
         }
     }
 }

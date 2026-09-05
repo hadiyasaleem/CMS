@@ -3,12 +3,14 @@ package com.mbd.cmscommon.ui.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -80,14 +82,14 @@ fun StudentRosterWorkspace(
     val visible = students.filter { query.isBlank() || it.name.contains(query, ignoreCase = true) || it.rollNumber.contains(query, ignoreCase = true) }
         .sortedBy { it.rollNumber }
 
-    CardGrid(modifier.fillMaxWidth()) {
+    Box(modifier.fillMaxSize()) {
+    CardGrid(Modifier.fillMaxWidth()) {
         fullSpanItem {
             RosterHero(
                 session = session,
                 studentCount = students.size,
                 maxStudents = maxStudents,
                 importing = importing,
-                onAdd = { showAddStudent = true },
                 onImport = onPickImportFile,
             )
         }
@@ -124,6 +126,14 @@ fun StudentRosterWorkspace(
         }
 
         fullSpanItem { Spacer(Modifier.height(72.dp)) }
+    }
+        if (!isFull) {
+            CmsFab(
+                onClick = { showAddStudent = true },
+                contentDescription = "Add student",
+                modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+            )
+        }
     }
 
     if (showAddStudent) {
@@ -165,7 +175,6 @@ private fun RosterHero(
     studentCount: Int,
     maxStudents: Int,
     importing: Boolean,
-    onAdd: () -> Unit,
     onImport: () -> Unit,
 ) {
     Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
@@ -179,11 +188,8 @@ private fun RosterHero(
                 color = CmsTheme.colors.onInkMuted,
                 style = MaterialTheme.typography.bodyMedium,
             )
-            Spacer(Modifier.height(12.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                CmsPrimaryButton(text = "Add student", onClick = onAdd)
-                TextButton(onClick = onImport, enabled = !importing) { Text(if (importing) "Importing" else "Import file", color = CmsTheme.colors.onInk) }
-            }
+            Spacer(Modifier.height(8.dp))
+            TextButton(onClick = onImport, enabled = !importing) { Text(if (importing) "Importing" else "Import file", color = CmsTheme.colors.onInk) }
         }
     }
 }

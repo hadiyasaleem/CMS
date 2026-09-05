@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -97,12 +98,13 @@ fun CalendarWorkspace(
         .filter { query.isBlank() || it.title.contains(query, ignoreCase = true) || (it.venue ?: "").contains(query, ignoreCase = true) }
         .sortedWith(compareBy({ startDateOrNull(it) ?: LocalDate.MAX }, { it.title }))
 
+    Box(modifier.fillMaxSize()) {
     LazyColumn(
-        modifier = modifier.fillMaxWidth().background(CalendarCanvas),
+        modifier = Modifier.fillMaxWidth().background(CalendarCanvas),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { CalendarHeader(canEdit) { showCreate = true } }
+        item { CalendarHeader() }
 
         if (!errorMessage.isNullOrBlank()) {
             item { CalendarNotice(errorMessage, CmsTheme.colors.accent, action = "Retry", onAction = onRetry) }
@@ -152,6 +154,14 @@ fun CalendarWorkspace(
 
         item { Spacer(Modifier.height(72.dp)) }
     }
+        if (canEdit) {
+            CmsFab(
+                onClick = { showCreate = true },
+                contentDescription = "Add event",
+                modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+            )
+        }
+    }
 
     if (showCreate) {
         CreateCalendarEventDialog(
@@ -174,20 +184,15 @@ fun CalendarWorkspace(
 }
 
 @Composable
-private fun CalendarHeader(canEdit: Boolean, onAdd: () -> Unit) {
+private fun CalendarHeader() {
     Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text("College calendar", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                Text(
-                    "Holidays, activities, exams and deadlines in one timeline",
-                    color = CmsTheme.colors.onInkMuted,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-            if (canEdit) {
-                CmsPrimaryButton(text = "Add event", onClick = onAdd)
-            }
+        Column(Modifier.padding(20.dp)) {
+            Text("College calendar", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+            Text(
+                "Holidays, activities, exams and deadlines in one timeline",
+                color = CmsTheme.colors.onInkMuted,
+                style = MaterialTheme.typography.bodyMedium,
+            )
         }
     }
 }

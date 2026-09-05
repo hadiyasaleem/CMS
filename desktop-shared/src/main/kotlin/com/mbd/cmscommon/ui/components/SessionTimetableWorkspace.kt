@@ -4,10 +4,12 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -87,45 +89,52 @@ fun SessionTimetableWorkspace(
     val periodByDayAndSlot = periods.associateBy { it.day to it.timeRange }
     val timeSlots = periods.map { it.timeRange }.distinct().sortedBy { it.substringBefore('–') }
 
-    LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { TimetableHero(session, onAdd = { addingPeriodDay = DayOfWeek.MONDAY }) }
+    Box(modifier.fillMaxSize()) {
+        LazyColumn(Modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            item { TimetableHero(session) }
 
-        item { TimetableSummaryCard(periods.size, roomsConfigured, teacherIds.size, conflictIds.size) }
+            item { TimetableSummaryCard(periods.size, roomsConfigured, teacherIds.size, conflictIds.size) }
 
-        if (periods.isEmpty()) {
-            item { TimetableEmptyState(onAdd = { addingPeriodDay = DayOfWeek.MONDAY }) }
-        } else {
-            item {
-                TimetableGrid(
-                    timeSlots = timeSlots,
-                    rows = TIMETABLE_DAYS.map { day ->
-                        GridRow(
-                            key = day.name,
-                            label = day.getDisplayName(TextStyle.SHORT, Locale.ENGLISH),
-                            cells = timeSlots.associateWith { slot ->
-                                periodByDayAndSlot[day to slot]?.let { period ->
-                                    val isBreak = period.periodType == PeriodType.BREAK
-                                    GridCell(
-                                        title = if (isBreak) "BREAK" else period.subjectName.ifBlank { period.courseCode },
-                                        subtitle = if (isBreak) "" else period.teacherName.ifBlank { "Unassigned" },
-                                        meta = if (isBreak) "" else period.roomNo?.ifBlank { null } ?: "No room",
-                                        isBreak = isBreak,
-                                        isAlert = period.id in conflictIds,
-                                    )
-                                }
-                            },
-                        )
-                    },
-                    onCellClick = { dayKey, slot ->
-                        val day = DayOfWeek.valueOf(dayKey)
-                        val period = periodByDayAndSlot[day to slot]
-                        if (period != null) detailPeriod = period else addingPeriodDay = day
-                    },
-                )
+            if (periods.isEmpty()) {
+                item { TimetableEmptyState(onAdd = { addingPeriodDay = DayOfWeek.MONDAY }) }
+            } else {
+                item {
+                    TimetableGrid(
+                        timeSlots = timeSlots,
+                        rows = TIMETABLE_DAYS.map { day ->
+                            GridRow(
+                                key = day.name,
+                                label = day.getDisplayName(TextStyle.SHORT, Locale.ENGLISH),
+                                cells = timeSlots.associateWith { slot ->
+                                    periodByDayAndSlot[day to slot]?.let { period ->
+                                        val isBreak = period.periodType == PeriodType.BREAK
+                                        GridCell(
+                                            title = if (isBreak) "BREAK" else period.subjectName.ifBlank { period.courseCode },
+                                            subtitle = if (isBreak) "" else period.teacherName.ifBlank { "Unassigned" },
+                                            meta = if (isBreak) "" else period.roomNo?.ifBlank { null } ?: "No room",
+                                            isBreak = isBreak,
+                                            isAlert = period.id in conflictIds,
+                                        )
+                                    }
+                                },
+                            )
+                        },
+                        onCellClick = { dayKey, slot ->
+                            val day = DayOfWeek.valueOf(dayKey)
+                            val period = periodByDayAndSlot[day to slot]
+                            if (period != null) detailPeriod = period else addingPeriodDay = day
+                        },
+                    )
+                }
             }
-        }
 
-        item { Spacer(Modifier.height(72.dp)) }
+            item { Spacer(Modifier.height(72.dp)) }
+        }
+        CmsFab(
+            onClick = { addingPeriodDay = DayOfWeek.MONDAY },
+            contentDescription = "Add period",
+            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+        )
     }
 
     if (addingPeriodDay != null || editorState != null) {
@@ -214,17 +223,14 @@ private fun conflictingPeriodIds(periods: List<SessionPeriod>): Set<String> {
 }
 
 @Composable
-private fun TimetableHero(session: AcademicSession?, onAdd: () -> Unit) {
+private fun TimetableHero(session: AcademicSession?) {
     Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text("WEEKLY TIMETABLE", color = TimetableGold, style = CmsTextStyles.eyebrow)
-                Spacer(Modifier.height(6.dp))
-                Text(session?.label ?: "Session", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                Spacer(Modifier.height(4.dp))
-                Text("Weekly period schedule for this session", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
-            }
-            CmsPrimaryButton(text = "Add period", onClick = onAdd)
+        Column(Modifier.padding(20.dp)) {
+            Text("WEEKLY TIMETABLE", color = TimetableGold, style = CmsTextStyles.eyebrow)
+            Spacer(Modifier.height(6.dp))
+            Text(session?.label ?: "Session", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+            Spacer(Modifier.height(4.dp))
+            Text("Weekly period schedule for this session", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }

@@ -147,7 +147,7 @@ fun AdministratorDirectoryWorkspace(
     ) { padding ->
         RefreshBox(isRefreshing = loading, onRefresh = onRefresh, modifier = Modifier.padding(padding)) {
             LazyColumn(Modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp)) {
-                item { AdministratorHero(directory.accounts.size, compact = false, onAdd = { showCreateDialog = true }) }
+                item { AdministratorHero(directory.accounts.size) }
 
                 if (!createdEmail.isNullOrBlank()) {
                     item {
@@ -230,19 +230,14 @@ fun AdministratorDirectoryWorkspace(
 }
 
 @Composable
-private fun AdministratorHero(count: Int, compact: Boolean, onAdd: () -> Unit, modifier: Modifier = Modifier) {
+private fun AdministratorHero(count: Int, modifier: Modifier = Modifier) {
     Surface(modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(22.dp), color = ModInk) {
-        Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text("ACCESS CONTROL", color = CmsTheme.colors.onInk.copy(alpha = 0.7f), style = CmsTextStyles.eyebrow)
-                Spacer(Modifier.height(6.dp))
-                Text("Administrator directory", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                Spacer(Modifier.height(4.dp))
-                Text("$count full-access accounts", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
-            }
-            if (!compact) {
-                CmsPrimaryButton(text = "Add administrator", onClick = onAdd)
-            }
+        Column(Modifier.padding(20.dp)) {
+            Text("ACCESS CONTROL", color = CmsTheme.colors.onInk.copy(alpha = 0.7f), style = CmsTextStyles.eyebrow)
+            Spacer(Modifier.height(6.dp))
+            Text("Administrator directory", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+            Spacer(Modifier.height(4.dp))
+            Text("$count full-access accounts", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }

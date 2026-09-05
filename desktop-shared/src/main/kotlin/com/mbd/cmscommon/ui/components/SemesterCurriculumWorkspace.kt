@@ -3,12 +3,14 @@ package com.mbd.cmscommon.ui.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -77,8 +79,9 @@ fun SemesterCurriculumWorkspace(
     val visible = subjects.filter { query.isBlank() || it.name.contains(query, ignoreCase = true) || it.courseCode.contains(query, ignoreCase = true) }
         .sortedBy { it.courseCode }
 
-    CardGrid(modifier.fillMaxWidth()) {
-        fullSpanItem { CurriculumHero(session, semester, subjects.size, totalCredits, onAdd = { addingSubject = true }) }
+    Box(modifier.fillMaxSize()) {
+    CardGrid(Modifier.fillMaxWidth()) {
+        fullSpanItem { CurriculumHero(session, semester, subjects.size, totalCredits) }
 
         if (!errorMessage.isNullOrBlank()) {
             fullSpanItem { ValidationMessage(errorMessage) }
@@ -107,6 +110,12 @@ fun SemesterCurriculumWorkspace(
         }
 
         fullSpanItem { Spacer(Modifier.height(72.dp)) }
+    }
+        CmsFab(
+            onClick = { addingSubject = true },
+            contentDescription = "Add subject",
+            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+        )
     }
 
     if (addingSubject || subjectEditor != null) {
@@ -142,21 +151,18 @@ fun SemesterCurriculumWorkspace(
 }
 
 @Composable
-private fun CurriculumHero(session: AcademicSession?, semester: Int, subjectCount: Int, totalCredits: Int, onAdd: () -> Unit) {
+private fun CurriculumHero(session: AcademicSession?, semester: Int, subjectCount: Int, totalCredits: Int) {
     Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text("SESSION CURRICULUM", color = CurriculumGold, style = CmsTextStyles.eyebrow)
-                Spacer(Modifier.height(6.dp))
-                Text("Session curriculum", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    "${session?.label ?: "Session"} · Semester $semester · $subjectCount subject(s) · $totalCredits credits",
-                    color = CmsTheme.colors.onInkMuted,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-            CmsPrimaryButton(text = "Add subject", onClick = onAdd)
+        Column(Modifier.padding(20.dp)) {
+            Text("SESSION CURRICULUM", color = CurriculumGold, style = CmsTextStyles.eyebrow)
+            Spacer(Modifier.height(6.dp))
+            Text("Session curriculum", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "${session?.label ?: "Session"} · Semester $semester · $subjectCount subject(s) · $totalCredits credits",
+                color = CmsTheme.colors.onInkMuted,
+                style = MaterialTheme.typography.bodyMedium,
+            )
         }
     }
 }
