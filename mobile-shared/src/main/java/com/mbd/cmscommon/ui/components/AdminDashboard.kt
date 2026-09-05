@@ -55,7 +55,6 @@ import com.mbd.cmscommon.ui.theme.ModSurfaceAlt
 import com.mbd.cmscommon.ui.theme.ModSuccess
 import com.mbd.cmscommon.ui.theme.ModWarn
 import com.mbd.cmscommon.ui.theme.ModRedTint
-import com.mbd.cmscommon.ui.theme.CollegeInfo
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -205,9 +204,9 @@ private fun DashboardHero(heroPainter: Painter, wide: Boolean) {
             Box(
                 Modifier.fillMaxSize().background(
                     Brush.horizontalGradient(
-                        0f to ModWarn.copy(alpha = 0.12f),
-                        0.48f to ModWarn.copy(alpha = 0.94f),
-                        0.72f to ModWarn.copy(alpha = 0.18f),
+                        0f to ModWarn.copy(alpha = 0.97f),
+                        0.7f to ModWarn.copy(alpha = 0.97f),
+                        0.9f to ModWarn.copy(alpha = 0.15f),
                         1f to Color.Transparent,
                     ),
                 ),
@@ -218,10 +217,6 @@ private fun DashboardHero(heroPainter: Painter, wide: Boolean) {
                     .fillMaxWidth(if (wide) 0.5f else 0.64f)
                     .padding(if (wide) 32.dp else 22.dp),
             ) {
-                Surface(shape = RoundedCornerShape(999.dp), color = ModSurface.copy(alpha = 0.9f)) {
-                    CollegeCrestBadge()
-                }
-                Spacer(Modifier.height(14.dp))
                 Text(
                     "Welcome back,\nAdmin.",
                     color = ModInk,
@@ -231,7 +226,7 @@ private fun DashboardHero(heroPainter: Painter, wide: Boolean) {
                 Spacer(Modifier.height(8.dp))
                 Text(
                     "A clear view of people, sessions, and the work that needs attention today.",
-                    color = ModMuted,
+                    color = ModInk.copy(alpha = 0.78f),
                     maxLines = if (wide) 3 else 4,
                     overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.bodyMedium,
@@ -239,16 +234,6 @@ private fun DashboardHero(heroPainter: Painter, wide: Boolean) {
             }
         }
     }
-}
-
-@Composable
-private fun CollegeCrestBadge() {
-    Text(
-        CollegeInfo.NAME,
-        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-        color = ModInk,
-        style = CmsTextStyles.eyebrow,
-    )
 }
 
 @Composable
