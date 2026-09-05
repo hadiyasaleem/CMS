@@ -1,7 +1,10 @@
-package com.mbd.cmscommon.data.local
+package com.mbd.cmscommon.di
 
 import androidx.room.Database
 import androidx.room.TypeConverters
+import com.mbd.cmscommon.data.local.CMS_DATABASE_VERSION
+import com.mbd.cmscommon.data.local.CmsDatabase
+import com.mbd.cmscommon.data.local.Converters
 import com.mbd.cmscommon.data.local.entity.AcademicSessionEntity
 import com.mbd.cmscommon.data.local.entity.AdministratorAccountEntity
 import com.mbd.cmscommon.data.local.entity.CalendarEventEntity
@@ -36,6 +39,10 @@ import com.mbd.cmscommon.data.local.entity.UserEntity
  * list and the version are identical across apps, one shared class replaces what used to be three
  * near-duplicate ones (AdminDatabase/StudentDatabase/TeacherDatabase). Each app still opens its own
  * file (see per-app DatabaseModule) so their data stays isolated.
+ *
+ * Lives under `di/`, not `data/local/`, on purpose: desktop-shared's build.gradle.kts reuses the
+ * `data/local` directory as a source set for its own (unrelated) DesktopDatabase, and Room's KSP
+ * would still try to process a @Database class placed there even if compileKotlin excludes it.
  */
 @Database(
     entities = [

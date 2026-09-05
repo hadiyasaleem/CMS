@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.mbd.cmscommon.data.local.CmsDatabase
 import com.mbd.cmscommon.data.local.CMS_DATABASE_MIGRATIONS
-import com.mbd.cmscommon.data.local.MobileCmsDatabase
+import com.mbd.cmscommon.di.MobileCmsDatabase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
