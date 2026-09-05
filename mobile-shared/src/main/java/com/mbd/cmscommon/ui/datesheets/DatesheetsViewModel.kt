@@ -16,6 +16,7 @@ import com.mbd.cmscommon.domain.repository.DatesheetRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
 import com.mbd.cmscommon.domain.repository.UserRepository
 import com.mbd.cmscommon.util.StudentIdCodec
+import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -25,6 +26,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+@HiltViewModel
 class DatesheetsViewModel @Inject constructor(
     datesheetRepository: DatesheetRepository,
     private val userRepository: UserRepository,

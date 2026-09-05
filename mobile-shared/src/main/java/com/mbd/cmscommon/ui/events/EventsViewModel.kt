@@ -16,12 +16,14 @@ import com.mbd.cmscommon.domain.repository.TeacherRepository
 import com.mbd.cmscommon.domain.repository.UserRepository
 import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider
 import com.mbd.cmscommon.util.StudentIdCodec
+import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
+@HiltViewModel
 class EventsViewModel @Inject constructor(
     calendarRepository: CalendarRepository,
     userRepository: UserRepository,
