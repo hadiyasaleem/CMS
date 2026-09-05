@@ -54,6 +54,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -312,7 +313,7 @@ private fun DepartmentFilterChip(departments: List<Department>, selectedDeptId: 
     Box {
         Surface(
             modifier = Modifier.clickable { expanded = true },
-            shape = RoundedCornerShape(100),
+            shape = RectangleShape,
             color = if (selectedDeptId != null) CmsTheme.colors.ink else MaterialTheme.colorScheme.surfaceContainerLowest,
             contentColor = if (selectedDeptId != null) CmsTheme.colors.onInk else MaterialTheme.colorScheme.onSurface,
             border = if (selectedDeptId != null) null else BorderStroke(2.dp, CmsTheme.colors.rule),
