@@ -76,6 +76,7 @@ fun StudentTimetableWorkspace(
     modifier: Modifier = Modifier,
 ) {
     var detailItem by remember { mutableStateOf<StudentScheduledPeriod?>(null) }
+    var dismissedError by remember { mutableStateOf<String?>(null) }
 
     LazyColumn(
         modifier = modifier.fillMaxWidth().background(TimetableCanvas),
@@ -83,10 +84,6 @@ fun StudentTimetableWorkspace(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item { StudentTimetableHeader(heroPainter) }
-
-        if (!errorMessage.isNullOrBlank()) {
-            item { ErrorCard(errorMessage, onRetry) }
-        }
 
         when {
             loading && snapshot == null -> items(3) { SkeletonRow() }
@@ -136,6 +133,16 @@ fun StudentTimetableWorkspace(
 
     detailItem?.let { item ->
         StudentPeriodDetailDialog(item, onDismiss = { detailItem = null })
+    }
+
+    if (!errorMessage.isNullOrBlank() && errorMessage != dismissedError) {
+        AlertDialog(
+            onDismissRequest = { dismissedError = errorMessage },
+            title = { Text("Couldn't load timetable") },
+            text = { Text(errorMessage, color = TimetableRed) },
+            confirmButton = { TextButton(onClick = { dismissedError = null; onRetry() }) { Text("Retry") } },
+            dismissButton = { TextButton(onClick = { dismissedError = errorMessage }) { Text("Dismiss") } },
+        )
     }
 }
 
@@ -244,12 +251,3 @@ private fun DetailRow(icon: ImageVector, text: String) {
     }
 }
 
-@Composable
-private fun ErrorCard(message: String, onRetry: () -> Unit) {
-    Surface(shape = RoundedCornerShape(14.dp), color = TimetableRed.copy(alpha = 0.1f), border = BorderStroke(1.dp, TimetableRed.copy(alpha = 0.25f))) {
-        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(message, modifier = Modifier.weight(1f), color = TimetableRed, style = MaterialTheme.typography.bodyMedium)
-            TextButton(onClick = onRetry) { Text("Retry", color = TimetableRed) }
-        }
-    }
-}

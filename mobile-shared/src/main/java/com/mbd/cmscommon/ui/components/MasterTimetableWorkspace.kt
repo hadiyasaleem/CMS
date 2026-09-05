@@ -75,6 +75,7 @@ fun MasterTimetableWorkspace(
     modifier: Modifier = Modifier,
 ) {
     var detailPeriod by remember { mutableStateOf<SessionPeriod?>(null) }
+    var dismissedError by remember { mutableStateOf<String?>(null) }
     val department = departments.firstOrNull { it.deptId == selectedDeptId }
     val periodByDayAndSlot = periods.associateBy { it.day to it.timeRange }
     val timeSlots = periods.map { it.timeRange }.distinct().sortedBy { it.substringBefore('–') }
@@ -85,10 +86,6 @@ fun MasterTimetableWorkspace(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item { MasterHeader() }
-
-        if (!errorMessage.isNullOrBlank()) {
-            item { MasterNotice(errorMessage, onRetry) }
-        }
 
         item {
             MasterFilters(
@@ -154,6 +151,16 @@ fun MasterTimetableWorkspace(
 
     detailPeriod?.let { period ->
         PeriodDetailDialog(period, onDismiss = { detailPeriod = null })
+    }
+
+    if (!errorMessage.isNullOrBlank() && errorMessage != dismissedError) {
+        AlertDialog(
+            onDismissRequest = { dismissedError = errorMessage },
+            title = { Text("Couldn't load timetable") },
+            text = { Text(errorMessage, color = MasterRed) },
+            confirmButton = { TextButton(onClick = { dismissedError = null; onRetry() }) { Text("Retry") } },
+            dismissButton = { TextButton(onClick = { dismissedError = errorMessage }) { Text("Dismiss") } },
+        )
     }
 }
 
@@ -259,16 +266,6 @@ private fun DetailRow(label: String, value: String) {
     Column {
         Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
         Text(value, style = MaterialTheme.typography.bodyMedium)
-    }
-}
-
-@Composable
-private fun MasterNotice(message: String, onRetry: () -> Unit) {
-    Surface(shape = RoundedCornerShape(14.dp), color = MasterRed.copy(alpha = 0.1f), border = BorderStroke(1.dp, MasterRed.copy(alpha = 0.25f))) {
-        Row(Modifier.padding(14.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-            Text(message, modifier = Modifier.weight(1f), color = MasterRed, style = MaterialTheme.typography.bodyMedium)
-            TextButton(onClick = onRetry) { Text("Retry", color = MasterRed) }
-        }
     }
 }
 
