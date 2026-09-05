@@ -324,7 +324,7 @@ private fun DepartmentFilterChip(departments: List<Department>, selectedDeptId: 
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(selectedName ?: "All departments", style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Icon(Icons.Filled.ArrowDropDown, contentDescription = null, modifier = Modifier.size(18.dp))
+                Icon(Icons.Filled.ArrowDropDown, contentDescription = null, modifier = Modifier.size(16.dp))
             }
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.heightIn(max = 240.dp)) {
