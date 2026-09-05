@@ -1,15 +1,18 @@
 package com.mbd.cmscommon.ui.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.controller.departmentDetailSnapshot
 import com.mbd.cmscommon.domain.model.AcademicSession
@@ -226,8 +230,13 @@ private fun SessionMetric(label: String, value: String, modifier: Modifier = Mod
 
 @Composable
 private fun DepartmentSessionCard(session: AcademicSession, studentCount: Int, onClick: () -> Unit) {
-    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Column(Modifier.padding(16.dp)) {
+    Surface(
+        modifier = Modifier.fillMaxHeight().clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        color = ModSurface,
+        border = BorderStroke(1.dp, ModTrack),
+    ) {
+        Column(Modifier.padding(16.dp).heightIn(min = 184.dp)) {
             Column {
                 Text("Session ${session.label}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                 Text("${session.shift} · Semester ${session.currentSemester}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
@@ -235,12 +244,22 @@ private fun DepartmentSessionCard(session: AcademicSession, studentCount: Int, o
             Spacer(Modifier.height(8.dp))
             StatusBadge(session.shift.name, if (session.shift == Session.MORNING) BadgeTone.Navy else BadgeTone.Gold)
             Spacer(Modifier.height(8.dp))
-            Text(session.programName?.takeIf { it.isNotBlank() } ?: "Program name not configured", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
-            Text(session.inchargeEmail?.takeIf { it.isNotBlank() } ?: "Session in-charge not assigned", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+            Text(
+                session.programName?.takeIf { it.isNotBlank() } ?: "Program name not configured",
+                color = ModMuted,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                session.inchargeEmail?.takeIf { it.isNotBlank() } ?: "Session in-charge not assigned",
+                color = ModMuted,
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
             Spacer(Modifier.height(8.dp))
             Text("$studentCount / ${session.maxStudents} enrolled", color = ModMuted, style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.height(8.dp))
-            TextButton(onClick = onClick) { Text("Open session") }
         }
     }
 }
