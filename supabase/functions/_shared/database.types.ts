@@ -23,7 +23,6 @@ export type Database = {
           deleted_by: string | null
           dept_id: string
           end_year: number
-          entity_id: number
           incharge_email: string | null
           is_active: boolean
           is_deleted: boolean
@@ -43,7 +42,6 @@ export type Database = {
           deleted_by?: string | null
           dept_id: string
           end_year: number
-          entity_id?: never
           incharge_email?: string | null
           is_active?: boolean
           is_deleted?: boolean
@@ -63,7 +61,6 @@ export type Database = {
           deleted_by?: string | null
           dept_id?: string
           end_year?: number
-          entity_id?: never
           incharge_email?: string | null
           is_active?: boolean
           is_deleted?: boolean
@@ -103,7 +100,6 @@ export type Database = {
           description: string | null
           end_date: string | null
           end_time: string | null
-          entity_id: number
           event_type: Database["public"]["Enums"]["event_type"]
           id: string
           is_deleted: boolean
@@ -125,7 +121,6 @@ export type Database = {
           description?: string | null
           end_date?: string | null
           end_time?: string | null
-          entity_id?: never
           event_type: Database["public"]["Enums"]["event_type"]
           id?: string
           is_deleted?: boolean
@@ -147,7 +142,6 @@ export type Database = {
           description?: string | null
           end_date?: string | null
           end_time?: string | null
-          entity_id?: never
           event_type?: Database["public"]["Enums"]["event_type"]
           id?: string
           is_deleted?: boolean
@@ -194,7 +188,6 @@ export type Database = {
           deleted_by: string | null
           duration_minutes: number | null
           end_time: string | null
-          entity_id: number
           exam_date: string
           id: string
           invigilator_email: string | null
@@ -215,7 +208,6 @@ export type Database = {
           deleted_by?: string | null
           duration_minutes?: number | null
           end_time?: string | null
-          entity_id?: never
           exam_date: string
           id?: string
           invigilator_email?: string | null
@@ -236,7 +228,6 @@ export type Database = {
           deleted_by?: string | null
           duration_minutes?: number | null
           end_time?: string | null
-          entity_id?: never
           exam_date?: string
           id?: string
           invigilator_email?: string | null
@@ -270,7 +261,6 @@ export type Database = {
           created_by: string | null
           deleted_at: string | null
           deleted_by: string | null
-          entity_id: number
           exam_type: Database["public"]["Enums"]["exam_type"] | null
           id: string
           instructions: string | null
@@ -286,7 +276,6 @@ export type Database = {
           created_by?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
-          entity_id?: never
           exam_type?: Database["public"]["Enums"]["exam_type"] | null
           id?: string
           instructions?: string | null
@@ -302,7 +291,6 @@ export type Database = {
           created_by?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
-          entity_id?: never
           exam_type?: Database["public"]["Enums"]["exam_type"] | null
           id?: string
           instructions?: string | null
@@ -339,7 +327,6 @@ export type Database = {
           deleted_by: string | null
           dept_id: string
           description: string | null
-          entity_id: number
           hod_email: string | null
           is_deleted: boolean
           name: string
@@ -354,7 +341,6 @@ export type Database = {
           deleted_by?: string | null
           dept_id: string
           description?: string | null
-          entity_id?: never
           hod_email?: string | null
           is_deleted?: boolean
           name: string
@@ -369,7 +355,6 @@ export type Database = {
           deleted_by?: string | null
           dept_id?: string
           description?: string | null
-          entity_id?: never
           hod_email?: string | null
           is_deleted?: boolean
           name?: string
@@ -393,7 +378,6 @@ export type Database = {
           created_by: string | null
           deleted_at: string | null
           deleted_by: string | null
-          entity_id: number
           exam_type: Database["public"]["Enums"]["exam_type"]
           file_name: string
           file_size_bytes: number | null
@@ -419,7 +403,6 @@ export type Database = {
           created_by?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
-          entity_id?: never
           exam_type: Database["public"]["Enums"]["exam_type"]
           file_name: string
           file_size_bytes?: number | null
@@ -445,7 +428,6 @@ export type Database = {
           created_by?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
-          entity_id?: never
           exam_type?: Database["public"]["Enums"]["exam_type"]
           file_name?: string
           file_size_bytes?: number | null
@@ -489,7 +471,6 @@ export type Database = {
           created_by: string | null
           deleted_at: string | null
           deleted_by: string | null
-          entity_id: number
           is_deleted: boolean
           label: string
           reason: string
@@ -504,7 +485,6 @@ export type Database = {
           created_by?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
-          entity_id?: never
           is_deleted?: boolean
           label: string
           reason?: string
@@ -519,7 +499,6 @@ export type Database = {
           created_by?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
-          entity_id?: never
           is_deleted?: boolean
           label?: string
           reason?: string
@@ -553,7 +532,6 @@ export type Database = {
           created_by: string | null
           deleted_at: string | null
           deleted_by: string | null
-          entity_id: number
           id: string
           is_deleted: boolean
           issued_at: string
@@ -571,7 +549,6 @@ export type Database = {
           created_by?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
-          entity_id?: never
           id?: string
           is_deleted?: boolean
           issued_at?: string
@@ -589,7 +566,6 @@ export type Database = {
           created_by?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
-          entity_id?: never
           id?: string
           is_deleted?: boolean
           issued_at?: string
@@ -625,7 +601,6 @@ export type Database = {
           current_score: number | null
           deleted_at: string | null
           deleted_by: string | null
-          entity_id: number
           exam_type: Database["public"]["Enums"]["exam_type"]
           id: string
           is_deleted: boolean
@@ -649,7 +624,6 @@ export type Database = {
           current_score?: number | null
           deleted_at?: string | null
           deleted_by?: string | null
-          entity_id?: never
           exam_type: Database["public"]["Enums"]["exam_type"]
           id?: string
           is_deleted?: boolean
@@ -673,7 +647,6 @@ export type Database = {
           current_score?: number | null
           deleted_at?: string | null
           deleted_by?: string | null
-          entity_id?: never
           exam_type?: Database["public"]["Enums"]["exam_type"]
           id?: string
           is_deleted?: boolean
@@ -716,7 +689,6 @@ export type Database = {
           created_by_email: string
           deleted_at: string | null
           deleted_by: string | null
-          entity_id: number
           expires_at: string | null
           id: string
           is_deleted: boolean
@@ -736,7 +708,6 @@ export type Database = {
           created_by_email: string
           deleted_at?: string | null
           deleted_by?: string | null
-          entity_id?: never
           expires_at?: string | null
           id?: string
           is_deleted?: boolean
@@ -756,7 +727,6 @@ export type Database = {
           created_by_email?: string
           deleted_at?: string | null
           deleted_by?: string | null
-          entity_id?: never
           expires_at?: string | null
           id?: string
           is_deleted?: boolean
@@ -798,7 +768,6 @@ export type Database = {
           created_by: string | null
           deleted_at: string | null
           deleted_by: string | null
-          entity_id: number
           is_deleted: boolean
           period_id: string
           session_id: string
@@ -810,7 +779,6 @@ export type Database = {
           created_by?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
-          entity_id?: never
           is_deleted?: boolean
           period_id: string
           session_id: string
@@ -822,7 +790,6 @@ export type Database = {
           created_by?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
-          entity_id?: never
           is_deleted?: boolean
           period_id?: string
           session_id?: string
@@ -860,7 +827,6 @@ export type Database = {
           deleted_at: string | null
           deleted_by: string | null
           email: string
-          entity_id: number
           id: string
           is_deleted: boolean
           last_login_at: string | null
@@ -879,7 +845,6 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           email: string
-          entity_id?: never
           id: string
           is_deleted?: boolean
           last_login_at?: string | null
@@ -898,7 +863,6 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           email?: string
-          entity_id?: never
           id?: string
           is_deleted?: boolean
           last_login_at?: string | null
@@ -942,7 +906,6 @@ export type Database = {
           deleted_at: string | null
           deleted_by: string | null
           end_date: string | null
-          entity_id: number
           is_deleted: boolean
           semester: number
           session_id: string
@@ -956,7 +919,6 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           end_date?: string | null
-          entity_id?: never
           is_deleted?: boolean
           semester: number
           session_id: string
@@ -970,7 +932,6 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           end_date?: string | null
-          entity_id?: never
           is_deleted?: boolean
           semester?: number
           session_id?: string
@@ -1083,7 +1044,6 @@ export type Database = {
           created_by: string | null
           deleted_at: string | null
           deleted_by: string | null
-          entity_id: number
           is_deleted: boolean
           label: string
           position: number
@@ -1097,7 +1057,6 @@ export type Database = {
           created_by?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
-          entity_id?: never
           is_deleted?: boolean
           label: string
           position?: number
@@ -1111,7 +1070,6 @@ export type Database = {
           created_by?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
-          entity_id?: never
           is_deleted?: boolean
           label?: string
           position?: number
@@ -1138,7 +1096,6 @@ export type Database = {
           deleted_at: string | null
           deleted_by: string | null
           due_date: string | null
-          entity_id: number
           is_deleted: boolean
           late_fine_note: string | null
           payment_note: string | null
@@ -1154,7 +1111,6 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           due_date?: string | null
-          entity_id?: never
           is_deleted?: boolean
           late_fine_note?: string | null
           payment_note?: string | null
@@ -1170,7 +1126,6 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           due_date?: string | null
-          entity_id?: never
           is_deleted?: boolean
           late_fine_note?: string | null
           payment_note?: string | null
@@ -1202,7 +1157,6 @@ export type Database = {
           created_by: string | null
           deleted_at: string | null
           deleted_by: string | null
-          entity_id: number
           exam_date: string | null
           exam_type: Database["public"]["Enums"]["exam_type"]
           is_deleted: boolean
@@ -1223,7 +1177,6 @@ export type Database = {
           created_by?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
-          entity_id?: never
           exam_date?: string | null
           exam_type: Database["public"]["Enums"]["exam_type"]
           is_deleted?: boolean
@@ -1244,7 +1197,6 @@ export type Database = {
           created_by?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
-          entity_id?: never
           exam_date?: string | null
           exam_type?: Database["public"]["Enums"]["exam_type"]
           is_deleted?: boolean
@@ -1293,7 +1245,6 @@ export type Database = {
           emergency_contact_phone: string | null
           emergency_contact_relation: string | null
           enrollment_status: Database["public"]["Enums"]["enrollment_status"]
-          entity_id: number
           father_name: string | null
           gender: Database["public"]["Enums"]["gender"] | null
           gpa: number | null
@@ -1333,7 +1284,6 @@ export type Database = {
           emergency_contact_phone?: string | null
           emergency_contact_relation?: string | null
           enrollment_status?: Database["public"]["Enums"]["enrollment_status"]
-          entity_id?: never
           father_name?: string | null
           gender?: Database["public"]["Enums"]["gender"] | null
           gpa?: number | null
@@ -1373,7 +1323,6 @@ export type Database = {
           emergency_contact_phone?: string | null
           emergency_contact_relation?: string | null
           enrollment_status?: Database["public"]["Enums"]["enrollment_status"]
-          entity_id?: never
           father_name?: string | null
           gender?: Database["public"]["Enums"]["gender"] | null
           gpa?: number | null
@@ -1422,7 +1371,6 @@ export type Database = {
           credit_hours: number
           deleted_at: string | null
           deleted_by: string | null
-          entity_id: number
           is_deleted: boolean
           is_elective: boolean
           name: string
@@ -1440,7 +1388,6 @@ export type Database = {
           credit_hours?: number
           deleted_at?: string | null
           deleted_by?: string | null
-          entity_id?: never
           is_deleted?: boolean
           is_elective?: boolean
           name: string
@@ -1458,7 +1405,6 @@ export type Database = {
           credit_hours?: number
           deleted_at?: string | null
           deleted_by?: string | null
-          entity_id?: never
           is_deleted?: boolean
           is_elective?: boolean
           name?: string
@@ -1495,7 +1441,6 @@ export type Database = {
           deleted_at: string | null
           deleted_by: string | null
           dob_claimed: string | null
-          entity_id: number
           is_deleted: boolean
           message: string | null
           name_claimed: string | null
@@ -1520,7 +1465,6 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           dob_claimed?: string | null
-          entity_id?: never
           is_deleted?: boolean
           message?: string | null
           name_claimed?: string | null
@@ -1545,7 +1489,6 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           dob_claimed?: string | null
-          entity_id?: never
           is_deleted?: boolean
           message?: string | null
           name_claimed?: string | null
@@ -1587,7 +1530,6 @@ export type Database = {
           created_by: string | null
           deleted_at: string | null
           deleted_by: string | null
-          entity_id: number
           gpa: number
           is_deleted: boolean
           remarks: string | null
@@ -1607,7 +1549,6 @@ export type Database = {
           created_by?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
-          entity_id?: never
           gpa: number
           is_deleted?: boolean
           remarks?: string | null
@@ -1627,7 +1568,6 @@ export type Database = {
           created_by?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
-          entity_id?: never
           gpa?: number
           is_deleted?: boolean
           remarks?: string | null
@@ -1671,7 +1611,6 @@ export type Database = {
           dept_id: string | null
           designation: string | null
           email: string
-          entity_id: number
           gender: Database["public"]["Enums"]["gender"] | null
           is_active: boolean
           is_admin: boolean
@@ -1700,7 +1639,6 @@ export type Database = {
           dept_id?: string | null
           designation?: string | null
           email: string
-          entity_id?: never
           gender?: Database["public"]["Enums"]["gender"] | null
           is_active?: boolean
           is_admin?: boolean
@@ -1729,7 +1667,6 @@ export type Database = {
           dept_id?: string | null
           designation?: string | null
           email?: string
-          entity_id?: never
           gender?: Database["public"]["Enums"]["gender"] | null
           is_active?: boolean
           is_admin?: boolean
@@ -1768,7 +1705,6 @@ export type Database = {
           effective_from: string | null
           effective_to: string | null
           end_time: string
-          entity_id: number
           id: string
           is_deleted: boolean
           notes: string | null
@@ -1794,7 +1730,6 @@ export type Database = {
           effective_from?: string | null
           effective_to?: string | null
           end_time: string
-          entity_id?: never
           id?: string
           is_deleted?: boolean
           notes?: string | null
@@ -1820,7 +1755,6 @@ export type Database = {
           effective_from?: string | null
           effective_to?: string | null
           end_time?: string
-          entity_id?: never
           id?: string
           is_deleted?: boolean
           notes?: string | null
@@ -1947,35 +1881,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "departments"
             referencedColumns: ["dept_id"]
-          },
-        ]
-      }
-      student_gpa_progression: {
-        Row: {
-          cgpa: number | null
-          class_position: number | null
-          gpa: number | null
-          gpa_delta: number | null
-          result_status: Database["public"]["Enums"]["semester_result"] | null
-          roll_number: string | null
-          semester: number | null
-          session_id: string | null
-          term_label: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "student_semester_gpa_session_id_roll_number_fkey"
-            columns: ["session_id", "roll_number"]
-            isOneToOne: false
-            referencedRelation: "at_risk_students"
-            referencedColumns: ["session_id", "roll_number"]
-          },
-          {
-            foreignKeyName: "student_semester_gpa_session_id_roll_number_fkey"
-            columns: ["session_id", "roll_number"]
-            isOneToOne: false
-            referencedRelation: "session_students"
-            referencedColumns: ["session_id", "roll_number"]
           },
         ]
       }
