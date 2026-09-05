@@ -1,6 +1,7 @@
 package com.mbd.cmscommon.ui.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -33,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.PeriodType
 import com.mbd.cmscommon.domain.model.SemesterSubject
+import com.mbd.cmscommon.domain.model.SemesterTerm
 import com.mbd.cmscommon.domain.model.SessionPeriod
 import com.mbd.cmscommon.domain.model.Teacher
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
@@ -62,6 +65,7 @@ fun SessionTimetableWorkspace(
     periods: List<SessionPeriod>,
     subjects: List<SemesterSubject>,
     teachers: List<Teacher>,
+    currentSemesterTerm: SemesterTerm?,
     errorMessage: String?,
     onSavePeriod: (DayOfWeek, String, String, SemesterSubject?, Teacher?, PeriodType, String, String, String, LocalDate?, LocalDate?, SessionPeriod?) -> Unit,
     onRemovePeriod: (SessionPeriod) -> Unit,
@@ -137,9 +141,16 @@ fun SessionTimetableWorkspace(
             existing = editorState,
             subjects = subjects,
             teachers = teachers,
+            currentSemesterTerm = currentSemesterTerm,
             onDismiss = { addingPeriodDay = null; editorState = null },
-            onSave = { day, start, end, subject, teacher, type, room, building, notes, from, to ->
-                onSavePeriod(day, start, end, subject, teacher, type, room, building, notes, from, to, editorState)
+            onSave = { days, start, end, subject, teacher, type, room, building, notes, from, to ->
+                // Multiple days can be checked at once: the day being edited (if any) carries the
+                // "replaces" reference so its old row is removed/repositioned; every other checked
+                // day is a brand-new row sharing the same subject/time/room/etc.
+                days.forEach { day ->
+                    val replaces = editorState?.takeIf { it.day == day } ?: editorState?.takeIf { day == days.first() }
+                    onSavePeriod(day, start, end, subject, teacher, type, room, building, notes, from, to, replaces)
+                }
                 addingPeriodDay = null
                 editorState = null
             },
@@ -290,10 +301,11 @@ private fun PeriodEditorDialog(
     existing: SessionPeriod?,
     subjects: List<SemesterSubject>,
     teachers: List<Teacher>,
+    currentSemesterTerm: SemesterTerm?,
     onDismiss: () -> Unit,
-    onSave: (DayOfWeek, String, String, SemesterSubject?, Teacher?, PeriodType, String, String, String, LocalDate?, LocalDate?) -> Unit,
+    onSave: (Set<DayOfWeek>, String, String, SemesterSubject?, Teacher?, PeriodType, String, String, String, LocalDate?, LocalDate?) -> Unit,
 ) {
-    var selectedDay by remember { mutableStateOf(day) }
+    var selectedDays by remember { mutableStateOf(setOf(day)) }
     var start by remember { mutableStateOf(existing?.startTime ?: "") }
     var end by remember { mutableStateOf(existing?.endTime ?: "") }
     var type by remember { mutableStateOf(existing?.periodType ?: PeriodType.LECTURE) }
@@ -309,26 +321,40 @@ private fun PeriodEditorDialog(
     val endTime = runCatching { LocalTime.parse(end.trim()) }
     val timeValid = startTime.isSuccess && endTime.isSuccess && startTime.getOrNull()!! < endTime.getOrNull()
     val needsSubject = type != PeriodType.BREAK
+    val hasSemesterTerm = currentSemesterTerm?.startDate != null && currentSemesterTerm.endDate != null
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (existing == null) "Timetable period" else "Edit period", style = MaterialTheme.typography.headlineSmall) },
         text = {
             Column(Modifier.heightIn(max = 460.dp).verticalScroll(rememberScrollState())) {
-                Text("DAY", color = ModMuted, style = CmsTextStyles.eyebrow)
+                Text("DAYS", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     TIMETABLE_DAYS.forEach { option ->
-                        CmsChip(option.getDisplayName(TextStyle.SHORT, Locale.ENGLISH), selected = selectedDay == option, onClick = { selectedDay = option })
+                        Row(
+                            modifier = Modifier.clickable {
+                                selectedDays = if (option in selectedDays) selectedDays - option else selectedDays + option
+                            },
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Checkbox(checked = option in selectedDays, onCheckedChange = { checked ->
+                                selectedDays = if (checked) selectedDays + option else selectedDays - option
+                            })
+                            Text(option.getDisplayName(TextStyle.SHORT, Locale.ENGLISH))
+                        }
                     }
+                }
+                if (selectedDays.isEmpty()) {
+                    Text("Select at least one day.", color = TimetableRed, style = MaterialTheme.typography.bodySmall)
                 }
                 Spacer(Modifier.height(10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedTextField(value = start, onValueChange = { start = it }, label = { Text("Start") }, placeholder = { Text("HH:MM") }, modifier = Modifier.weight(1f), singleLine = true)
-                    OutlinedTextField(value = end, onValueChange = { end = it }, label = { Text("End") }, placeholder = { Text("HH:MM") }, modifier = Modifier.weight(1f), singleLine = true)
+                    CmsTimeField(value = start, onValueChange = { start = it }, label = "Start", modifier = Modifier.weight(1f))
+                    CmsTimeField(value = end, onValueChange = { end = it }, label = "End", modifier = Modifier.weight(1f))
                 }
                 Spacer(Modifier.height(10.dp))
                 Text("PERIOD TYPE", color = ModMuted, style = CmsTextStyles.eyebrow)
@@ -366,6 +392,16 @@ private fun PeriodEditorDialog(
                 Spacer(Modifier.height(10.dp))
                 OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("Notes (optional)") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
                 Spacer(Modifier.height(10.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("EFFECTIVE DATES", modifier = Modifier.weight(1f), color = ModMuted, style = CmsTextStyles.eyebrow)
+                    if (hasSemesterTerm) {
+                        TextButton(onClick = {
+                            effectiveFrom = currentSemesterTerm!!.startDate.toString()
+                            effectiveTo = currentSemesterTerm.endDate.toString()
+                        }) { Text("Use semester dates") }
+                    }
+                }
+                Spacer(Modifier.height(6.dp))
                 CmsDateField(value = effectiveFrom, onValueChange = { effectiveFrom = it }, label = "Effective from", optional = true)
                 Spacer(Modifier.height(10.dp))
                 CmsDateField(value = effectiveTo, onValueChange = { effectiveTo = it }, label = "Effective to", optional = true)
@@ -381,12 +417,12 @@ private fun PeriodEditorDialog(
                     val subject = subjects.firstOrNull { it.courseCode == subjectCode }
                     val teacher = teachers.firstOrNull { it.teacherId == teacherId }
                     onSave(
-                        selectedDay, start.trim(), end.trim(), subject, teacher, type, room.trim(), building.trim(), notes.trim(),
+                        selectedDays, start.trim(), end.trim(), subject, teacher, type, room.trim(), building.trim(), notes.trim(),
                         runCatching { LocalDate.parse(effectiveFrom.trim()) }.getOrNull(),
                         runCatching { LocalDate.parse(effectiveTo.trim()) }.getOrNull(),
                     )
                 },
-                enabled = timeValid && (!needsSubject || subjectCode.isNotBlank()),
+                enabled = selectedDays.isNotEmpty() && timeValid && (!needsSubject || subjectCode.isNotBlank()),
             ) { Text(if (existing == null) "Add period" else "Save") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },

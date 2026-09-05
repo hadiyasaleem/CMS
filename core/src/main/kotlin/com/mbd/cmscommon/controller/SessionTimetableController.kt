@@ -3,6 +3,7 @@ package com.mbd.cmscommon.controller
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.PeriodType
 import com.mbd.cmscommon.domain.model.SemesterSubject
+import com.mbd.cmscommon.domain.model.SemesterTerm
 import com.mbd.cmscommon.domain.model.SessionPeriod
 import com.mbd.cmscommon.domain.model.Teacher
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
@@ -15,6 +16,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 
@@ -39,6 +41,13 @@ class SessionTimetableController(
 
     val teachers: StateFlow<List<Teacher>> =
         teacherRepository.observeActiveTeachers().stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /** The current semester's configured term dates for this session, if set -- offered as a shortcut for effective from/to. */
+    val currentSemesterTerm: StateFlow<SemesterTerm?> = session
+        .flatMapLatest { s ->
+            if (s == null) flowOf<SemesterTerm?>(null) else flow { emit(curriculumRepository.getSemesterTerm(s.sessionId, s.currentSemester)) }
+        }
+        .stateIn(scope, SharingStarted.WhileSubscribed(5000), null)
 
     fun savePeriod(
         day: DayOfWeek,

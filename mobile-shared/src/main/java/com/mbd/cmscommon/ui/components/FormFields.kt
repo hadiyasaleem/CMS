@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenu
@@ -20,7 +22,9 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,6 +37,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneOffset
 
 data class CmsEntityOption(
@@ -98,6 +103,52 @@ fun CmsDateField(
         ) {
             DatePicker(state = state)
         }
+    }
+}
+
+/** A time field backed by Material3's clock-face [TimePicker] (12-hour, AM/PM), storing "HH:MM" (24h). */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+fun CmsTimeField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+    isError: Boolean = false,
+) {
+    var showPicker by remember { mutableStateOf(false) }
+
+    Box(modifier.fillMaxWidth()) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = {},
+            modifier = Modifier.fillMaxWidth(),
+            readOnly = true,
+            label = { Text(label) },
+            placeholder = { Text("Select time") },
+            trailingIcon = { Icon(Icons.Outlined.AccessTime, contentDescription = "Choose $label") },
+            isError = isError,
+            singleLine = true,
+            shape = RectangleShape,
+        )
+        Box(Modifier.matchParentSize().clickable(onClickLabel = "Choose $label") { showPicker = true })
+    }
+
+    if (showPicker) {
+        val initial = runCatching { LocalTime.parse(value.trim()) }.getOrNull() ?: LocalTime.of(8, 0)
+        val state = rememberTimePickerState(initialHour = initial.hour, initialMinute = initial.minute, is24Hour = false)
+        AlertDialog(
+            onDismissRequest = { showPicker = false },
+            title = { Text(label) },
+            text = { TimePicker(state = state) },
+            confirmButton = {
+                TextButton(onClick = {
+                    onValueChange("%02d:%02d".format(state.hour, state.minute))
+                    showPicker = false
+                }) { Text("Select") }
+            },
+            dismissButton = { TextButton(onClick = { showPicker = false }) { Text("Cancel") } },
+        )
     }
 }
 

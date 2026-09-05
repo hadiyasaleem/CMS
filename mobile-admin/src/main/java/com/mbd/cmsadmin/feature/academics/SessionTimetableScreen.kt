@@ -43,6 +43,7 @@ class SessionTimetableViewModel @Inject constructor(
     val periods = controller.periods
     val subjects = controller.subjects
     val teachers = controller.teachers
+    val currentSemesterTerm = controller.currentSemesterTerm
     val error = controller.error
 
     fun savePeriod(
@@ -70,6 +71,7 @@ fun SessionTimetableScreen(viewModel: SessionTimetableViewModel = hiltViewModel(
     val periods by viewModel.periods.collectAsState()
     val subjects by viewModel.subjects.collectAsState()
     val teachers by viewModel.teachers.collectAsState()
+    val currentSemesterTerm by viewModel.currentSemesterTerm.collectAsState()
     val errorMessage by viewModel.error.collectAsState()
 
     SessionTimetableWorkspace(
@@ -77,6 +79,7 @@ fun SessionTimetableScreen(viewModel: SessionTimetableViewModel = hiltViewModel(
         periods = periods,
         subjects = subjects,
         teachers = teachers,
+        currentSemesterTerm = currentSemesterTerm,
         errorMessage = errorMessage,
         onSavePeriod = viewModel::savePeriod,
         onRemovePeriod = viewModel::removePeriod,

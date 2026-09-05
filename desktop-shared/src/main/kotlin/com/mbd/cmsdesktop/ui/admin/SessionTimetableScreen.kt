@@ -28,6 +28,7 @@ fun SessionTimetableScreen(
     val periods by controller.periods.collectAsState()
     val subjects by controller.subjects.collectAsState()
     val teachers by controller.teachers.collectAsState()
+    val currentSemesterTerm by controller.currentSemesterTerm.collectAsState()
     val errorMessage by controller.error.collectAsState()
 
     SessionTimetableWorkspace(
@@ -35,6 +36,7 @@ fun SessionTimetableScreen(
         periods = periods,
         subjects = subjects,
         teachers = teachers,
+        currentSemesterTerm = currentSemesterTerm,
         errorMessage = errorMessage,
         onSavePeriod = controller::savePeriod,
         onRemovePeriod = controller::removePeriod,
