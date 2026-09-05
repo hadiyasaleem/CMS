@@ -31,6 +31,9 @@ Deno.serve(handle(async (req) => {
   if (status === "DELETE") {
     update.is_active = false;
     update.status = "DISABLED";
+    update.is_deleted = true;
+    update.deleted_at = new Date().toISOString();
+    update.deleted_by = caller.email;
   } else if (status) {
     if (!["ACTIVE", "DISABLED", "BANNED"].includes(status)) {
       throw httpError(400, "status must be ACTIVE, DISABLED, BANNED or DELETE");
