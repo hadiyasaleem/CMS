@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -97,14 +98,12 @@ fun DepartmentDetailWorkspace(
                 occupiedPercent = snapshot.occupancyPercent,
                 sessionsNeedingSetup = snapshot.sessionsNeedingSetup,
                 hasHod = !department?.hodEmail.isNullOrBlank(),
+                onCreateSession = { showAddSession = true },
             )
         }
 
         fullSpanItem {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text("Current intakes", modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                CmsPrimaryButton(text = "Create session", onClick = { showAddSession = true })
-            }
+            Text("Current intakes", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
         }
 
         fullSpanItem {
@@ -190,6 +189,7 @@ private fun DepartmentSummary(
     occupiedPercent: Float,
     sessionsNeedingSetup: Int,
     hasHod: Boolean,
+    onCreateSession: () -> Unit,
 ) {
     Column(Modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -198,7 +198,11 @@ private fun DepartmentSummary(
             SessionMetric("Seats left", remainingSeats.toString(), Modifier.weight(1f))
         }
         Spacer(Modifier.height(10.dp))
-        CapacityBar(count = studentCount, max = totalCapacity.coerceAtLeast(1))
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            CapacityBar(count = studentCount, max = totalCapacity.coerceAtLeast(1), modifier = Modifier.weight(1f))
+            Spacer(Modifier.width(12.dp))
+            CmsPrimaryButton(text = "Create session", onClick = onCreateSession)
+        }
         Spacer(Modifier.height(10.dp))
         Text(
             if (sessionsNeedingSetup > 0) "$sessionsNeedingSetup session(s) need program or in-charge" else "Sessions and HOD configured",
