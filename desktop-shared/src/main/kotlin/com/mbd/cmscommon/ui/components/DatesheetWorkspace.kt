@@ -104,6 +104,8 @@ fun DatesheetWorkspace(
     var showCreate by remember { mutableStateOf(false) }
     var editingSheet by remember { mutableStateOf<Datesheet?>(null) }
     var editingSlot by remember { mutableStateOf<Pair<String, DatesheetSlot?>?>(null) }
+    var addingSlotDate by remember { mutableStateOf<String?>(null) }
+    var detailSlot by remember { mutableStateOf<Pair<String, DatesheetSlot>?>(null) }
     var pendingDeleteSheet by remember { mutableStateOf<Datesheet?>(null) }
     var pendingDeleteSlot by remember { mutableStateOf<Pair<String, DatesheetSlot>?>(null) }
 
@@ -183,7 +185,9 @@ fun DatesheetWorkspace(
                     onDelete = { pendingDeleteSheet = sheet },
                     onPublish = { onSetPublished(sheet.id, !sheet.published) },
                     onAddPaper = { editingSlot = sheet.id to null },
+                    onAddPaperOnDate = { date -> addingSlotDate = date; editingSlot = sheet.id to null },
                     onEditPaper = { slot -> editingSlot = sheet.id to slot },
+                    onViewPaper = { slot -> detailSlot = sheet.id to slot },
                     onDeletePaper = { slot -> pendingDeleteSlot = sheet.id to slot },
                 )
             }
@@ -210,14 +214,27 @@ fun DatesheetWorkspace(
     editingSlot?.let { (sheetId, slot) ->
         PaperEditorDialog(
             slot = slot,
+            initialDate = addingSlotDate.orEmpty(),
             subjects = subjectsBySession[datesheets.firstOrNull { it.id == sheetId }?.sessionId].orEmpty(),
             invigilators = invigilators,
             busy = busy,
-            onDismiss = { editingSlot = null },
+            onDismiss = { editingSlot = null; addingSlotDate = null },
             onSave = { draft ->
                 if (slot != null) onUpdateSlot(draft) else onAddSlot(draft.copy(datesheetId = sheetId))
                 editingSlot = null
+                addingSlotDate = null
             },
+        )
+    }
+
+    detailSlot?.let { (sheetId, slot) ->
+        PaperDetailDialog(
+            slot = slot,
+            canManage = viewer.canManage,
+            isMyDuty = isAssignedTo(slot, viewer.identityKey),
+            onEdit = { detailSlot = null; editingSlot = sheetId to slot },
+            onRequestRemove = { detailSlot = null; pendingDeleteSlot = sheetId to slot },
+            onDismiss = { detailSlot = null },
         )
     }
 
@@ -330,7 +347,9 @@ private fun DatesheetScheduleCard(
     onDelete: () -> Unit,
     onPublish: () -> Unit,
     onAddPaper: () -> Unit,
+    onAddPaperOnDate: (String) -> Unit,
     onEditPaper: (DatesheetSlot) -> Unit,
+    onViewPaper: (DatesheetSlot) -> Unit,
     onDeletePaper: (DatesheetSlot) -> Unit,
 ) {
     val quality = datesheetScheduleQuality(sheet, slots)
@@ -366,15 +385,54 @@ private fun DatesheetScheduleCard(
                 when {
                     loadingSlots -> DatesheetSkeletonCard()
                     slots.isEmpty() -> DatesheetInlineEmpty(canManage, onAddPaper)
-                    else -> Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        slots.sortedBy { it.examDate }.forEach { slot ->
-                            PaperCard(
-                                slot = slot,
-                                canManage = canManage,
-                                isMyDuty = isAssignedTo(slot, identityKey),
-                                onEdit = { onEditPaper(slot) },
-                                onDelete = { onDeletePaper(slot) },
+                    else -> {
+                        val timedSlots = slots.filter { !it.startTime.isNullOrBlank() && !it.endTime.isNullOrBlank() }
+                        val untimedSlots = slots - timedSlots.toSet()
+                        if (timedSlots.isNotEmpty()) {
+                            val dates = timedSlots.map { it.examDate }.distinct().sorted()
+                            val timeSlots = timedSlots.map { "${it.startTime}–${it.endTime}" }.distinct().sortedBy { it.substringBefore('–') }
+                            val byDateAndTime = timedSlots.associateBy { it.examDate to "${it.startTime}–${it.endTime}" }
+                            TimetableGrid(
+                                timeSlots = timeSlots,
+                                identityHeader = "DATE",
+                                rows = dates.map { date ->
+                                    val parsed = runCatching { LocalDate.parse(date) }.getOrNull()
+                                    GridRow(
+                                        key = date,
+                                        label = parsed?.format(DatesheetDateFormat) ?: date,
+                                        cells = timeSlots.associateWith { timeKey ->
+                                            byDateAndTime[date to timeKey]?.let { slot ->
+                                                GridCell(
+                                                    title = slot.subjectName ?: slot.courseCode ?: "Untitled paper",
+                                                    subtitle = locationLabel(slot),
+                                                    meta = slot.invigilatorEmail ?: "No invigilator",
+                                                    isAlert = isAssignedTo(slot, identityKey),
+                                                )
+                                            }
+                                        },
+                                    )
+                                },
+                                onCellClick = { dateKey, timeKey ->
+                                    val existing = byDateAndTime[dateKey to timeKey]
+                                    if (existing != null) onViewPaper(existing) else if (canManage) onAddPaperOnDate(dateKey)
+                                },
                             )
+                        }
+                        if (untimedSlots.isNotEmpty()) {
+                            if (timedSlots.isNotEmpty()) Spacer(Modifier.height(10.dp))
+                            Text("UNSCHEDULED", color = ModMuted, style = CmsTextStyles.eyebrow)
+                            Spacer(Modifier.height(6.dp))
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                untimedSlots.sortedBy { it.examDate }.forEach { slot ->
+                                    PaperCard(
+                                        slot = slot,
+                                        canManage = canManage,
+                                        isMyDuty = isAssignedTo(slot, identityKey),
+                                        onEdit = { onEditPaper(slot) },
+                                        onDelete = { onDeletePaper(slot) },
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -412,6 +470,54 @@ private fun PaperCard(slot: DatesheetSlot, canManage: Boolean, isMyDuty: Boolean
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun PaperDetailDialog(
+    slot: DatesheetSlot,
+    canManage: Boolean,
+    isMyDuty: Boolean,
+    onEdit: () -> Unit,
+    onRequestRemove: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val date = runCatching { LocalDate.parse(slot.examDate) }.getOrNull()
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(slot.subjectName ?: slot.courseCode ?: "Exam paper") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                if (isMyDuty) {
+                    StatusBadge("MY DUTY", BadgeTone.Gold)
+                    Spacer(Modifier.height(4.dp))
+                }
+                PaperDetailRow("Date", date?.format(DatesheetDateFormat) ?: slot.examDate)
+                PaperDetailRow("Time", timeLabel(slot))
+                slot.courseCode?.takeIf { it.isNotBlank() }?.let { PaperDetailRow("Course code", it) }
+                PaperDetailRow("Room", locationLabel(slot))
+                PaperDetailRow("Invigilator", slot.invigilatorEmail ?: "Not assigned")
+            }
+        },
+        confirmButton = {
+            if (canManage) TextButton(onClick = onEdit) { Text("Edit") } else TextButton(onClick = onDismiss) { Text("Close") }
+        },
+        dismissButton = {
+            if (canManage) {
+                Row {
+                    TextButton(onClick = onRequestRemove) { Text("Remove", color = CmsTheme.colors.accent) }
+                    TextButton(onClick = onDismiss) { Text("Close") }
+                }
+            }
+        },
+    )
+}
+
+@Composable
+private fun PaperDetailRow(label: String, value: String) {
+    Column {
+        Text(label.uppercase(Locale.ROOT), color = ModMuted, style = CmsTextStyles.eyebrow)
+        Text(value, style = MaterialTheme.typography.bodyMedium)
     }
 }
 
@@ -538,6 +644,7 @@ private fun DatesheetEditorDialog(
 @Composable
 private fun PaperEditorDialog(
     slot: DatesheetSlot?,
+    initialDate: String = "",
     subjects: List<SemesterSubject>,
     invigilators: List<Teacher>,
     busy: Boolean,
@@ -546,7 +653,7 @@ private fun PaperEditorDialog(
 ) {
     var courseCode by remember { mutableStateOf(slot?.courseCode ?: "") }
     var subjectName by remember { mutableStateOf(slot?.subjectName ?: "") }
-    var examDate by remember { mutableStateOf(slot?.examDate ?: "") }
+    var examDate by remember { mutableStateOf(slot?.examDate ?: initialDate) }
     var startTime by remember { mutableStateOf(slot?.startTime ?: "") }
     var endTime by remember { mutableStateOf(slot?.endTime ?: "") }
     var roomNo by remember { mutableStateOf(slot?.roomNo ?: "") }
