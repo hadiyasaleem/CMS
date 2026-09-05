@@ -168,13 +168,6 @@ export type Database = {
             referencedRelation: "academic_sessions"
             referencedColumns: ["session_id"]
           },
-          {
-            foreignKeyName: "calendar_events_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "session_overview"
-            referencedColumns: ["session_id"]
-          },
         ]
       }
       datesheet_slots: {
@@ -307,13 +300,6 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "academic_sessions"
-            referencedColumns: ["session_id"]
-          },
-          {
-            foreignKeyName: "datesheets_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "session_overview"
             referencedColumns: ["session_id"]
           },
         ]
@@ -455,13 +441,6 @@ export type Database = {
             referencedRelation: "academic_sessions"
             referencedColumns: ["session_id"]
           },
-          {
-            foreignKeyName: "exam_paper_submissions_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "session_overview"
-            referencedColumns: ["session_id"]
-          },
         ]
       }
       fee_overrides: {
@@ -508,13 +487,6 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "fee_overrides_session_id_roll_number_fkey"
-            columns: ["session_id", "roll_number"]
-            isOneToOne: false
-            referencedRelation: "at_risk_students"
-            referencedColumns: ["session_id", "roll_number"]
-          },
           {
             foreignKeyName: "fee_overrides_session_id_roll_number_fkey"
             columns: ["session_id", "roll_number"]
@@ -577,13 +549,6 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "fines_session_id_roll_number_fkey"
-            columns: ["session_id", "roll_number"]
-            isOneToOne: false
-            referencedRelation: "at_risk_students"
-            referencedColumns: ["session_id", "roll_number"]
-          },
           {
             foreignKeyName: "fines_session_id_roll_number_fkey"
             columns: ["session_id", "roll_number"]
@@ -671,13 +636,6 @@ export type Database = {
             referencedRelation: "academic_sessions"
             referencedColumns: ["session_id"]
           },
-          {
-            foreignKeyName: "mark_edit_requests_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "session_overview"
-            referencedColumns: ["session_id"]
-          },
         ]
       }
       notifications: {
@@ -753,13 +711,6 @@ export type Database = {
             referencedRelation: "academic_sessions"
             referencedColumns: ["session_id"]
           },
-          {
-            foreignKeyName: "notifications_target_session_id_fkey"
-            columns: ["target_session_id"]
-            isOneToOne: false
-            referencedRelation: "session_overview"
-            referencedColumns: ["session_id"]
-          },
         ]
       }
       period_sessions: {
@@ -809,13 +760,6 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "academic_sessions"
-            referencedColumns: ["session_id"]
-          },
-          {
-            foreignKeyName: "period_sessions_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "session_overview"
             referencedColumns: ["session_id"]
           },
         ]
@@ -880,13 +824,6 @@ export type Database = {
             foreignKeyName: "fk_profiles_student"
             columns: ["linked_session_id", "linked_roll"]
             isOneToOne: false
-            referencedRelation: "at_risk_students"
-            referencedColumns: ["session_id", "roll_number"]
-          },
-          {
-            foreignKeyName: "fk_profiles_student"
-            columns: ["linked_session_id", "linked_roll"]
-            isOneToOne: false
             referencedRelation: "session_students"
             referencedColumns: ["session_id", "roll_number"]
           },
@@ -945,13 +882,6 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "academic_sessions"
-            referencedColumns: ["session_id"]
-          },
-          {
-            foreignKeyName: "semester_terms_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "session_overview"
             referencedColumns: ["session_id"]
           },
         ]
@@ -1021,13 +951,6 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "session_attendance_session_id_roll_number_fkey"
-            columns: ["session_id", "roll_number"]
-            isOneToOne: false
-            referencedRelation: "at_risk_students"
-            referencedColumns: ["session_id", "roll_number"]
-          },
           {
             foreignKeyName: "session_attendance_session_id_roll_number_fkey"
             columns: ["session_id", "roll_number"]
@@ -1141,13 +1064,6 @@ export type Database = {
             referencedRelation: "academic_sessions"
             referencedColumns: ["session_id"]
           },
-          {
-            foreignKeyName: "session_fees_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: true
-            referencedRelation: "session_overview"
-            referencedColumns: ["session_id"]
-          },
         ]
       }
       session_marks: {
@@ -1212,13 +1128,6 @@ export type Database = {
           was_absent?: boolean
         }
         Relationships: [
-          {
-            foreignKeyName: "session_marks_session_id_roll_number_fkey"
-            columns: ["session_id", "roll_number"]
-            isOneToOne: false
-            referencedRelation: "at_risk_students"
-            referencedColumns: ["session_id", "roll_number"]
-          },
           {
             foreignKeyName: "session_marks_session_id_roll_number_fkey"
             columns: ["session_id", "roll_number"]
@@ -1354,13 +1263,6 @@ export type Database = {
             referencedRelation: "academic_sessions"
             referencedColumns: ["session_id"]
           },
-          {
-            foreignKeyName: "session_students_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "session_overview"
-            referencedColumns: ["session_id"]
-          },
         ]
       }
       session_subjects: {
@@ -1421,13 +1323,6 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "academic_sessions"
-            referencedColumns: ["session_id"]
-          },
-          {
-            foreignKeyName: "session_subjects_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "session_overview"
             referencedColumns: ["session_id"]
           },
         ]
@@ -1513,13 +1408,6 @@ export type Database = {
             referencedRelation: "academic_sessions"
             referencedColumns: ["session_id"]
           },
-          {
-            foreignKeyName: "student_link_requests_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "session_overview"
-            referencedColumns: ["session_id"]
-          },
         ]
       }
       student_semester_gpa: {
@@ -1581,13 +1469,6 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "student_semester_gpa_session_id_roll_number_fkey"
-            columns: ["session_id", "roll_number"]
-            isOneToOne: false
-            referencedRelation: "at_risk_students"
-            referencedColumns: ["session_id", "roll_number"]
-          },
           {
             foreignKeyName: "student_semester_gpa_session_id_roll_number_fkey"
             columns: ["session_id", "roll_number"]
@@ -1777,13 +1658,6 @@ export type Database = {
             referencedColumns: ["session_id"]
           },
           {
-            foreignKeyName: "timetable_periods_primary_session_id_fkey"
-            columns: ["primary_session_id"]
-            isOneToOne: false
-            referencedRelation: "session_overview"
-            referencedColumns: ["session_id"]
-          },
-          {
             foreignKeyName: "timetable_periods_teacher_email_fkey"
             columns: ["teacher_email"]
             isOneToOne: false
@@ -1794,96 +1668,7 @@ export type Database = {
       }
     }
     Views: {
-      at_risk_students: {
-        Row: {
-          attendance: number | null
-          cgpa: number | null
-          name: string | null
-          roll_number: string | null
-          session_id: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "session_students_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "academic_sessions"
-            referencedColumns: ["session_id"]
-          },
-          {
-            foreignKeyName: "session_students_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "session_overview"
-            referencedColumns: ["session_id"]
-          },
-        ]
-      }
-      exam_stats: {
-        Row: {
-          avg_score: number | null
-          course_code: string | null
-          entered: number | null
-          exam_type: Database["public"]["Enums"]["exam_type"] | null
-          max_score: number | null
-          min_score: number | null
-          out_of: number | null
-          pass_rate: number | null
-          semester: number | null
-          session_id: string | null
-          stddev: number | null
-        }
-        Relationships: []
-      }
-      session_attendance_summary: {
-        Row: {
-          absent: number | null
-          course_code: string | null
-          leave: number | null
-          percentage: number | null
-          present: number | null
-          roll_number: string | null
-          semester: number | null
-          session_id: string | null
-          total_marked: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "session_attendance_session_id_roll_number_fkey"
-            columns: ["session_id", "roll_number"]
-            isOneToOne: false
-            referencedRelation: "at_risk_students"
-            referencedColumns: ["session_id", "roll_number"]
-          },
-          {
-            foreignKeyName: "session_attendance_session_id_roll_number_fkey"
-            columns: ["session_id", "roll_number"]
-            isOneToOne: false
-            referencedRelation: "session_students"
-            referencedColumns: ["session_id", "roll_number"]
-          },
-        ]
-      }
-      session_overview: {
-        Row: {
-          avg_attendance: number | null
-          avg_cgpa: number | null
-          current_semester: number | null
-          dept_id: string | null
-          session_id: string | null
-          shift: Database["public"]["Enums"]["shift"] | null
-          students: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "academic_sessions_dept_id_fkey"
-            columns: ["dept_id"]
-            isOneToOne: false
-            referencedRelation: "departments"
-            referencedColumns: ["dept_id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Functions: {
       audit_actor: { Args: never; Returns: string }
