@@ -327,7 +327,7 @@ private fun DepartmentFilterChip(departments: List<Department>, selectedDeptId: 
                 Icon(Icons.Filled.ArrowDropDown, contentDescription = null, modifier = Modifier.size(18.dp))
             }
         }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.heightIn(max = 240.dp)) {
             DropdownMenuItem(text = { Text("All departments") }, onClick = { onSelect(null); expanded = false })
             departments.sortedBy { it.name }.forEach { dept ->
                 DropdownMenuItem(text = { Text(dept.name) }, onClick = { onSelect(dept.deptId); expanded = false })
