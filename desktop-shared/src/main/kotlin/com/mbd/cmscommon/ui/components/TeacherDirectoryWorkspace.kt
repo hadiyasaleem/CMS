@@ -15,11 +15,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -435,6 +437,7 @@ private fun TeacherActionDialog(
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var permissions by remember { mutableStateOf(existing?.permissions ?: TeacherPermissions()) }
+    var isAdmin by remember { mutableStateOf(existing?.isAdmin ?: false) }
 
     val nameError = FieldValidators.nameError(name, "Teacher name")
     val emailError = FieldValidators.emailError(email)
@@ -445,7 +448,7 @@ private fun TeacherActionDialog(
         onDismissRequest = onDismiss,
         title = { Text(title, style = MaterialTheme.typography.headlineSmall) },
         text = {
-            Column {
+            Column(Modifier.heightIn(max = 460.dp).verticalScroll(rememberScrollState())) {
                 if (existing == null) {
                     Text("Create the sign-in account and complete the initial faculty profile in one step.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(10.dp))
@@ -499,12 +502,22 @@ private fun TeacherActionDialog(
                 Text("DELEGATED PERMISSIONS", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
                 PermissionEditor(permissions, onChange = { permissions = it })
+                Spacer(Modifier.height(10.dp))
+                Text("ACCOUNT ACCESS", color = ModMuted, style = CmsTextStyles.eyebrow)
+                Spacer(Modifier.height(6.dp))
+                PermissionRow("Admin access (grants full admin rights)", isAdmin) { isAdmin = it }
             }
         },
         confirmButton = {
             TextButton(
                 onClick = {
-                    onConfirm(TeacherAccountDraft(name.trim(), email.trim(), phone.trim(), deptId, designation.trim(), qualification.trim(), specialization.trim(), officeRoom.trim(), gender, password, permissions))
+                    onConfirm(
+                        TeacherAccountDraft(
+                            name.trim(), email.trim(), phone.trim(), deptId, designation.trim(),
+                            qualification.trim(), specialization.trim(), officeRoom.trim(), gender,
+                            password, permissions, isAdmin,
+                        ),
+                    )
                 },
                 enabled = valid && !busy,
             ) { Text(if (busy) (if (existing == null) "Creating" else "Saving") else if (existing == null) "Create teacher" else "Save changes") }

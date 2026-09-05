@@ -14,4 +14,5 @@ data class TeacherAccountDraft(
     val gender: String = "",
     val password: String = "",
     val permissions: TeacherPermissions = TeacherPermissions(),
+    val isAdmin: Boolean = false,
 )
