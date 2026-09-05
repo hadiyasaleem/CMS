@@ -79,7 +79,7 @@ fun DepartmentPortfolio(
     val departmentsWithHod = departments.count { !it.hodEmail.isNullOrBlank() }
 
     CardGrid(modifier.fillMaxWidth()) {
-        fullSpanItem { DepartmentHero(heroPainter, departments.size, onAddDepartment) }
+        fullSpanItem { DepartmentHero(heroPainter, departments.size) }
         fullSpanItem { PortfolioSummary(departments.size, totalStudents, totalSessions, occupancy, departmentsWithHod) }
         fullSpanItem {
             OutlinedTextField(
@@ -110,7 +110,7 @@ fun DepartmentPortfolio(
 }
 
 @Composable
-private fun DepartmentHero(heroPainter: Painter, departmentCount: Int, onAdd: () -> Unit) {
+private fun DepartmentHero(heroPainter: Painter, departmentCount: Int) {
     Surface(modifier = Modifier.fillMaxWidth().height(200.dp), shape = RoundedCornerShape(22.dp), color = ModWarn.copy(alpha = 0.12f), border = BorderStroke(1.dp, ModTrack)) {
         Box(Modifier.fillMaxSize()) {
             Image(
@@ -138,7 +138,6 @@ private fun DepartmentHero(heroPainter: Painter, departmentCount: Int, onAdd: ()
                     Text("$departmentCount departments across the college", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
                 }
             }
-            CmsPrimaryButton(text = "Add department", onClick = onAdd, modifier = Modifier.align(Alignment.BottomEnd).padding(24.dp))
         }
     }
 }
