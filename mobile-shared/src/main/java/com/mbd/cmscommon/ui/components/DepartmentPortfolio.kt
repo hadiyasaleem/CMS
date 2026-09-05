@@ -147,11 +147,15 @@ private fun DepartmentHero(heroPainter: Painter, departmentCount: Int) {
 
 @Composable
 private fun PortfolioSummary(departmentCount: Int, totalStudents: Int, totalSessions: Int, occupancy: Float, departmentsWithHod: Int) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        DepartmentMetric("Departments", departmentCount.toString(), Modifier.weight(1f))
-        DepartmentMetric("Students", totalStudents.toString(), Modifier.weight(1f))
-        DepartmentMetric("Sessions", totalSessions.toString(), Modifier.weight(1f))
-        DepartmentMetric("HOD assigned", "$departmentsWithHod / $departmentCount", Modifier.weight(1f))
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            DepartmentMetric("Departments", departmentCount.toString(), Modifier.weight(1f))
+            DepartmentMetric("Students", totalStudents.toString(), Modifier.weight(1f))
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            DepartmentMetric("Sessions", totalSessions.toString(), Modifier.weight(1f))
+            DepartmentMetric("HOD assigned", "$departmentsWithHod / $departmentCount", Modifier.weight(1f))
+        }
     }
 }
 
