@@ -225,6 +225,7 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         departmentRepository = component.departmentRepository(),
                         createdBy = accountKey,
                         assignmentsProvider = teacherAssignmentsProvider,
+                        window = window,
                     )
 
                     AdminScreen.LinkRequests -> LinkRequestsScreen(

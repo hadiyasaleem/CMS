@@ -1,6 +1,7 @@
 package com.mbd.cmscommon.ui.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -22,13 +23,16 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -42,11 +46,16 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -101,6 +110,8 @@ fun TeacherDirectoryWorkspace(
     onUpdate: (Teacher, TeacherAccountDraft) -> Unit,
     onSetStatus: (Teacher, TeacherStatus) -> Unit,
     onDelete: (Teacher) -> Unit,
+    onPickPhoto: (Teacher) -> Unit,
+    onLoadPhoto: suspend (String) -> ImageBitmap?,
     onConsumeNotice: () -> Unit,
     onClearError: () -> Unit,
     modifier: Modifier = Modifier,
@@ -201,6 +212,7 @@ fun TeacherDirectoryWorkspace(
                         onEdit = { editingTeacher = teacher },
                         onRequestStatus = { status -> pendingStatus = teacher to status },
                         onRequestDelete = { pendingDelete = teacher },
+                        onLoadPhoto = onLoadPhoto,
                     )
                 }
             }
@@ -222,6 +234,9 @@ fun TeacherDirectoryWorkspace(
             busy = busy,
             onDismiss = { showCreateDialog = false },
             onConfirm = { draft -> onCreate(draft); showCreateDialog = false },
+            onPickPhoto = null,
+            photoBusy = false,
+            onLoadPhoto = onLoadPhoto,
         )
     }
 
@@ -233,6 +248,9 @@ fun TeacherDirectoryWorkspace(
             busy = busy,
             onDismiss = { editingTeacher = null },
             onConfirm = { draft -> onUpdate(teacher, draft); editingTeacher = null },
+            onPickPhoto = { onPickPhoto(teacher) },
+            photoBusy = busyTeacherId == teacher.teacherId,
+            onLoadPhoto = onLoadPhoto,
         )
     }
 
@@ -306,6 +324,29 @@ private fun DepartmentFilterChip(departments: List<Department>, selectedDeptId: 
     }
 }
 
+/** Shows the teacher's uploaded photo (downloaded lazily via [onLoadPhoto]), falling back to initials. */
+@Composable
+private fun TeacherAvatar(name: String, photoPath: String?, size: Int, onLoadPhoto: suspend (String) -> ImageBitmap?, modifier: Modifier = Modifier) {
+    if (photoPath.isNullOrBlank()) {
+        AvatarInitials(name, modifier, size)
+        return
+    }
+    val bitmap by produceState<ImageBitmap?>(initialValue = null, photoPath) {
+        value = runCatching { onLoadPhoto(photoPath) }.getOrNull()
+    }
+    val current = bitmap
+    if (current != null) {
+        Image(
+            bitmap = current,
+            contentDescription = name,
+            modifier = modifier.size(size.dp).clip(CircleShape),
+            contentScale = ContentScale.Crop,
+        )
+    } else {
+        AvatarInitials(name, modifier, size)
+    }
+}
+
 @Composable
 private fun TeacherMetric(label: String, value: String, modifier: Modifier = Modifier, alert: Boolean = false) {
     Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
@@ -327,13 +368,14 @@ private fun TeacherCard(
     onEdit: () -> Unit,
     onRequestStatus: (TeacherStatus) -> Unit,
     onRequestDelete: () -> Unit,
+    onLoadPhoto: suspend (String) -> ImageBitmap?,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
     Surface(modifier = Modifier.clickable(onClick = onEdit), shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                AvatarInitials(teacher.name, size = 42)
+                TeacherAvatar(teacher.name, teacher.photoPath, size = 42, onLoadPhoto = onLoadPhoto)
                 Box {
                     IconButton(onClick = { menuExpanded = true }, enabled = !busy) { Icon(Icons.Filled.MoreVert, contentDescription = "More") }
                     DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
@@ -424,6 +466,9 @@ private fun TeacherActionDialog(
     busy: Boolean,
     onDismiss: () -> Unit,
     onConfirm: (TeacherAccountDraft) -> Unit,
+    onPickPhoto: (() -> Unit)?,
+    photoBusy: Boolean,
+    onLoadPhoto: suspend (String) -> ImageBitmap?,
 ) {
     var name by remember { mutableStateOf(existing?.name ?: "") }
     var email by remember { mutableStateOf(existing?.email ?: "") }
@@ -452,6 +497,26 @@ private fun TeacherActionDialog(
                 if (existing == null) {
                     Text("Create the sign-in account and complete the initial faculty profile in one step.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(10.dp))
+                }
+                if (existing != null && onPickPhoto != null) {
+                    Box(Modifier.padding(bottom = 12.dp), contentAlignment = Alignment.Center) {
+                        Box(contentAlignment = Alignment.BottomEnd) {
+                            TeacherAvatar(existing.name, existing.photoPath, size = 72, onLoadPhoto = onLoadPhoto)
+                            Surface(
+                                modifier = Modifier.clickable(enabled = !photoBusy, onClick = onPickPhoto),
+                                shape = CircleShape,
+                                color = CmsTheme.colors.accent,
+                            ) {
+                                Box(Modifier.size(26.dp), contentAlignment = Alignment.Center) {
+                                    if (photoBusy) {
+                                        CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp, color = CmsTheme.colors.onInk)
+                                    } else {
+                                        Icon(Icons.Filled.PhotoCamera, contentDescription = "Change photo", tint = CmsTheme.colors.onInk, modifier = Modifier.size(16.dp))
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
                 OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Teacher name") }, isError = name.isNotBlank() && nameError != null, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 Spacer(Modifier.height(10.dp))

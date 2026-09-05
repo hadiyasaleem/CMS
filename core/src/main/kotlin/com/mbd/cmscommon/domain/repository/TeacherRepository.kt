@@ -16,4 +16,10 @@ interface TeacherRepository {
     suspend fun resolveNameOrFallback(teacherId: String): String
     suspend fun sync()
     suspend fun syncSelf(teacherId: String)
+
+    /** Uploads a new profile photo, stores it at photos/teachers/{teacherId}.{ext}, and records the path. */
+    suspend fun uploadPhoto(teacherId: String, imageBytes: ByteArray, mimeType: String)
+
+    /** Downloads a previously-uploaded photo's bytes, or null if it no longer exists. */
+    suspend fun downloadPhoto(photoPath: String): ByteArray?
 }

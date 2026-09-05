@@ -171,6 +171,17 @@ class TeachersController(
         }
     }
 
+    fun uploadPhoto(teacher: Teacher, imageBytes: ByteArray, mimeType: String) = launch {
+        try {
+            _busyTeacherId.value = teacher.teacherId
+            _notice.value = null
+            teacherRepository.uploadPhoto(teacher.teacherId, imageBytes, mimeType)
+            _notice.value = "${teacher.name}'s photo was updated."
+        } finally {
+            _busyTeacherId.value = null
+        }
+    }
+
     fun consumeNotice() {
         _notice.value = null
     }

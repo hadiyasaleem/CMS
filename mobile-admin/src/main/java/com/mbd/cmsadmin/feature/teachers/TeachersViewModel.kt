@@ -1,5 +1,8 @@
 package com.mbd.cmsadmin.feature.teachers
 
+import android.graphics.BitmapFactory
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.auth.SessionManager
@@ -15,7 +18,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class TeachersViewModel @Inject constructor(
-    teacherRepository: TeacherRepository,
+    private val teacherRepository: TeacherRepository,
     departmentRepository: DepartmentRepository,
     assignmentsProvider: TeacherAssignmentsProvider,
     sessionManager: SessionManager,
@@ -42,6 +45,11 @@ class TeachersViewModel @Inject constructor(
     fun updateTeacher(teacher: Teacher, draft: TeacherAccountDraft) = controller.updateTeacher(teacher, draft)
     fun setStatus(teacher: Teacher, status: TeacherStatus) = controller.setStatus(teacher, status)
     fun deleteTeacher(teacher: Teacher) = controller.deleteTeacher(teacher)
+    fun uploadPhoto(teacher: Teacher, imageBytes: ByteArray, mimeType: String) = controller.uploadPhoto(teacher, imageBytes, mimeType)
+    suspend fun loadPhoto(photoPath: String): ImageBitmap? {
+        val bytes = teacherRepository.downloadPhoto(photoPath) ?: return null
+        return BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
+    }
     fun consumeNotice() = controller.consumeNotice()
     fun clearError() = controller.clearError()
 }

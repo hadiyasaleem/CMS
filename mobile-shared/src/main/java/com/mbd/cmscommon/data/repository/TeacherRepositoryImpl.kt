@@ -13,9 +13,12 @@ import com.mbd.cmscommon.data.sync.SyncCheckpointStore
 import com.mbd.cmscommon.data.sync.maxRemoteUpdatedAt
 import com.mbd.cmscommon.domain.model.Teacher
 import com.mbd.cmscommon.domain.model.TeacherStatus
+import com.mbd.cmscommon.domain.model.teacherPhotoExtension
+import com.mbd.cmscommon.domain.model.teacherPhotoUploadError
 import com.mbd.cmscommon.domain.repository.TeacherRepository
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.query.Order
+import io.github.jan.supabase.storage.Storage
 import java.time.Instant
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
@@ -23,6 +26,7 @@ import kotlinx.coroutines.flow.map
 
 class TeacherRepositoryImpl @Inject constructor(
     private val postgrest: Postgrest,
+    private val storage: Storage,
     private val teacherDao: TeacherDao,
     private val provisioner: AdminUserProvisioner,
     private val checkpointStore: SyncCheckpointStore,
@@ -107,6 +111,21 @@ class TeacherRepositoryImpl @Inject constructor(
             )
         }
     }
+
+    override suspend fun uploadPhoto(teacherId: String, imageBytes: ByteArray, mimeType: String) {
+        teacherPhotoUploadError(mimeType, imageBytes)?.let { throw IllegalArgumentException(it) }
+        val path = "teachers/$teacherId.${teacherPhotoExtension(mimeType)}"
+        storage.from(SupabaseTables.BUCKET_PHOTOS).upload(path, imageBytes) { upsert = true }
+        postgrest.from(SupabaseTables.TEACHERS).update({ set("photo_path", path) }) {
+            filter { eq("email", teacherId) }
+        }
+        teacherDao.getById(teacherId)?.let { cached ->
+            teacherDao.upsert(cached.copy(photoPath = path, updatedAt = System.currentTimeMillis()))
+        }
+    }
+
+    override suspend fun downloadPhoto(photoPath: String): ByteArray? =
+        runCatching { storage.from(SupabaseTables.BUCKET_PHOTOS).downloadAuthenticated(photoPath) }.getOrNull()
 
     private companion object {
         const val PAGE_SIZE = 500L
