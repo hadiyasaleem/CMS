@@ -204,9 +204,9 @@ private fun DashboardHero(heroPainter: Painter, wide: Boolean) {
             Box(
                 Modifier.fillMaxSize().background(
                     Brush.horizontalGradient(
-                        0f to ModWarn.copy(alpha = 0.97f),
-                        0.7f to ModWarn.copy(alpha = 0.97f),
-                        0.9f to ModWarn.copy(alpha = 0.15f),
+                        0f to ModSurface.copy(alpha = 0.82f),
+                        0.55f to ModSurface.copy(alpha = 0.6f),
+                        0.8f to ModSurface.copy(alpha = 0.1f),
                         1f to Color.Transparent,
                     ),
                 ),
