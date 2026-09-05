@@ -71,7 +71,7 @@ fun SessionOperationsWorkspace(
     feeLoading: Boolean,
     errorMessage: String?,
     teachers: List<Teacher>,
-    onSetSemester: (Int) -> Unit,
+    onPromoteSession: () -> Unit,
     onUpdateDetails: (String, String, Int) -> Unit,
     onOpenStudents: () -> Unit,
     onOpenTimetable: () -> Unit,
@@ -82,7 +82,7 @@ fun SessionOperationsWorkspace(
     modifier: Modifier = Modifier,
 ) {
     var showEditDetails by remember { mutableStateOf(false) }
-    var pendingSemester by remember { mutableStateOf<Int?>(null) }
+    var showPromoteConfirm by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
 
     val gpaRecorded = students.count { it.gpa != null }
@@ -108,7 +108,7 @@ fun SessionOperationsWorkspace(
             }
         }
 
-        item { SessionProgressCard(session, students.size, gpaRecorded, configuredSemesters, onSelectSemester = { pendingSemester = it }) }
+        item { SessionProgressCard(session, students.size, gpaRecorded, configuredSemesters, onPromoteClick = { showPromoteConfirm = true }) }
 
         item { WorkspaceSection("Operational areas", "Roster, timetable, and fee tools for this intake") }
         items(actions) { action -> SessionActionCard(action) }
@@ -142,18 +142,23 @@ fun SessionOperationsWorkspace(
         EditSessionDetailsDialog(session, onDismiss = { showEditDetails = false }, onSave = { program, incharge, capacity -> onUpdateDetails(program, incharge, capacity); showEditDetails = false })
     }
 
-    pendingSemester?.let { semester ->
-        val moveForward = session != null && semester > session.currentSemester
+    if (showPromoteConfirm) {
+        val currentSemester = session?.currentSemester ?: 1
+        val graduating = currentSemester >= 8
         AlertDialog(
-            onDismissRequest = { pendingSemester = null },
-            title = { Text("Change to semester $semester", style = MaterialTheme.typography.headlineSmall) },
+            onDismissRequest = { showPromoteConfirm = false },
+            title = { Text(if (graduating) "Graduate this class" else "Promote to semester ${currentSemester + 1}", style = MaterialTheme.typography.headlineSmall) },
             text = {
                 Text(
-                    if (moveForward) "This promotes the whole class from semester ${session?.currentSemester} to $semester." else "This moves the whole class back from semester ${session?.currentSemester} to $semester.",
+                    if (graduating) {
+                        "This marks the whole class as graduated and archives the session. This cannot be undone."
+                    } else {
+                        "This promotes the whole class from semester $currentSemester to ${currentSemester + 1} and removes that semester's exam papers."
+                    },
                 )
             },
-            confirmButton = { TextButton(onClick = { onSetSemester(semester); pendingSemester = null }) { Text("Confirm") } },
-            dismissButton = { TextButton(onClick = { pendingSemester = null }) { Text("Cancel") } },
+            confirmButton = { TextButton(onClick = { onPromoteSession(); showPromoteConfirm = false }) { Text(if (graduating) "Graduate" else "Promote") } },
+            dismissButton = { TextButton(onClick = { showPromoteConfirm = false }) { Text("Cancel") } },
         )
     }
 
@@ -186,7 +191,7 @@ private fun SessionIdentityCard(session: AcademicSession?, onEdit: () -> Unit) {
 }
 
 @Composable
-private fun SessionProgressCard(session: AcademicSession?, studentCount: Int, gpaRecorded: Int, configuredSemesters: Int, onSelectSemester: (Int) -> Unit) {
+private fun SessionProgressCard(session: AcademicSession?, studentCount: Int, gpaRecorded: Int, configuredSemesters: Int, onPromoteClick: () -> Unit) {
     val maxStudents = session?.maxStudents ?: 0
     val capacityUsed = if (maxStudents == 0) 0f else (studentCount.toFloat() / maxStudents).coerceIn(0f, 1f)
     val gpaPercent = if (studentCount == 0) 0f else gpaRecorded.toFloat() / studentCount
@@ -204,9 +209,12 @@ private fun SessionProgressCard(session: AcademicSession?, studentCount: Int, gp
             Spacer(Modifier.height(10.dp))
             ProgressLine("Curriculum coverage", curriculumPercent, "$configuredSemesters / 8 semesters configured")
             Spacer(Modifier.height(10.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                TextButton(onClick = { (session?.currentSemester ?: 1).let { if (it > 1) onSelectSemester(it - 1) } }) { Text("Previous semester") }
-                TextButton(onClick = { (session?.currentSemester ?: 1).let { if (it < 8) onSelectSemester(it + 1) } }) { Text("Next semester") }
+            if (session?.isActive == true) {
+                TextButton(onClick = onPromoteClick) {
+                    Text(if (session.currentSemester >= 8) "Mark as graduated" else "Promote semester")
+                }
+            } else if (session != null) {
+                Text("This class has graduated.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             }
         }
     }

@@ -49,7 +49,7 @@ fun SessionDetailScreen(
         feeLoading = feeLoading,
         errorMessage = errorMessage,
         teachers = teachers,
-        onSetSemester = controller::setSemester,
+        onPromoteSession = controller::promoteSession,
         onUpdateDetails = { programName, inchargeEmail, maxStudents ->
             controller.updateDetails(programName, inchargeEmail, maxStudents)
         },

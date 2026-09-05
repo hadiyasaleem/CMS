@@ -48,7 +48,7 @@ class SessionDetailViewModel @Inject constructor(
     val teachers = teacherRepository.observeActiveTeachers()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    fun setSemester(semester: Int) = controller.setSemester(semester)
+    fun promoteSession() = controller.promoteSession()
     fun updateDetails(programName: String?, inchargeEmail: String?, maxStudents: Int) =
         controller.updateDetails(programName, inchargeEmail, maxStudents)
     fun deleteSession(onDone: () -> Unit) = controller.deleteSession(onDone)
@@ -82,7 +82,7 @@ fun SessionDetailScreen(
         feeLoading = feeLoading,
         errorMessage = errorMessage,
         teachers = teachers,
-        onSetSemester = viewModel::setSemester,
+        onPromoteSession = viewModel::promoteSession,
         onUpdateDetails = viewModel::updateDetails,
         onOpenStudents = { onOpenStudents(viewModel.sessionId) },
         onOpenTimetable = { onOpenTimetable(viewModel.sessionId) },

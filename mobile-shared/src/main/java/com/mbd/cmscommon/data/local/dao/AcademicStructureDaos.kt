@@ -49,6 +49,9 @@ interface AcademicSessionDao {
     @Query("UPDATE academic_sessions SET currentSemester = :semester WHERE sessionId = :sessionId")
     suspend fun setCurrentSemester(sessionId: String, semester: Int)
 
+    @Query("UPDATE academic_sessions SET isActive = :isActive WHERE sessionId = :sessionId")
+    suspend fun setActive(sessionId: String, isActive: Boolean)
+
     suspend fun applyDelta(upserts: List<AcademicSessionEntity>, deletedIds: List<String>) {
         if (upserts.isNotEmpty()) upsertAll(upserts)
         if (deletedIds.isNotEmpty()) deleteByIds(deletedIds)

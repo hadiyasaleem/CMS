@@ -19,28 +19,36 @@ import com.mbd.cmscommon.data.sync.SyncCheckpointStore
 import com.mbd.cmscommon.data.sync.maxRemoteUpdatedAt
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.Session
+import com.mbd.cmscommon.domain.model.SessionPromotionResult
 import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.domain.model.StudentProfile
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.util.FieldValidators
+import io.github.jan.supabase.functions.Functions
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.query.Order
+import io.ktor.client.call.body
 import java.time.Instant
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 class AcademicSessionRepositoryImpl @Inject constructor(
     private val postgrest: Postgrest,
+    private val functions: Functions,
     private val sessionDao: AcademicSessionDao,
     private val studentDao: SessionStudentDao,
     private val periodDao: SessionPeriodDao,
     private val checkpointStore: SyncCheckpointStore,
     private val sessionManager: SessionManager,
 ) : AcademicSessionRepository {
+
+    @Serializable
+    private data class PromoteSessionRequest(val sessionId: String)
 
     private val profileJson = Json {
         ignoreUnknownKeys = true
@@ -150,12 +158,16 @@ class AcademicSessionRepositoryImpl @Inject constructor(
         return session
     }
 
-    override suspend fun setCurrentSemester(sessionId: String, semester: Int) {
-        val clamped = semester.coerceIn(1, 8)
-        postgrest.from(SupabaseTables.ACADEMIC_SESSIONS).update({ set("current_semester", clamped) }) {
-            filter { eq("session_id", sessionId) }
+    override suspend fun promoteSession(sessionId: String): SessionPromotionResult {
+        val response = functions.invoke("promote-session", PromoteSessionRequest(sessionId))
+        val result = response.body<SessionPromotionResult>()
+        val promotedTo = result.promotedTo
+        if (result.graduated) {
+            sessionDao.setActive(sessionId, false)
+        } else if (promotedTo != null) {
+            sessionDao.setCurrentSemester(sessionId, promotedTo)
         }
-        sessionDao.setCurrentSemester(sessionId, clamped)
+        return result
     }
 
     override suspend fun updateSessionDetails(sessionId: String, programName: String?, inchargeEmail: String?, maxStudents: Int) {

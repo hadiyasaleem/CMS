@@ -3,6 +3,7 @@ package com.mbd.cmscommon.domain.model
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
+import kotlinx.serialization.Serializable
 
 data class AcademicSession(
     val sessionId: String,
@@ -31,6 +32,15 @@ data class AcademicSession(
             "${deptId}_${startYear}_${shift.name}"
     }
 }
+
+/** Result of the `promote-session` edge function: either the pointer advanced, or the class graduated at semester 8. */
+@Serializable
+data class SessionPromotionResult(
+    val sessionId: String,
+    val graduated: Boolean = false,
+    val promotedTo: Int? = null,
+    val papersDeleted: Int = 0,
+)
 
 data class AttendanceEntry(
     val status: AttendanceStatus,

@@ -55,8 +55,8 @@ class SessionDetailController(
         }
     }
 
-    fun setSemester(semester: Int) = launch {
-        sessionRepository.setCurrentSemester(sessionId, semester)
+    fun promoteSession() = launch {
+        sessionRepository.promoteSession(sessionId)
     }
 
     fun updateDetails(programName: String?, inchargeEmail: String?, maxStudents: Int) = launch {

@@ -10,6 +10,7 @@ import com.mbd.cmscommon.domain.model.SemesterSubject
 import com.mbd.cmscommon.domain.model.SemesterTerm
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.SessionPeriod
+import com.mbd.cmscommon.domain.model.SessionPromotionResult
 import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.domain.model.StudentProfile
 import com.mbd.cmscommon.domain.model.SubjectExamScore
@@ -25,7 +26,8 @@ interface AcademicSessionRepository {
     fun observeTotalStudentCount(): Flow<Int>
 
     suspend fun createSession(deptId: String, startYear: Int, shift: Session): AcademicSession
-    suspend fun setCurrentSemester(sessionId: String, semester: Int)
+    /** Advances the session by one semester, or graduates the class if it's already on the final semester. */
+    suspend fun promoteSession(sessionId: String): SessionPromotionResult
     suspend fun updateSessionDetails(sessionId: String, programName: String?, inchargeEmail: String?, maxStudents: Int)
     suspend fun deleteSession(sessionId: String)
     suspend fun addStudent(sessionId: String, rollNumber: String, name: String, gpa: Double? = null, cgpa: Double? = null)
