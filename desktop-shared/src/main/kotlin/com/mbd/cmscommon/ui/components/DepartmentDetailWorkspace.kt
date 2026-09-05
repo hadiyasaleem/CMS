@@ -201,7 +201,7 @@ private fun DepartmentSummary(
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             CapacityBar(count = studentCount, max = totalCapacity.coerceAtLeast(1), modifier = Modifier.weight(1f))
             Spacer(Modifier.width(12.dp))
-            CmsPrimaryButton(text = "Create session", onClick = onCreateSession)
+            CmsPrimaryButton(text = "Create session", onClick = onCreateSession, modifier = Modifier.width(168.dp))
         }
         Spacer(Modifier.height(10.dp))
         Text(
