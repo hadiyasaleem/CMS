@@ -3,7 +3,7 @@ package com.mbd.cmscommon.ui.components
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
@@ -32,7 +32,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -55,9 +54,18 @@ fun PhotoCropDialog(source: ImageBitmap, onCancel: () -> Unit, onCropped: (Image
     var offset by remember { mutableStateOf(Offset.Zero) }
     val density = LocalDensity.current
     val viewportPx = with(density) { CROP_VIEWPORT_DP.dp.toPx() }
+    // Base ("cover") size at zoom = 1 -- fixed layout size, independent of zoom. Zoom/pan are then
+    // applied purely as a graphicsLayer transform, which is what actually re-renders reliably on
+    // state change (resizing the layout itself via width/height inside an AlertDialog does not).
     val coverScale = max(viewportPx / source.width, viewportPx / source.height)
-    val displayWidthPx = source.width * coverScale * zoom
-    val displayHeightPx = source.height * coverScale * zoom
+    val baseWidthPx = source.width * coverScale
+    val baseHeightPx = source.height * coverScale
+
+    fun clampOffset(candidate: Offset, currentZoom: Float): Offset {
+        val slackX = max(0f, (baseWidthPx * currentZoom - viewportPx) / 2f)
+        val slackY = max(0f, (baseHeightPx * currentZoom - viewportPx) / 2f)
+        return Offset(candidate.x.coerceIn(-slackX, slackX), candidate.y.coerceIn(-slackY, slackY))
+    }
 
     AlertDialog(
         onDismissRequest = onCancel,
@@ -71,9 +79,10 @@ fun PhotoCropDialog(source: ImageBitmap, onCancel: () -> Unit, onCropped: (Image
                         .background(ModTrack)
                         .border(1.dp, ModTrack, CircleShape)
                         .pointerInput(Unit) {
-                            detectDragGestures { change, drag ->
-                                change.consume()
-                                offset += drag
+                            detectTransformGestures { _, pan, gestureZoom, _ ->
+                                val newZoom = (zoom * gestureZoom).coerceIn(1f, 3f)
+                                zoom = newZoom
+                                offset = clampOffset(offset + pan, newZoom)
                             }
                         },
                     contentAlignment = Alignment.Center,
@@ -84,16 +93,25 @@ fun PhotoCropDialog(source: ImageBitmap, onCancel: () -> Unit, onCropped: (Image
                         contentScale = ContentScale.FillBounds,
                         modifier = with(density) {
                             Modifier
-                                .width(displayWidthPx.toDp())
-                                .height(displayHeightPx.toDp())
-                                .graphicsLayer(translationX = offset.x, translationY = offset.y)
+                                .width(baseWidthPx.toDp())
+                                .height(baseHeightPx.toDp())
+                                .graphicsLayer(
+                                    scaleX = zoom,
+                                    scaleY = zoom,
+                                    translationX = offset.x,
+                                    translationY = offset.y,
+                                )
                         },
                     )
                 }
                 Spacer(Modifier.height(12.dp))
-                Text("Drag to reposition, use the slider to zoom.", style = MaterialTheme.typography.bodySmall)
+                Text("Drag to reposition, pinch or use the slider to zoom.", style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.height(4.dp))
-                Slider(value = zoom, onValueChange = { zoom = it }, valueRange = 1f..3f)
+                Slider(
+                    value = zoom,
+                    onValueChange = { newZoom -> zoom = newZoom; offset = clampOffset(offset, newZoom) },
+                    valueRange = 1f..3f,
+                )
             }
         },
         confirmButton = {
