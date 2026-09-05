@@ -78,7 +78,7 @@ class PeopleHubController(
                                 sessionRepository.syncStudents(session.sessionId)
                             }
                         }
-                        sessionRepository.observeTotalStudentCount().first()
+                        sessionRepository.observeActiveSessionStudentCount().first()
                     }
                 }
                 val linksDeferred = async {

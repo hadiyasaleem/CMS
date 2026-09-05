@@ -20,7 +20,7 @@ class DashboardController(
 ) : ScreenController(scope) {
 
     val state: StateFlow<DashboardState> = combine(
-        sessionRepository.observeTotalStudentCount(),
+        sessionRepository.observeActiveSessionStudentCount(),
         teacherRepository.observeActiveTeachers(),
         departmentRepository.observeActiveDepartments(),
         linkRequestRepository.observePendingRequests(),

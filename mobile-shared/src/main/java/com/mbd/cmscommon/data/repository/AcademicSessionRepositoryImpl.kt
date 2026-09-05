@@ -125,7 +125,7 @@ class AcademicSessionRepositoryImpl @Inject constructor(
     override fun observeStudents(sessionId: String): Flow<List<SessionStudent>> =
         studentDao.observeForSession(sessionId).map { rows -> rows.map { AcademicStructureMapper.studentEntityToDomain(it) } }
 
-    override fun observeTotalStudentCount(): Flow<Int> = studentDao.observeTotalCount()
+    override fun observeActiveSessionStudentCount(): Flow<Int> = studentDao.observeActiveSessionStudentCount()
 
     override suspend fun createSession(deptId: String, startYear: Int, shift: Session): AcademicSession {
         val session = AcademicSession(

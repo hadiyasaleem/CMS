@@ -95,8 +95,14 @@ interface SessionStudentDao {
     @Query("SELECT * FROM session_students WHERE sessionId = :sessionId AND isDeleted = 0")
     fun observeForSession(sessionId: String): Flow<List<SessionStudentEntity>>
 
-    @Query("SELECT COUNT(*) FROM session_students WHERE isDeleted = 0")
-    fun observeTotalCount(): Flow<Int>
+    @Query(
+        """
+        SELECT COUNT(*) FROM session_students
+        WHERE isDeleted = 0
+        AND sessionId IN (SELECT sessionId FROM academic_sessions WHERE isActive = 1 AND isDeleted = 0)
+        """,
+    )
+    fun observeActiveSessionStudentCount(): Flow<Int>
 
     @Query("SELECT * FROM session_students WHERE isDeleted = 0")
     suspend fun getAllActive(): List<SessionStudentEntity>

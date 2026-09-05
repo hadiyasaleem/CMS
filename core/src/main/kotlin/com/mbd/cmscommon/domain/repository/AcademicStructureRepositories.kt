@@ -23,7 +23,8 @@ interface AcademicSessionRepository {
     fun observeAllSessions(): Flow<List<AcademicSession>>
     fun observeSession(sessionId: String): Flow<AcademicSession?>
     fun observeStudents(sessionId: String): Flow<List<SessionStudent>>
-    fun observeTotalStudentCount(): Flow<Int>
+    /** Students enrolled in a currently-active session -- excludes graduated/inactive intakes. */
+    fun observeActiveSessionStudentCount(): Flow<Int>
 
     suspend fun createSession(deptId: String, startYear: Int, shift: Session): AcademicSession
     /** Advances the session by one semester, or graduates the class if it's already on the final semester. */
