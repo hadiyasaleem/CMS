@@ -701,8 +701,8 @@ private fun PaperEditorDialog(
                 CmsDateField(value = examDate, onValueChange = { examDate = it }, label = "Exam date")
                 Spacer(Modifier.height(10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedTextField(value = startTime, onValueChange = { startTime = it }, label = { Text("Start time") }, placeholder = { Text("HH:MM") }, modifier = Modifier.weight(1f), singleLine = true)
-                    OutlinedTextField(value = endTime, onValueChange = { endTime = it }, label = { Text("End time") }, placeholder = { Text("HH:MM") }, modifier = Modifier.weight(1f), singleLine = true)
+                    CmsTimeField(value = startTime, onValueChange = { startTime = it }, label = "Start time", modifier = Modifier.weight(1f))
+                    CmsTimeField(value = endTime, onValueChange = { endTime = it }, label = "End time", modifier = Modifier.weight(1f))
                 }
                 Spacer(Modifier.height(10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
