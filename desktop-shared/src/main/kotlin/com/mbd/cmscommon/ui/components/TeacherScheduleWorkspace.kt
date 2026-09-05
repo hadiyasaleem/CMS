@@ -27,7 +27,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -81,6 +80,7 @@ fun TeacherScheduleWorkspace(
     val busiest = ScheduleDays.maxByOrNull { day -> teachingPeriods.count { it.day == day } }
 
     var detailPeriod by remember { mutableStateOf<SessionPeriod?>(null) }
+    var dismissedError by remember { mutableStateOf<String?>(null) }
     val periodByDayAndSlot = teachingPeriods.associateBy { it.day to it.timeRange }
     val timeSlots = teachingPeriods.map { it.timeRange }.distinct().sortedBy { it.substringBefore('–') }
 
@@ -90,10 +90,6 @@ fun TeacherScheduleWorkspace(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item { ScheduleHeader(heroPainter, teachingPeriods.size) }
-
-        if (outcome is Outcome.Error) {
-            item { ScheduleNotice(outcome.message, ScheduleRed, "Retry", onRefresh) }
-        }
 
         item { ScheduleMetrics(teachingPeriods.size, classDays, totalMinutes, rooms, busiest) }
 
@@ -137,6 +133,16 @@ fun TeacherScheduleWorkspace(
 
     detailPeriod?.let { period ->
         TeacherPeriodDetailDialog(period, sessions.firstOrNull { it.sessionId == period.sessionId }, onDismiss = { detailPeriod = null })
+    }
+
+    if (outcome is Outcome.Error && outcome.message != dismissedError) {
+        AlertDialog(
+            onDismissRequest = { dismissedError = outcome.message },
+            title = { Text("Couldn't load schedule") },
+            text = { Text(outcome.message, color = ScheduleRed) },
+            confirmButton = { TextButton(onClick = { dismissedError = null; onRefresh() }) { Text("Retry") } },
+            dismissButton = { TextButton(onClick = { dismissedError = outcome.message }) { Text("Dismiss") } },
+        )
     }
 }
 
@@ -220,15 +226,6 @@ private fun ScheduleDetailRow(label: String, value: String) {
     }
 }
 
-@Composable
-private fun ScheduleNotice(message: String, color: Color, action: String, onAction: () -> Unit) {
-    Surface(shape = RoundedCornerShape(14.dp), color = color.copy(alpha = 0.1f), border = BorderStroke(1.dp, color.copy(alpha = 0.25f))) {
-        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(message, modifier = Modifier.weight(1f), color = color, style = MaterialTheme.typography.bodyMedium)
-            TextButton(onClick = onAction) { Text(action, color = color) }
-        }
-    }
-}
 private val scheduleTimeFormatter = java.time.format.DateTimeFormatter.ofPattern("H:mm")
 
 private fun scheduleTime(value: String?): java.time.LocalTime? =
