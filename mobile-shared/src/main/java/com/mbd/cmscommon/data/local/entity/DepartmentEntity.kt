@@ -11,7 +11,6 @@ data class DepartmentEntity(
     val code: String,
     val hodEmail: String?,
     val description: String?,
-    val isActive: Boolean = true,
     val createdAt: Long = 0L,
     val createdBy: String? = null,
     val updatedAt: Long = 0L,

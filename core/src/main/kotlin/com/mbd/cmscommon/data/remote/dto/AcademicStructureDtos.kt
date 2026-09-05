@@ -111,7 +111,6 @@ data class StudentProfileDto(
     val linkedEmail: String? = null,
     val gpa: Double? = null,
     val cgpa: Double? = null,
-    val isActive: Boolean = true,
     val photoPath: String? = null,
     val createdAt: String? = null,
     val createdBy: String? = null,

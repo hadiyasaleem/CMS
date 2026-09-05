@@ -626,6 +626,48 @@ val MIGRATION_36_37: Migration = object : Migration(36, 37) {
     }
 }
 
+/** Drops departments.is_active — the local query filtered on it, but nothing ever writes it
+ * false (no "deactivate department" feature exists); it was a permanent tautology. Also drops
+ * session_students' is_active from the profileJson blob (pure JSON, no schema migration needed
+ * for that half) — enrollment_status is the real student lifecycle field. */
+val MIGRATION_37_38: Migration = object : Migration(37, 38) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE `departments_new` (
+                `deptId` TEXT NOT NULL,
+                `entityId` INTEGER NOT NULL DEFAULT 0,
+                `name` TEXT NOT NULL,
+                `code` TEXT NOT NULL,
+                `hodEmail` TEXT,
+                `description` TEXT,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `createdBy` TEXT,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedBy` TEXT,
+                `isDeleted` INTEGER NOT NULL DEFAULT 0,
+                `deletedAt` INTEGER,
+                `deletedBy` TEXT,
+                PRIMARY KEY(`deptId`)
+            )
+            """.trimIndent(),
+        )
+        db.execSQL(
+            """
+            INSERT INTO `departments_new`
+            (`deptId`,`entityId`,`name`,`code`,`hodEmail`,`description`,
+             `createdAt`,`createdBy`,`updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`)
+            SELECT
+             `deptId`,`entityId`,`name`,`code`,`hodEmail`,`description`,
+             `createdAt`,`createdBy`,`updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`
+            FROM `departments`
+            """.trimIndent(),
+        )
+        db.execSQL("DROP TABLE `departments`")
+        db.execSQL("ALTER TABLE `departments_new` RENAME TO `departments`")
+    }
+}
+
 val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_18_19,
     MIGRATION_19_20,
@@ -646,4 +688,5 @@ val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_34_35,
     MIGRATION_35_36,
     MIGRATION_36_37,
+    MIGRATION_37_38,
 )

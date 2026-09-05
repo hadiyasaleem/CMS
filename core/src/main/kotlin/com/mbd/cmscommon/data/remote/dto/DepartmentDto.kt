@@ -10,7 +10,6 @@ data class DepartmentDto(
     val code: String? = null,
     val hodEmail: String? = null,
     val description: String? = null,
-    val isActive: Boolean = true,
     val createdAt: String? = null,
     val createdBy: String? = null,
     val updatedAt: String? = null,

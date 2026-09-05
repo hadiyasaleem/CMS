@@ -137,7 +137,6 @@ class AcademicSessionRepositoryImpl @Inject constructor(
             endYear = startYear + 4,
             shift = shift,
             currentSemester = 1,
-            isActive = false,
             maxStudents = 0,
         )
         val dto = AcademicSessionDto(
@@ -283,7 +282,6 @@ class AcademicSessionRepositoryImpl @Inject constructor(
             linkedEmail = profile.linkedEmail,
             gpa = profile.gpa,
             cgpa = profile.cgpa,
-            isActive = profile.isActive,
             photoPath = profile.photoPath,
         )
         postgrest.from(SupabaseTables.SESSION_STUDENTS).update(dto) {

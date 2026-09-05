@@ -32,7 +32,6 @@ data class StudentProfile(
     val linkedEmail: String = "",
     val gpa: Double? = null,
     val cgpa: Double? = null,
-    val isActive: Boolean = true,
     val photoPath: String? = null,
     override val entityId: Long = 0L,
     override val createdAt: Instant = Instant.EPOCH,

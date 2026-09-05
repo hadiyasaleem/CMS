@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface DepartmentDao {
-    @Query("SELECT * FROM departments WHERE isActive = 1 AND isDeleted = 0 ORDER BY name")
+    @Query("SELECT * FROM departments WHERE isDeleted = 0 ORDER BY name")
     fun observeActive(): Flow<List<DepartmentEntity>>
 
     @Query("SELECT * FROM departments WHERE deptId = :id LIMIT 1")

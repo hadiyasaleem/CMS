@@ -40,7 +40,6 @@ object StudentProfileMapper {
         linkedEmail = dto.linkedEmail ?: "",
         gpa = dto.gpa,
         cgpa = dto.cgpa,
-        isActive = dto.isActive,
         photoPath = dto.photoPath,
         entityId = dto.entityId ?: 0L,
         createdAt = PgTime.parseOrEpoch(dto.createdAt),
@@ -79,7 +78,6 @@ object StudentProfileMapper {
         linkedEmail = domain.linkedEmail,
         gpa = domain.gpa,
         cgpa = domain.cgpa,
-        isActive = domain.isActive,
         photoPath = domain.photoPath,
     )
 
