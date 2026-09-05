@@ -35,7 +35,7 @@ fun recordsHubSnapshot(
     }
 
     return RecordsHubSnapshot(
-        activeSessions = sessions.count { it.isActive && it.archivedAt == null },
+        activeSessions = sessions.count { it.isActive },
         upcomingEvents = upcomingEvents,
         publishedDatesheets = datesheets.count { it.published },
         draftDatesheets = datesheets.count { !it.published },

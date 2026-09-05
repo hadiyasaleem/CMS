@@ -37,4 +37,4 @@ class DashboardController(
 }
 
 fun countActiveDashboardSessions(sessions: List<AcademicSession>): Int =
-    sessions.count { it.isActive && it.archivedAt == null }
+    sessions.count { it.isActive }

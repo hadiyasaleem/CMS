@@ -33,7 +33,6 @@ data class StudentProfile(
     val gpa: Double? = null,
     val cgpa: Double? = null,
     val isActive: Boolean = true,
-    val archivedAt: String? = null,
     val photoPath: String? = null,
     override val entityId: Long = 0L,
     override val createdAt: Instant = Instant.EPOCH,

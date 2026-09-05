@@ -16,7 +16,6 @@ data class AcademicSession(
     val programName: String? = null,
     val inchargeEmail: String? = null,
     val maxStudents: Int = MAX_STUDENTS,
-    val archivedAt: Instant? = null,
     override val entityId: Long = 0L,
     override val createdAt: Instant = Instant.EPOCH,
     override val createdBy: String? = null,

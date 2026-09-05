@@ -9,7 +9,6 @@ data class Department(
     val hodEmail: String? = null,
     val description: String? = null,
     val isActive: Boolean = true,
-    val archivedAt: Instant? = null,
     override val entityId: Long = 0L,
     override val createdAt: Instant,
     override val createdBy: String,

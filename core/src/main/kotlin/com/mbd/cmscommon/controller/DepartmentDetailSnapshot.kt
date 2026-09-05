@@ -12,7 +12,7 @@ data class DepartmentDetailSnapshot(
 )
 
 fun departmentDetailSnapshot(sessions: List<AcademicSession>, studentCounts: Map<String, Int>): DepartmentDetailSnapshot {
-    val currentSessions = sessions.filter { it.isActive && it.archivedAt == null }
+    val currentSessions = sessions.filter { it.isActive }
 
     val studentCount = currentSessions.sumOf { (studentCounts[it.sessionId] ?: 0).coerceAtLeast(0) }
     val totalCapacity = currentSessions.sumOf { it.maxStudents.coerceAtLeast(0) }

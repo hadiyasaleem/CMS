@@ -14,7 +14,7 @@ data class DepartmentPortfolioStats(
 )
 
 fun departmentPortfolioStats(sessionCounts: List<Pair<AcademicSession, Int>>): Map<String, DepartmentPortfolioStats> {
-    val activeRows = sessionCounts.filter { (session, _) -> session.isActive && session.archivedAt == null }
+    val activeRows = sessionCounts.filter { (session, _) -> session.isActive }
     val byDept = activeRows.groupBy { (session, _) -> session.deptId }
 
     return byDept.mapValues { (_, rows) ->

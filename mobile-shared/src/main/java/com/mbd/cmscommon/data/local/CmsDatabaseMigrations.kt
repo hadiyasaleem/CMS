@@ -481,6 +481,90 @@ val MIGRATION_34_35: Migration = object : Migration(34, 35) {
     }
 }
 
+/** Drops archived_at from academic_sessions and departments — never written by any code path,
+ * so the check-the-column-then-fall-back-to-isActive logic it backed was always vacuous. Kept on
+ * teachers, where set-teacher-status actually writes it as a soft-delete timestamp. SQLite on
+ * pre-3.35 devices has no DROP COLUMN, so rebuild each table without it. */
+val MIGRATION_35_36: Migration = object : Migration(35, 36) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE `academic_sessions_new` (
+                `sessionId` TEXT NOT NULL,
+                `deptId` TEXT NOT NULL,
+                `startYear` INTEGER NOT NULL,
+                `endYear` INTEGER NOT NULL,
+                `shift` TEXT NOT NULL,
+                `currentSemester` INTEGER NOT NULL,
+                `isActive` INTEGER NOT NULL DEFAULT 1,
+                `programName` TEXT,
+                `inchargeEmail` TEXT,
+                `maxStudents` INTEGER NOT NULL,
+                `entityId` INTEGER NOT NULL DEFAULT 0,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `createdBy` TEXT,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedBy` TEXT,
+                `isDeleted` INTEGER NOT NULL DEFAULT 0,
+                `deletedAt` INTEGER,
+                `deletedBy` TEXT,
+                PRIMARY KEY(`sessionId`)
+            )
+            """.trimIndent(),
+        )
+        db.execSQL(
+            """
+            INSERT INTO `academic_sessions_new`
+            (`sessionId`,`deptId`,`startYear`,`endYear`,`shift`,`currentSemester`,`isActive`,
+             `programName`,`inchargeEmail`,`maxStudents`,`entityId`,`createdAt`,`createdBy`,
+             `updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`)
+            SELECT
+             `sessionId`,`deptId`,`startYear`,`endYear`,`shift`,`currentSemester`,`isActive`,
+             `programName`,`inchargeEmail`,`maxStudents`,`entityId`,`createdAt`,`createdBy`,
+             `updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`
+            FROM `academic_sessions`
+            """.trimIndent(),
+        )
+        db.execSQL("DROP TABLE `academic_sessions`")
+        db.execSQL("ALTER TABLE `academic_sessions_new` RENAME TO `academic_sessions`")
+
+        db.execSQL(
+            """
+            CREATE TABLE `departments_new` (
+                `deptId` TEXT NOT NULL,
+                `entityId` INTEGER NOT NULL DEFAULT 0,
+                `name` TEXT NOT NULL,
+                `code` TEXT NOT NULL,
+                `hodEmail` TEXT,
+                `description` TEXT,
+                `isActive` INTEGER NOT NULL DEFAULT 1,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `createdBy` TEXT,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedBy` TEXT,
+                `isDeleted` INTEGER NOT NULL DEFAULT 0,
+                `deletedAt` INTEGER,
+                `deletedBy` TEXT,
+                PRIMARY KEY(`deptId`)
+            )
+            """.trimIndent(),
+        )
+        db.execSQL(
+            """
+            INSERT INTO `departments_new`
+            (`deptId`,`entityId`,`name`,`code`,`hodEmail`,`description`,`isActive`,
+             `createdAt`,`createdBy`,`updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`)
+            SELECT
+             `deptId`,`entityId`,`name`,`code`,`hodEmail`,`description`,`isActive`,
+             `createdAt`,`createdBy`,`updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`
+            FROM `departments`
+            """.trimIndent(),
+        )
+        db.execSQL("DROP TABLE `departments`")
+        db.execSQL("ALTER TABLE `departments_new` RENAME TO `departments`")
+    }
+}
+
 val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_18_19,
     MIGRATION_19_20,
@@ -499,4 +583,5 @@ val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_32_33,
     MIGRATION_33_34,
     MIGRATION_34_35,
+    MIGRATION_35_36,
 )

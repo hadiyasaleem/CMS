@@ -11,7 +11,6 @@ data class DepartmentDto(
     val hodEmail: String? = null,
     val description: String? = null,
     val isActive: Boolean = true,
-    val archivedAt: String? = null,
     val createdAt: String? = null,
     val createdBy: String? = null,
     val updatedAt: String? = null,

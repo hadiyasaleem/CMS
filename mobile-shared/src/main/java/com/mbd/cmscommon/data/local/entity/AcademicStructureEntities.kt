@@ -16,7 +16,6 @@ data class AcademicSessionEntity(
     val programName: String?,
     val inchargeEmail: String?,
     val maxStudents: Int,
-    val archivedAt: Long? = null,
     val entityId: Long = 0L,
     val createdAt: Long = 0L,
     val createdBy: String? = null,

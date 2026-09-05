@@ -73,7 +73,6 @@ class AcademicSessionRepositoryImpl @Inject constructor(
                 programName = programName,
                 inchargeEmail = inchargeEmail,
                 maxStudents = maxStudents,
-                archivedAt = archivedAt?.let { PgTime.parseOrEpoch(it) },
                 entityId = entityId ?: 0L,
                 createdAt = PgTime.parseOrEpoch(createdAt),
                 createdBy = createdBy,
@@ -285,7 +284,6 @@ class AcademicSessionRepositoryImpl @Inject constructor(
             gpa = profile.gpa,
             cgpa = profile.cgpa,
             isActive = profile.isActive,
-            archivedAt = profile.archivedAt,
             photoPath = profile.photoPath,
         )
         postgrest.from(SupabaseTables.SESSION_STUDENTS).update(dto) {
