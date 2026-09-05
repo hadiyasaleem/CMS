@@ -11,7 +11,6 @@ data class Fine(
     val reason: String,
     val issuedBy: String? = null,
     val issuedAt: Instant? = null,
-    override val entityId: Long = 0L,
     override val createdAt: Instant = Instant.EPOCH,
     override val createdBy: String? = null,
     override val updatedAt: Instant = Instant.EPOCH,

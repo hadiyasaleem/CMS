@@ -668,6 +668,784 @@ val MIGRATION_37_38: Migration = object : Migration(37, 38) {
     }
 }
 
+/** Drops entityId (the `bigint generated always as identity` surrogate key added by an earlier
+ * migration) from every local table except session_attendance_rows, matching the Supabase side
+ * where the column was dropped from all tables except session_attendance — there it's genuinely
+ * used as a sync-page tie-breaker (see SessionAttendanceRepositoryImpl). SQLite has no DROP COLUMN
+ * pre-3.35, so each affected table is rebuilt without the column. */
+val MIGRATION_38_39: Migration = object : Migration(38, 39) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE `academic_sessions_new` (
+                `sessionId` TEXT NOT NULL,
+                `deptId` TEXT NOT NULL,
+                `startYear` INTEGER NOT NULL,
+                `endYear` INTEGER NOT NULL,
+                `shift` TEXT NOT NULL,
+                `currentSemester` INTEGER NOT NULL,
+                `isActive` INTEGER NOT NULL DEFAULT 1,
+                `programName` TEXT,
+                `inchargeEmail` TEXT,
+                `maxStudents` INTEGER NOT NULL,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `createdBy` TEXT,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedBy` TEXT,
+                `isDeleted` INTEGER NOT NULL DEFAULT 0,
+                `deletedAt` INTEGER,
+                `deletedBy` TEXT,
+                PRIMARY KEY(`sessionId`)
+            )
+            """.trimIndent(),
+        )
+        db.execSQL(
+            """
+            INSERT INTO `academic_sessions_new`
+            (`sessionId`,`deptId`,`startYear`,`endYear`,`shift`,`currentSemester`,`isActive`,
+             `programName`,`inchargeEmail`,`maxStudents`,`createdAt`,`createdBy`,
+             `updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`)
+            SELECT
+             `sessionId`,`deptId`,`startYear`,`endYear`,`shift`,`currentSemester`,`isActive`,
+             `programName`,`inchargeEmail`,`maxStudents`,`createdAt`,`createdBy`,
+             `updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`
+            FROM `academic_sessions`
+            """.trimIndent(),
+        )
+        db.execSQL("DROP TABLE `academic_sessions`")
+        db.execSQL("ALTER TABLE `academic_sessions_new` RENAME TO `academic_sessions`")
+
+        db.execSQL(
+            """
+            CREATE TABLE `semester_subjects_new` (
+                `id` TEXT NOT NULL,
+                `sessionId` TEXT NOT NULL,
+                `semester` INTEGER NOT NULL,
+                `courseCode` TEXT NOT NULL,
+                `name` TEXT NOT NULL,
+                `creditHours` INTEGER NOT NULL,
+                `subjectType` TEXT NOT NULL,
+                `isElective` INTEGER NOT NULL DEFAULT 0,
+                `outline` TEXT,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `createdBy` TEXT,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedBy` TEXT,
+                `isDeleted` INTEGER NOT NULL DEFAULT 0,
+                `deletedAt` INTEGER,
+                `deletedBy` TEXT,
+                PRIMARY KEY(`id`)
+            )
+            """.trimIndent(),
+        )
+        db.execSQL(
+            """
+            INSERT INTO `semester_subjects_new`
+            (`id`,`sessionId`,`semester`,`courseCode`,`name`,`creditHours`,`subjectType`,`isElective`,
+             `outline`,`createdAt`,`createdBy`,`updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`)
+            SELECT
+             `id`,`sessionId`,`semester`,`courseCode`,`name`,`creditHours`,`subjectType`,`isElective`,
+             `outline`,`createdAt`,`createdBy`,`updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`
+            FROM `semester_subjects`
+            """.trimIndent(),
+        )
+        db.execSQL("DROP TABLE `semester_subjects`")
+        db.execSQL("ALTER TABLE `semester_subjects_new` RENAME TO `semester_subjects`")
+
+        db.execSQL(
+            """
+            CREATE TABLE `session_marks_new` (
+                `id` TEXT NOT NULL,
+                `sessionId` TEXT NOT NULL,
+                `courseCode` TEXT NOT NULL,
+                `examType` TEXT NOT NULL,
+                `rollNumber` TEXT NOT NULL,
+                `score` INTEGER NOT NULL,
+                `maxMarks` INTEGER NOT NULL,
+                `wasAbsent` INTEGER NOT NULL DEFAULT 0,
+                `remarks` TEXT,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `createdBy` TEXT,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedBy` TEXT,
+                `isDeleted` INTEGER NOT NULL DEFAULT 0,
+                `deletedAt` INTEGER,
+                `deletedBy` TEXT,
+                PRIMARY KEY(`id`)
+            )
+            """.trimIndent(),
+        )
+        db.execSQL(
+            """
+            INSERT INTO `session_marks_new`
+            (`id`,`sessionId`,`courseCode`,`examType`,`rollNumber`,`score`,`maxMarks`,`wasAbsent`,
+             `remarks`,`createdAt`,`createdBy`,`updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`)
+            SELECT
+             `id`,`sessionId`,`courseCode`,`examType`,`rollNumber`,`score`,`maxMarks`,`wasAbsent`,
+             `remarks`,`createdAt`,`createdBy`,`updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`
+            FROM `session_marks`
+            """.trimIndent(),
+        )
+        db.execSQL("DROP TABLE `session_marks`")
+        db.execSQL("ALTER TABLE `session_marks_new` RENAME TO `session_marks`")
+
+        db.execSQL(
+            """
+            CREATE TABLE `session_periods_new` (
+                `id` TEXT NOT NULL,
+                `sessionId` TEXT NOT NULL,
+                `deptId` TEXT NOT NULL,
+                `day` TEXT NOT NULL,
+                `startTime` TEXT,
+                `endTime` TEXT,
+                `courseCode` TEXT,
+                `subjectName` TEXT,
+                `teacherId` TEXT,
+                `teacherName` TEXT,
+                `periodType` TEXT NOT NULL,
+                `creditHours` INTEGER,
+                `roomNo` TEXT,
+                `building` TEXT,
+                `notes` TEXT,
+                `effectiveFrom` TEXT,
+                `effectiveTo` TEXT,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `createdBy` TEXT,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedBy` TEXT,
+                `isDeleted` INTEGER NOT NULL DEFAULT 0,
+                `deletedAt` INTEGER,
+                `deletedBy` TEXT,
+                PRIMARY KEY(`id`)
+            )
+            """.trimIndent(),
+        )
+        db.execSQL(
+            """
+            INSERT INTO `session_periods_new`
+            (`id`,`sessionId`,`deptId`,`day`,`startTime`,`endTime`,`courseCode`,`subjectName`,
+             `teacherId`,`teacherName`,`periodType`,`creditHours`,`roomNo`,`building`,`notes`,
+             `effectiveFrom`,`effectiveTo`,`createdAt`,`createdBy`,`updatedAt`,`updatedBy`,
+             `isDeleted`,`deletedAt`,`deletedBy`)
+            SELECT
+             `id`,`sessionId`,`deptId`,`day`,`startTime`,`endTime`,`courseCode`,`subjectName`,
+             `teacherId`,`teacherName`,`periodType`,`creditHours`,`roomNo`,`building`,`notes`,
+             `effectiveFrom`,`effectiveTo`,`createdAt`,`createdBy`,`updatedAt`,`updatedBy`,
+             `isDeleted`,`deletedAt`,`deletedBy`
+            FROM `session_periods`
+            """.trimIndent(),
+        )
+        db.execSQL("DROP TABLE `session_periods`")
+        db.execSQL("ALTER TABLE `session_periods_new` RENAME TO `session_periods`")
+
+        db.execSQL(
+            """
+            CREATE TABLE `session_students_new` (
+                `id` TEXT NOT NULL,
+                `sessionId` TEXT NOT NULL,
+                `deptId` TEXT NOT NULL,
+                `rollNumber` TEXT NOT NULL,
+                `name` TEXT NOT NULL,
+                `linkedEmail` TEXT,
+                `gpa` REAL,
+                `cgpa` REAL,
+                `profileJson` TEXT,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `createdBy` TEXT,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedBy` TEXT,
+                `isDeleted` INTEGER NOT NULL DEFAULT 0,
+                `deletedAt` INTEGER,
+                `deletedBy` TEXT,
+                PRIMARY KEY(`id`)
+            )
+            """.trimIndent(),
+        )
+        db.execSQL(
+            """
+            INSERT INTO `session_students_new`
+            (`id`,`sessionId`,`deptId`,`rollNumber`,`name`,`linkedEmail`,`gpa`,`cgpa`,`profileJson`,
+             `createdAt`,`createdBy`,`updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`)
+            SELECT
+             `id`,`sessionId`,`deptId`,`rollNumber`,`name`,`linkedEmail`,`gpa`,`cgpa`,`profileJson`,
+             `createdAt`,`createdBy`,`updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`
+            FROM `session_students`
+            """.trimIndent(),
+        )
+        db.execSQL("DROP TABLE `session_students`")
+        db.execSQL("ALTER TABLE `session_students_new` RENAME TO `session_students`")
+
+        db.execSQL(
+            """
+            CREATE TABLE `student_semester_gpa_new` (
+                `id` TEXT NOT NULL,
+                `sessionId` TEXT NOT NULL,
+                `rollNumber` TEXT NOT NULL,
+                `semester` INTEGER NOT NULL,
+                `gpa` REAL NOT NULL,
+                `cgpa` REAL NOT NULL,
+                `termLabel` TEXT,
+                `resultStatus` TEXT NOT NULL,
+                `classPosition` INTEGER,
+                `remarks` TEXT,
+                `supplyCoursesJson` TEXT NOT NULL,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `createdBy` TEXT,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedBy` TEXT,
+                `isDeleted` INTEGER NOT NULL DEFAULT 0,
+                `deletedAt` INTEGER,
+                `deletedBy` TEXT,
+                PRIMARY KEY(`id`)
+            )
+            """.trimIndent(),
+        )
+        db.execSQL(
+            """
+            INSERT INTO `student_semester_gpa_new`
+            (`id`,`sessionId`,`rollNumber`,`semester`,`gpa`,`cgpa`,`termLabel`,`resultStatus`,
+             `classPosition`,`remarks`,`supplyCoursesJson`,`createdAt`,`createdBy`,`updatedAt`,
+             `updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`)
+            SELECT
+             `id`,`sessionId`,`rollNumber`,`semester`,`gpa`,`cgpa`,`termLabel`,`resultStatus`,
+             `classPosition`,`remarks`,`supplyCoursesJson`,`createdAt`,`createdBy`,`updatedAt`,
+             `updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`
+            FROM `student_semester_gpa`
+            """.trimIndent(),
+        )
+        db.execSQL("DROP TABLE `student_semester_gpa`")
+        db.execSQL("ALTER TABLE `student_semester_gpa_new` RENAME TO `student_semester_gpa`")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_student_semester_gpa_sessionId_rollNumber_semester` ON `student_semester_gpa` (`sessionId`, `rollNumber`, `semester`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_student_semester_gpa_sessionId_semester_rollNumber` ON `student_semester_gpa` (`sessionId`, `semester`, `rollNumber`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_student_semester_gpa_sessionId_rollNumber_updatedAt` ON `student_semester_gpa` (`sessionId`, `rollNumber`, `updatedAt`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_student_semester_gpa_sessionId_semester_updatedAt` ON `student_semester_gpa` (`sessionId`, `semester`, `updatedAt`)")
+
+        db.execSQL(
+            """
+            CREATE TABLE `administrator_accounts_new` (
+                `id` TEXT NOT NULL,
+                `email` TEXT NOT NULL,
+                `status` TEXT NOT NULL,
+                `lastLoginAt` INTEGER,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `createdBy` TEXT,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedBy` TEXT,
+                `isDeleted` INTEGER NOT NULL DEFAULT 0,
+                `deletedAt` INTEGER,
+                `deletedBy` TEXT,
+                PRIMARY KEY(`id`)
+            )
+            """.trimIndent(),
+        )
+        db.execSQL(
+            """
+            INSERT INTO `administrator_accounts_new`
+            (`id`,`email`,`status`,`lastLoginAt`,`createdAt`,`createdBy`,`updatedAt`,`updatedBy`,
+             `isDeleted`,`deletedAt`,`deletedBy`)
+            SELECT
+             `id`,`email`,`status`,`lastLoginAt`,`createdAt`,`createdBy`,`updatedAt`,`updatedBy`,
+             `isDeleted`,`deletedAt`,`deletedBy`
+            FROM `administrator_accounts`
+            """.trimIndent(),
+        )
+        db.execSQL("DROP TABLE `administrator_accounts`")
+        db.execSQL("ALTER TABLE `administrator_accounts_new` RENAME TO `administrator_accounts`")
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_administrator_accounts_email` ON `administrator_accounts` (`email`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_administrator_accounts_updatedAt` ON `administrator_accounts` (`updatedAt`)")
+
+        db.execSQL(
+            """
+            CREATE TABLE `datesheets_new` (
+                `datesheetId` TEXT NOT NULL,
+                `title` TEXT NOT NULL,
+                `examType` TEXT NOT NULL,
+                `sessionId` TEXT,
+                `published` INTEGER NOT NULL DEFAULT 0,
+                `instructions` TEXT,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `createdBy` TEXT,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedBy` TEXT,
+                `isDeleted` INTEGER NOT NULL DEFAULT 0,
+                `deletedAt` INTEGER,
+                `deletedBy` TEXT,
+                PRIMARY KEY(`datesheetId`)
+            )
+            """.trimIndent(),
+        )
+        db.execSQL(
+            """
+            INSERT INTO `datesheets_new`
+            (`datesheetId`,`title`,`examType`,`sessionId`,`published`,`instructions`,
+             `createdAt`,`createdBy`,`updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`)
+            SELECT
+             `datesheetId`,`title`,`examType`,`sessionId`,`published`,`instructions`,
+             `createdAt`,`createdBy`,`updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`
+            FROM `datesheets`
+            """.trimIndent(),
+        )
+        db.execSQL("DROP TABLE `datesheets`")
+        db.execSQL("ALTER TABLE `datesheets_new` RENAME TO `datesheets`")
+
+        db.execSQL(
+            """
+            CREATE TABLE `datesheet_slots_new` (
+                `slotId` TEXT NOT NULL,
+                `datesheetId` TEXT NOT NULL,
+                `examDate` TEXT NOT NULL,
+                `startTime` TEXT,
+                `endTime` TEXT,
+                `durationMinutes` INTEGER,
+                `courseCode` TEXT,
+                `subjectName` TEXT,
+                `roomNo` TEXT,
+                `building` TEXT,
+                `invigilatorEmail` TEXT,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `createdBy` TEXT,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedBy` TEXT,
+                `isDeleted` INTEGER NOT NULL DEFAULT 0,
+                `deletedAt` INTEGER,
+                `deletedBy` TEXT,
+                PRIMARY KEY(`slotId`)
+            )
+            """.trimIndent(),
+        )
+        db.execSQL(
+            """
+            INSERT INTO `datesheet_slots_new`
+            (`slotId`,`datesheetId`,`examDate`,`startTime`,`endTime`,`durationMinutes`,`courseCode`,
+             `subjectName`,`roomNo`,`building`,`invigilatorEmail`,`createdAt`,`createdBy`,
+             `updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`)
+            SELECT
+             `slotId`,`datesheetId`,`examDate`,`startTime`,`endTime`,`durationMinutes`,`courseCode`,
+             `subjectName`,`roomNo`,`building`,`invigilatorEmail`,`createdAt`,`createdBy`,
+             `updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`
+            FROM `datesheet_slots`
+            """.trimIndent(),
+        )
+        db.execSQL("DROP TABLE `datesheet_slots`")
+        db.execSQL("ALTER TABLE `datesheet_slots_new` RENAME TO `datesheet_slots`")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_datesheet_slots_datesheetId_examDate` ON `datesheet_slots` (`datesheetId`, `examDate`)")
+
+        db.execSQL(
+            """
+            CREATE TABLE `departments_new` (
+                `deptId` TEXT NOT NULL,
+                `name` TEXT NOT NULL,
+                `code` TEXT NOT NULL,
+                `hodEmail` TEXT,
+                `description` TEXT,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `createdBy` TEXT,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedBy` TEXT,
+                `isDeleted` INTEGER NOT NULL DEFAULT 0,
+                `deletedAt` INTEGER,
+                `deletedBy` TEXT,
+                PRIMARY KEY(`deptId`)
+            )
+            """.trimIndent(),
+        )
+        db.execSQL(
+            """
+            INSERT INTO `departments_new`
+            (`deptId`,`name`,`code`,`hodEmail`,`description`,
+             `createdAt`,`createdBy`,`updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`)
+            SELECT
+             `deptId`,`name`,`code`,`hodEmail`,`description`,
+             `createdAt`,`createdBy`,`updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`
+            FROM `departments`
+            """.trimIndent(),
+        )
+        db.execSQL("DROP TABLE `departments`")
+        db.execSQL("ALTER TABLE `departments_new` RENAME TO `departments`")
+
+        db.execSQL(
+            """
+            CREATE TABLE `exam_paper_submissions_new` (
+                `submissionId` TEXT NOT NULL,
+                `offeringId` TEXT NOT NULL,
+                `subjectId` TEXT NOT NULL,
+                `examType` TEXT NOT NULL,
+                `teacherId` TEXT NOT NULL,
+                `storagePath` TEXT,
+                `fileName` TEXT,
+                `uploadedAt` INTEGER NOT NULL,
+                `mimeType` TEXT,
+                `keyStoragePath` TEXT,
+                `teacherNotes` TEXT,
+                `reviewStatus` TEXT NOT NULL DEFAULT 'SUBMITTED',
+                `reviewedBy` TEXT,
+                `reviewedAt` INTEGER,
+                `createdBy` TEXT,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedBy` TEXT,
+                `isDeleted` INTEGER NOT NULL DEFAULT 0,
+                `deletedAt` INTEGER,
+                `deletedBy` TEXT,
+                PRIMARY KEY(`submissionId`)
+            )
+            """.trimIndent(),
+        )
+        db.execSQL(
+            """
+            INSERT INTO `exam_paper_submissions_new`
+            (`submissionId`,`offeringId`,`subjectId`,`examType`,`teacherId`,`storagePath`,`fileName`,
+             `uploadedAt`,`mimeType`,`keyStoragePath`,`teacherNotes`,`reviewStatus`,`reviewedBy`,
+             `reviewedAt`,`createdBy`,`createdAt`,`updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`)
+            SELECT
+             `submissionId`,`offeringId`,`subjectId`,`examType`,`teacherId`,`storagePath`,`fileName`,
+             `uploadedAt`,`mimeType`,`keyStoragePath`,`teacherNotes`,`reviewStatus`,`reviewedBy`,
+             `reviewedAt`,`createdBy`,`createdAt`,`updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`
+            FROM `exam_paper_submissions`
+            """.trimIndent(),
+        )
+        db.execSQL("DROP TABLE `exam_paper_submissions`")
+        db.execSQL("ALTER TABLE `exam_paper_submissions_new` RENAME TO `exam_paper_submissions`")
+
+        db.execSQL(
+            """
+            CREATE TABLE `notifications_new` (
+                `notificationId` TEXT NOT NULL,
+                `title` TEXT NOT NULL,
+                `body` TEXT,
+                `targetRole` TEXT NOT NULL,
+                `targetOfferingId` TEXT,
+                `createdByUid` TEXT,
+                `priority` TEXT NOT NULL,
+                `targetDeptId` TEXT,
+                `attachmentPath` TEXT,
+                `expiresAt` INTEGER,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `createdBy` TEXT,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedBy` TEXT,
+                `isDeleted` INTEGER NOT NULL DEFAULT 0,
+                `deletedAt` INTEGER,
+                `deletedBy` TEXT,
+                PRIMARY KEY(`notificationId`)
+            )
+            """.trimIndent(),
+        )
+        db.execSQL(
+            """
+            INSERT INTO `notifications_new`
+            (`notificationId`,`title`,`body`,`targetRole`,`targetOfferingId`,`createdByUid`,`priority`,
+             `targetDeptId`,`attachmentPath`,`expiresAt`,`createdAt`,`createdBy`,`updatedAt`,`updatedBy`,
+             `isDeleted`,`deletedAt`,`deletedBy`)
+            SELECT
+             `notificationId`,`title`,`body`,`targetRole`,`targetOfferingId`,`createdByUid`,`priority`,
+             `targetDeptId`,`attachmentPath`,`expiresAt`,`createdAt`,`createdBy`,`updatedAt`,`updatedBy`,
+             `isDeleted`,`deletedAt`,`deletedBy`
+            FROM `notifications`
+            """.trimIndent(),
+        )
+        db.execSQL("DROP TABLE `notifications`")
+        db.execSQL("ALTER TABLE `notifications_new` RENAME TO `notifications`")
+
+        db.execSQL(
+            """
+            CREATE TABLE `calendar_events_new` (
+                `eventId` TEXT NOT NULL,
+                `title` TEXT NOT NULL,
+                `eventType` TEXT NOT NULL,
+                `startDate` TEXT NOT NULL,
+                `endDate` TEXT,
+                `startTime` TEXT,
+                `endTime` TEXT,
+                `description` TEXT,
+                `venue` TEXT,
+                `audience` TEXT NOT NULL,
+                `deptId` TEXT,
+                `sessionId` TEXT,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `createdBy` TEXT,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedBy` TEXT,
+                `isDeleted` INTEGER NOT NULL DEFAULT 0,
+                `deletedAt` INTEGER,
+                `deletedBy` TEXT,
+                PRIMARY KEY(`eventId`)
+            )
+            """.trimIndent(),
+        )
+        db.execSQL(
+            """
+            INSERT INTO `calendar_events_new`
+            (`eventId`,`title`,`eventType`,`startDate`,`endDate`,`startTime`,`endTime`,`description`,
+             `venue`,`audience`,`deptId`,`sessionId`,`createdAt`,`createdBy`,`updatedAt`,`updatedBy`,
+             `isDeleted`,`deletedAt`,`deletedBy`)
+            SELECT
+             `eventId`,`title`,`eventType`,`startDate`,`endDate`,`startTime`,`endTime`,`description`,
+             `venue`,`audience`,`deptId`,`sessionId`,`createdAt`,`createdBy`,`updatedAt`,`updatedBy`,
+             `isDeleted`,`deletedAt`,`deletedBy`
+            FROM `calendar_events`
+            """.trimIndent(),
+        )
+        db.execSQL("DROP TABLE `calendar_events`")
+        db.execSQL("ALTER TABLE `calendar_events_new` RENAME TO `calendar_events`")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_calendar_events_startDate` ON `calendar_events` (`startDate`)")
+
+        db.execSQL(
+            """
+            CREATE TABLE `fines_new` (
+                `fineId` TEXT NOT NULL,
+                `sessionId` TEXT NOT NULL,
+                `rollNumber` TEXT NOT NULL,
+                `category` TEXT NOT NULL,
+                `amount` REAL NOT NULL,
+                `reason` TEXT,
+                `issuedBy` TEXT,
+                `issuedAt` INTEGER,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `createdBy` TEXT,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedBy` TEXT,
+                `isDeleted` INTEGER NOT NULL DEFAULT 0,
+                `deletedAt` INTEGER,
+                `deletedBy` TEXT,
+                PRIMARY KEY(`fineId`)
+            )
+            """.trimIndent(),
+        )
+        db.execSQL(
+            """
+            INSERT INTO `fines_new`
+            (`fineId`,`sessionId`,`rollNumber`,`category`,`amount`,`reason`,`issuedBy`,`issuedAt`,
+             `createdAt`,`createdBy`,`updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`)
+            SELECT
+             `fineId`,`sessionId`,`rollNumber`,`category`,`amount`,`reason`,`issuedBy`,`issuedAt`,
+             `createdAt`,`createdBy`,`updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`
+            FROM `fines`
+            """.trimIndent(),
+        )
+        db.execSQL("DROP TABLE `fines`")
+        db.execSQL("ALTER TABLE `fines_new` RENAME TO `fines`")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_fines_sessionId_rollNumber` ON `fines` (`sessionId`, `rollNumber`)")
+
+        db.execSQL(
+            """
+            CREATE TABLE `mark_edit_requests_new` (
+                `requestId` TEXT NOT NULL,
+                `sessionId` TEXT NOT NULL,
+                `semester` INTEGER NOT NULL,
+                `courseCode` TEXT NOT NULL,
+                `examType` TEXT NOT NULL,
+                `rollNumber` TEXT NOT NULL,
+                `currentScore` INTEGER,
+                `requestedScore` INTEGER NOT NULL,
+                `reason` TEXT,
+                `status` TEXT NOT NULL,
+                `requestedBy` TEXT NOT NULL,
+                `reviewedBy` TEXT,
+                `requestedAt` INTEGER NOT NULL,
+                `reviewedAt` INTEGER,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `createdBy` TEXT,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedBy` TEXT,
+                `isDeleted` INTEGER NOT NULL DEFAULT 0,
+                `deletedAt` INTEGER,
+                `deletedBy` TEXT,
+                PRIMARY KEY(`requestId`)
+            )
+            """.trimIndent(),
+        )
+        db.execSQL(
+            """
+            INSERT INTO `mark_edit_requests_new`
+            (`requestId`,`sessionId`,`semester`,`courseCode`,`examType`,`rollNumber`,`currentScore`,
+             `requestedScore`,`reason`,`status`,`requestedBy`,`reviewedBy`,`requestedAt`,`reviewedAt`,
+             `createdAt`,`createdBy`,`updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`)
+            SELECT
+             `requestId`,`sessionId`,`semester`,`courseCode`,`examType`,`rollNumber`,`currentScore`,
+             `requestedScore`,`reason`,`status`,`requestedBy`,`reviewedBy`,`requestedAt`,`reviewedAt`,
+             `createdAt`,`createdBy`,`updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`
+            FROM `mark_edit_requests`
+            """.trimIndent(),
+        )
+        db.execSQL("DROP TABLE `mark_edit_requests`")
+        db.execSQL("ALTER TABLE `mark_edit_requests_new` RENAME TO `mark_edit_requests`")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_mark_edit_requests_sessionId_courseCode_examType_status_rollNumber` ON `mark_edit_requests` (`sessionId`, `courseCode`, `examType`, `status`, `rollNumber`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_mark_edit_requests_sessionId_courseCode_examType_status_updatedAt` ON `mark_edit_requests` (`sessionId`, `courseCode`, `examType`, `status`, `updatedAt`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_mark_edit_requests_status_requestedAt` ON `mark_edit_requests` (`status`, `requestedAt`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_mark_edit_requests_status_updatedAt` ON `mark_edit_requests` (`status`, `updatedAt`)")
+
+        db.execSQL(
+            """
+            CREATE TABLE `session_fees_new` (
+                `sessionId` TEXT NOT NULL,
+                `cadence` TEXT NOT NULL,
+                `academicYear` TEXT,
+                `dueDate` TEXT,
+                `lateFineNote` TEXT,
+                `paymentNote` TEXT,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `createdBy` TEXT,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedBy` TEXT,
+                `isDeleted` INTEGER NOT NULL DEFAULT 0,
+                `deletedAt` INTEGER,
+                `deletedBy` TEXT,
+                PRIMARY KEY(`sessionId`)
+            )
+            """.trimIndent(),
+        )
+        db.execSQL(
+            """
+            INSERT INTO `session_fees_new`
+            (`sessionId`,`cadence`,`academicYear`,`dueDate`,`lateFineNote`,`paymentNote`,
+             `createdAt`,`createdBy`,`updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`)
+            SELECT
+             `sessionId`,`cadence`,`academicYear`,`dueDate`,`lateFineNote`,`paymentNote`,
+             `createdAt`,`createdBy`,`updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`
+            FROM `session_fees`
+            """.trimIndent(),
+        )
+        db.execSQL("DROP TABLE `session_fees`")
+        db.execSQL("ALTER TABLE `session_fees_new` RENAME TO `session_fees`")
+
+        db.execSQL(
+            """
+            CREATE TABLE `session_fee_heads_new` (
+                `id` TEXT NOT NULL,
+                `sessionId` TEXT NOT NULL,
+                `label` TEXT NOT NULL,
+                `amount` REAL NOT NULL,
+                `position` INTEGER NOT NULL,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `createdBy` TEXT,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedBy` TEXT,
+                `isDeleted` INTEGER NOT NULL DEFAULT 0,
+                `deletedAt` INTEGER,
+                `deletedBy` TEXT,
+                PRIMARY KEY(`id`)
+            )
+            """.trimIndent(),
+        )
+        db.execSQL(
+            """
+            INSERT INTO `session_fee_heads_new`
+            (`id`,`sessionId`,`label`,`amount`,`position`,
+             `createdAt`,`createdBy`,`updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`)
+            SELECT
+             `id`,`sessionId`,`label`,`amount`,`position`,
+             `createdAt`,`createdBy`,`updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`
+            FROM `session_fee_heads`
+            """.trimIndent(),
+        )
+        db.execSQL("DROP TABLE `session_fee_heads`")
+        db.execSQL("ALTER TABLE `session_fee_heads_new` RENAME TO `session_fee_heads`")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_session_fee_heads_sessionId_position` ON `session_fee_heads` (`sessionId`, `position`)")
+
+        db.execSQL(
+            """
+            CREATE TABLE `student_link_requests_new` (
+                `requestId` TEXT NOT NULL,
+                `requestedByUid` TEXT NOT NULL,
+                `sessionIdClaimed` TEXT,
+                `rollNumberClaimed` TEXT,
+                `nameClaimed` TEXT,
+                `cnicClaimed` TEXT,
+                `dobClaimed` TEXT,
+                `universityRollClaimed` TEXT,
+                `registrationNoClaimed` TEXT,
+                `message` TEXT,
+                `status` TEXT NOT NULL,
+                `reviewedBy` TEXT,
+                `reviewedAt` INTEGER,
+                `rejectionReason` TEXT,
+                `attemptCount` INTEGER NOT NULL DEFAULT 0,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `createdBy` TEXT,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedBy` TEXT,
+                `isDeleted` INTEGER NOT NULL DEFAULT 0,
+                `deletedAt` INTEGER,
+                `deletedBy` TEXT,
+                PRIMARY KEY(`requestId`)
+            )
+            """.trimIndent(),
+        )
+        db.execSQL(
+            """
+            INSERT INTO `student_link_requests_new`
+            (`requestId`,`requestedByUid`,`sessionIdClaimed`,`rollNumberClaimed`,`nameClaimed`,
+             `cnicClaimed`,`dobClaimed`,`universityRollClaimed`,`registrationNoClaimed`,`message`,
+             `status`,`reviewedBy`,`reviewedAt`,`rejectionReason`,`attemptCount`,
+             `createdAt`,`createdBy`,`updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`)
+            SELECT
+             `requestId`,`requestedByUid`,`sessionIdClaimed`,`rollNumberClaimed`,`nameClaimed`,
+             `cnicClaimed`,`dobClaimed`,`universityRollClaimed`,`registrationNoClaimed`,`message`,
+             `status`,`reviewedBy`,`reviewedAt`,`rejectionReason`,`attemptCount`,
+             `createdAt`,`createdBy`,`updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`
+            FROM `student_link_requests`
+            """.trimIndent(),
+        )
+        db.execSQL("DROP TABLE `student_link_requests`")
+        db.execSQL("ALTER TABLE `student_link_requests_new` RENAME TO `student_link_requests`")
+
+        db.execSQL(
+            """
+            CREATE TABLE `teachers_new` (
+                `teacherId` TEXT NOT NULL,
+                `name` TEXT NOT NULL,
+                `email` TEXT NOT NULL,
+                `phone` TEXT,
+                `deptId` TEXT,
+                `designation` TEXT,
+                `qualification` TEXT,
+                `specialization` TEXT,
+                `officeRoom` TEXT,
+                `gender` TEXT,
+                `authUid` TEXT,
+                `isAdmin` INTEGER NOT NULL DEFAULT 0,
+                `isHod` INTEGER NOT NULL DEFAULT 0,
+                `photoPath` TEXT,
+                `canApproveLinkRequests` INTEGER NOT NULL DEFAULT 0,
+                `canEditTimetable` INTEGER NOT NULL DEFAULT 0,
+                `canSendNotifications` INTEGER NOT NULL DEFAULT 0,
+                `canManageDatesheets` INTEGER NOT NULL DEFAULT 0,
+                `status` TEXT NOT NULL,
+                `isActive` INTEGER NOT NULL DEFAULT 1,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `createdBy` TEXT,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedBy` TEXT,
+                `isDeleted` INTEGER NOT NULL DEFAULT 0,
+                `deletedAt` INTEGER,
+                `deletedBy` TEXT,
+                PRIMARY KEY(`teacherId`)
+            )
+            """.trimIndent(),
+        )
+        db.execSQL(
+            """
+            INSERT INTO `teachers_new`
+            (`teacherId`,`name`,`email`,`phone`,`deptId`,`designation`,`qualification`,
+             `specialization`,`officeRoom`,`gender`,`authUid`,`isAdmin`,`isHod`,`photoPath`,
+             `canApproveLinkRequests`,`canEditTimetable`,`canSendNotifications`,`canManageDatesheets`,
+             `status`,`isActive`,`createdAt`,`createdBy`,`updatedAt`,`updatedBy`,
+             `isDeleted`,`deletedAt`,`deletedBy`)
+            SELECT
+             `teacherId`,`name`,`email`,`phone`,`deptId`,`designation`,`qualification`,
+             `specialization`,`officeRoom`,`gender`,`authUid`,`isAdmin`,`isHod`,`photoPath`,
+             `canApproveLinkRequests`,`canEditTimetable`,`canSendNotifications`,`canManageDatesheets`,
+             `status`,`isActive`,`createdAt`,`createdBy`,`updatedAt`,`updatedBy`,
+             `isDeleted`,`deletedAt`,`deletedBy`
+            FROM `teachers`
+            """.trimIndent(),
+        )
+        db.execSQL("DROP TABLE `teachers`")
+        db.execSQL("ALTER TABLE `teachers_new` RENAME TO `teachers`")
+    }
+}
+
 val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_18_19,
     MIGRATION_19_20,
@@ -689,4 +1467,5 @@ val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_35_36,
     MIGRATION_36_37,
     MIGRATION_37_38,
+    MIGRATION_38_39,
 )

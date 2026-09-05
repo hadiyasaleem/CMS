@@ -19,7 +19,6 @@ data class ExamPaperSubmission(
     val reviewedAt: Instant? = null,
     val teacherNotes: String? = null,
     val keyStoragePath: String? = null,
-    override val entityId: Long = 0L,
     override val createdAt: Instant = Instant.EPOCH,
     override val createdBy: String,
     override val updatedAt: Instant = Instant.EPOCH,

@@ -5,7 +5,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AcademicSessionDto(
-    val entityId: Long? = null,
     val sessionId: String? = null,
     val deptId: String? = null,
     val startYear: Int = 0,
@@ -27,7 +26,6 @@ data class AcademicSessionDto(
 
 @Serializable
 data class SemesterSubjectDto(
-    val entityId: Long? = null,
     val sessionId: String? = null,
     val semester: Int = 0,
     val courseCode: String? = null,
@@ -47,7 +45,6 @@ data class SemesterSubjectDto(
 
 @Serializable
 data class SemesterTermDto(
-    val entityId: Long? = null,
     val sessionId: String? = null,
     val semester: Int = 0,
     val startDate: String? = null,
@@ -63,7 +60,6 @@ data class SemesterTermDto(
 
 @Serializable
 data class SessionStudentDto(
-    val entityId: Long? = null,
     val sessionId: String? = null,
     val rollNumber: String? = null,
     val name: String? = null,
@@ -81,7 +77,6 @@ data class SessionStudentDto(
 
 @Serializable
 data class StudentProfileDto(
-    val entityId: Long? = null,
     val sessionId: String? = null,
     val rollNumber: String? = null,
     val name: String? = null,
@@ -123,7 +118,6 @@ data class StudentProfileDto(
 
 @Serializable
 data class TimetablePeriodDto(
-    val entityId: Long? = null,
     val id: String? = null,
     @SerialName("primary_session_id") val sessionId: String? = null,
     val day: String? = null,
@@ -184,7 +178,6 @@ data class AttendanceSummaryRowDto(
 
 @Serializable
 data class MarkRowDto(
-    val entityId: Long? = null,
     val sessionId: String? = null,
     val semester: Int = 0,
     val courseCode: String? = null,
@@ -207,7 +200,6 @@ data class MarkRowDto(
 
 @Serializable
 data class SemesterGpaDto(
-    val entityId: Long? = null,
     val sessionId: String? = null,
     val rollNumber: String? = null,
     val semester: Int = 0,

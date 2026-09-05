@@ -62,7 +62,7 @@ fun calendarEventKey(event: CalendarEvent): String {
     val trimmed = event.id.trim()
     if (trimmed.isNotBlank()) return trimmed
     return listOf(
-        event.entityId, event.title, event.startDate, event.startTime,
+        event.title, event.startDate, event.startTime,
         event.audience, event.deptId, event.sessionId, event.createdAt,
     ).joinToString("|")
 }

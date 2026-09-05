@@ -5,7 +5,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class StudentLinkRequestDto(
-    val entityId: Long? = null,
     val requestId: String? = null,
     val requestedByEmail: String? = null,
     val rollNumberClaimed: String? = null,

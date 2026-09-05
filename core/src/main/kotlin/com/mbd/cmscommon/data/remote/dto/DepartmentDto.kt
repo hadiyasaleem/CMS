@@ -4,7 +4,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class DepartmentDto(
-    val entityId: Long? = null,
     val deptId: String? = null,
     val name: String? = null,
     val code: String? = null,

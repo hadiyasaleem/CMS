@@ -24,7 +24,6 @@ data class StudentLinkRequest(
     val reviewedAt: Instant?,
     val rejectionReason: String? = null,
     val attemptCount: Int = 1,
-    override val entityId: Long = 0L,
     override val createdAt: Instant,
     override val createdBy: String? = null,
     override val updatedAt: Instant = Instant.EPOCH,

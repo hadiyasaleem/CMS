@@ -4,7 +4,6 @@ import java.time.Instant
 
 data class AdministratorAccount(
     val id: String,
-    val entityId: Long = 0L,
     val email: String,
     val status: String,
     val createdAt: Instant?,

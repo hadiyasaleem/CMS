@@ -68,7 +68,7 @@ fun markEditReviewKey(request: MarkEditRequest): String {
     val trimmed = request.id.trim()
     if (trimmed.isNotBlank()) return trimmed
     return listOf(
-        request.entityId, request.sessionId, request.semester, request.courseCode,
+        request.sessionId, request.semester, request.courseCode,
         request.examType, request.rollNumber, request.requestedBy, request.requestedAt,
     ).joinToString("|")
 }

@@ -58,7 +58,6 @@ class CalendarRepositoryImpl @Inject constructor(
         audience = audience ?: "ALL",
         deptId = deptId,
         sessionId = sessionId,
-        entityId = entityId ?: 0L,
         createdAt = PgTime.parseOrEpoch(createdAt),
         createdBy = createdBy,
         updatedAt = PgTime.parseOrEpoch(updatedAt),

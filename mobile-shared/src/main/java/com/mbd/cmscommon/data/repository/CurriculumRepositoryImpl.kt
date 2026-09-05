@@ -62,7 +62,6 @@ class CurriculumRepositoryImpl @Inject constructor(
         subjectType = subjectType ?: "THEORY",
         isElective = isElective,
         outline = outline,
-        entityId = entityId ?: 0L,
         createdAt = PgTime.parseOrEpoch(createdAt).toEpochMilli(),
         createdBy = createdBy,
         updatedAt = PgTime.parseOrEpoch(updatedAt).toEpochMilli(),

@@ -18,7 +18,6 @@ data class CalendarEventEntity(
     val audience: String,
     val deptId: String?,
     val sessionId: String?,
-    val entityId: Long = 0L,
     val createdAt: Long = 0L,
     val createdBy: String? = null,
     val updatedAt: Long = 0L,
@@ -38,7 +37,6 @@ data class FineEntity(
     val reason: String?,
     val issuedBy: String?,
     val issuedAt: Long?,
-    val entityId: Long = 0L,
     val createdAt: Long = 0L,
     val createdBy: String? = null,
     val updatedAt: Long = 0L,
@@ -52,9 +50,9 @@ data class FineEntity(
     tableName = "mark_edit_requests",
     indices = [
         Index(value = ["sessionId", "courseCode", "examType", "status", "rollNumber"]),
-        Index(value = ["sessionId", "courseCode", "examType", "status", "updatedAt", "entityId"]),
+        Index(value = ["sessionId", "courseCode", "examType", "status", "updatedAt"]),
         Index(value = ["status", "requestedAt"]),
-        Index(value = ["status", "updatedAt", "entityId"]),
+        Index(value = ["status", "updatedAt"]),
     ],
 )
 data class MarkEditRequestEntity(
@@ -72,7 +70,6 @@ data class MarkEditRequestEntity(
     val reviewedBy: String?,
     val requestedAt: Long,
     val reviewedAt: Long?,
-    val entityId: Long = 0L,
     val createdAt: Long = 0L,
     val createdBy: String? = null,
     val updatedAt: Long = 0L,

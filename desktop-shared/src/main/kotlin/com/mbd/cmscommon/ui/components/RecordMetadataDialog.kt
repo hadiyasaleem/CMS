@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -29,7 +28,7 @@ import java.util.Locale
 
 @Composable
 fun RecordMetadataInfoButton(title: String, entity: BaseEntity) {
-    var open by remember(entity.entityId) { mutableStateOf(false) }
+    var open by remember(entity.createdAt) { mutableStateOf(false) }
 
     IconButton(onClick = { open = true }) {
         Icon(Icons.Outlined.Info, contentDescription = "$title information")
@@ -41,13 +40,12 @@ fun RecordMetadataInfoButton(title: String, entity: BaseEntity) {
 
 @Composable
 fun RecordMetadataDialog(title: String, entity: BaseEntity, onDismiss: () -> Unit) {
-    RecordMetadataDialog(title, entity.entityId, entity.createdAt, entity.createdBy, entity.updatedAt, entity.updatedBy, onDismiss)
+    RecordMetadataDialog(title, entity.createdAt, entity.createdBy, entity.updatedAt, entity.updatedBy, onDismiss)
 }
 
 @Composable
 fun RecordMetadataDialog(
     title: String,
-    entityId: Long,
     createdAt: Instant?,
     createdBy: String?,
     updatedAt: Instant?,
@@ -60,8 +58,6 @@ fun RecordMetadataDialog(
         title = { Text("$title information") },
         text = {
             Column(Modifier.fillMaxWidth()) {
-                MetadataValue("Entity ID", entityId.toString())
-                HorizontalDivider()
                 MetadataValue("Created at", formatMetadataTime(createdAt))
                 MetadataValue("Created by", createdBy ?: "Unavailable")
                 Spacer(Modifier.height(8.dp))

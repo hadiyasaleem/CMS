@@ -4,7 +4,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class SessionFeeDto(
-    val entityId: Long? = null,
     val sessionId: String? = null,
     val cadence: String? = null,
     val academicYear: String? = null,
@@ -22,7 +21,6 @@ data class SessionFeeDto(
 
 @Serializable
 data class SessionFeeHeadDto(
-    val entityId: Long? = null,
     val sessionId: String? = null,
     val label: String? = null,
     val amount: Double = 0.0,

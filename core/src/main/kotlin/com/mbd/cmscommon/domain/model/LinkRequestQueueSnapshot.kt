@@ -60,7 +60,7 @@ fun linkRequestVerificationKey(request: StudentLinkRequest): String {
     val trimmed = request.requestId.trim()
     if (trimmed.isNotBlank()) return trimmed
     return listOf(
-        request.entityId, request.requestedByUid, request.sessionIdClaimed,
+        request.requestedByUid, request.sessionIdClaimed,
         request.rollNumberClaimed, request.createdAt,
     ).joinToString("|")
 }

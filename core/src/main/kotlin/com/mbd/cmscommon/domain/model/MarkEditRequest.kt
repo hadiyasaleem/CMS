@@ -23,7 +23,6 @@ data class MarkEditRequest(
     val reviewedBy: String?,
     val requestedAt: Instant,
     val reviewedAt: Instant?,
-    override val entityId: Long = 0L,
     override val createdAt: Instant = Instant.EPOCH,
     override val createdBy: String? = null,
     override val updatedAt: Instant = Instant.EPOCH,

@@ -26,7 +26,6 @@ data class Notification(
     val targetDeptId: String? = null,
     val attachmentPath: String? = null,
     val expiresAt: Instant? = null,
-    override val entityId: Long = 0L,
     override val createdAt: Instant,
     override val createdBy: String? = null,
     override val updatedAt: Instant = Instant.EPOCH,

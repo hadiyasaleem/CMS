@@ -33,7 +33,6 @@ data class Teacher(
     val permissions: TeacherPermissions = TeacherPermissions(),
     val status: TeacherStatus = TeacherStatus.ACTIVE,
     val isActive: Boolean = true,
-    override val entityId: Long = 0L,
     override val createdAt: Instant,
     override val createdBy: String?,
     override val updatedAt: Instant,

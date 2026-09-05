@@ -21,7 +21,6 @@ data class StudentLinkRequestEntity(
     val rejectionReason: String?,
     val attemptCount: Int = 0,
     val createdAt: Long = 0L,
-    val entityId: Long = 0L,
     val createdBy: String? = null,
     val updatedAt: Long = 0L,
     val updatedBy: String? = null,

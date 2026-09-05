@@ -55,7 +55,6 @@ class SessionTimetableRepositoryImpl @Inject constructor(
         notes = notes,
         effectiveFrom = effectiveFrom,
         effectiveTo = effectiveTo,
-        entityId = entityId ?: 0L,
         createdAt = PgTime.parseOrEpoch(createdAt).toEpochMilli(),
         createdBy = createdBy,
         updatedAt = PgTime.parseOrEpoch(updatedAt).toEpochMilli(),

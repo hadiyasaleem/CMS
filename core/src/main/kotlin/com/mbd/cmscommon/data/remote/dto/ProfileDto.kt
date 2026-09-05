@@ -15,7 +15,6 @@ data class ProfileDto(
     // jsonb, default '{}' — no defined shape or consumer yet anywhere in the app; kept as a raw
     // passthrough so decoding/round-tripping a profile row doesn't silently drop the column.
     val notificationPrefs: JsonElement? = null,
-    val entityId: Long? = null,
     val createdAt: String? = null,
     val createdBy: String? = null,
     val updatedAt: String? = null,

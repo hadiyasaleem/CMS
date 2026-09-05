@@ -58,7 +58,6 @@ class FineRepositoryImpl @Inject constructor(
         reason = reason.orEmpty(),
         issuedBy = issuedBy,
         issuedAt = PgTime.parse(issuedAt),
-        entityId = entityId ?: 0L,
         createdAt = PgTime.parseOrEpoch(createdAt),
         createdBy = createdBy,
         updatedAt = PgTime.parseOrEpoch(updatedAt),

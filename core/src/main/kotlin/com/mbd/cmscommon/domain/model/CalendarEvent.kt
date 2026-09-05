@@ -15,7 +15,6 @@ data class CalendarEvent(
     val audience: String = "ALL",
     val deptId: String? = null,
     val sessionId: String? = null,
-    override val entityId: Long = 0L,
     override val createdAt: Instant = Instant.EPOCH,
     override val createdBy: String? = null,
     override val updatedAt: Instant = Instant.EPOCH,

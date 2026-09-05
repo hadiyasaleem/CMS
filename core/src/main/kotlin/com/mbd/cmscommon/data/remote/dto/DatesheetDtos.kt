@@ -4,7 +4,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class DatesheetDto(
-    val entityId: Long? = null,
     val id: String? = null,
     val title: String? = null,
     val examType: String? = null,
@@ -22,7 +21,6 @@ data class DatesheetDto(
 
 @Serializable
 data class DatesheetSlotDto(
-    val entityId: Long? = null,
     val id: String? = null,
     val datesheetId: String? = null,
     val examDate: String? = null,

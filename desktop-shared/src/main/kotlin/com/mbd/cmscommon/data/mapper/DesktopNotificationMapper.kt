@@ -28,7 +28,6 @@ object DesktopNotificationMapper {
         targetDeptId = dto.targetDeptId,
         attachmentPath = dto.attachmentPath,
         expiresAt = PgTime.parse(dto.expiresAt),
-        entityId = dto.entityId ?: 0L,
         createdAt = PgTime.parseOrEpoch(dto.createdAt),
         createdBy = dto.createdBy,
         updatedAt = PgTime.parseOrEpoch(dto.updatedAt),

@@ -5,7 +5,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class MarkEditRequestDto(
     val id: String? = null,
-    val entityId: Long? = null,
     val sessionId: String? = null,
     val semester: Int = 0,
     val courseCode: String? = null,

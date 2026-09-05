@@ -8,7 +8,7 @@ import androidx.room.PrimaryKey
     tableName = "administrator_accounts",
     indices = [
         Index(value = ["email"], unique = true),
-        Index(value = ["updatedAt", "entityId"]),
+        Index(value = ["updatedAt"]),
     ],
 )
 data class AdministratorAccountEntity(
@@ -16,7 +16,6 @@ data class AdministratorAccountEntity(
     val email: String,
     val status: String,
     val lastLoginAt: Long?,
-    val entityId: Long = 0L,
     val createdAt: Long = 0L,
     val createdBy: String? = null,
     val updatedAt: Long = 0L,

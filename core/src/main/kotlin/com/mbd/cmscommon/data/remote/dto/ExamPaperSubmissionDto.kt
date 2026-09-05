@@ -4,7 +4,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class ExamPaperSubmissionDto(
-    val entityId: Long? = null,
     val id: String? = null,
     val sessionId: String? = null,
     val semester: Int = 0,

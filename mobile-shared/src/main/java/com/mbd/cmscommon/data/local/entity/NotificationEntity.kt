@@ -16,7 +16,6 @@ data class NotificationEntity(
     val attachmentPath: String?,
     val expiresAt: Long?,
     val createdAt: Long = 0L,
-    val entityId: Long = 0L,
     val createdBy: String? = null,
     val updatedAt: Long = 0L,
     val updatedBy: String? = null,

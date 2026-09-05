@@ -41,7 +41,6 @@ object StudentProfileMapper {
         gpa = dto.gpa,
         cgpa = dto.cgpa,
         photoPath = dto.photoPath,
-        entityId = dto.entityId ?: 0L,
         createdAt = PgTime.parseOrEpoch(dto.createdAt),
         createdBy = dto.createdBy,
         updatedAt = PgTime.parseOrEpoch(dto.updatedAt),
@@ -82,7 +81,6 @@ object StudentProfileMapper {
     )
 
     fun rosterDto(dto: StudentProfileDto): SessionStudentDto = SessionStudentDto(
-        entityId = dto.entityId,
         sessionId = dto.sessionId,
         rollNumber = dto.rollNumber,
         name = dto.name,

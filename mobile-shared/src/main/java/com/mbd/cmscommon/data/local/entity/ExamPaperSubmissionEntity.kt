@@ -20,7 +20,6 @@ data class ExamPaperSubmissionEntity(
     val reviewedBy: String? = null,
     val reviewedAt: Long? = null,
     val createdBy: String? = null,
-    val entityId: Long = 0L,
     val createdAt: Long = 0L,
     val updatedAt: Long = 0L,
     val updatedBy: String? = null,

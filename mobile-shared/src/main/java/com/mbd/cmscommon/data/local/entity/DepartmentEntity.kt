@@ -6,7 +6,6 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "departments")
 data class DepartmentEntity(
     @PrimaryKey val deptId: String,
-    val entityId: Long = 0L,
     val name: String,
     val code: String,
     val hodEmail: String?,

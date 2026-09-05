@@ -107,14 +107,14 @@ fun datesheetScheduleQuality(sheet: Datesheet, slots: List<DatesheetSlot>): Date
 fun datesheetKey(datesheet: Datesheet): String {
     val trimmed = datesheet.id.trim()
     if (trimmed.isNotBlank()) return trimmed
-    return listOf(datesheet.entityId, datesheet.title, datesheet.sessionId, datesheet.examType, datesheet.createdAt).joinToString("|")
+    return listOf(datesheet.title, datesheet.sessionId, datesheet.examType, datesheet.createdAt).joinToString("|")
 }
 
 fun datesheetSlotKey(slot: DatesheetSlot): String {
     val trimmed = slot.id.trim()
     if (trimmed.isNotBlank()) return trimmed
     return listOf(
-        slot.entityId, slot.datesheetId, slot.examDate, slot.startTime,
+        slot.datesheetId, slot.examDate, slot.startTime,
         slot.courseCode, slot.subjectName, slot.createdAt,
     ).joinToString("|")
 }

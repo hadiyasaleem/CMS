@@ -35,7 +35,6 @@ object TeacherMapper {
             permissions = permissions,
             status = status,
             isActive = dto.isActive,
-            entityId = dto.entityId ?: 0L,
             createdAt = PgTime.parseOrEpoch(dto.createdAt),
             createdBy = dto.createdBy ?: "",
             updatedAt = PgTime.parseOrEpoch(dto.updatedAt),
@@ -69,7 +68,6 @@ object TeacherMapper {
 
     fun domainToEntity(domain: Teacher): TeacherEntity = TeacherEntity(
         teacherId = domain.teacherId,
-        entityId = domain.entityId,
         name = domain.name,
         email = domain.email,
         phone = domain.phone,
@@ -121,7 +119,6 @@ object TeacherMapper {
             permissions = permissions,
             status = status,
             isActive = entity.isActive,
-            entityId = entity.entityId,
             createdAt = Instant.ofEpochMilli(entity.createdAt),
             createdBy = entity.createdBy,
             updatedAt = Instant.ofEpochMilli(entity.updatedAt),

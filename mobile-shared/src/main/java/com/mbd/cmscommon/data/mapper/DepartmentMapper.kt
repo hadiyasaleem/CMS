@@ -9,7 +9,6 @@ import java.time.Instant
 object DepartmentMapper {
     fun dtoToEntity(dto: DepartmentDto): DepartmentEntity = DepartmentEntity(
         deptId = dto.deptId ?: "",
-        entityId = dto.entityId ?: 0L,
         name = dto.name ?: "",
         code = dto.code ?: "",
         hodEmail = dto.hodEmail,
@@ -29,7 +28,6 @@ object DepartmentMapper {
         code = entity.code,
         hodEmail = entity.hodEmail,
         description = entity.description,
-        entityId = entity.entityId,
         createdAt = Instant.ofEpochMilli(entity.createdAt),
         createdBy = entity.createdBy ?: "",
         updatedAt = Instant.ofEpochMilli(entity.updatedAt),
@@ -38,7 +36,6 @@ object DepartmentMapper {
 
     fun domainToEntity(domain: Department): DepartmentEntity = DepartmentEntity(
         deptId = domain.deptId,
-        entityId = domain.entityId,
         name = domain.name,
         code = domain.code,
         hodEmail = domain.hodEmail,

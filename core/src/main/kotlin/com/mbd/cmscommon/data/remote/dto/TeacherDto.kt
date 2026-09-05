@@ -4,7 +4,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class TeacherDto(
-    val entityId: Long? = null,
     val email: String? = null,
     val name: String? = null,
     val phone: String? = null,

@@ -64,7 +64,6 @@ object DesktopSessionMarksMapper {
         classPosition = dto.classPosition,
         remarks = dto.remarks,
         supplyCourses = dto.supplyCourses,
-        entityId = dto.entityId ?: 0L,
         createdAt = PgTime.parseOrEpoch(dto.createdAt),
         createdBy = dto.createdBy,
         updatedAt = PgTime.parseOrEpoch(dto.updatedAt),

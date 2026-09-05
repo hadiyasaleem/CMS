@@ -27,7 +27,6 @@ private fun AdministratorAccountDto.toEntity(): AdministratorAccountEntity = Adm
     email = email ?: "",
     status = status ?: "",
     lastLoginAt = PgTime.parse(lastLoginAt)?.toEpochMilli(),
-    entityId = entityId ?: 0L,
     createdAt = PgTime.parseOrEpoch(createdAt).toEpochMilli(),
     createdBy = createdBy,
     updatedAt = PgTime.parseOrEpoch(updatedAt ?: createdAt).toEpochMilli(),
@@ -39,7 +38,6 @@ private fun AdministratorAccountDto.toEntity(): AdministratorAccountEntity = Adm
 
 private fun AdministratorAccountEntity.toDomain(): AdministratorAccount = AdministratorAccount(
     id = id,
-    entityId = entityId,
     email = email,
     status = status,
     createdAt = Instant.ofEpochMilli(createdAt),

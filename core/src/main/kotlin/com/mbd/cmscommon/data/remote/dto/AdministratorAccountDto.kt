@@ -8,7 +8,6 @@ data class AdministratorAccountDto(
     val id: String? = null,
     val email: String? = null,
     val status: String? = null,
-    val entityId: Long? = null,
     // jsonb, default '{}' — no defined shape or consumer yet anywhere in the app; kept as a raw
     // passthrough so decoding/round-tripping a profile row doesn't silently drop the column.
     val notificationPrefs: JsonElement? = null,

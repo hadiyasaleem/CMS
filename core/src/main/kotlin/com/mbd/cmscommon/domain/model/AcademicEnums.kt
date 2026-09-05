@@ -26,7 +26,6 @@ enum class FeeType {
 data class FeeHead(
     val label: String,
     val amount: Double,
-    override val entityId: Long = 0L,
     override val createdAt: Instant = Instant.EPOCH,
     override val createdBy: String? = null,
     override val updatedAt: Instant = Instant.EPOCH,
