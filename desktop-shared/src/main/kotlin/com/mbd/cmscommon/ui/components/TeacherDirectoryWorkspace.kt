@@ -308,33 +308,13 @@ private fun TeacherSummaryCard(total: Int, active: Int, classes: Int, incomplete
 
 @Composable
 private fun DepartmentFilterChip(departments: List<Department>, selectedDeptId: String?, onSelect: (String?) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-    val selectedName = departments.firstOrNull { it.deptId == selectedDeptId }?.name
-
-    Box {
-        Surface(
-            modifier = Modifier.clickable { expanded = true },
-            shape = RectangleShape,
-            color = if (selectedDeptId != null) CmsTheme.colors.ink else MaterialTheme.colorScheme.surfaceContainerLowest,
-            contentColor = if (selectedDeptId != null) CmsTheme.colors.onInk else MaterialTheme.colorScheme.onSurface,
-            border = if (selectedDeptId != null) null else BorderStroke(2.dp, CmsTheme.colors.rule),
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Text(selectedName ?: "All departments", style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Icon(Icons.Filled.ArrowDropDown, contentDescription = null, modifier = Modifier.size(16.dp))
-            }
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.heightIn(max = 240.dp)) {
-            DropdownMenuItem(text = { Text("All departments") }, onClick = { onSelect(null); expanded = false })
-            departments.sortedBy { it.name }.forEach { dept ->
-                DropdownMenuItem(text = { Text(dept.name) }, onClick = { onSelect(dept.deptId); expanded = false })
-            }
-        }
-    }
+    val options = departments.sortedBy { it.name }.map { CmsEntityOption(it.deptId, it.name) }
+    DropdownChip(
+        selectedLabel = options.firstOrNull { it.id == selectedDeptId }?.label,
+        emptyLabel = "All departments",
+        options = options,
+        onSelected = onSelect,
+    )
 }
 
 /**

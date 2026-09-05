@@ -2,6 +2,8 @@ package com.mbd.cmscommon.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -180,33 +182,38 @@ private fun MasterFilters(
     onSelectStartYear: (Int?) -> Unit,
     onSelectShift: (Session?) -> Unit,
 ) {
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        CmsEntityPicker(
-            label = "Department",
-            selectedId = selectedDeptId,
-            options = departments.sortedBy { it.name }.map { CmsEntityOption(it.deptId, "${it.code} · ${it.name}") },
-            onSelected = onSelectDepartment,
-            optional = true,
-            emptyLabel = "Select department",
-        )
-        CmsEntityPicker(
-            label = "Session",
-            selectedId = selectedStartYear?.toString(),
-            options = sessionsInDepartment.map { it.startYear }.distinct().sorted().map { CmsEntityOption(it.toString(), "$it–${it + 4}") },
-            onSelected = { onSelectStartYear(it?.toIntOrNull()) },
-            optional = true,
-            emptyLabel = "Select session",
-            enabled = selectedDeptId != null,
-        )
-        CmsEntityPicker(
-            label = "Shift",
-            selectedId = selectedShift?.name,
-            options = shiftsForSelection.map { CmsEntityOption(it.name, it.name) },
-            onSelected = { onSelectShift(it?.let(Session::valueOf)) },
-            optional = true,
-            emptyLabel = "Select shift",
-            enabled = selectedStartYear != null,
-        )
+    val departmentOptions = departments.sortedBy { it.name }.map { CmsEntityOption(it.deptId, "${it.code} · ${it.name}") }
+    val sessionOptions = sessionsInDepartment.map { it.startYear }.distinct().sorted().map { CmsEntityOption(it.toString(), "$it–${it + 4}") }
+    val shiftOptions = shiftsForSelection.map { CmsEntityOption(it.name, it.name) }
+
+    Column(Modifier.fillMaxWidth()) {
+        Text("SHOW", color = ModMuted, style = CmsTextStyles.eyebrow)
+        Spacer(Modifier.height(6.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            DropdownChip(
+                selectedLabel = departmentOptions.firstOrNull { it.id == selectedDeptId }?.label,
+                emptyLabel = "All departments",
+                options = departmentOptions,
+                onSelected = onSelectDepartment,
+            )
+            DropdownChip(
+                selectedLabel = sessionOptions.firstOrNull { it.id == selectedStartYear?.toString() }?.label,
+                emptyLabel = "All sessions",
+                options = sessionOptions,
+                onSelected = { onSelectStartYear(it?.toIntOrNull()) },
+                enabled = selectedDeptId != null,
+            )
+            DropdownChip(
+                selectedLabel = shiftOptions.firstOrNull { it.id == selectedShift?.name }?.label,
+                emptyLabel = "All shifts",
+                options = shiftOptions,
+                onSelected = { onSelectShift(it?.let(Session::valueOf)) },
+                enabled = selectedStartYear != null,
+            )
+        }
     }
 }
 
