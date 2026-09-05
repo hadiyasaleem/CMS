@@ -11,6 +11,7 @@ import com.mbd.cmsadmin.feature.academics.SessionStudentsScreen
 import com.mbd.cmsadmin.feature.academics.SessionTimetableScreen
 import com.mbd.cmsadmin.feature.academics.StudentProfileScreen
 import com.mbd.cmsadmin.feature.administrators.AdministratorsScreen
+import com.mbd.cmsadmin.feature.buildings.BuildingsRoomsScreen
 import com.mbd.cmsadmin.feature.dashboard.DashboardScreen
 import com.mbd.cmsadmin.feature.departments.DepartmentDetailScreen
 import com.mbd.cmsadmin.feature.departments.DepartmentsScreen
@@ -64,6 +65,7 @@ fun AdminNavHost(navController: NavHostController, onSignedOut: () -> Unit, refr
                         RecordsDestination.TIMETABLE -> AdminLeaf.MASTER_TIMETABLE
                         RecordsDestination.FEES -> AdminLeaf.FEES_PICKER
                         RecordsDestination.INSIGHTS -> AdminLeaf.INSIGHTS
+                        RecordsDestination.BUILDINGS_ROOMS -> AdminLeaf.BUILDINGS_ROOMS
                     },
                 )
             })
@@ -105,6 +107,7 @@ fun AdminNavHost(navController: NavHostController, onSignedOut: () -> Unit, refr
         composable(AdminLeaf.CALENDAR) { com.mbd.cmsadmin.feature.calendar.CalendarScreen() }
         composable(AdminLeaf.DATESHEETS) { com.mbd.cmsadmin.feature.datesheets.DatesheetsScreen() }
         composable(AdminLeaf.INSIGHTS) { com.mbd.cmsadmin.feature.insights.InsightsScreen(refreshVersion = refreshVersion) }
+        composable(AdminLeaf.BUILDINGS_ROOMS) { BuildingsRoomsScreen() }
 
         // ── Department drill-down ──
         composable(AdminRoutes.DEPT_DETAIL) { backStackEntry ->

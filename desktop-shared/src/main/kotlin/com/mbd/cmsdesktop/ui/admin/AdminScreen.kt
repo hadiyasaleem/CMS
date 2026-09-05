@@ -20,6 +20,7 @@ sealed interface AdminScreen {
     data object Calendar : AdminScreen
     data object Datesheets : AdminScreen
     data object MasterTimetable : AdminScreen
+    data object BuildingsRooms : AdminScreen
     data object FeesPicker : AdminScreen
     data object Insights : AdminScreen
     data object Notifications : AdminScreen

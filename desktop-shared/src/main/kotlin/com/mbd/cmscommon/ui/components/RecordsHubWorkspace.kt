@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Assessment
+import androidx.compose.material.icons.outlined.Apartment
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.EventAvailable
@@ -60,7 +61,7 @@ private val RecordsGreen = ModSuccess
 private val RecordsGold = ModWarn
 private val RecordsRed = ModAccent
 
-enum class RecordsDestination { ATTENDANCE, CALENDAR, DATESHEETS, TIMETABLE, FEES, INSIGHTS }
+enum class RecordsDestination { ATTENDANCE, CALENDAR, DATESHEETS, TIMETABLE, FEES, INSIGHTS, BUILDINGS_ROOMS }
 
 private data class RecordsCard(
     val destination: RecordsDestination,
@@ -190,6 +191,13 @@ private fun recordsCards(snapshot: RecordsHubSnapshot): List<RecordsCard> = list
         "${snapshot.atRiskStudents} student(s) flagged",
         Icons.Outlined.Assessment, if (snapshot.atRiskStudents > 0) RecordsRed else RecordsGreen, RecordsSummarySource.INSIGHTS,
         RecordsSummarySource.INSIGHTS in snapshot.unavailableSources,
+    ),
+    RecordsCard(
+        RecordsDestination.BUILDINGS_ROOMS, "Buildings & Rooms",
+        "Manage campus buildings and rooms, including teacher offices.",
+        "Reference data",
+        Icons.Outlined.Apartment, RecordsBlue, RecordsSummarySource.SESSIONS,
+        unavailable = false,
     ),
 )
 

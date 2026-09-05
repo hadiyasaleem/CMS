@@ -31,6 +31,7 @@ object AdminLeaf {
     const val NOTIFICATIONS = "notifications"
     const val PROFILE = "profile"
     const val MASTER_TIMETABLE = "master_timetable"
+    const val BUILDINGS_ROOMS = "buildings_rooms"
     const val FEES_PICKER = "fees_picker"          // pick a department → straight to ITS fees
     const val ATTENDANCE_RECORDS = "attendance_records"
     const val CALENDAR = "calendar"

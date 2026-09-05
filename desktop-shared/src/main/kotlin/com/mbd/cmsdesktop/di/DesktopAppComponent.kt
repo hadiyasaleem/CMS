@@ -4,6 +4,7 @@ import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.sync.AdminDataBootstrapper
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.AdministratorRepository
+import com.mbd.cmscommon.domain.repository.BuildingRepository
 import com.mbd.cmscommon.domain.repository.CalendarRepository
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.DatesheetRepository
@@ -13,6 +14,7 @@ import com.mbd.cmscommon.domain.repository.FineRepository
 import com.mbd.cmscommon.domain.repository.InsightsRepository
 import com.mbd.cmscommon.domain.repository.MarkEditRequestRepository
 import com.mbd.cmscommon.domain.repository.NotificationRepository
+import com.mbd.cmscommon.domain.repository.RoomRepository
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
 import com.mbd.cmscommon.domain.repository.SessionFeeRepository
 import com.mbd.cmscommon.domain.repository.SessionMarksRepository
@@ -48,6 +50,8 @@ interface DesktopAppComponent {
     fun examPaperRepository(): ExamPaperSubmissionRepository
     fun teacherRepository(): TeacherRepository
     fun departmentRepository(): DepartmentRepository
+    fun buildingRepository(): BuildingRepository
+    fun roomRepository(): RoomRepository
     fun markEditRequestRepository(): MarkEditRequestRepository
     fun calendarRepository(): CalendarRepository
     fun academicSessionRepository(): AcademicSessionRepository

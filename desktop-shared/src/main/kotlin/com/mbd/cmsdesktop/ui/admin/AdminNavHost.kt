@@ -199,6 +199,7 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                                 RecordsDestination.TIMETABLE -> push(AdminScreen.MasterTimetable)
                                 RecordsDestination.FEES -> push(AdminScreen.FeesPicker)
                                 RecordsDestination.INSIGHTS -> push(AdminScreen.Insights)
+                                RecordsDestination.BUILDINGS_ROOMS -> push(AdminScreen.BuildingsRooms)
                             }
                         },
                     )
@@ -279,6 +280,12 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         sessionRepository = component.academicSessionRepository(),
                         timetableRepository = component.sessionTimetableRepository(),
                         onOpenSession = { sessionId -> push(AdminScreen.SessionDetail(sessionId)) },
+                    )
+
+                    AdminScreen.BuildingsRooms -> BuildingsRoomsScreen(
+                        buildingRepository = component.buildingRepository(),
+                        roomRepository = component.roomRepository(),
+                        createdBy = accountKey,
                     )
 
                     AdminScreen.FeesPicker -> DepartmentsScreen(
