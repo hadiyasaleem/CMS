@@ -44,10 +44,6 @@ android {
     }
 }
 
-ksp {
-    arg("room.schemaLocation", "$projectDir/schemas")
-}
-
 dependencies {
     coreLibraryDesugaring(libs.desugar.jdk.libs)
     implementation(project(":mobile-shared"))
@@ -55,8 +51,6 @@ dependencies {
     ksp(libs.hilt.compiler)
 
     implementation(libs.room.runtime)
-    implementation(libs.room.ktx)
-    ksp(libs.room.compiler)
 
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)

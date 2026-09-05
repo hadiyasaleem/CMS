@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.mbd.cmscommon.data.local.CmsDatabase
 import com.mbd.cmscommon.data.local.CMS_DATABASE_MIGRATIONS
+import com.mbd.cmscommon.data.local.MobileCmsDatabase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -22,7 +23,7 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideAdminDatabase(@ApplicationContext context: Context): CmsDatabase =
-        Room.databaseBuilder(context, AdminDatabase::class.java, "cms_admin.db")
+        Room.databaseBuilder(context, MobileCmsDatabase::class.java, "cms_admin.db")
             .addMigrations(*CMS_DATABASE_MIGRATIONS)
             // Schema v5 (Supabase cutover) drops the legacy tables; destructive fallback wipes any
             // stale pre-cutover local cache rather than risking id-mismatch confusion after upgrade.

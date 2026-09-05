@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.mbd.cmscommon.data.local.CmsDatabase
 import com.mbd.cmscommon.data.local.CMS_DATABASE_MIGRATIONS
+import com.mbd.cmscommon.data.local.MobileCmsDatabase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -22,7 +23,7 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideStudentDatabase(@ApplicationContext context: Context): CmsDatabase =
-        Room.databaseBuilder(context, StudentDatabase::class.java, "cms_student.db")
+        Room.databaseBuilder(context, MobileCmsDatabase::class.java, "cms_student.db")
             .addMigrations(*CMS_DATABASE_MIGRATIONS)
             .fallbackToDestructiveMigration()
             .build()

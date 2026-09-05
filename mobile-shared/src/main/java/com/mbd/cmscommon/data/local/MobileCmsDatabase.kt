@@ -1,10 +1,7 @@
-package com.mbd.cmsadmin.di
+package com.mbd.cmscommon.data.local
 
 import androidx.room.Database
 import androidx.room.TypeConverters
-import com.mbd.cmscommon.data.local.CMS_DATABASE_VERSION
-import com.mbd.cmscommon.data.local.CmsDatabase
-import com.mbd.cmscommon.data.local.Converters
 import com.mbd.cmscommon.data.local.entity.AcademicSessionEntity
 import com.mbd.cmscommon.data.local.entity.AdministratorAccountEntity
 import com.mbd.cmscommon.data.local.entity.CalendarEventEntity
@@ -34,10 +31,11 @@ import com.mbd.cmscommon.data.local.entity.TeacherEntity
 import com.mbd.cmscommon.data.local.entity.UserEntity
 
 /**
- * Admin's concrete Room database — repeats the full shared entity list from CmsDatabase's
- * documented reference (a Room/annotation constraint: the @Database-annotated class itself must
- * list entities as a compile-time literal). Teacher/Student apps declare the same list but only
- * exercise a subset of the DAOs in practice.
+ * The single concrete Room database for all mobile apps (admin/student/teacher). Room requires
+ * the entity list to be a compile-time literal on the @Database-annotated class, but since that
+ * list and the version are identical across apps, one shared class replaces what used to be three
+ * near-duplicate ones (AdminDatabase/StudentDatabase/TeacherDatabase). Each app still opens its own
+ * file (see per-app DatabaseModule) so their data stays isolated.
  */
 @Database(
     entities = [
@@ -57,4 +55,4 @@ import com.mbd.cmscommon.data.local.entity.UserEntity
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
-abstract class AdminDatabase : CmsDatabase()
+abstract class MobileCmsDatabase : CmsDatabase()
