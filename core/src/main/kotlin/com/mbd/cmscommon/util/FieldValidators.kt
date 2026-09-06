@@ -141,3 +141,18 @@ object FieldValidators {
         return null
     }
 }
+
+/**
+ * Throws a typed [CmsException.Validation] if this (a `*Error(...)` validator result) is non-null.
+ * Replaces the previous pattern of `validator(x)?.let { throw IllegalArgumentException(it) }`,
+ * which controllers relied on [ErrorClassifier]'s string-sniffing fallback to recognise as
+ * validation. `field` is optional context carried for logging only — it is never shown to the user.
+ */
+fun String?.orThrowValidation(field: String? = null) {
+    if (this != null) throw CmsException.Validation(this, field)
+}
+
+/** Throws a typed [CmsException.Validation] with [message] when [condition] is false. */
+fun requireValid(condition: Boolean, field: String? = null, message: () -> String) {
+    if (!condition) throw CmsException.Validation(message(), field)
+}
