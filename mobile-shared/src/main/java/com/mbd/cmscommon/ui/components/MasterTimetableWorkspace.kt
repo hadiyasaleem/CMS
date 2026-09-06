@@ -40,7 +40,6 @@ import com.mbd.cmscommon.ui.theme.ModMuted
 import com.mbd.cmscommon.ui.theme.ModTrack
 import com.mbd.cmscommon.ui.theme.ModGround
 import com.mbd.cmscommon.ui.theme.ModSurface
-import com.mbd.cmscommon.ui.theme.ModAccent
 import com.mbd.cmscommon.ui.theme.ModWarn
 import java.time.DayOfWeek
 import java.time.format.TextStyle
@@ -48,7 +47,6 @@ import java.util.Locale
 
 private val MasterCanvas = ModGround
 private val MasterGold = ModWarn
-private val MasterRed = ModAccent
 private val MasterDays = listOf(
     DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
     DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY,
@@ -154,12 +152,11 @@ fun MasterTimetableWorkspace(
     }
 
     if (!errorMessage.isNullOrBlank() && errorMessage != dismissedError) {
-        AlertDialog(
-            onDismissRequest = { dismissedError = errorMessage },
-            title = { Text("Couldn't load timetable") },
-            text = { Text(errorMessage, color = MasterRed) },
-            confirmButton = { TextButton(onClick = { dismissedError = null; onRetry() }) { Text("Retry") } },
-            dismissButton = { TextButton(onClick = { dismissedError = errorMessage }) { Text("Dismiss") } },
+        CmsErrorDialog(
+            message = errorMessage,
+            title = "Couldn't load timetable",
+            onDismiss = { dismissedError = errorMessage },
+            onRetry = { dismissedError = null; onRetry() },
         )
     }
 }
