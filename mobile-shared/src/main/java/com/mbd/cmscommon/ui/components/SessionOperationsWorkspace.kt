@@ -152,7 +152,7 @@ fun SessionOperationsWorkspace(
     }
 
     if (showEditDetails && session != null) {
-        EditSessionDetailsDialog(session, onDismiss = { showEditDetails = false }, onSave = { program, incharge, capacity -> onUpdateDetails(program, incharge, capacity); showEditDetails = false })
+        EditSessionDetailsDialog(session, teachers, onDismiss = { showEditDetails = false }, onSave = { program, incharge, capacity -> onUpdateDetails(program, incharge, capacity); showEditDetails = false })
     }
 
     if (showPromoteConfirm) {
@@ -322,7 +322,7 @@ private fun DangerZoneCard(studentCount: Int, onDelete: () -> Unit) {
 }
 
 @Composable
-private fun EditSessionDetailsDialog(session: AcademicSession, onDismiss: () -> Unit, onSave: (String, String, Int) -> Unit) {
+private fun EditSessionDetailsDialog(session: AcademicSession, teachers: List<Teacher>, onDismiss: () -> Unit, onSave: (String, String, Int) -> Unit) {
     var programName by remember { mutableStateOf(session.programName ?: "") }
     var inchargeEmail by remember { mutableStateOf(session.inchargeEmail ?: "") }
     var maxStudents by remember { mutableStateOf(session.maxStudents.toString()) }
@@ -338,7 +338,13 @@ private fun EditSessionDetailsDialog(session: AcademicSession, onDismiss: () -> 
             Column {
                 OutlinedTextField(value = programName, onValueChange = { programName = it }, label = { Text("Program name (optional)") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 Spacer(Modifier.height(10.dp))
-                OutlinedTextField(value = inchargeEmail, onValueChange = { inchargeEmail = it }, label = { Text("Session in-charge") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                CmsEntityPicker(
+                    label = "Session in-charge",
+                    selectedId = inchargeEmail.ifBlank { null },
+                    options = teachers.sortedBy { it.name }.map { CmsEntityOption(it.email, it.name, it.email) },
+                    onSelected = { inchargeEmail = it.orEmpty() },
+                    emptyLabel = "In-charge not assigned",
+                )
                 Spacer(Modifier.height(10.dp))
                 OutlinedTextField(value = maxStudents, onValueChange = { maxStudents = it }, label = { Text("Student capacity") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 if (error != null) {
