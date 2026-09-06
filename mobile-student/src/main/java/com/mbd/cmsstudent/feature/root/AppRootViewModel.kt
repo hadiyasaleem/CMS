@@ -7,6 +7,7 @@ import com.mbd.cmscommon.data.sync.StartupBootstrapTracker
 import com.mbd.cmscommon.data.sync.AdminDataBootstrapper
 import com.mbd.cmscommon.domain.model.UserRole
 import com.mbd.cmscommon.domain.repository.UserRepository
+import com.mbd.cmscommon.util.orLogCritical
 import com.mbd.cmsstudent.feature.common.CurrentStudentProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -47,15 +48,17 @@ class AppRootViewModel @Inject constructor(
                 return@launch
             }
 
-            val cachedRole = runCatching { userRepository.getCachedRole(accountKey) }.getOrNull() as? UserRole.LinkedStudent
+            val cachedRole = runCatching { userRepository.getCachedRole(accountKey) }.orLogCritical("AppRootViewModel.getCachedRole") as? UserRole.LinkedStudent
             startupRole.value = cachedRole
             if (cachedRole != null) _authChecked.value = true
 
-            runCatching { userRepository.resolveRole(accountKey) }
+            runCatching { userRepository.resolveRole(accountKey) }.orLogCritical("AppRootViewModel.resolveRole")
 
-            val completed = runCatching { dataBootstrapper.refreshAll() }.getOrDefault(false)
+            val completed = runCatching { dataBootstrapper.refreshAll() }.orLogCritical("AppRootViewModel.refreshAll", false)
             if (completed) {
-                runCatching { startupBootstrapTracker.markComplete(StartupBootstrapTracker.REFERENCE_DATA, accountKey) }
+                runCatching {
+                    startupBootstrapTracker.markComplete(StartupBootstrapTracker.REFERENCE_DATA, accountKey)
+                }.orLogCritical("AppRootViewModel.markComplete")
             }
             _authChecked.value = true
         }
@@ -68,9 +71,11 @@ class AppRootViewModel @Inject constructor(
     }
 
     private suspend fun ensureStudentSession(accountKey: String, studentId: String) {
-        val completed = runCatching { currentStudentProvider.syncMySession(studentId) }.getOrDefault(false)
+        val completed = runCatching { currentStudentProvider.syncMySession(studentId) }.orLogCritical("AppRootViewModel.syncMySession", false)
         if (completed) {
-            runCatching { startupBootstrapTracker.markComplete(StartupBootstrapTracker.STUDENT_SESSION, accountKey) }
+            runCatching {
+                startupBootstrapTracker.markComplete(StartupBootstrapTracker.STUDENT_SESSION, accountKey)
+            }.orLogCritical("AppRootViewModel.markComplete")
         }
     }
 

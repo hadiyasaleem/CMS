@@ -14,12 +14,13 @@ import com.mbd.cmsstudent.navigation.StudentDestination
 fun ExamsHubScreen(onOpen: (String) -> Unit, viewModel: StudentExamsHubViewModel = hiltViewModel()) {
     val snapshot by viewModel.snapshot.collectAsState()
     val loading by viewModel.loading.collectAsState()
+    val error by viewModel.error.collectAsState()
 
     StudentExamsHubWorkspace(
         heroPainter = painterResource(R.drawable.student_exams_hero),
         snapshot = snapshot,
         loading = loading,
-        errorMessage = null,
+        errorMessage = error,
         onRetry = viewModel::refresh,
         onOpen = { destination ->
             onOpen(

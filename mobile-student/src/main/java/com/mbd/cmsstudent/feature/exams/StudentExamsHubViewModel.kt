@@ -6,6 +6,7 @@ import com.mbd.cmscommon.domain.model.StudentExamsHubSnapshot
 import com.mbd.cmscommon.domain.model.studentExamsHubSnapshot
 import com.mbd.cmscommon.domain.repository.DatesheetRepository
 import com.mbd.cmscommon.domain.repository.SessionMarksRepository
+import com.mbd.cmscommon.util.orLogCritical
 import com.mbd.cmsstudent.feature.common.CurrentStudentProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
@@ -32,6 +33,8 @@ class StudentExamsHubViewModel @Inject constructor(
     private val _refreshTrigger = MutableStateFlow(0)
     private val _loading = MutableStateFlow(true)
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
 
     val snapshot: StateFlow<StudentExamsHubSnapshot?> = currentStudentProvider.observeContext()
         .distinctUntilChangedBy { it?.studentId }
@@ -45,11 +48,22 @@ class StudentExamsHubViewModel @Inject constructor(
                     try {
                         // Pull remote marks before reading local cache (mirrors StudentExamsHubController.refresh),
                         // otherwise the hub only ever shows stale/empty cached data.
-                        runCatching { marksRepository.syncSession(context.sessionId) }
-                        val scores = runCatching { marksRepository.observeStudentMarks(context.sessionId, context.rollNumber).first() }.getOrDefault(emptyList())
-                        val results = runCatching { marksRepository.getSemesterGpa(context.sessionId, context.rollNumber) }.getOrDefault(emptyList())
-                        val datesheets = runCatching { datesheetRepository.getDatesheets() }.getOrDefault(emptyList())
-                        val slots = datesheets.flatMap { sheet -> runCatching { datesheetRepository.getSlots(sheet.id) }.getOrDefault(emptyList()) }
+                        val syncResult = runCatching { marksRepository.syncSession(context.sessionId) }
+                        syncResult.orLogCritical("StudentExamsHubViewModel.syncSession")
+                        val scoresResult = runCatching { marksRepository.observeStudentMarks(context.sessionId, context.rollNumber).first() }
+                        val resultsResult = runCatching { marksRepository.getSemesterGpa(context.sessionId, context.rollNumber) }
+                        val datesheetsResult = runCatching { datesheetRepository.getDatesheets() }
+                        val scores = scoresResult.orLogCritical("StudentExamsHubViewModel.observeStudentMarks", emptyList())
+                        val results = resultsResult.orLogCritical("StudentExamsHubViewModel.getSemesterGpa", emptyList())
+                        val datesheets = datesheetsResult.orLogCritical("StudentExamsHubViewModel.getDatesheets", emptyList())
+                        val slots = datesheets.flatMap { sheet ->
+                            runCatching { datesheetRepository.getSlots(sheet.id) }.orLogCritical("StudentExamsHubViewModel.getSlots", emptyList())
+                        }
+                        _error.value = if (syncResult.isFailure || scoresResult.isFailure || resultsResult.isFailure || datesheetsResult.isFailure) {
+                            "Some exam data could not be loaded. Pull to refresh to try again."
+                        } else {
+                            null
+                        }
                         studentExamsHubSnapshot(
                             sessionId = context.sessionId,
                             scores = scores,

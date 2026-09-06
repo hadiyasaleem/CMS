@@ -9,11 +9,12 @@ import com.mbd.cmscommon.ui.components.StudentFeeWorkspace
 @Composable
 fun FeeChallanScreen(viewModel: FeeChallanViewModel = hiltViewModel()) {
     val snapshot by viewModel.snapshot.collectAsState()
+    val error by viewModel.error.collectAsState()
 
     StudentFeeWorkspace(
         snapshot = snapshot,
         loading = snapshot == null,
-        errorMessage = null,
+        errorMessage = error,
         onRetry = viewModel::refresh,
     )
 }

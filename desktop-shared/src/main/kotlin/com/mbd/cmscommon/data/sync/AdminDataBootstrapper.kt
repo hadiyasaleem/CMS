@@ -21,6 +21,7 @@ import com.mbd.cmscommon.domain.repository.SessionMarksRepository
 import com.mbd.cmscommon.domain.repository.SessionTimetableRepository
 import com.mbd.cmscommon.domain.repository.StudentLinkRequestRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
+import com.mbd.cmscommon.util.isSuccessLogged
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.async
@@ -61,22 +62,22 @@ class AdminDataBootstrapper @Inject constructor(
     suspend fun refreshAll(): Boolean {
         var successful = supervisorScope {
             listOf(
-                async { runCatching { administratorRepository.sync() }.isSuccess },
-                async { runCatching { departmentRepository.sync() }.isSuccess },
-                async { runCatching { buildingRepository.sync() }.isSuccess },
-                async { runCatching { roomRepository.sync() }.isSuccess },
-                async { runCatching { teacherRepository.sync() }.isSuccess },
-                async { runCatching { calendarRepository.sync() }.isSuccess },
-                async { runCatching { datesheetRepository.sync() }.isSuccess },
-                async { runCatching { insightsRepository.sync() }.isSuccess },
-                async { runCatching { markEditRequestRepository.sync() }.isSuccess },
+                async { runCatching { administratorRepository.sync() }.isSuccessLogged("sync.administrators") },
+                async { runCatching { departmentRepository.sync() }.isSuccessLogged("sync.departments") },
+                async { runCatching { buildingRepository.sync() }.isSuccessLogged("sync.buildings") },
+                async { runCatching { roomRepository.sync() }.isSuccessLogged("sync.rooms") },
+                async { runCatching { teacherRepository.sync() }.isSuccessLogged("sync.teachers") },
+                async { runCatching { calendarRepository.sync() }.isSuccessLogged("sync.calendar") },
+                async { runCatching { datesheetRepository.sync() }.isSuccessLogged("sync.datesheets") },
+                async { runCatching { insightsRepository.sync() }.isSuccessLogged("sync.insights") },
+                async { runCatching { markEditRequestRepository.sync() }.isSuccessLogged("sync.markEditRequests") },
             ).awaitAll().all { it }
         }
 
         val departments = runCatching { departmentRepository.observeActiveDepartments().first() }.getOrDefault(emptyList())
         successful = supervisorScope {
             departments.map { department ->
-                async { runCatching { sessionRepository.syncSessionsForDept(department.deptId) }.isSuccess }
+                async { runCatching { sessionRepository.syncSessionsForDept(department.deptId) }.isSuccessLogged("sync.sessionsForDept") }
             }.awaitAll().all { it }
         } && successful
 
@@ -86,12 +87,12 @@ class AdminDataBootstrapper @Inject constructor(
                 async {
                     supervisorScope {
                         listOf(
-                            async { runCatching { sessionRepository.syncStudents(session.sessionId) }.isSuccess },
-                            async { runCatching { curriculumRepository.syncSession(session.sessionId) }.isSuccess },
-                            async { runCatching { timetableRepository.syncSession(session.sessionId) }.isSuccess },
-                            async { runCatching { attendanceRepository.syncSession(session.sessionId) }.isSuccess },
-                            async { runCatching { marksRepository.syncSession(session.sessionId) }.isSuccess },
-                            async { runCatching { feeRepository.syncSession(session.sessionId) }.isSuccess },
+                            async { runCatching { sessionRepository.syncStudents(session.sessionId) }.isSuccessLogged("sync.sessionStudents") },
+                            async { runCatching { curriculumRepository.syncSession(session.sessionId) }.isSuccessLogged("sync.curriculum") },
+                            async { runCatching { timetableRepository.syncSession(session.sessionId) }.isSuccessLogged("sync.timetable") },
+                            async { runCatching { attendanceRepository.syncSession(session.sessionId) }.isSuccessLogged("sync.attendance") },
+                            async { runCatching { marksRepository.syncSession(session.sessionId) }.isSuccessLogged("sync.marks") },
+                            async { runCatching { feeRepository.syncSession(session.sessionId) }.isSuccessLogged("sync.fees") },
                         ).awaitAll().all { it }
                     }
                 }
@@ -107,10 +108,10 @@ class AdminDataBootstrapper @Inject constructor(
                         .getOrDefault(emptyList())
                     supervisorScope {
                         val fineSyncs = students.map { student ->
-                            async { runCatching { fineRepository.sync(session.sessionId, student.rollNumber) }.isSuccess }
+                            async { runCatching { fineRepository.sync(session.sessionId, student.rollNumber) }.isSuccessLogged("sync.fines") }
                         }
                         val paperSyncs = subjects.distinctBy { it.courseCode }.map { subject ->
-                            async { runCatching { examPaperRepository.sync(session.sessionId, subject.courseCode) }.isSuccess }
+                            async { runCatching { examPaperRepository.sync(session.sessionId, subject.courseCode) }.isSuccessLogged("sync.examPapers") }
                         }
                         (fineSyncs + paperSyncs).awaitAll().all { it }
                     }
@@ -121,15 +122,15 @@ class AdminDataBootstrapper @Inject constructor(
         val datesheets = runCatching { datesheetRepository.getDatesheets() }.getOrDefault(emptyList())
         successful = supervisorScope {
             datesheets.map { sheet ->
-                async { runCatching { datesheetRepository.syncSlots(sheet.id) }.isSuccess }
+                async { runCatching { datesheetRepository.syncSlots(sheet.id) }.isSuccessLogged("sync.datesheetSlots") }
             }.awaitAll().all { it }
         } && successful
         successful = supervisorScope {
             listOf(
-                async { runCatching { linkRequestRepository.sync() }.isSuccess },
-                async { runCatching { notificationRepository.sync(NotificationTargetRole.ADMIN) }.isSuccess },
-                async { runCatching { notificationRepository.sync(NotificationTargetRole.TEACHER) }.isSuccess },
-                async { runCatching { notificationRepository.sync(NotificationTargetRole.STUDENT) }.isSuccess },
+                async { runCatching { linkRequestRepository.sync() }.isSuccessLogged("sync.linkRequests") },
+                async { runCatching { notificationRepository.sync(NotificationTargetRole.ADMIN) }.isSuccessLogged("sync.notifications.admin") },
+                async { runCatching { notificationRepository.sync(NotificationTargetRole.TEACHER) }.isSuccessLogged("sync.notifications.teacher") },
+                async { runCatching { notificationRepository.sync(NotificationTargetRole.STUDENT) }.isSuccessLogged("sync.notifications.student") },
             ).awaitAll().all { it }
         } && successful
 

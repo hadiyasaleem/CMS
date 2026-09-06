@@ -8,6 +8,7 @@ import com.mbd.cmscommon.data.sync.AdminDataBootstrapper
 import com.mbd.cmscommon.domain.model.UserRole
 import com.mbd.cmscommon.domain.repository.TeacherRepository
 import com.mbd.cmscommon.domain.repository.UserRepository
+import com.mbd.cmscommon.util.orLogCritical
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,16 +46,18 @@ class AppRootViewModel @Inject constructor(
                 return@launch
             }
 
-            val cachedRole = runCatching { userRepository.getCachedRole(accountKey) }.getOrNull() as? UserRole.Teacher
+            val cachedRole = runCatching { userRepository.getCachedRole(accountKey) }.orLogCritical("AppRootViewModel.getCachedRole") as? UserRole.Teacher
             startupRole.value = cachedRole
             if (cachedRole != null) _authChecked.value = true
 
-            runCatching { userRepository.resolveRole(accountKey) }
-            runCatching { teacherRepository.syncSelf(accountKey) }
+            runCatching { userRepository.resolveRole(accountKey) }.orLogCritical("AppRootViewModel.resolveRole")
+            runCatching { teacherRepository.syncSelf(accountKey) }.orLogCritical("AppRootViewModel.syncSelf")
 
-            val completed = runCatching { dataBootstrapper.refreshAll() }.getOrDefault(false)
+            val completed = runCatching { dataBootstrapper.refreshAll() }.orLogCritical("AppRootViewModel.refreshAll", false)
             if (completed) {
-                runCatching { startupBootstrapTracker.markComplete(StartupBootstrapTracker.REFERENCE_DATA, accountKey) }
+                runCatching {
+                    startupBootstrapTracker.markComplete(StartupBootstrapTracker.REFERENCE_DATA, accountKey)
+                }.orLogCritical("AppRootViewModel.markComplete")
             }
             _authChecked.value = true
         }

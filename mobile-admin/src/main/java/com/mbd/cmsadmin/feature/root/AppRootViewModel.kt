@@ -7,6 +7,7 @@ import com.mbd.cmscommon.data.sync.AdminDataBootstrapper
 import com.mbd.cmscommon.data.sync.StartupBootstrapTracker
 import com.mbd.cmscommon.domain.model.UserRole
 import com.mbd.cmscommon.domain.repository.UserRepository
+import com.mbd.cmscommon.util.orLogCritical
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -59,12 +60,12 @@ class AppRootViewModel @Inject constructor(
             val accountKey = sessionManager.awaitInitialization()
             if (accountKey == null) {
                 startupRole.value = null
-                runCatching { userRepository.clearLocalCache() }
+                runCatching { userRepository.clearLocalCache() }.orLogCritical("AppRootViewModel.clearLocalCache")
                 _authChecked.value = true
                 return@launch
             }
 
-            val cachedRole = runCatching { userRepository.getCachedRole(accountKey) }.getOrNull() as? UserRole.Admin
+            val cachedRole = runCatching { userRepository.getCachedRole(accountKey) }.orLogCritical("AppRootViewModel.getCachedRole") as? UserRole.Admin
             startupRole.value = cachedRole
             if (cachedRole != null) {
                 ensureAdminData(accountKey)
@@ -72,7 +73,7 @@ class AppRootViewModel @Inject constructor(
             }
 
             // Each step isolated so one failure never skips the reference-data pull.
-            val resolved = runCatching { userRepository.resolveRole(accountKey) }.getOrNull() as? UserRole.Admin
+            val resolved = runCatching { userRepository.resolveRole(accountKey) }.orLogCritical("AppRootViewModel.resolveRole") as? UserRole.Admin
             val effectiveRole = resolved ?: cachedRole
             if (effectiveRole != null) {
                 ensureAdminData(accountKey)
@@ -94,11 +95,11 @@ class AppRootViewModel @Inject constructor(
             if (_readyAccount.value == accountKey) return
             _isBootstrapping.value = true
             try {
-                val completed = runCatching { adminDataBootstrapper.refreshAll() }.getOrDefault(false)
+                val completed = runCatching { adminDataBootstrapper.refreshAll() }.orLogCritical("AppRootViewModel.refreshAll", false)
                 if (completed) {
                     runCatching {
                         startupBootstrapTracker.markComplete(StartupBootstrapTracker.ADMIN_DATA, accountKey)
-                    }
+                    }.orLogCritical("AppRootViewModel.markComplete")
                 }
                 _readyAccount.value = accountKey
             } finally {

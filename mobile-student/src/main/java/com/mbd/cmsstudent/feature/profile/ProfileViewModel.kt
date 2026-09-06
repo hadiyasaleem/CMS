@@ -9,7 +9,8 @@ import com.mbd.cmscommon.domain.model.StudentProfile
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.FineRepository
-import com.mbd.cmscommon.util.userMessage
+import com.mbd.cmscommon.util.orLogCritical
+import com.mbd.cmscommon.util.userMessageLogged
 import com.mbd.cmsstudent.feature.common.CurrentStudentProvider
 import com.mbd.cmsstudent.feature.common.StudentContext
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -56,9 +57,17 @@ class ProfileViewModel @Inject constructor(
                 flowOf<StudentProfileScreenState?>(null)
             } else {
                 _refreshTrigger.map {
-                    val department = runCatching { departmentRepository.getDepartment(context.deptId) }.getOrNull()
-                    val profile = runCatching { sessionRepository.getStudentProfile(context.sessionId, context.rollNumber) }.getOrNull()
-                    val fines = runCatching { fineRepository.getFines(context.sessionId, context.rollNumber) }.getOrDefault(emptyList())
+                    val departmentResult = runCatching { departmentRepository.getDepartment(context.deptId) }
+                    val profileResult = runCatching { sessionRepository.getStudentProfile(context.sessionId, context.rollNumber) }
+                    val finesResult = runCatching { fineRepository.getFines(context.sessionId, context.rollNumber) }
+                    val department = departmentResult.orLogCritical("ProfileViewModel.getDepartment")
+                    val profile = profileResult.orLogCritical("ProfileViewModel.getStudentProfile")
+                    val fines = finesResult.orLogCritical("ProfileViewModel.getFines", emptyList())
+                    _error.value = if (departmentResult.isFailure || profileResult.isFailure || finesResult.isFailure) {
+                        "Some profile details could not be loaded. Pull to refresh to try again."
+                    } else {
+                        null
+                    }
                     StudentProfileScreenState(context, department, profile, fines)
                 }
             }
@@ -76,7 +85,7 @@ class ProfileViewModel @Inject constructor(
                 sessionManager.sendPasswordReset(email)
                 _actionMessage.value = "Password reset email sent."
             } catch (t: Throwable) {
-                _error.value = t.userMessage("Could not send the reset email.")
+                _error.value = t.userMessageLogged("StudentProfileViewModel.resetPassword", "Could not send the reset email.")
             }
         }
     }
