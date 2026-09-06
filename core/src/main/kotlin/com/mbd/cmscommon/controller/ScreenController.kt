@@ -1,6 +1,8 @@
 package com.mbd.cmscommon.controller
 
-import com.mbd.cmscommon.util.userMessage
+import com.mbd.cmscommon.util.CmsLog
+import com.mbd.cmscommon.util.ErrorClassifier
+import com.mbd.cmscommon.util.Severity
 import java.util.concurrent.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +21,11 @@ abstract class ScreenController(protected val scope: CoroutineScope) {
             } catch (c: CancellationException) {
                 throw c
             } catch (t: Throwable) {
-                _error.value = t.userMessage()
+                val classified = ErrorClassifier.classify(t)
+                _error.value = classified.userMessage
+                if (classified.severity == Severity.CRITICAL) {
+                    CmsLog.critical(this@ScreenController::class.simpleName ?: "ScreenController", classified.userMessage, t)
+                }
             }
         }
     }

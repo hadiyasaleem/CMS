@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.auth
 
+import com.mbd.cmscommon.util.LogContext
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.auth.providers.builtin.Email
 import java.util.Locale
@@ -26,7 +27,7 @@ class SessionManager @Inject constructor(
 
     suspend fun awaitInitialization(): String? {
         auth.awaitInitialization()
-        return accountKey
+        return accountKey.also { LogContext.accountEmail = it }
     }
 
     suspend fun signIn(email: String, password: String) {
@@ -34,6 +35,7 @@ class SessionManager @Inject constructor(
             this.email = email.normalizeEmail()
             this.password = password
         }
+        LogContext.accountEmail = accountKey
     }
 
     suspend fun registerStudent(email: String, password: String) {
@@ -41,6 +43,7 @@ class SessionManager @Inject constructor(
             this.email = email.normalizeEmail()
             this.password = password
         }
+        LogContext.accountEmail = accountKey
     }
 
     suspend fun sendPasswordReset(email: String) {
@@ -48,6 +51,7 @@ class SessionManager @Inject constructor(
     }
 
     fun signOut() {
+        LogContext.accountEmail = null
         scope.launch {
             runCatching { auth.signOut() }
         }
