@@ -7,7 +7,6 @@ import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.SessionMarksRepository
 import com.mbd.cmscommon.teacher.ResolvedAssignment
 import com.mbd.cmscommon.util.Outcome
-import com.mbd.cmscommon.util.userMessage
 import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -88,7 +87,7 @@ class SemesterResultsController(
                 _results.value = marksRepository.getSemesterResults(sid, _semester.value).associateBy { it.rollNumber }
                 _loadState.value = Outcome.Success(Unit)
             } catch (t: Throwable) {
-                _loadState.value = Outcome.Error(t.userMessage("Could not load semester results."), t)
+                _loadState.value = Outcome.Error(t.userMessageLogged("Could not load semester results."), t)
             }
         }
     }
@@ -121,7 +120,7 @@ class SemesterResultsController(
                 _saveState.value = Outcome.Success(Unit)
                 _results.value = _results.value + (roll to SemesterGpa(sid, roll, _semester.value, gpa, cgpa, termLabel, result.trim().uppercase(Locale.ROOT), position, remarks, supply))
             } catch (t: Throwable) {
-                _saveState.value = Outcome.Error(t.userMessage("Could not save the result."), t)
+                _saveState.value = Outcome.Error(t.userMessageLogged("Could not save the result."), t)
             }
         }
     }

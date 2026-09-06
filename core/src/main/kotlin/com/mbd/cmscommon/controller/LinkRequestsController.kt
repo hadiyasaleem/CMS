@@ -10,7 +10,6 @@ import com.mbd.cmscommon.domain.model.verifyLinkIdentityClaims
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.StudentLinkRequestRepository
-import com.mbd.cmscommon.util.userMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -122,7 +121,7 @@ class LinkRequestsController(
             _rowErrors.value = _rowErrors.value - requestKey
             _notice.value = "${request.nameClaimed ?: request.rollNumberClaimed} was linked successfully."
         } catch (t: Throwable) {
-            _rowErrors.value = _rowErrors.value + (requestKey to t.userMessage("Could not approve the request."))
+            _rowErrors.value = _rowErrors.value + (requestKey to t.userMessageLogged("Could not approve the request."))
         } finally {
             _busyRequestId.value = null
         }
@@ -146,7 +145,7 @@ class LinkRequestsController(
             _rowErrors.value = _rowErrors.value - requestKey
             _notice.value = "${request.nameClaimed ?: request.rollNumberClaimed}'s request was rejected with guidance."
         } catch (t: Throwable) {
-            _rowErrors.value = _rowErrors.value + (requestKey to t.userMessage("Could not reject the request."))
+            _rowErrors.value = _rowErrors.value + (requestKey to t.userMessageLogged("Could not reject the request."))
         } finally {
             _busyRequestId.value = null
         }
@@ -192,7 +191,7 @@ class LinkRequestsController(
             }
             key to verification
         } catch (t: Throwable) {
-            key to LinkRequestVerification(RosterVerificationState.FAILED, message = t.userMessage("Could not verify the roster record."))
+            key to LinkRequestVerification(RosterVerificationState.FAILED, message = t.userMessageLogged("Could not verify the roster record."))
         }
     }
 }

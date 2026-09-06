@@ -6,7 +6,6 @@ import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.SessionTimetableRepository
 import com.mbd.cmscommon.util.Outcome
-import com.mbd.cmscommon.util.userMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -47,7 +46,7 @@ class TeacherScheduleController(
         }
 
         _refreshState.value = failures.firstOrNull()
-            ?.let { Outcome.Error(it.userMessage("Could not refresh your schedule."), it) }
+            ?.let { Outcome.Error(it.userMessageLogged("Could not refresh your schedule."), it) }
             ?: Outcome.Success(Unit)
     }
 }

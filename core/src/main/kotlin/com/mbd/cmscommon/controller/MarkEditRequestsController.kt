@@ -12,7 +12,6 @@ import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.MarkEditRequestRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
-import com.mbd.cmscommon.util.userMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -93,7 +92,7 @@ class MarkEditRequestsController(
             removeResolvedRequest(request)
             _notice.value = notice
         } catch (t: Throwable) {
-            _rowErrors.value = _rowErrors.value + (requestKey to t.userMessage("Could not approve this score change."))
+            _rowErrors.value = _rowErrors.value + (requestKey to t.userMessageLogged("Could not approve this score change."))
         } finally {
             _busyRequestId.value = null
         }
@@ -113,7 +112,7 @@ class MarkEditRequestsController(
             removeResolvedRequest(request)
             _notice.value = notice
         } catch (t: Throwable) {
-            _rowErrors.value = _rowErrors.value + (requestKey to t.userMessage("Could not reject this score change."))
+            _rowErrors.value = _rowErrors.value + (requestKey to t.userMessageLogged("Could not reject this score change."))
         } finally {
             _busyRequestId.value = null
         }

@@ -6,7 +6,6 @@ import com.mbd.cmscommon.domain.model.StudentProfile
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.FineRepository
 import com.mbd.cmscommon.util.Outcome
-import com.mbd.cmscommon.util.userMessage
 import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -90,7 +89,7 @@ class StudentProfileEditController(
             _saveState.value = Outcome.Success(Unit)
             _profile.value = normalized
         } catch (t: Throwable) {
-            _saveState.value = Outcome.Error(t.userMessage("Could not save the student profile."), t)
+            _saveState.value = Outcome.Error(t.userMessageLogged("Could not save the student profile."), t)
         }
     }
 }

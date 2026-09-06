@@ -7,7 +7,6 @@ import com.mbd.cmscommon.domain.model.SessionPeriod
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.SessionTimetableRepository
-import com.mbd.cmscommon.util.userMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -89,7 +88,7 @@ class MasterTimetableController(
                 runCatching { timetableRepository.syncSession(sessionId) }.onFailure { failures += it }
             }
 
-            _refreshError.value = failures.firstOrNull()?.userMessage("Could not refresh the master timetable.")
+            _refreshError.value = failures.firstOrNull()?.userMessageLogged("Could not refresh the master timetable.")
         } finally {
             _loading.value = false
         }

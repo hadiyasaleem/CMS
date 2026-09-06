@@ -10,7 +10,6 @@ import com.mbd.cmscommon.domain.repository.CalendarRepository
 import com.mbd.cmscommon.domain.repository.NotificationAudienceContext
 import com.mbd.cmscommon.domain.repository.NotificationRepository
 import com.mbd.cmscommon.domain.repository.SessionFeeRepository
-import com.mbd.cmscommon.util.userMessage
 import java.time.LocalDate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -91,7 +90,7 @@ class StudentMoreController(
                         LocalDate.now(),
                     )
                     _loadError.value = results.firstNotNullOfOrNull { it.exceptionOrNull() }
-                        ?.userMessage("Some portal summaries could not be loaded.")
+                        ?.userMessageLogged("Some portal summaries could not be loaded.")
                     _loading.value = false
                 }
             }

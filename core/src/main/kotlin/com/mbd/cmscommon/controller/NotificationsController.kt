@@ -9,7 +9,6 @@ import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.NotificationAudienceContext
 import com.mbd.cmscommon.domain.repository.NotificationRepository
 import com.mbd.cmscommon.teacher.ResolvedAssignment
-import com.mbd.cmscommon.util.userMessage
 import java.time.Instant
 import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
@@ -173,7 +172,7 @@ class NotificationsController(
             repository.syncAuthoredByCurrentUser(accountKey)
             _notice.value = "Notification sent to ${audienceLabel(targetRole, targetDepartment, targetSession)}."
         } catch (t: Throwable) {
-            _composeError.value = t.userMessage("Could not send this notification.")
+            _composeError.value = t.userMessageLogged("Could not send this notification.")
         } finally {
             _busyActionId.value = null
         }
@@ -190,7 +189,7 @@ class NotificationsController(
             _rowErrors.value = _rowErrors.value - notification.notificationId
             _notice.value = "Notification deleted."
         } catch (t: Throwable) {
-            _rowErrors.value = _rowErrors.value + (notification.notificationId to t.userMessage("Could not delete this notification."))
+            _rowErrors.value = _rowErrors.value + (notification.notificationId to t.userMessageLogged("Could not delete this notification."))
         } finally {
             _busyActionId.value = null
         }

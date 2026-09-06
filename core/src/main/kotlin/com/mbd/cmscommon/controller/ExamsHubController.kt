@@ -9,7 +9,6 @@ import com.mbd.cmscommon.domain.repository.DatesheetRepository
 import com.mbd.cmscommon.domain.repository.ExamPaperSubmissionRepository
 import com.mbd.cmscommon.teacher.ResolvedAssignment
 import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider
-import com.mbd.cmscommon.util.userMessage
 import java.time.LocalDate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -116,7 +115,7 @@ class ExamsHubController(
                     if (version == loadVersion) {
                         _slots.value = slotResults.flatMap { it.getOrDefault(emptyList()) }
                         val firstFailure = (paperResults + datesheetResult + slotResults).firstNotNullOfOrNull { it.exceptionOrNull() }
-                        _loadError.value = firstFailure?.userMessage("Some exam data could not be loaded.")
+                        _loadError.value = firstFailure?.userMessageLogged("Some exam data could not be loaded.")
                     }
                 }
             } finally {

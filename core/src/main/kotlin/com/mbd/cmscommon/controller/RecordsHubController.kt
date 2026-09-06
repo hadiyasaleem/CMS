@@ -7,7 +7,6 @@ import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.CalendarRepository
 import com.mbd.cmscommon.domain.repository.DatesheetRepository
 import com.mbd.cmscommon.domain.repository.InsightsRepository
-import com.mbd.cmscommon.util.userMessage
 import java.time.LocalDate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -83,7 +82,7 @@ class RecordsHubController(
                     )
                     _loadError.value = listOf(sessionsResult, eventsResult, datesheetsResult, risksResult)
                         .firstNotNullOfOrNull { it.exceptionOrNull() }
-                        ?.userMessage("Some record summaries could not be loaded.")
+                        ?.userMessageLogged("Some record summaries could not be loaded.")
                     _loading.value = false
                 }
             }

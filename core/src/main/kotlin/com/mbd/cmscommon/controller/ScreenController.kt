@@ -21,13 +21,24 @@ abstract class ScreenController(protected val scope: CoroutineScope) {
             } catch (c: CancellationException) {
                 throw c
             } catch (t: Throwable) {
-                val classified = ErrorClassifier.classify(t)
-                _error.value = classified.userMessage
-                if (classified.severity == Severity.CRITICAL) {
-                    CmsLog.critical(this@ScreenController::class.simpleName ?: "ScreenController", classified.userMessage, t)
-                }
+                _error.value = t.userMessageLogged()
             }
         }
+    }
+
+    /**
+     * Like [com.mbd.cmscommon.util.userMessage], but also logs to [CmsLog] when the failure is
+     * [Severity.CRITICAL]. Many controllers catch a [Throwable] locally (into an `Outcome` or a
+     * per-row error `StateFlow`) instead of letting it propagate to [launch]'s own catch above —
+     * those local catches bypass the logging [launch] does, so they should call this instead of
+     * the plain [com.mbd.cmscommon.util.userMessage] extension to still get it.
+     */
+    protected fun Throwable.userMessageLogged(fallback: String = "Something went wrong. Please try again."): String {
+        val classified = ErrorClassifier.classify(this, fallback)
+        if (classified.severity == Severity.CRITICAL) {
+            CmsLog.critical(this@ScreenController::class.simpleName ?: "ScreenController", classified.userMessage, this)
+        }
+        return classified.userMessage
     }
 
     fun clearError() {

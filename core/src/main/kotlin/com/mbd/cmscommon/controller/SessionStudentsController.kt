@@ -5,7 +5,6 @@ import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.util.FieldValidators
 import com.mbd.cmscommon.util.ImportedStudentRow
-import com.mbd.cmscommon.util.userMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -49,7 +48,7 @@ class SessionStudentsController(
 
             repo.addStudent(sessionId, normalizedRoll, normalizedName, gpa, cgpa)
         } catch (t: Throwable) {
-            throw IllegalStateException(t.userMessage("Could not add the student."), t)
+            throw IllegalStateException(t.userMessageLogged("Could not add the student."), t)
         }
     }
 
@@ -75,7 +74,7 @@ class SessionStudentsController(
                             repo.addStudent(sessionId, normalizedRoll, normalizedName, null, null)
                             succeeded++
                         } catch (t: Throwable) {
-                            failures += "Row ${row.rowNumber}: ${t.userMessage("Could not add this student.")}"
+                            failures += "Row ${row.rowNumber}: ${t.userMessageLogged("Could not add this student.")}"
                         }
                     }
                 }

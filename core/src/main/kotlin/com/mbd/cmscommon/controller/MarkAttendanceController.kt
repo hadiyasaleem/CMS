@@ -9,7 +9,6 @@ import com.mbd.cmscommon.domain.repository.NotificationRepository
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
 import com.mbd.cmscommon.teacher.ResolvedAssignment
 import com.mbd.cmscommon.util.Outcome
-import com.mbd.cmscommon.util.userMessage
 import java.time.LocalDate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -158,7 +157,7 @@ class MarkAttendanceController(
             _alreadyMarked.value = true
             _submitState.value = Outcome.Success(Unit)
         } catch (t: Throwable) {
-            _submitState.value = Outcome.Error(t.userMessage("Could not submit attendance."), t)
+            _submitState.value = Outcome.Error(t.userMessageLogged("Could not submit attendance."), t)
         }
     }
 }

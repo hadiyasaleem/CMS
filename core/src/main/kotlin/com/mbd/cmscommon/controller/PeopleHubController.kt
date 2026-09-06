@@ -12,7 +12,6 @@ import com.mbd.cmscommon.domain.repository.ExamPaperSubmissionRepository
 import com.mbd.cmscommon.domain.repository.MarkEditRequestRepository
 import com.mbd.cmscommon.domain.repository.StudentLinkRequestRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
-import com.mbd.cmscommon.util.userMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -122,7 +121,7 @@ class PeopleHubController(
                     )
                     _loadError.value = listOf(administratorsResult, teachersResult, studentsResult, linksResult, editsResult, examReviewsResult)
                         .firstNotNullOfOrNull { it.exceptionOrNull() }
-                        ?.userMessage("Some people summaries could not be loaded.")
+                        ?.userMessageLogged("Some people summaries could not be loaded.")
                     _loading.value = false
                 }
             }

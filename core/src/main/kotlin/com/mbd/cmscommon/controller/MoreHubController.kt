@@ -8,7 +8,6 @@ import com.mbd.cmscommon.domain.model.NotificationTargetRole
 import com.mbd.cmscommon.domain.model.moreHubSnapshot
 import com.mbd.cmscommon.domain.repository.AdministratorRepository
 import com.mbd.cmscommon.domain.repository.NotificationRepository
-import com.mbd.cmscommon.util.userMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -85,7 +84,7 @@ class MoreHubController(
                     )
                     _loadError.value = listOf(administratorsResult, authoredResult, unreadResult)
                         .firstNotNullOfOrNull { it.exceptionOrNull() }
-                        ?.userMessage("Some account summaries could not be loaded.")
+                        ?.userMessageLogged("Some account summaries could not be loaded.")
                     _loading.value = false
                 }
             }

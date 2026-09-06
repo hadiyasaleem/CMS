@@ -6,7 +6,6 @@ import com.mbd.cmscommon.domain.model.examPaperUploadError
 import com.mbd.cmscommon.domain.repository.ExamPaperSubmissionRepository
 import com.mbd.cmscommon.teacher.ResolvedAssignment
 import com.mbd.cmscommon.util.Outcome
-import com.mbd.cmscommon.util.userMessage
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -62,20 +61,20 @@ class ExamPaperSubmissionController(
                 repo.uploadSubmission(assignment.sessionId, assignment.courseCode, _examType.value, teacherId, fileBytes, fileName)
             }.fold(
                 onSuccess = { Outcome.Success(Unit) },
-                onFailure = { Outcome.Error(it.userMessage("Upload failed."), it) },
+                onFailure = { Outcome.Error(it.userMessageLogged("Upload failed."), it) },
             )
         }
     }
 
     fun deleteSubmission(submissionId: String) = launch {
         runCatching { repo.deleteSubmission(submissionId) }
-            .onFailure { _uploadState.value = Outcome.Error(it.userMessage("Could not delete the submission."), it) }
+            .onFailure { _uploadState.value = Outcome.Error(it.userMessageLogged("Could not delete the submission."), it) }
     }
 
     fun downloadAndOpen(submission: ExamPaperSubmission, targetDir: File, opener: (File) -> Unit) = launch {
         runCatching {
             val file = repo.downloadTo(submission, targetDir)
             opener(file)
-        }.onFailure { _uploadState.value = Outcome.Error(it.userMessage("Could not open the file."), it) }
+        }.onFailure { _uploadState.value = Outcome.Error(it.userMessageLogged("Could not open the file."), it) }
     }
 }

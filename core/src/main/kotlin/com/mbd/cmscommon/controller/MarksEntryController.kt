@@ -9,7 +9,6 @@ import com.mbd.cmscommon.domain.repository.MarkEditRequestRepository
 import com.mbd.cmscommon.domain.repository.SessionMarksRepository
 import com.mbd.cmscommon.teacher.ResolvedAssignment
 import com.mbd.cmscommon.util.Outcome
-import com.mbd.cmscommon.util.userMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -139,7 +138,7 @@ class MarksEntryController(
                 _edits.value = emptyMap()
                 _absentRolls.value = emptySet()
             } catch (t: Throwable) {
-                _saveState.value = Outcome.Error(t.userMessage("Could not save marks."), t)
+                _saveState.value = Outcome.Error(t.userMessageLogged("Could not save marks."), t)
             }
         }
     }
@@ -191,7 +190,7 @@ class MarksEntryController(
                 _requestState.value = Outcome.Success(Unit)
                 loadPendingRequests()
             } catch (t: Throwable) {
-                _requestState.value = Outcome.Error(t.userMessage("Could not submit the edit request."), t)
+                _requestState.value = Outcome.Error(t.userMessageLogged("Could not submit the edit request."), t)
             }
         }
     }
