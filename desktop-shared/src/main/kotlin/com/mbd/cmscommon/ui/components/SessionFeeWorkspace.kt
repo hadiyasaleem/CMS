@@ -104,10 +104,10 @@ fun SessionFeeWorkspace(
         item { FeeHero(session) }
 
         if (!errorMessage.isNullOrBlank()) {
-            item { FeeNotice(errorMessage, FeeRed, "Dismiss", onClearError) }
+            item { CmsNotice(errorMessage, tone = NoticeTone.Error, onDismiss = onClearError) }
         }
         if (saved) {
-            item { FeeNotice("Fee structure saved", FeeGreen, "Dismiss", onConsumeSaved) }
+            item { CmsNotice("Fee structure saved", tone = NoticeTone.Success, onDismiss = onConsumeSaved) }
         }
 
         item { FeeSummaryCard(total, average, cadence, onCadenceChange = { cadence = it }) }
@@ -307,15 +307,6 @@ private fun FeeSaveCard(dirty: Boolean, saving: Boolean, validationError: String
     }
 }
 
-@Composable
-private fun FeeNotice(message: String, color: Color, action: String, onAction: () -> Unit) {
-    Surface(shape = RoundedCornerShape(14.dp), color = color.copy(alpha = 0.1f), border = BorderStroke(1.dp, color.copy(alpha = 0.25f))) {
-        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(message, modifier = Modifier.weight(1f), color = color, style = MaterialTheme.typography.bodyMedium)
-            TextButton(onClick = onAction) { Text(action, color = color) }
-        }
-    }
-}
 
 @Composable
 private fun FeeHeadEditorDialog(existing: FeeHead?, existingLabels: Set<String>, onDismiss: () -> Unit, onSave: (String, Double) -> Unit) {
