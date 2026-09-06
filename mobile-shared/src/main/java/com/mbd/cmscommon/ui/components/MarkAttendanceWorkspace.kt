@@ -324,13 +324,9 @@ private fun SubmitCard(unmarked: Int, locked: Boolean, allMarked: Boolean, loadi
 private fun SubmitNotice(outcome: Outcome<Unit>?) {
     when (outcome) {
         null -> {} // idle: no submit yet, show no notice
-        is Outcome.Loading -> Row(verticalAlignment = Alignment.CenterVertically) {
-            CircularProgressIndicator(modifier = Modifier.height(16.dp), strokeWidth = 2.dp)
-            Spacer(Modifier.width(8.dp))
-            Text("Attendance has been submitted.", color = RegisterBlue)
-        }
-        is Outcome.Success -> Text("Attendance submitted successfully.", color = RegisterGreen, style = MaterialTheme.typography.bodyMedium)
-        is Outcome.Error -> Text(outcome.message, color = RegisterRed, style = MaterialTheme.typography.bodyMedium)
+        is Outcome.Loading -> CmsNotice("Attendance has been submitted.", tone = NoticeTone.Info, showProgress = true)
+        is Outcome.Success -> CmsNotice("Attendance submitted successfully.", tone = NoticeTone.Success)
+        is Outcome.Error -> CmsNotice(outcome.message, tone = NoticeTone.Error)
     }
 }
 

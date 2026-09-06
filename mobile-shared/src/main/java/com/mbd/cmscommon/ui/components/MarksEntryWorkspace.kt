@@ -300,15 +300,9 @@ private fun SaveMarksCard(examType: ExamType, ready: Int, invalid: Int, outcome:
 @Composable
 private fun MarksNotice(outcome: Outcome<Unit>, onDismiss: () -> Unit) {
     when (outcome) {
-        is Outcome.Loading -> Text("Submitting...", color = MarksBlue, style = MaterialTheme.typography.bodySmall)
-        is Outcome.Success -> Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Edit request sent for review.", modifier = Modifier.weight(1f), color = MarksGreen, style = MaterialTheme.typography.bodySmall)
-            TextButton(onClick = onDismiss) { Text("Dismiss") }
-        }
-        is Outcome.Error -> Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(outcome.message, modifier = Modifier.weight(1f), color = MarksRed, style = MaterialTheme.typography.bodySmall)
-            TextButton(onClick = onDismiss) { Text("Dismiss") }
-        }
+        is Outcome.Loading -> CmsNotice("Submitting...", tone = NoticeTone.Info, showProgress = true)
+        is Outcome.Success -> CmsNotice("Edit request sent for review.", tone = NoticeTone.Success, onDismiss = onDismiss)
+        is Outcome.Error -> CmsNotice(outcome.message, tone = NoticeTone.Error, onDismiss = onDismiss)
     }
 }
 

@@ -133,10 +133,10 @@ fun MarkEditRequestReviewWorkspace(
         item { MarkRequestHero(requests.size) }
 
         if (!errorMessage.isNullOrBlank()) {
-            item { MarkRequestNotice(errorMessage, MarkRed, onClearError) }
+            item { CmsNotice(errorMessage, tone = NoticeTone.Error, onDismiss = onClearError) }
         }
         if (!notice.isNullOrBlank()) {
-            item { MarkRequestNotice(notice, MarkGreen, onConsumeNotice) }
+            item { CmsNotice(notice, tone = NoticeTone.Success, onDismiss = onConsumeNotice) }
         }
 
         item { MarkSummaryCard(requests) }
@@ -313,16 +313,6 @@ private fun MarkScoreValue(label: String, score: String, tint: Color) {
         Column(Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
             Text(score, color = tint, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
             Text(label, color = tint, style = CmsTextStyles.eyebrow)
-        }
-    }
-}
-
-@Composable
-private fun MarkRequestNotice(message: String, color: Color, onDismiss: () -> Unit) {
-    Surface(shape = RoundedCornerShape(14.dp), color = color.copy(alpha = 0.1f), border = BorderStroke(1.dp, color.copy(alpha = 0.25f))) {
-        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(message, modifier = Modifier.weight(1f), color = color, style = MaterialTheme.typography.bodyMedium)
-            TextButton(onClick = onDismiss) { Text("Dismiss", color = color) }
         }
     }
 }

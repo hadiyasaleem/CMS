@@ -111,7 +111,7 @@ fun ExamsHubWorkspace(
     ) {
         item { ExamHeader(heroPainter) }
         if (!errorMessage.isNullOrBlank()) {
-            item { ExamNotice(errorMessage, "Retry", onRetry) }
+            item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         }
         item { ExamMetrics(snapshot, loading) }
         items(actions, key = { it.destination }) { action -> ExamActionCard(action, onClick = { onOpen(action.destination) }) }
@@ -183,12 +183,3 @@ private fun ExamActionCard(action: ExamAction, onClick: () -> Unit) {
     }
 }
 
-@Composable
-private fun ExamNotice(message: String, action: String, onAction: () -> Unit) {
-    Surface(shape = RoundedCornerShape(14.dp), color = ExamRed.copy(alpha = 0.1f), border = BorderStroke(1.dp, ExamRed.copy(alpha = 0.25f))) {
-        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(message, modifier = Modifier.weight(1f), color = ExamRed, style = MaterialTheme.typography.bodyMedium)
-            TextButton(onClick = onAction) { Text(action, color = ExamRed) }
-        }
-    }
-}

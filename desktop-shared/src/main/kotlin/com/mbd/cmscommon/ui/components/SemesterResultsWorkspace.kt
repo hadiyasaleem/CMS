@@ -95,13 +95,13 @@ fun SemesterResultsWorkspace(
         item { ResultsHeader(classLabel, semester, averageGpa) }
 
         if (loadOutcome is Outcome.Error) {
-            item { ResultNotice(loadOutcome.message, ResultRed, "Retry", onRetry) }
+            item { CmsNotice(loadOutcome.message, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         }
         if (saveOutcome is Outcome.Error) {
-            item { ResultNotice(saveOutcome.message, ResultRed, "Dismiss", onClearSave) }
+            item { CmsNotice(saveOutcome.message, tone = NoticeTone.Error, onDismiss = onClearSave) }
         }
         if (saveOutcome is Outcome.Success) {
-            item { ResultNotice("Result saved.", ResultGreen, "Dismiss", onClearSave) }
+            item { CmsNotice("Result saved.", tone = NoticeTone.Success, onDismiss = onClearSave) }
         }
 
         item { SessionPicker(sessions, sessionId, onSelectSession) }
@@ -238,16 +238,6 @@ private fun ResultValue(value: String, label: String) {
         Column(Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) {
             Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
             Text(label, color = ModMuted, style = CmsTextStyles.eyebrow)
-        }
-    }
-}
-
-@Composable
-private fun ResultNotice(message: String, color: Color, action: String, onAction: () -> Unit) {
-    Surface(shape = RoundedCornerShape(14.dp), color = color.copy(alpha = 0.1f), border = BorderStroke(1.dp, color.copy(alpha = 0.25f))) {
-        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(message, modifier = Modifier.weight(1f), color = color, style = MaterialTheme.typography.bodyMedium)
-            TextButton(onClick = onAction) { Text(action, color = color) }
         }
     }
 }

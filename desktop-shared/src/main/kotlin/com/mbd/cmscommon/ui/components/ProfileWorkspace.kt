@@ -37,11 +37,9 @@ import com.mbd.cmscommon.domain.model.Teacher
 import com.mbd.cmscommon.teacher.ResolvedAssignment
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
-import com.mbd.cmscommon.ui.theme.ModAccent
 import com.mbd.cmscommon.ui.theme.ModGround
 import com.mbd.cmscommon.ui.theme.ModInk
 import com.mbd.cmscommon.ui.theme.ModMuted
-import com.mbd.cmscommon.ui.theme.ModSuccess
 import com.mbd.cmscommon.ui.theme.ModSurface
 import com.mbd.cmscommon.ui.theme.ModTrack
 import java.time.Instant
@@ -50,8 +48,6 @@ import java.time.format.DateTimeFormatter
 
 private val ProfileCanvas = ModGround
 private val ProfileBlue = ModInk
-private val ProfileGreen = ModSuccess
-private val ProfileRed = ModAccent
 private val ProfileDateFormatter = DateTimeFormatter.ofPattern("dd MMM yyyy")
 
 private data class ProfileMetric(val label: String, val value: String, val detail: String)
@@ -81,8 +77,8 @@ fun AdministratorProfileWorkspace(
 
     LazyColumn(modifier.fillMaxWidth().background(ProfileCanvas), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { ProfileHero(account?.email ?: accountKey, "Administrator", if (active) "ACTIVE" else "INACTIVE", if (active) BadgeTone.Success else BadgeTone.Neutral, "Verified administrator account") }
-        if (!errorMessage.isNullOrBlank()) item { ProfileNotice(errorMessage, ProfileRed, showProgress = false, action = "Retry", onAction = onRetry) }
-        if (!actionMessage.isNullOrBlank()) item { ProfileNotice(actionMessage, ProfileGreen, showProgress = false, action = null, onAction = null) }
+        if (!errorMessage.isNullOrBlank()) item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
+        if (!actionMessage.isNullOrBlank()) item { CmsNotice(actionMessage, tone = NoticeTone.Success) }
         if (loading) item { SkeletonRow() }
         item { ProfileMetrics(metrics) }
         item {
@@ -143,8 +139,8 @@ fun TeacherProfileWorkspace(
 
     LazyColumn(modifier.fillMaxWidth().background(ProfileCanvas), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { ProfileHero(profile?.name ?: accountKey, "Teacher", (profile?.status?.name ?: "ACTIVE"), BadgeTone.Success, "Faculty member") }
-        if (!errorMessage.isNullOrBlank()) item { ProfileNotice(errorMessage, ProfileRed, showProgress = false, action = null, onAction = null) }
-        if (!actionMessage.isNullOrBlank()) item { ProfileNotice(actionMessage, ProfileGreen, showProgress = false, action = null, onAction = null) }
+        if (!errorMessage.isNullOrBlank()) item { CmsNotice(errorMessage, tone = NoticeTone.Error) }
+        if (!actionMessage.isNullOrBlank()) item { CmsNotice(actionMessage, tone = NoticeTone.Success) }
         if (loading) item { SkeletonRow() }
         item { ProfileMetrics(metrics) }
         item {
@@ -236,8 +232,8 @@ fun StudentOwnProfileWorkspace(
 
     LazyColumn(modifier.fillMaxWidth().background(ProfileCanvas), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { ProfileHero(studentName, "Student", "ENROLLED", BadgeTone.Success, "Class roll $rollNumber") }
-        if (!errorMessage.isNullOrBlank()) item { ProfileNotice(errorMessage, ProfileRed, showProgress = false, action = "Retry", onAction = onRetry) }
-        if (!actionMessage.isNullOrBlank()) item { ProfileNotice(actionMessage, ProfileGreen, showProgress = false, action = null, onAction = null) }
+        if (!errorMessage.isNullOrBlank()) item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
+        if (!actionMessage.isNullOrBlank()) item { CmsNotice(actionMessage, tone = NoticeTone.Success) }
         if (loading) item { SkeletonRow() }
         item { ProfileMetrics(metrics) }
         item {
@@ -390,18 +386,6 @@ private fun FineLine(fine: Fine) {
 @Composable
 private fun ProfileEmptyLine(text: String) {
     Text(text, color = ModMuted, style = MaterialTheme.typography.bodySmall)
-}
-
-@Composable
-private fun ProfileNotice(message: String, color: Color, showProgress: Boolean, action: String?, onAction: (() -> Unit)?) {
-    Surface(shape = RoundedCornerShape(14.dp), color = color.copy(alpha = 0.1f), border = BorderStroke(1.dp, color.copy(alpha = 0.25f))) {
-        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(message, modifier = Modifier.weight(1f), color = color, style = MaterialTheme.typography.bodyMedium)
-            if (action != null && onAction != null) {
-                TextButton(onClick = onAction) { Text(action, color = color) }
-            }
-        }
-    }
 }
 
 @Composable
