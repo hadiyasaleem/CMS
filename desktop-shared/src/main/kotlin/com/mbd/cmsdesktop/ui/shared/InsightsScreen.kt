@@ -39,6 +39,7 @@ fun InsightsScreen(
     val atRisk by controller.atRisk.collectAsState()
     val examStats by controller.examStats.collectAsState()
     val refreshing by controller.refreshing.collectAsState()
+    val error by controller.error.collectAsState()
 
     var sessions by remember { mutableStateOf<List<AcademicSession>>(emptyList()) }
     var departments by remember { mutableStateOf<List<Department>>(emptyList()) }
@@ -54,7 +55,7 @@ fun InsightsScreen(
         viewer = viewer,
         assignments = assignments.orEmpty(),
         loading = refreshing && overviews == null,
-        errorMessage = null,
+        errorMessage = error,
         onRetry = controller::refresh,
     )
 }
