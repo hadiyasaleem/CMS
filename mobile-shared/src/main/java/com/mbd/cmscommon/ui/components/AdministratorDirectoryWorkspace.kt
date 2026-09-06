@@ -220,12 +220,7 @@ fun AdministratorDirectoryWorkspace(
     }
 
     if (!errorMessage.isNullOrBlank()) {
-        AlertDialog(
-            onDismissRequest = onClearError,
-            title = { Text("Something went wrong") },
-            text = { Text(errorMessage, color = CmsTheme.colors.accent) },
-            confirmButton = { TextButton(onClick = onClearError) { Text("OK") } },
-        )
+        CmsErrorDialog(message = errorMessage, onDismiss = onClearError)
     }
 }
 

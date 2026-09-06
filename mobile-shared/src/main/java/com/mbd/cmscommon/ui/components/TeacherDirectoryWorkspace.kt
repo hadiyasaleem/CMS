@@ -278,12 +278,7 @@ fun TeacherDirectoryWorkspace(
     }
 
     if (!errorMessage.isNullOrBlank()) {
-        AlertDialog(
-            onDismissRequest = onClearError,
-            title = { Text("Something went wrong", style = MaterialTheme.typography.headlineSmall) },
-            text = { Text(errorMessage) },
-            confirmButton = { TextButton(onClick = onClearError) { Text("OK") } },
-        )
+        CmsErrorDialog(message = errorMessage, onDismiss = onClearError)
     }
 
     if (!notice.isNullOrBlank()) {

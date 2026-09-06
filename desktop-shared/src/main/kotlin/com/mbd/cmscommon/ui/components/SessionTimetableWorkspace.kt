@@ -192,12 +192,7 @@ fun SessionTimetableWorkspace(
     }
 
     if (!errorMessage.isNullOrBlank()) {
-        AlertDialog(
-            onDismissRequest = onClearError,
-            title = { Text("Couldn't save period") },
-            text = { Text(errorMessage, color = TimetableRed) },
-            confirmButton = { TextButton(onClick = onClearError) { Text("OK") } },
-        )
+        CmsErrorDialog(message = errorMessage, onDismiss = onClearError, title = "Couldn't save period")
     }
 }
 
