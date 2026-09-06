@@ -215,6 +215,9 @@ interface SessionAttendanceDao {
 
 @Dao
 interface SessionMarkDao {
+    @Query("SELECT * FROM session_marks WHERE id = :id LIMIT 1")
+    suspend fun getById(id: String): SessionMarkEntity?
+
     @Query("SELECT * FROM session_marks WHERE sessionId = :sessionId AND courseCode = :courseCode AND examType = :examType")
     fun observeScores(sessionId: String, courseCode: String, examType: String): Flow<List<SessionMarkEntity>>
 

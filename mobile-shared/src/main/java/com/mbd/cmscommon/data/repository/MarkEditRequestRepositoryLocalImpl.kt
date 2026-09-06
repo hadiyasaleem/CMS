@@ -2,6 +2,7 @@ package com.mbd.cmscommon.data.repository
 
 import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.local.dao.MarkEditRequestDao
+import com.mbd.cmscommon.data.local.dao.SessionMarkDao
 import com.mbd.cmscommon.data.mapper.MarkEditRequestEntityMapper
 import com.mbd.cmscommon.data.remote.SupabaseTables
 import com.mbd.cmscommon.data.remote.dto.MarkEditRequestDto
@@ -23,6 +24,7 @@ private const val MARK_EDIT_STATUS_PENDING = "PENDING"
 class MarkEditRequestRepositoryLocalImpl @Inject constructor(
     private val postgrest: Postgrest,
     private val requestDao: MarkEditRequestDao,
+    private val markDao: SessionMarkDao,
     private val checkpointStore: SyncCheckpointStore,
     private val sessionManager: SessionManager,
 ) : MarkEditRequestRepository {
@@ -86,6 +88,16 @@ class MarkEditRequestRepositoryLocalImpl @Inject constructor(
                 eq("roll_number", request.rollNumber)
             }
         }
+
+        // The remote score is now authoritative -- patch the local cache too, since nothing else
+        // resyncs this student's marks after an approval and the reviewer would otherwise keep
+        // seeing the pre-edit score everywhere in the app until some unrelated screen happens to
+        // resync this exact session/course/exam combination.
+        val markId = "${request.sessionId}_${request.courseCode}_${request.examType}_${request.rollNumber}"
+        markDao.getById(markId)?.let { mark ->
+            markDao.upsertAll(listOf(mark.copy(score = request.requestedScore, updatedAt = System.currentTimeMillis())))
+        }
+
         updateStatus(requestId, "APPROVED", reviewedBy)
     }
 
