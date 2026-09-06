@@ -41,6 +41,10 @@ class DepartmentDetailController(
     }
 
     fun createSession(startYear: Int, shift: Session) = launch {
+        // The UI only ever offers full 4-digit years (see intakeYearOptions() in
+        // DepartmentDetailWorkspace); this guards the controller boundary in case anything else
+        // ever calls this directly with a 2-digit year like 21 instead of 2021.
+        requireValid(startYear in 1900..9999) { "Enter a valid 4-digit intake year." }
         sessionRepository.createSession(deptId, startYear, shift)
     }
 

@@ -289,16 +289,22 @@ private fun SessionEmptyState(filtered: Boolean, onAction: () -> Unit) {
 
 @Composable
 private fun AddDepartmentSessionDialog(onDismiss: () -> Unit, onConfirm: (Int, Session) -> Unit) {
-    var year by remember { mutableStateOf("") }
+    var year by remember { mutableStateOf<Int?>(null) }
     var shift by remember { mutableStateOf(Session.MORNING) }
-    val parsedYear = year.trim().toIntOrNull()
+    val parsedYear = year
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Create session", style = MaterialTheme.typography.headlineSmall) },
         text = {
             Column {
-                OutlinedTextField(value = year, onValueChange = { year = it }, label = { Text("Intake year") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                CmsEntityPicker(
+                    label = "Intake year",
+                    selectedId = year?.toString(),
+                    options = intakeYearOptions().map { CmsEntityOption(it.toString(), it.toString()) },
+                    onSelected = { year = it?.toIntOrNull() },
+                    emptyLabel = "Select intake year",
+                )
                 Spacer(Modifier.height(10.dp))
                 Text("SHIFT", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
@@ -317,6 +323,12 @@ private fun AddDepartmentSessionDialog(onDismiss: () -> Unit, onConfirm: (Int, S
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     )
+}
+
+/** Full 4-digit intake years to choose from, most recent first -- next year (pre-registration) down to 15 years back. */
+private fun intakeYearOptions(): List<Int> {
+    val currentYear = java.time.Year.now().value
+    return (currentYear + 1 downTo currentYear - 15).toList()
 }
 
 @Composable
