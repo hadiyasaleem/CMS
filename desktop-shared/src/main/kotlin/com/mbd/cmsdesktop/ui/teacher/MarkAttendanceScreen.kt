@@ -12,7 +12,6 @@ import com.mbd.cmscommon.domain.repository.NotificationRepository
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
 import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider
 import com.mbd.cmscommon.ui.components.MarkAttendanceWorkspace
-import com.mbd.cmscommon.util.Outcome
 
 /** Attendance tab: mark today's session, then jump into [AttendanceHistoryScreen] via [onOpenHistory]. */
 @Composable
@@ -52,7 +51,7 @@ fun MarkAttendanceScreen(
         alreadyMarked = alreadyMarked,
         allMarked = allMarked,
         lectureTopic = lectureTopic,
-        outcome = submitState ?: Outcome.Success(Unit),
+        outcome = submitState,
         onSelect = controller::select,
         onStatus = controller::setStatus,
         onToggleLate = controller::toggleLate,
