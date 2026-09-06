@@ -10,6 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.awt.ComposeWindow
 import com.mbd.cmscommon.controller.SessionStudentsController
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
+import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.ui.components.StudentRosterWorkspace
 import com.mbd.cmscommon.util.StudentImportParser
 import com.mbd.cmscommon.util.StudentImportResult
@@ -20,12 +21,13 @@ import com.mbd.cmsdesktop.platform.AwtDesktopPlatformServices
 fun SessionStudentsScreen(
     sessionId: String,
     sessionRepository: AcademicSessionRepository,
+    departmentRepository: DepartmentRepository,
     window: ComposeWindow,
     onOpenStudent: (sessionId: String, roll: String) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val controller = remember(sessionId, sessionRepository) {
-        SessionStudentsController(sessionId, sessionRepository, scope)
+        SessionStudentsController(sessionId, sessionRepository, departmentRepository, scope)
     }
     val students by controller.students.collectAsState()
     val session by controller.session.collectAsState()

@@ -16,6 +16,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.controller.SessionStudentsController
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
+import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.ui.components.StudentRosterWorkspace
 import com.mbd.cmscommon.util.ImportedStudentRow
 import com.mbd.cmscommon.util.StudentImportParser
@@ -36,10 +37,12 @@ private val ROSTER_FILE_MIME_TYPES = arrayOf(
 class SessionStudentsViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     sessionRepository: AcademicSessionRepository,
+    departmentRepository: DepartmentRepository,
 ) : ViewModel() {
     private val controller = SessionStudentsController(
         sessionId = checkNotNull(savedStateHandle["sessionId"]),
         repo = sessionRepository,
+        departmentRepo = departmentRepository,
         scope = viewModelScope,
     )
 

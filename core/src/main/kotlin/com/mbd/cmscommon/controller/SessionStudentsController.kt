@@ -3,6 +3,7 @@ package com.mbd.cmscommon.controller
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
+import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.util.FieldValidators
 import com.mbd.cmscommon.util.ImportedStudentRow
 import com.mbd.cmscommon.util.orThrowValidation
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.stateIn
 class SessionStudentsController(
     val sessionId: String,
     private val repo: AcademicSessionRepository,
+    private val departmentRepo: DepartmentRepository,
     scope: CoroutineScope,
 ) : ScreenController(scope) {
 
@@ -32,13 +34,22 @@ class SessionStudentsController(
     private val _importing = MutableStateFlow(false)
     val importing: StateFlow<Boolean> = _importing.asStateFlow()
 
+    /**
+     * [AcademicSession.deptId] is the department's row id (e.g. "botany"), not its display code
+     * (e.g. "BOT") -- validating roll numbers against it let "BOTANY-24-01" through instead of
+     * requiring "BOT-24-01", since normalizeRollNumber uppercases the whole thing before matching.
+     */
+    private suspend fun currentDepartmentCode(currentSession: AcademicSession?): String? =
+        currentSession?.deptId?.let { departmentRepo.getDepartment(it)?.code }
+
     fun addStudent(rollNumber: String, name: String, gpa: Double?, cgpa: Double?) = launch {
         try {
             val normalizedRoll = FieldValidators.normalizeRollNumber(rollNumber)
             val normalizedName = name.trim()
             val currentSession = session.value
+            val departmentCode = currentDepartmentCode(currentSession)
 
-            FieldValidators.rollNumberError(normalizedRoll, currentSession?.deptId, currentSession?.startYear).orThrowValidation()
+            FieldValidators.rollNumberError(normalizedRoll, departmentCode, currentSession?.startYear).orThrowValidation()
             FieldValidators.nameError(normalizedName, "Student name").orThrowValidation()
             requireValid(gpa == null || gpa in 0.0..4.0) { "GPA must be between 0 and 4." }
             requireValid(cgpa == null || cgpa in 0.0..4.0) { "CGPA must be between 0 and 4." }
@@ -57,13 +68,14 @@ class SessionStudentsController(
         try {
             val knownRolls = students.value.map { it.rollNumber.uppercase() }.toMutableSet()
             val currentSession = session.value
+            val departmentCode = currentDepartmentCode(currentSession)
             val failures = mutableListOf<String>()
             var succeeded = 0
 
             for (row in rows) {
                 val normalizedRoll = FieldValidators.normalizeRollNumber(row.rollNumber)
                 val normalizedName = row.name.trim()
-                val rollError = FieldValidators.rollNumberError(normalizedRoll, currentSession?.deptId, currentSession?.startYear)
+                val rollError = FieldValidators.rollNumberError(normalizedRoll, departmentCode, currentSession?.startYear)
                 val nameError = FieldValidators.nameError(normalizedName, "Student name")
                 when {
                     rollError != null -> failures += "Row ${row.rowNumber}: $rollError"

@@ -351,6 +351,7 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                     is AdminScreen.SessionStudents -> SessionStudentsScreen(
                         sessionId = current.sessionId,
                         sessionRepository = component.academicSessionRepository(),
+                        departmentRepository = component.departmentRepository(),
                         window = window,
                         onOpenStudent = { sessionId, roll -> push(AdminScreen.StudentProfile(sessionId, roll)) },
                     )
