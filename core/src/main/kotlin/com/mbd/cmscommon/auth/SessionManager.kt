@@ -1,6 +1,7 @@
 package com.mbd.cmscommon.auth
 
 import com.mbd.cmscommon.util.LogContext
+import com.mbd.cmscommon.util.cmsExceptionHandler
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.auth.providers.builtin.Email
 import java.util.Locale
@@ -17,7 +18,7 @@ fun String.normalizeEmail(): String = trim().lowercase(Locale.ROOT)
 class SessionManager @Inject constructor(
     private val auth: Auth,
 ) {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default + cmsExceptionHandler("SessionManager"))
 
     val accountKey: String?
         get() = auth.currentUserOrNull()?.email?.normalizeEmail()

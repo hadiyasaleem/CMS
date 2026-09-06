@@ -14,6 +14,7 @@ import androidx.compose.ui.window.rememberWindowState
 import com.mbd.cmscommon.domain.model.UserRole
 import com.mbd.cmscommon.ui.theme.CmsApp
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.util.CmsCrashHandlerInstaller
 import com.mbd.cmsdesktop.di.DesktopAppComponent
 import com.mbd.cmsdesktop.ui.student.StudentAuthScreen
 import com.mbd.cmsdesktop.ui.student.StudentNavHost
@@ -21,9 +22,22 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
+private const val DESKTOP_APP_ID = "com.mbd.cmsdesktopstudent"
+private const val DESKTOP_APP_VERSION = "1.0.1"
+
 fun main() = application {
     System.setProperty("cms.desktop.appId", "student")
-    val component = remember { DesktopAppComponent.create() }
+    val component = remember {
+        DesktopAppComponent.create().also { created ->
+            CmsCrashHandlerInstaller.install(
+                sink = created.logSink(),
+                appId = DESKTOP_APP_ID,
+                appVersion = DESKTOP_APP_VERSION,
+                platform = "desktop",
+                deviceInfo = "${System.getProperty("os.name")} ${System.getProperty("os.version")}",
+            )
+        }
+    }
     val windowState = rememberWindowState(size = DpSize(1280.dp, 800.dp))
     var role by remember { mutableStateOf<UserRole?>(null) }
     var authChecked by remember { mutableStateOf(false) }
