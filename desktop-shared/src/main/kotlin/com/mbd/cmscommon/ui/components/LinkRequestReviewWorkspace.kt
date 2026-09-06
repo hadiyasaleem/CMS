@@ -1,6 +1,8 @@
 package com.mbd.cmscommon.ui.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -175,7 +177,10 @@ fun LinkRequestReviewWorkspace(
                 Spacer(Modifier.height(8.dp))
                 Text("SHOW", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     LinkRequestFilter.entries.forEach { option ->
                         CmsChip(option.label, selected = filter == option, onClick = { filter = option })
                     }
@@ -183,7 +188,10 @@ fun LinkRequestReviewWorkspace(
                 Spacer(Modifier.height(8.dp))
                 Text("SORT", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     LinkRequestSort.entries.forEach { option ->
                         CmsChip(option.label, selected = sort == option, onClick = { sort = option })
                     }
