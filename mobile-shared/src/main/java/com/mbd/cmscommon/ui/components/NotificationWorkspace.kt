@@ -3,10 +3,12 @@ package com.mbd.cmscommon.ui.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -75,12 +77,13 @@ fun NotificationControllerWorkspace(controller: NotificationsController, modifie
     val canPublish = publishAccess == NotificationPublishAccess.ALLOWED
     val urgentCount = inbox.count { it.priority == NotificationPriority.URGENT }
 
+    Box(modifier.fillMaxSize()) {
     LazyColumn(
-        modifier = modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { NotificationHero(controller.viewerRole, inbox.size, canPublish, onCompose = { showCompose = true }) }
+        item { NotificationHero(controller.viewerRole, inbox.size) }
 
         if (!composeError.isNullOrBlank()) {
             item { NotificationNotice(composeError ?: "", NoticeRed, controller::clearComposeError) }
@@ -117,6 +120,14 @@ fun NotificationControllerWorkspace(controller: NotificationsController, modifie
 
         item { Spacer(Modifier.height(72.dp)) }
     }
+        if (canPublish) {
+            CmsFab(
+                onClick = { showCompose = true },
+                contentDescription = "Compose",
+                modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+            )
+        }
+    }
 
     if (showCompose) {
         ComposeNotificationDialog(
@@ -140,19 +151,14 @@ fun NotificationControllerWorkspace(controller: NotificationsController, modifie
 }
 
 @Composable
-private fun NotificationHero(viewerRole: NotificationTargetRole, inboxCount: Int, canPublish: Boolean, onCompose: () -> Unit) {
+private fun NotificationHero(viewerRole: NotificationTargetRole, inboxCount: Int) {
     Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text("ACCOUNT & COMMUNICATIONS", color = NoticeGold, style = CmsTextStyles.eyebrow)
-                Spacer(Modifier.height(6.dp))
-                Text("Notifications", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                Spacer(Modifier.height(4.dp))
-                Text("$inboxCount notice(s) for ${viewerRole.name.lowercase().replaceFirstChar { it.uppercase() }}s", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
-            }
-            if (canPublish) {
-                CmsPrimaryButton(text = "Compose", onClick = onCompose)
-            }
+        Column(Modifier.padding(20.dp)) {
+            Text("ACCOUNT & COMMUNICATIONS", color = NoticeGold, style = CmsTextStyles.eyebrow)
+            Spacer(Modifier.height(6.dp))
+            Text("Notifications", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+            Spacer(Modifier.height(4.dp))
+            Text("$inboxCount notice(s) for ${viewerRole.name.lowercase().replaceFirstChar { it.uppercase() }}s", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
