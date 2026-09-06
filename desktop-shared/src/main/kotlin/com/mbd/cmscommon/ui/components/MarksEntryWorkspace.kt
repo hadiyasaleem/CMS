@@ -50,14 +50,12 @@ import com.mbd.cmscommon.ui.theme.ModAccent
 import com.mbd.cmscommon.ui.theme.ModGround
 import com.mbd.cmscommon.ui.theme.ModInk
 import com.mbd.cmscommon.ui.theme.ModMuted
-import com.mbd.cmscommon.ui.theme.ModSuccess
 import com.mbd.cmscommon.ui.theme.ModSurface
 import com.mbd.cmscommon.ui.theme.ModTrack
 import com.mbd.cmscommon.ui.theme.ModWarn
 import com.mbd.cmscommon.util.Outcome
 
 private val MarksCanvas = ModGround
-private val MarksGreen = ModSuccess
 private val MarksGold = ModWarn
 private val MarksRed = ModAccent
 private val MarksBlue = ModInk
@@ -73,8 +71,8 @@ fun MarksEntryWorkspace(
     pendingByRoll: Map<String, MarkEditRequest>,
     absentRolls: Set<String>,
     savedAbsentRolls: Set<String>,
-    saveOutcome: Outcome<Unit>,
-    requestOutcome: Outcome<Unit>,
+    saveOutcome: Outcome<Unit>?,
+    requestOutcome: Outcome<Unit>?,
     onSelect: (ResolvedAssignment) -> Unit,
     onExamType: (ExamType) -> Unit,
     onScore: (String, String) -> Unit,
@@ -275,7 +273,7 @@ private fun StatusPill(label: String, tone: Color) {
 }
 
 @Composable
-private fun SaveMarksCard(examType: ExamType, ready: Int, invalid: Int, outcome: Outcome<Unit>, onSave: () -> Unit) {
+private fun SaveMarksCard(examType: ExamType, ready: Int, invalid: Int, outcome: Outcome<Unit>?, onSave: () -> Unit) {
     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Text(
@@ -288,18 +286,19 @@ private fun SaveMarksCard(examType: ExamType, ready: Int, invalid: Int, outcome:
             CmsPrimaryButton(text = if (loading) "Saving..." else "Save marks", onClick = onSave, enabled = ready > 0 && invalid == 0 && !loading)
             if (outcome is Outcome.Success) {
                 Spacer(Modifier.height(8.dp))
-                Text("Marks saved successfully.", color = MarksGreen, style = MaterialTheme.typography.bodySmall)
+                CmsNotice("Marks saved successfully.", tone = NoticeTone.Success)
             } else if (outcome is Outcome.Error) {
                 Spacer(Modifier.height(8.dp))
-                Text(outcome.message, color = MarksRed, style = MaterialTheme.typography.bodySmall)
+                CmsNotice(outcome.message, tone = NoticeTone.Error)
             }
         }
     }
 }
 
 @Composable
-private fun MarksNotice(outcome: Outcome<Unit>, onDismiss: () -> Unit) {
+private fun MarksNotice(outcome: Outcome<Unit>?, onDismiss: () -> Unit) {
     when (outcome) {
+        null -> {} // idle: no request submitted yet, show no notice
         is Outcome.Loading -> CmsNotice("Submitting...", tone = NoticeTone.Info, showProgress = true)
         is Outcome.Success -> CmsNotice("Edit request sent for review.", tone = NoticeTone.Success, onDismiss = onDismiss)
         is Outcome.Error -> CmsNotice(outcome.message, tone = NoticeTone.Error, onDismiss = onDismiss)

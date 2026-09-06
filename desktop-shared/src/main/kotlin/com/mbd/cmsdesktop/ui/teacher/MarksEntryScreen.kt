@@ -11,7 +11,6 @@ import com.mbd.cmscommon.domain.repository.MarkEditRequestRepository
 import com.mbd.cmscommon.domain.repository.SessionMarksRepository
 import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider
 import com.mbd.cmscommon.ui.components.MarksEntryWorkspace
-import com.mbd.cmscommon.util.Outcome
 
 /** Marks-entry leaf reachable from Home / Exams hub. */
 @Composable
@@ -48,8 +47,8 @@ fun MarksEntryScreen(
         pendingByRoll = pendingByRoll,
         absentRolls = absentRolls,
         savedAbsentRolls = savedAbsentRolls,
-        saveOutcome = saveState ?: Outcome.Success(Unit),
-        requestOutcome = requestState ?: Outcome.Success(Unit),
+        saveOutcome = saveState,
+        requestOutcome = requestState,
         onSelect = controller::select,
         onExamType = controller::selectExamType,
         onScore = controller::setScore,

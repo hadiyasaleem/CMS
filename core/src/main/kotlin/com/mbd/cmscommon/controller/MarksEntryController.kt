@@ -163,12 +163,11 @@ class MarksEntryController(
         val semester = session.value?.currentSemester ?: 1
         val currentScore = savedScores.value[rollNumber]
 
-        if ((reason ?: "").trim().length > 500) {
         if (requestedScore !in 0..type.maxMarks) {
             _requestState.value = Outcome.Error("Score must be between 0 and ${type.maxMarks}.", IllegalArgumentException("score out of range"))
             return
         }
-
+        if ((reason ?: "").trim().length > 500) {
             _requestState.value = Outcome.Error("Reason must not exceed 500 characters.", IllegalArgumentException("reason length"))
             return
         }

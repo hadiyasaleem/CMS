@@ -5,7 +5,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mbd.cmscommon.ui.components.MarksEntryWorkspace
-import com.mbd.cmscommon.util.Outcome
 
 @Composable
 fun MarksEntryScreen(viewModel: MarksEntryViewModel = hiltViewModel()) {
@@ -32,8 +31,8 @@ fun MarksEntryScreen(viewModel: MarksEntryViewModel = hiltViewModel()) {
         pendingByRoll = pendingByRoll,
         absentRolls = absentRolls,
         savedAbsentRolls = savedAbsentRolls,
-        saveOutcome = saveState ?: Outcome.Success(Unit),
-        requestOutcome = requestState ?: Outcome.Success(Unit),
+        saveOutcome = saveState,
+        requestOutcome = requestState,
         onSelect = controller::select,
         onExamType = controller::selectExamType,
         onScore = controller::setScore,
