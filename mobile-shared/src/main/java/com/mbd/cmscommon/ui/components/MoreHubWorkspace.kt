@@ -97,7 +97,7 @@ fun MoreHubWorkspace(
     ) {
         item { MoreHeader(heroPainter) }
         if (!errorMessage.isNullOrBlank()) {
-            item { MoreNotice(errorMessage, onRetry) }
+            item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         }
         item { AccountSummary(snapshot, loading) }
         item { MoreMetrics(snapshot, loading) }
@@ -202,12 +202,3 @@ private fun MoreActionCard(action: MoreAction, onClick: () -> Unit) {
     }
 }
 
-@Composable
-private fun MoreNotice(message: String, onRetry: () -> Unit) {
-    Surface(shape = RoundedCornerShape(14.dp), color = MoreRed.copy(alpha = 0.1f), border = BorderStroke(1.dp, MoreRed.copy(alpha = 0.25f))) {
-        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(message, modifier = Modifier.weight(1f), color = MoreRed, style = MaterialTheme.typography.bodyMedium)
-            TextButton(onClick = onRetry) { Text("Retry", color = MoreRed) }
-        }
-    }
-}

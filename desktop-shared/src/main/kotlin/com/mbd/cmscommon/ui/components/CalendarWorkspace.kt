@@ -61,7 +61,6 @@ import com.mbd.cmscommon.ui.theme.CmsTheme
 import com.mbd.cmscommon.ui.theme.ModGround
 import com.mbd.cmscommon.ui.theme.ModInk
 import com.mbd.cmscommon.ui.theme.ModMuted
-import com.mbd.cmscommon.ui.theme.ModSuccess
 import com.mbd.cmscommon.ui.theme.ModSurface
 import com.mbd.cmscommon.ui.theme.ModTrack
 import java.time.LocalDate
@@ -108,10 +107,10 @@ fun CalendarWorkspace(
         item { CalendarHeader() }
 
         if (!errorMessage.isNullOrBlank()) {
-            item { CalendarNotice(errorMessage, CmsTheme.colors.accent, action = "Retry", onAction = onRetry) }
+            item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         }
         if (!actionMessage.isNullOrBlank()) {
-            item { CalendarNotice(actionMessage, ModSuccess, action = null, onAction = null) }
+            item { CmsNotice(actionMessage, tone = NoticeTone.Success) }
         }
 
         item { CalendarSummaryRow(summary.upcoming, summary.thisMonth, summary.exams + summary.deadlines, summary.ongoing) }
@@ -392,18 +391,6 @@ private fun eventTypeTone(type: String): BadgeTone = when (type.uppercase(Locale
     "DEADLINE" -> BadgeTone.Warning
     "HOLIDAY" -> BadgeTone.Gold
     else -> BadgeTone.Navy
-}
-
-@Composable
-private fun CalendarNotice(message: String, color: Color, action: String?, onAction: (() -> Unit)?) {
-    Surface(shape = RoundedCornerShape(14.dp), color = color.copy(alpha = 0.1f), border = BorderStroke(1.dp, color.copy(alpha = 0.25f))) {
-        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(message, modifier = Modifier.weight(1f), color = color, style = MaterialTheme.typography.bodyMedium)
-            if (action != null && onAction != null) {
-                TextButton(onClick = onAction) { Text(action, color = color) }
-            }
-        }
-    }
 }
 
 @Composable

@@ -150,10 +150,10 @@ fun LinkRequestReviewWorkspace(
         item { LinkRequestHero(requests.size) }
 
         if (!errorMessage.isNullOrBlank()) {
-            item { LinkRequestNotice(errorMessage, LinkRed, onClearError) }
+            item { CmsNotice(errorMessage, tone = NoticeTone.Error, onDismiss = onClearError) }
         }
         if (!notice.isNullOrBlank()) {
-            item { LinkRequestNotice(notice, LinkGreen, onConsumeNotice) }
+            item { CmsNotice(notice, tone = NoticeTone.Success, onDismiss = onConsumeNotice) }
         }
 
         item {
@@ -394,16 +394,6 @@ private fun IdentityCheckSummary(verification: LinkRequestVerification) {
                 color = tone,
                 style = MaterialTheme.typography.bodySmall,
             )
-        }
-    }
-}
-
-@Composable
-private fun LinkRequestNotice(message: String, color: Color, onDismiss: () -> Unit) {
-    Surface(shape = RoundedCornerShape(14.dp), color = color.copy(alpha = 0.1f), border = BorderStroke(1.dp, color.copy(alpha = 0.25f))) {
-        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(message, modifier = Modifier.weight(1f), color = color, style = MaterialTheme.typography.bodyMedium)
-            TextButton(onClick = onDismiss) { Text("Dismiss", color = color) }
         }
     }
 }

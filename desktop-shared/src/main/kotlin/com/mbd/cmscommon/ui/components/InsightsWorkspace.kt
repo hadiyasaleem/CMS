@@ -128,7 +128,7 @@ fun InsightsWorkspace(
         item { InsightsHeader(viewer) }
 
         if (!errorMessage.isNullOrBlank()) {
-            item { InsightsNotice(errorMessage, onRetry) }
+            item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         }
 
         item { InsightsSummaryStrip(summary.sessions, summary.students, summary.atRiskStudents, summary.weightedPassRate) }
@@ -340,16 +340,6 @@ private fun InsightReviewReasons(reasons: List<String>) {
     Column {
         Text("NEEDS REVIEW", color = InsightsRed, style = CmsTextStyles.eyebrow)
         reasons.forEach { reason -> Text("· $reason", color = ModMuted, style = MaterialTheme.typography.bodySmall) }
-    }
-}
-
-@Composable
-private fun InsightsNotice(message: String, onRetry: () -> Unit) {
-    Surface(shape = RoundedCornerShape(14.dp), color = InsightsRed.copy(alpha = 0.1f), border = BorderStroke(1.dp, InsightsRed.copy(alpha = 0.25f))) {
-        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(message, modifier = Modifier.weight(1f), color = InsightsRed, style = MaterialTheme.typography.bodyMedium)
-            TextButton(onClick = onRetry) { Text("Retry", color = InsightsRed) }
-        }
     }
 }
 

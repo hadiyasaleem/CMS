@@ -53,7 +53,6 @@ import com.mbd.cmscommon.ui.theme.ModGround
 import com.mbd.cmscommon.ui.theme.ModInk
 import com.mbd.cmscommon.ui.theme.ModMuted
 import com.mbd.cmscommon.ui.theme.ModRedTint
-import com.mbd.cmscommon.ui.theme.ModSuccess
 import com.mbd.cmscommon.ui.theme.ModSurface
 import com.mbd.cmscommon.ui.theme.ModTrack
 import com.mbd.cmscommon.ui.theme.ModWarn
@@ -62,7 +61,6 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 private val DatesheetCanvas = ModGround
-private val DatesheetGreen = ModSuccess
 private val DatesheetGold = ModWarn
 private val DatesheetNavy = ModInk
 private val DatesheetDateFormat = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy")
@@ -139,10 +137,10 @@ fun DatesheetWorkspace(
         item { DatesheetHeader() }
 
         if (!errorMessage.isNullOrBlank()) {
-            item { DatesheetNotice(errorMessage, CmsTheme.colors.accent, action = "Retry", onAction = onRetry) }
+            item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         }
         if (!actionMessage.isNullOrBlank()) {
-            item { DatesheetNotice(actionMessage, DatesheetGreen, action = null, onAction = null) }
+            item { CmsNotice(actionMessage, tone = NoticeTone.Success) }
         }
 
         item { DatesheetSummaryRow(visibleSheets.size, slots.values.sumOf { it.size }, duty.upcomingDuties, visibleSheets.count { !it.published }) }
@@ -545,18 +543,6 @@ private fun locationLabel(slot: DatesheetSlot): String =
 @Composable
 private fun MetaLine(text: String) {
     Text(text, color = ModMuted, style = MaterialTheme.typography.bodySmall)
-}
-
-@Composable
-private fun DatesheetNotice(message: String, color: Color, action: String?, onAction: (() -> Unit)?) {
-    Surface(shape = RoundedCornerShape(14.dp), color = color.copy(alpha = 0.1f), border = BorderStroke(1.dp, color.copy(alpha = 0.25f))) {
-        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(message, modifier = Modifier.weight(1f), color = color, style = MaterialTheme.typography.bodyMedium)
-            if (action != null && onAction != null) {
-                TextButton(onClick = onAction) { Text(action, color = color) }
-            }
-        }
-    }
 }
 
 @Composable

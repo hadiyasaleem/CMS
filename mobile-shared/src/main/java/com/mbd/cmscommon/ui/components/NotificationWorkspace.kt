@@ -45,12 +45,10 @@ import com.mbd.cmscommon.ui.theme.CmsTheme
 import com.mbd.cmscommon.ui.theme.ModAccent
 import com.mbd.cmscommon.ui.theme.ModInk
 import com.mbd.cmscommon.ui.theme.ModMuted
-import com.mbd.cmscommon.ui.theme.ModSuccess
 import com.mbd.cmscommon.ui.theme.ModSurface
 import com.mbd.cmscommon.ui.theme.ModTrack
 import com.mbd.cmscommon.ui.theme.ModWarn
 
-private val NoticeGreen = ModSuccess
 private val NoticeGold = ModWarn
 private val NoticeRed = ModAccent
 
@@ -88,10 +86,10 @@ fun NotificationControllerWorkspace(controller: NotificationsController, modifie
         item { NotificationHero(controller.viewerRole, inbox.size) }
 
         if (!composeError.isNullOrBlank()) {
-            item { NotificationNotice(composeError ?: "", NoticeRed, controller::clearComposeError) }
+            item { CmsNotice(composeError ?: "", tone = NoticeTone.Error, onDismiss = controller::clearComposeError) }
         }
         if (!notice.isNullOrBlank()) {
-            item { NotificationNotice(notice ?: "", NoticeGreen, controller::consumeNotice) }
+            item { CmsNotice(notice ?: "", tone = NoticeTone.Success, onDismiss = controller::consumeNotice) }
         }
 
         item { NotificationSummaryCard(inbox.size, sent.size, urgentCount) }
@@ -211,16 +209,6 @@ private fun NotificationCard(
                 Spacer(Modifier.height(6.dp))
                 TextButton(onClick = onDelete, enabled = !busy) { Text(if (busy) "Working..." else "Delete", color = CmsTheme.colors.accent) }
             }
-        }
-    }
-}
-
-@Composable
-private fun NotificationNotice(message: String, color: Color, onDismiss: () -> Unit) {
-    Surface(shape = RoundedCornerShape(14.dp), color = color.copy(alpha = 0.1f), border = BorderStroke(1.dp, color.copy(alpha = 0.25f))) {
-        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(message, modifier = Modifier.weight(1f), color = color, style = MaterialTheme.typography.bodyMedium)
-            TextButton(onClick = onDismiss) { Text("Dismiss", color = color) }
         }
     }
 }

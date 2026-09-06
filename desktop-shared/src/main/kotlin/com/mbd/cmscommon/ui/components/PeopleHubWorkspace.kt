@@ -90,7 +90,7 @@ fun PeopleHubWorkspace(
         CardGrid(Modifier.fillMaxWidth().background(PeopleCanvas), columns = columns) {
             fullSpanItem { PeopleHeader(heroPainter) }
             if (!errorMessage.isNullOrBlank()) {
-                fullSpanItem { PeopleNotice(errorMessage, "Retry", onRetry) }
+                fullSpanItem { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
             }
             fullSpanItem { PeopleSummary(snapshot, loading) }
 
@@ -215,16 +215,6 @@ private fun PeopleActionCard(card: PeopleCard, onClick: () -> Unit) {
             Text(card.detail, color = ModMuted, style = MaterialTheme.typography.bodySmall, maxLines = 3, overflow = TextOverflow.Ellipsis)
             Spacer(Modifier.height(8.dp))
             Text(card.status, color = card.tone, style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
-    }
-}
-
-@Composable
-private fun PeopleNotice(message: String, action: String, onAction: () -> Unit) {
-    Surface(shape = RoundedCornerShape(14.dp), color = PeopleRed.copy(alpha = 0.1f), border = BorderStroke(1.dp, PeopleRed.copy(alpha = 0.25f))) {
-        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(message, modifier = Modifier.weight(1f), color = PeopleRed, style = MaterialTheme.typography.bodyMedium)
-            TextButton(onClick = onAction) { Text(action, color = PeopleRed) }
         }
     }
 }

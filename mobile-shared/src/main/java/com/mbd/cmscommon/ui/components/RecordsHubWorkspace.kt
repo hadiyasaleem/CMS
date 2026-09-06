@@ -91,7 +91,7 @@ fun RecordsHubWorkspace(
     ) {
         item { RecordsHeader(heroPainter) }
         if (!errorMessage.isNullOrBlank()) {
-            item { RecordsNotice(errorMessage, "Retry", onRetry) }
+            item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         }
         if (snapshot != null) {
             item { RecordsSummaryRow(snapshot) }
@@ -224,12 +224,3 @@ private fun RecordsActionCard(card: RecordsCard, onClick: () -> Unit) {
     }
 }
 
-@Composable
-private fun RecordsNotice(message: String, action: String, onAction: () -> Unit) {
-    Surface(shape = RoundedCornerShape(14.dp), color = RecordsRed.copy(alpha = 0.1f), border = BorderStroke(1.dp, RecordsRed.copy(alpha = 0.25f))) {
-        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(message, modifier = Modifier.weight(1f), color = RecordsRed, style = MaterialTheme.typography.bodyMedium)
-            TextButton(onClick = onAction) { Text(action, color = RecordsRed) }
-        }
-    }
-}
