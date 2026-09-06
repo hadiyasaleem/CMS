@@ -68,6 +68,21 @@ class AppRootViewModel @Inject constructor(
                 if (resolved is UserRole.LinkedStudent) ensureStudentSession(resolved.uid, resolved.studentId)
             }
         }
+
+        // Covers sign-in/sign-up made through the auth screen (which already knows its own
+        // account key) AND a session that lands with no call site of its own -- the
+        // "cms://login-callback" email-verification deep link, finished entirely inside the
+        // Supabase SDK by MainActivity.handleDeeplinks(). Without this, verifying by email leaves
+        // the app authenticated at the SDK level but with no local user row, so it never leaves
+        // the login screen. observeCurrentUserRole() is Room-backed, so writing that row here is
+        // enough to flow the new role into `role` above and out of the login screen automatically.
+        viewModelScope.launch {
+            sessionManager.newlyAuthenticatedAccountKey.collectLatest { accountKey ->
+                runCatching { userRepository.provisionUnlinkedStudent(accountKey) }.orLogCritical("AppRootViewModel.provisionUnlinkedStudent")
+                runCatching { userRepository.touchLastLogin(accountKey) }.orLogCritical("AppRootViewModel.touchLastLogin")
+                _authChecked.value = true
+            }
+        }
     }
 
     private suspend fun ensureStudentSession(accountKey: String, studentId: String) {
