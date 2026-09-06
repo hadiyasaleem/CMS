@@ -1490,6 +1490,31 @@ val MIGRATION_39_40: Migration = object : Migration(39, 40) {
     }
 }
 
+val MIGRATION_40_41: Migration = object : Migration(40, 41) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `app_logs` (
+                `logId` TEXT NOT NULL,
+                `occurredAtMillis` INTEGER NOT NULL,
+                `severity` TEXT NOT NULL,
+                `kind` TEXT NOT NULL,
+                `tag` TEXT NOT NULL,
+                `message` TEXT NOT NULL,
+                `stackTrace` TEXT,
+                `accountEmail` TEXT,
+                `appId` TEXT,
+                `appVersion` TEXT,
+                `platform` TEXT,
+                `deviceInfo` TEXT,
+                PRIMARY KEY(`logId`)
+            )
+            """.trimIndent(),
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_app_logs_occurredAtMillis` ON `app_logs` (`occurredAtMillis`)")
+    }
+}
+
 val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_18_19,
     MIGRATION_19_20,
@@ -1513,4 +1538,5 @@ val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_37_38,
     MIGRATION_38_39,
     MIGRATION_39_40,
+    MIGRATION_40_41,
 )

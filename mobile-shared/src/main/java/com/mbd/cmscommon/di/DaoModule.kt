@@ -3,6 +3,7 @@ package com.mbd.cmscommon.di
 import com.mbd.cmscommon.data.local.CmsDatabase
 import com.mbd.cmscommon.data.local.dao.AcademicSessionDao
 import com.mbd.cmscommon.data.local.dao.AdministratorAccountDao
+import com.mbd.cmscommon.data.local.dao.AppLogDao
 import com.mbd.cmscommon.data.local.dao.BuildingDao
 import com.mbd.cmscommon.data.local.dao.CalendarEventDao
 import com.mbd.cmscommon.data.local.dao.DatesheetDao
@@ -109,4 +110,7 @@ object DaoModule {
 
     @Provides
     fun provideSyncCheckpointStore(store: RoomSyncCheckpointStore): SyncCheckpointStore = store
+
+    @Provides
+    fun provideAppLogDao(db: CmsDatabase): AppLogDao = db.appLogDao()
 }
