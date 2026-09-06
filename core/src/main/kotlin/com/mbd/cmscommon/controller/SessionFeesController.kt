@@ -7,6 +7,8 @@ import com.mbd.cmscommon.domain.model.SessionFeeStructure
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.SessionFeeRepository
 import com.mbd.cmscommon.util.FieldValidators
+import com.mbd.cmscommon.util.orThrowValidation
+import com.mbd.cmscommon.util.requireValid
 import java.time.LocalDate
 import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
@@ -61,22 +63,22 @@ class SessionFeesController(
         try {
             _saving.value = true
             val normalizedHeads = heads.map { it.copy(label = it.label.trim()) }
-            require(normalizedHeads.isNotEmpty()) { "Add at least one fee head before saving." }
-            require(normalizedHeads.all { it.label.isNotBlank() }) { "Every fee head needs a label." }
-            require(normalizedHeads.all { it.amount > 0.0 }) { "Every fee amount must be greater than zero." }
-            require(normalizedHeads.map { it.label.lowercase(Locale.ROOT) }.distinct().size == normalizedHeads.size) {
+            requireValid(normalizedHeads.isNotEmpty()) { "Add at least one fee head before saving." }
+            requireValid(normalizedHeads.all { it.label.isNotBlank() }) { "Every fee head needs a label." }
+            requireValid(normalizedHeads.all { it.amount > 0.0 }) { "Every fee amount must be greater than zero." }
+            requireValid(normalizedHeads.map { it.label.lowercase(Locale.ROOT) }.distinct().size == normalizedHeads.size) {
                 "Fee head labels must be unique."
             }
 
             val year = academicYear.trim()
-            FieldValidators.academicYearError(year)?.let { throw IllegalStateException(it) }
+            FieldValidators.academicYearError(year).orThrowValidation()
 
             val due = dueDate.trim()
             if (due.isNotBlank()) {
-                require(runCatching { LocalDate.parse(due) }.isSuccess) { "Due date must use YYYY-MM-DD format." }
+                requireValid(runCatching { LocalDate.parse(due) }.isSuccess) { "Due date must use YYYY-MM-DD format." }
             }
-            require(lateFineNote.trim().length <= 300) { "Late fine note must not exceed 300 characters." }
-            require(paymentNote.trim().length <= 1000) { "Payment instructions must not exceed 1,000 characters." }
+            requireValid(lateFineNote.trim().length <= 300) { "Late fine note must not exceed 300 characters." }
+            requireValid(paymentNote.trim().length <= 1000) { "Payment instructions must not exceed 1,000 characters." }
 
             val updated = SessionFeeStructure(
                 sessionId = sessionId,

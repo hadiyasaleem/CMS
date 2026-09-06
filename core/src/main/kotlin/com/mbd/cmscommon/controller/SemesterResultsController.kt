@@ -7,6 +7,7 @@ import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.SessionMarksRepository
 import com.mbd.cmscommon.teacher.ResolvedAssignment
 import com.mbd.cmscommon.util.Outcome
+import com.mbd.cmscommon.util.requireValid
 import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -106,15 +107,15 @@ class SemesterResultsController(
         launch {
             try {
                 _saveState.value = Outcome.Loading
-                require(gpa in 0.0..4.0) { "GPA must be between 0 and 4." }
-                require(cgpa in 0.0..4.0) { "CGPA must be between 0 and 4." }
-                require((termLabel ?: "").trim().length <= 40) { "Term label must not exceed 40 characters." }
-                require(result.uppercase(Locale.ROOT) in setOf("PENDING", "PASS", "FAIL", "SUPPLY", "WITHHELD")) {
+                requireValid(gpa in 0.0..4.0) { "GPA must be between 0 and 4." }
+                requireValid(cgpa in 0.0..4.0) { "CGPA must be between 0 and 4." }
+                requireValid((termLabel ?: "").trim().length <= 40) { "Term label must not exceed 40 characters." }
+                requireValid(result.uppercase(Locale.ROOT) in setOf("PENDING", "PASS", "FAIL", "SUPPLY", "WITHHELD")) {
                     "Choose a valid result status."
                 }
-                require(position == null || position > 0) { "Class position must be a positive whole number." }
-                require((remarks ?: "").trim().length <= 500) { "Remarks must not exceed 500 characters." }
-                require(supply.all { _subjects.value.contains(it) }) { "Choose supply subjects from this semester's curriculum." }
+                requireValid(position == null || position > 0) { "Class position must be a positive whole number." }
+                requireValid((remarks ?: "").trim().length <= 500) { "Remarks must not exceed 500 characters." }
+                requireValid(supply.all { _subjects.value.contains(it) }) { "Choose supply subjects from this semester's curriculum." }
 
                 marksRepository.recordSemesterResult(sid, roll, _semester.value, gpa, cgpa, termLabel, result.trim().uppercase(Locale.ROOT), position, remarks, supply)
                 _saveState.value = Outcome.Success(Unit)

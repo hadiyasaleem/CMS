@@ -6,6 +6,8 @@ import com.mbd.cmscommon.domain.model.StudentProfile
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.FineRepository
 import com.mbd.cmscommon.util.Outcome
+import com.mbd.cmscommon.util.orThrowValidation
+import com.mbd.cmscommon.util.requireValid
 import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -50,12 +52,12 @@ class StudentProfileEditController(
     fun issueFine(category: String, amount: Double, reason: String) = launch {
         val normalizedCategory = category.trim().uppercase(Locale.ROOT).ifBlank { "OTHER" }
         val normalizedReason = reason.trim()
-        require(normalizedCategory in setOf("LIBRARY", "ATTENDANCE", "EXAM", "DISCIPLINARY", "OTHER")) {
+        requireValid(normalizedCategory in setOf("LIBRARY", "ATTENDANCE", "EXAM", "DISCIPLINARY", "OTHER")) {
             "Choose a valid fine category."
         }
-        require(amount > 0.0) { "Fine amount must be greater than zero." }
-        require(normalizedReason.isNotBlank()) { "Fine reason is required." }
-        require(normalizedReason.length <= 300) { "Fine reason must not exceed 300 characters." }
+        requireValid(amount > 0.0) { "Fine amount must be greater than zero." }
+        requireValid(normalizedReason.isNotBlank()) { "Fine reason is required." }
+        requireValid(normalizedReason.length <= 300) { "Fine reason must not exceed 300 characters." }
 
         fineRepository.issueFine(sessionId, rollNumber, normalizedCategory, amount, normalizedReason, issuedBy)
         loadFines()
@@ -69,7 +71,7 @@ class StudentProfileEditController(
     fun save(edited: StudentProfile) = launch {
         try {
             _saveState.value = Outcome.Loading
-            require(edited.sessionId == sessionId && edited.rollNumber == rollNumber) {
+            requireValid(edited.sessionId == sessionId && edited.rollNumber == rollNumber) {
                 "Student identity cannot be changed from this profile."
             }
             val normalized = edited.copy(
@@ -84,7 +86,7 @@ class StudentProfileEditController(
                 emergencyContactRelation = edited.emergencyContactRelation?.trim(),
                 specialNeeds = edited.specialNeeds?.trim(),
             )
-            validateStudentProfile(normalized)?.let { throw IllegalArgumentException(it) }
+            validateStudentProfile(normalized).orThrowValidation()
             sessionRepository.saveStudentProfile(normalized)
             _saveState.value = Outcome.Success(Unit)
             _profile.value = normalized

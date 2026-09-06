@@ -6,7 +6,10 @@ import com.mbd.cmscommon.domain.model.SemesterTerm
 import com.mbd.cmscommon.domain.model.SubjectType
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
+import com.mbd.cmscommon.util.CmsException
 import com.mbd.cmscommon.util.FieldValidators
+import com.mbd.cmscommon.util.orThrowValidation
+import com.mbd.cmscommon.util.requireValid
 import java.time.LocalDate
 import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
@@ -80,18 +83,18 @@ class SemesterSubjectsController(
         outline: String?,
     ) = launch {
         val normalizedCode = courseCode.trim().uppercase(Locale.ROOT)
-        FieldValidators.courseCodeError(normalizedCode)?.let { throw IllegalStateException(it) }
-        FieldValidators.textError(name, "Subject name", maxLength = 120)?.let { throw IllegalStateException(it) }
+        FieldValidators.courseCodeError(normalizedCode).orThrowValidation()
+        FieldValidators.textError(name, "Subject name", maxLength = 120).orThrowValidation()
         FieldValidators.textError(outline ?: "", "Course outline", required = false, maxLength = 2000)?.let {
-            throw IllegalStateException("Course outline must not exceed 2,000 characters.")
+            throw CmsException.Validation("Course outline must not exceed 2,000 characters.")
         }
-        require(creditHours in 1..6) { "Credit hours must be between 1 and 6." }
+        requireValid(creditHours in 1..6) { "Credit hours must be between 1 and 6." }
 
         val conflict = subjects.value.any {
             it.courseCode.equals(normalizedCode, ignoreCase = true) &&
                 !it.courseCode.equals(originalCourseCode ?: "", ignoreCase = true)
         }
-        require(!conflict) { "Course code $normalizedCode already exists in this semester." }
+        requireValid(!conflict) { "Course code $normalizedCode already exists in this semester." }
 
         val subject = SemesterSubject(
             sessionId = sessionId,

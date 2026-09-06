@@ -10,6 +10,8 @@ import com.mbd.cmscommon.domain.repository.TeacherRepository
 import com.mbd.cmscommon.teacher.ResolvedAssignment
 import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider
 import com.mbd.cmscommon.util.FieldValidators
+import com.mbd.cmscommon.util.orThrowValidation
+import com.mbd.cmscommon.util.requireValid
 import java.time.Instant
 import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
@@ -90,7 +92,7 @@ class TeachersController(
             _creating.value = true
             _notice.value = null
             val normalized = validateDraft(draft, creatingAccount = true)
-            require(teachers.value.none { it.email.trim().equals(normalized.email, ignoreCase = true) }) {
+            requireValid(teachers.value.none { it.email.trim().equals(normalized.email, ignoreCase = true) }) {
                 "A teacher account with this email already exists."
             }
 
@@ -205,29 +207,29 @@ class TeachersController(
             officeRoom = draft.officeRoom.trim(),
             gender = draft.gender.trim(),
         )
-        FieldValidators.nameError(normalized.name, "Teacher name")?.let { throw IllegalArgumentException(it) }
-        require(FieldValidators.emailError(normalized.email) == null) { "Enter a valid teacher email address." }
-        FieldValidators.phoneError(normalized.phone)?.let { throw IllegalArgumentException(it) }
-        require(FieldValidators.textError(normalized.designation, "Designation", required = false, maxLength = 80) == null) {
+        FieldValidators.nameError(normalized.name, "Teacher name").orThrowValidation()
+        requireValid(FieldValidators.emailError(normalized.email) == null) { "Enter a valid teacher email address." }
+        FieldValidators.phoneError(normalized.phone).orThrowValidation()
+        requireValid(FieldValidators.textError(normalized.designation, "Designation", required = false, maxLength = 80) == null) {
             "Designation must not exceed 80 characters."
         }
-        require(FieldValidators.textError(normalized.qualification, "Qualification", required = false, maxLength = 120) == null) {
+        requireValid(FieldValidators.textError(normalized.qualification, "Qualification", required = false, maxLength = 120) == null) {
             "Qualification must not exceed 120 characters."
         }
-        require(FieldValidators.textError(normalized.specialization, "Specialization", required = false, maxLength = 120) == null) {
+        requireValid(FieldValidators.textError(normalized.specialization, "Specialization", required = false, maxLength = 120) == null) {
             "Specialization must not exceed 120 characters."
         }
-        require(FieldValidators.textError(normalized.officeRoom, "Office", required = false, maxLength = 40) == null) {
+        requireValid(FieldValidators.textError(normalized.officeRoom, "Office", required = false, maxLength = 40) == null) {
             "Office must not exceed 40 characters."
         }
         val genderValid = normalized.gender.isBlank() || normalized.gender.uppercase(Locale.ROOT) in setOf("MALE", "FEMALE", "OTHER")
-        require(genderValid) { "Gender must be Male, Female, or Other." }
+        requireValid(genderValid) { "Gender must be Male, Female, or Other." }
 
         val deptValid = normalized.deptId.isBlank() || departments.value.any { it.deptId == normalized.deptId }
-        require(deptValid) { "Choose a valid department." }
+        requireValid(deptValid) { "Choose a valid department." }
 
         if (creatingAccount) {
-            FieldValidators.passwordError(normalized.password)?.let { throw IllegalArgumentException(it) }
+            FieldValidators.passwordError(normalized.password).orThrowValidation()
         }
 
         return normalized.copy(gender = normalized.gender.uppercase(Locale.ROOT))

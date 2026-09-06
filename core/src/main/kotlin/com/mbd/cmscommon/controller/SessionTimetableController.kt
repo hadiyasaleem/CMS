@@ -1,5 +1,8 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.util.orThrowValidation
+import com.mbd.cmscommon.util.requireValid
+
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.Building
 import com.mbd.cmscommon.domain.model.PeriodType
@@ -75,7 +78,7 @@ class SessionTimetableController(
         effectiveTo: LocalDate?,
         replaces: SessionPeriod?,
     ) = launch {
-        require(periodType == PeriodType.BREAK || subject != null) { "Choose a subject for this period." }
+        requireValid(periodType == PeriodType.BREAK || subject != null) { "Choose a subject for this period." }
 
         val normalizedStart = start.trim()
         val normalizedEnd = end.trim()
@@ -98,7 +101,7 @@ class SessionTimetableController(
             effectiveTo = effectiveTo,
         )
 
-        validateTimetablePeriod(period, replaces, periods.value)?.let { throw IllegalArgumentException(it) }
+        validateTimetablePeriod(period, replaces, periods.value).orThrowValidation()
 
         timetableRepository.savePeriod(period)
         if (replaces != null && (replaces.day != period.day || replaces.startTime != period.startTime)) {

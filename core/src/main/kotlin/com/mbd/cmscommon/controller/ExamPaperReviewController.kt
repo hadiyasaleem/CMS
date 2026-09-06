@@ -1,5 +1,7 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.util.requireValid
+
 import com.mbd.cmscommon.domain.model.ExamPaperSubmission
 import com.mbd.cmscommon.domain.repository.ExamPaperSubmissionRepository
 import java.io.File
@@ -43,7 +45,7 @@ class ExamPaperReviewController(
     fun markReviewed(submission: ExamPaperSubmission, notes: String?) = launch {
         try {
             _busySubmissionId.value = submission.submissionId
-            require(reviewedBy.isNotBlank()) { "Your signed-in account could not be identified." }
+            requireValid(reviewedBy.isNotBlank()) { "Your signed-in account could not be identified." }
             repo.markReviewed(submission.submissionId, reviewedBy, notes)
             _pending.value = _pending.value.filterNot { it.submissionId == submission.submissionId }
             _notice.value = "\"${submission.fileName}\" marked as reviewed."

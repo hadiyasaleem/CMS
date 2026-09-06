@@ -7,6 +7,9 @@ import com.mbd.cmscommon.domain.model.datesheetScheduleQuality
 import com.mbd.cmscommon.domain.model.normalized
 import com.mbd.cmscommon.domain.model.validationMessage
 import com.mbd.cmscommon.domain.repository.DatesheetRepository
+import com.mbd.cmscommon.util.CmsException
+import com.mbd.cmscommon.util.orThrowValidation
+import com.mbd.cmscommon.util.requireValid
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -71,8 +74,8 @@ class DatesheetsController(
     }
 
     fun createDatesheet(draft: DatesheetDraft) = mutate {
-        validationMessage(draft)?.let { throw IllegalArgumentException(it) }
-        require(!draft.published) { "Create the datesheet as a draft, add at least one paper, then publish it." }
+        validationMessage(draft).orThrowValidation()
+        requireValid(!draft.published) { "Create the datesheet as a draft, add at least one paper, then publish it." }
         repo.createDatesheet(
             title = draft.title.trim(),
             examType = draft.examType.orEmpty(),
@@ -86,7 +89,7 @@ class DatesheetsController(
 
     fun updateDatesheet(id: String, draft: DatesheetDraft) = mutate {
         val sheet = requireCurrentSheet(id)
-        validationMessage(draft)?.let { throw IllegalArgumentException(it) }
+        validationMessage(draft).orThrowValidation()
         // Publishing via update must clear the same schedule-quality gate as the dedicated publish action.
         if (draft.published) {
             val proposed = sheet.copy(
@@ -97,7 +100,7 @@ class DatesheetsController(
                 published = true,
             )
             val quality = datesheetScheduleQuality(proposed, repo.getSlots(id))
-            require(quality.canPublish) { quality.issues.joinToString(" ") }
+            requireValid(quality.canPublish) { quality.issues.joinToString(" ") }
         }
         repo.updateDatesheet(
             id = id,
@@ -114,7 +117,7 @@ class DatesheetsController(
         val sheet = requireCurrentSheet(id)
         if (published) {
             val quality = datesheetScheduleQuality(sheet, repo.getSlots(id))
-            require(quality.canPublish) { quality.issues.joinToString(" ") }
+            requireValid(quality.canPublish) { quality.issues.joinToString(" ") }
         }
         repo.setPublished(id, published)
         _actionMessage.value = if (published) "Datesheet published." else "Datesheet moved to drafts."
@@ -130,11 +133,11 @@ class DatesheetsController(
     fun addSlot(slot: DatesheetSlot) = mutate(refreshSheets = false) {
         val sheet = requireCurrentSheet(slot.datesheetId)
         val normalizedSlot = normalized(slot)
-        validationMessage(normalizedSlot)?.let { throw IllegalArgumentException(it) }
+        validationMessage(normalizedSlot).orThrowValidation()
         val candidate = normalizedSlot.copy(id = "pending-new-paper")
         val existingSlots = repo.getSlots(slot.datesheetId)
         val quality = datesheetScheduleQuality(sheet, existingSlots + candidate)
-        require(quality.issues.isEmpty()) { quality.issues.joinToString(" ") }
+        requireValid(quality.issues.isEmpty()) { quality.issues.joinToString(" ") }
         repo.addSlot(normalizedSlot)
         _slots.value = _slots.value + (slot.datesheetId to repo.getSlots(slot.datesheetId))
         _actionMessage.value = "Exam paper added."
@@ -142,14 +145,14 @@ class DatesheetsController(
 
     fun updateSlot(slot: DatesheetSlot) = mutate(refreshSheets = false) {
         val sheet = requireCurrentSheet(slot.datesheetId)
-        require(slot.id.isNotBlank()) { "This paper has no database ID and cannot be updated safely." }
+        requireValid(slot.id.isNotBlank()) { "This paper has no database ID and cannot be updated safely." }
         val normalizedSlot = normalized(slot)
-        validationMessage(normalizedSlot)?.let { throw IllegalArgumentException(it) }
+        validationMessage(normalizedSlot).orThrowValidation()
         val currentSlots = repo.getSlots(slot.datesheetId)
-        require(currentSlots.any { it.id == slot.id }) { "This paper is no longer in the datesheet. Refresh and try again." }
+        requireValid(currentSlots.any { it.id == slot.id }) { "This paper is no longer in the datesheet. Refresh and try again." }
         val merged = currentSlots.map { if (it.id == slot.id) normalizedSlot else it }
         val quality = datesheetScheduleQuality(sheet, merged)
-        require(quality.issues.isEmpty()) { quality.issues.joinToString(" ") }
+        requireValid(quality.issues.isEmpty()) { quality.issues.joinToString(" ") }
         repo.updateSlot(normalizedSlot)
         _slots.value = _slots.value + (slot.datesheetId to repo.getSlots(slot.datesheetId))
         _actionMessage.value = "Exam paper updated."
@@ -157,12 +160,12 @@ class DatesheetsController(
 
     fun deleteSlot(datesheetId: String, id: String) = mutate(refreshSheets = false) {
         requireCurrentSheet(datesheetId)
-        require(id.isNotBlank()) { "This paper has no database ID and cannot be removed safely." }
+        requireValid(id.isNotBlank()) { "This paper has no database ID and cannot be removed safely." }
         val currentSlots = repo.getSlots(datesheetId)
-        require(currentSlots.any { it.id == id }) { "This paper is no longer in the datesheet. Refresh and try again." }
+        requireValid(currentSlots.any { it.id == id }) { "This paper is no longer in the datesheet. Refresh and try again." }
         val published = _sheets.value.orEmpty().firstOrNull { it.id == datesheetId }?.published == true
         if (published && currentSlots.size <= 1) {
-            throw IllegalArgumentException("Move the datesheet to drafts before removing its final paper.")
+            throw CmsException.Validation("Move the datesheet to drafts before removing its final paper.")
         }
         repo.deleteSlot(id)
         _slots.value = _slots.value + (datesheetId to repo.getSlots(datesheetId))
@@ -187,9 +190,9 @@ class DatesheetsController(
     }
 
     private fun requireCurrentSheet(id: String): Datesheet {
-        require(id.isNotBlank()) { "This datesheet has no database ID and cannot be managed safely." }
+        requireValid(id.isNotBlank()) { "This datesheet has no database ID and cannot be managed safely." }
         return _sheets.value.orEmpty().firstOrNull { it.id == id }
-            ?: throw IllegalArgumentException("This datesheet is no longer available. Refresh and try again.")
+            ?: throw CmsException.NotFound("This datesheet is no longer available. Refresh and try again.")
     }
 
     private fun normalizeSheets(sheets: List<Datesheet>): List<Datesheet> {

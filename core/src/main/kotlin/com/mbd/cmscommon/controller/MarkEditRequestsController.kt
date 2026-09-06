@@ -1,5 +1,7 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.util.requireValid
+
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.Department
 import com.mbd.cmscommon.domain.model.MarkEditRequest
@@ -81,11 +83,11 @@ class MarkEditRequestsController(
         try {
             _busyRequestId.value = requestKey
             _notice.value = null
-            require(reviewedBy.isNotBlank()) { "Your signed-in account could not be identified." }
+            requireValid(reviewedBy.isNotBlank()) { "Your signed-in account could not be identified." }
 
             val quality = markEditReviewQuality(request)
-            require(!quality.blocksApproval) { quality.blockingIssues.joinToString(" ") }
-            require(_requests.value.any { it.id == request.id }) { "This request is no longer pending. Refresh the queue." }
+            requireValid(!quality.blocksApproval) { quality.blockingIssues.joinToString(" ") }
+            requireValid(_requests.value.any { it.id == request.id }) { "This request is no longer pending. Refresh the queue." }
 
             repository.approveRequest(request.id, reviewedBy)
             val notice = "${displayStudent(request)} now has ${request.requestedScore} marks for ${request.courseCode}."
@@ -103,9 +105,9 @@ class MarkEditRequestsController(
         try {
             _busyRequestId.value = requestKey
             _notice.value = null
-            require(reviewedBy.isNotBlank()) { "Your signed-in account could not be identified." }
-            require(request.id.isNotBlank()) { "This request has no database ID and cannot be rejected safely." }
-            require(_requests.value.any { it.id == request.id }) { "This request is no longer pending. Refresh the queue." }
+            requireValid(reviewedBy.isNotBlank()) { "Your signed-in account could not be identified." }
+            requireValid(request.id.isNotBlank()) { "This request has no database ID and cannot be rejected safely." }
+            requireValid(_requests.value.any { it.id == request.id }) { "This request is no longer pending. Refresh the queue." }
 
             repository.rejectRequest(request.id, reviewedBy)
             val notice = "The score change for ${displayStudent(request)} was rejected."

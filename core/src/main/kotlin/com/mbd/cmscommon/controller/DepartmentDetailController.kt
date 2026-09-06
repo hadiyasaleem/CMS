@@ -6,6 +6,8 @@ import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.util.FieldValidators
+import com.mbd.cmscommon.util.orThrowValidation
+import com.mbd.cmscommon.util.requireValid
 import java.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,12 +47,12 @@ class DepartmentDetailController(
     fun updateDetails(name: String, code: String, hodEmail: String?, description: String?) {
         val current = _department.value ?: return
         launch {
-            FieldValidators.nameError(name, "Department name", required = false)?.let { throw IllegalArgumentException(it) }
-            FieldValidators.departmentCodeError(code)?.let { throw IllegalArgumentException(it) }
-            require(FieldValidators.emailError(hodEmail ?: "", required = false) == null) {
+            FieldValidators.nameError(name, "Department name", required = false).orThrowValidation()
+            FieldValidators.departmentCodeError(code).orThrowValidation()
+            requireValid(FieldValidators.emailError(hodEmail ?: "", required = false) == null) {
                 "Choose a valid head of department."
             }
-            require((description ?: "").trim().length <= 500) {
+            requireValid((description ?: "").trim().length <= 500) {
                 "Department description must not exceed 500 characters."
             }
 

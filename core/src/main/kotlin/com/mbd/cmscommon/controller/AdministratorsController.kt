@@ -3,6 +3,8 @@ package com.mbd.cmscommon.controller
 import com.mbd.cmscommon.domain.model.AdministratorAccount
 import com.mbd.cmscommon.domain.repository.AdministratorRepository
 import com.mbd.cmscommon.util.FieldValidators
+import com.mbd.cmscommon.util.orThrowValidation
+import com.mbd.cmscommon.util.requireValid
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -47,13 +49,13 @@ class AdministratorsController(
             _createdEmail.value = null
 
             val normalizedEmail = FieldValidators.normalizeEmail(email)
-            require(FieldValidators.emailError(normalizedEmail, required = true) == null) {
+            requireValid(FieldValidators.emailError(normalizedEmail, required = true) == null) {
                 "Enter a valid administrator email address."
             }
-            require(administrators.value.none { it.email.trim().equals(normalizedEmail, ignoreCase = true) }) {
+            requireValid(administrators.value.none { it.email.trim().equals(normalizedEmail, ignoreCase = true) }) {
                 "An administrator with this email already exists."
             }
-            FieldValidators.passwordError(password)?.let { throw IllegalArgumentException(it) }
+            FieldValidators.passwordError(password).orThrowValidation()
 
             repository.createAdministrator(normalizedEmail, password)
             _createdEmail.value = normalizedEmail

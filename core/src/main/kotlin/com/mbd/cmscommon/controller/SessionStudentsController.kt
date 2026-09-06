@@ -5,6 +5,8 @@ import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.util.FieldValidators
 import com.mbd.cmscommon.util.ImportedStudentRow
+import com.mbd.cmscommon.util.orThrowValidation
+import com.mbd.cmscommon.util.requireValid
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -36,13 +38,11 @@ class SessionStudentsController(
             val normalizedName = name.trim()
             val currentSession = session.value
 
-            FieldValidators.rollNumberError(normalizedRoll, currentSession?.deptId, currentSession?.startYear)?.let {
-                throw IllegalStateException(it)
-            }
-            FieldValidators.nameError(normalizedName, "Student name")?.let { throw IllegalStateException(it) }
-            require(gpa == null || gpa in 0.0..4.0) { "GPA must be between 0 and 4." }
-            require(cgpa == null || cgpa in 0.0..4.0) { "CGPA must be between 0 and 4." }
-            require(students.value.none { it.rollNumber.equals(normalizedRoll, ignoreCase = true) }) {
+            FieldValidators.rollNumberError(normalizedRoll, currentSession?.deptId, currentSession?.startYear).orThrowValidation()
+            FieldValidators.nameError(normalizedName, "Student name").orThrowValidation()
+            requireValid(gpa == null || gpa in 0.0..4.0) { "GPA must be between 0 and 4." }
+            requireValid(cgpa == null || cgpa in 0.0..4.0) { "CGPA must be between 0 and 4." }
+            requireValid(students.value.none { it.rollNumber.equals(normalizedRoll, ignoreCase = true) }) {
                 "Roll number $normalizedRoll is already enrolled in this session."
             }
 

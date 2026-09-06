@@ -1,5 +1,8 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.util.orThrowValidation
+import com.mbd.cmscommon.util.requireValid
+
 import com.mbd.cmscommon.domain.model.CalendarEvent
 import com.mbd.cmscommon.domain.model.calendarQueueSnapshot
 import com.mbd.cmscommon.domain.model.validationMessage
@@ -52,7 +55,7 @@ class CalendarController(
             clearError()
             _actionMessage.value = null
             try {
-                validationMessage(event)?.let { throw IllegalArgumentException(it) }
+                validationMessage(event).orThrowValidation()
                 repo.createEvent(event, createdBy)
                 _events.value = calendarQueueSnapshot(repo.getEvents()).events
                 _actionMessage.value = "Event added to the college calendar."
@@ -69,8 +72,8 @@ class CalendarController(
             clearError()
             _actionMessage.value = null
             try {
-            require(id.isNotBlank()) { "This event has no database ID and cannot be removed safely." }
-            require(_events.value.orEmpty().any { it.id == id }) {
+            requireValid(id.isNotBlank()) { "This event has no database ID and cannot be removed safely." }
+            requireValid(_events.value.orEmpty().any { it.id == id }) {
                 "This event is no longer in the calendar. Refresh and try again."
             }
             repo.deleteEvent(id)

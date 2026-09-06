@@ -1,5 +1,7 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.util.CmsException
+import com.mbd.cmscommon.util.requireValid
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.Department
 import com.mbd.cmscommon.domain.model.StudentLinkRequest
@@ -94,25 +96,25 @@ class LinkRequestsController(
         try {
             _busyRequestId.value = requestKey
             _notice.value = null
-            require(reviewerId.isNotBlank()) { "Your signed-in account could not be identified." }
+            requireValid(reviewerId.isNotBlank()) { "Your signed-in account could not be identified." }
 
             val quality = linkRequestClaimQuality(request)
-            require(quality.isReviewable) { quality.summary ?: "This request cannot be reviewed safely." }
-            require(requests.value.any { it.requestId == request.requestId }) {
+            requireValid(quality.isReviewable) { quality.summary ?: "This request cannot be reviewed safely." }
+            requireValid(requests.value.any { it.requestId == request.requestId }) {
                 "This request is no longer pending. Refresh the queue."
             }
 
             val verification = verifications.value[requestKey]
-            require(verification?.state == RosterVerificationState.MATCHED || verification?.state == RosterVerificationState.RELINK) {
+            requireValid(verification?.state == RosterVerificationState.MATCHED || verification?.state == RosterVerificationState.RELINK) {
                 "Verify that this student exists in the selected session before approval."
             }
 
             val sessionId = request.sessionIdClaimed?.trim().orEmpty()
             val currentProfile = sessionRepository.getStudentProfile(sessionId, request.rollNumberClaimed.trim())
-                ?: throw IllegalStateException("The official student profile could not be loaded. Refresh before approval.")
+                ?: throw CmsException.NotFound("The official student profile could not be loaded. Refresh before approval.")
 
             val currentIdentity = verifyLinkIdentityClaims(request, currentProfile)
-            require(!currentIdentity.hasMismatch) {
+            requireValid(!currentIdentity.hasMismatch) {
                 val fields = currentIdentity.mismatches.joinToString { it.field.label }
                 "Official student details conflict with the request: $fields."
             }
@@ -132,14 +134,14 @@ class LinkRequestsController(
         try {
             _busyRequestId.value = requestKey
             _notice.value = null
-            require(reviewerId.isNotBlank()) { "Your signed-in account could not be identified." }
-            require(request.requestId.isNotBlank()) { "This request has no database ID and cannot be rejected safely." }
-            require(requests.value.any { it.requestId == request.requestId }) {
+            requireValid(reviewerId.isNotBlank()) { "Your signed-in account could not be identified." }
+            requireValid(request.requestId.isNotBlank()) { "This request has no database ID and cannot be rejected safely." }
+            requireValid(requests.value.any { it.requestId == request.requestId }) {
                 "This request is no longer pending. Refresh the queue."
             }
             val normalizedReason = reason.trim()
-            require(normalizedReason.length >= 4) { "Add a short reason so the student knows what to correct." }
-            require(normalizedReason.length <= 500) { "Keep the rejection reason within 500 characters." }
+            requireValid(normalizedReason.length >= 4) { "Add a short reason so the student knows what to correct." }
+            requireValid(normalizedReason.length <= 500) { "Keep the rejection reason within 500 characters." }
 
             repository.rejectRequest(request.requestId, reviewerId, normalizedReason)
             _rowErrors.value = _rowErrors.value - requestKey

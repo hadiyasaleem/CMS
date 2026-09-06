@@ -10,6 +10,7 @@ import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.SessionFeeRepository
 import com.mbd.cmscommon.domain.repository.SessionTimetableRepository
 import com.mbd.cmscommon.util.FieldValidators
+import com.mbd.cmscommon.util.requireValid
 import java.time.LocalDate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -72,14 +73,14 @@ class SessionDetailController(
     }
 
     fun promoteSession() = launch {
-        require(canPromote.value) { "This can only be done after the current semester's term end date." }
+        requireValid(canPromote.value) { "This can only be done after the current semester's term end date." }
         sessionRepository.promoteSession(sessionId)
     }
 
     fun updateDetails(programName: String?, inchargeEmail: String?, maxStudents: Int) = launch {
-        require((programName ?: "").trim().length <= 120) { "Program name must not exceed 120 characters." }
-        require(FieldValidators.emailError(inchargeEmail ?: "", required = false) == null) { "Choose a valid session in-charge." }
-        require(maxStudents in 1..50) { "Student capacity must be between 1 and 50." }
+        requireValid((programName ?: "").trim().length <= 120) { "Program name must not exceed 120 characters." }
+        requireValid(FieldValidators.emailError(inchargeEmail ?: "", required = false) == null) { "Choose a valid session in-charge." }
+        requireValid(maxStudents in 1..50) { "Student capacity must be between 1 and 50." }
         sessionRepository.updateSessionDetails(sessionId, programName, inchargeEmail, maxStudents)
     }
 

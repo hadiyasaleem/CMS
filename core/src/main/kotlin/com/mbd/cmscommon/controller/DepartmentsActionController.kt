@@ -3,6 +3,8 @@ package com.mbd.cmscommon.controller
 import com.mbd.cmscommon.domain.model.Department
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.util.FieldValidators
+import com.mbd.cmscommon.util.orThrowValidation
+import com.mbd.cmscommon.util.requireValid
 import java.time.Instant
 import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
@@ -14,11 +16,11 @@ class DepartmentsActionController(
 ) : ScreenController(scope) {
 
     fun create(name: String, code: String, hodEmail: String? = null, description: String? = null) = launch {
-        FieldValidators.nameError(name, "Department name")?.let { throw IllegalArgumentException(it) }
+        FieldValidators.nameError(name, "Department name").orThrowValidation()
         val normalizedCode = code.trim().uppercase(Locale.ROOT)
-        FieldValidators.departmentCodeError(normalizedCode)?.let { throw IllegalArgumentException(it) }
-        require(FieldValidators.emailError(hodEmail ?: "", false) == null) { "Choose a valid head of department." }
-        require((description ?: "").trim().length <= 500) { "Department description must not exceed 500 characters." }
+        FieldValidators.departmentCodeError(normalizedCode).orThrowValidation()
+        requireValid(FieldValidators.emailError(hodEmail ?: "", false) == null) { "Choose a valid head of department." }
+        requireValid((description ?: "").trim().length <= 500) { "Department description must not exceed 500 characters." }
 
         val deptId = Regex("[^a-z0-9-]").replace(normalizedCode.lowercase(Locale.ROOT), "-")
         val now = Instant.now()
@@ -38,10 +40,10 @@ class DepartmentsActionController(
     }
 
     fun update(existing: Department, name: String, code: String, hodEmail: String?, description: String?) = launch {
-        FieldValidators.nameError(name, "Department name")?.let { throw IllegalArgumentException(it) }
-        FieldValidators.departmentCodeError(code)?.let { throw IllegalArgumentException(it) }
-        require(FieldValidators.emailError(hodEmail ?: "", false) == null) { "Choose a valid head of department." }
-        require((description ?: "").trim().length <= 500) { "Department description must not exceed 500 characters." }
+        FieldValidators.nameError(name, "Department name").orThrowValidation()
+        FieldValidators.departmentCodeError(code).orThrowValidation()
+        requireValid(FieldValidators.emailError(hodEmail ?: "", false) == null) { "Choose a valid head of department." }
+        requireValid((description ?: "").trim().length <= 500) { "Department description must not exceed 500 characters." }
 
         repo.updateDepartment(
             existing.copy(

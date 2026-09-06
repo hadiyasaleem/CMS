@@ -1,5 +1,7 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.util.CmsException
+import com.mbd.cmscommon.util.requireValid
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.Department
 import com.mbd.cmscommon.domain.model.Notification
@@ -123,16 +125,16 @@ class NotificationsController(
             _composeError.value = null
             _notice.value = null
 
-            require(_publishAccess.value == NotificationPublishAccess.ALLOWED) {
+            requireValid(_publishAccess.value == NotificationPublishAccess.ALLOWED) {
                 "This account does not have permission to publish notifications."
             }
-            require(accountKey.isNotBlank()) { "Your signed-in account could not be identified." }
+            requireValid(accountKey.isNotBlank()) { "Your signed-in account could not be identified." }
 
             val title = draft.title.trim()
             val body = draft.body.trim()
-            require(title.length in 3..120) { "Use a title between 3 and 120 characters." }
-            require(body.length in 5..2000) { "Use a message between 5 and 2,000 characters." }
-            require(draft.expiresAt == null || draft.expiresAt.isAfter(Instant.now())) {
+            requireValid(title.length in 3..120) { "Use a title between 3 and 120 characters." }
+            requireValid(body.length in 5..2000) { "Use a message between 5 and 2,000 characters." }
+            requireValid(draft.expiresAt == null || draft.expiresAt.isAfter(Instant.now())) {
                 "The expiry date must be in the future."
             }
 
@@ -141,31 +143,31 @@ class NotificationsController(
                     val role = draft.targetRole
                     val dept = draft.departmentId
                     val session = draft.sessionId
-                    require(session == null || role == NotificationTargetRole.STUDENT) {
+                    requireValid(session == null || role == NotificationTargetRole.STUDENT) {
                         "Session notices can only target students."
                     }
-                    require(dept == null || session == null) {
+                    requireValid(dept == null || session == null) {
                         "Choose either a department or an academic session, not both."
                     }
-                    require(dept == null || role != NotificationTargetRole.ADMIN) {
+                    requireValid(dept == null || role != NotificationTargetRole.ADMIN) {
                         "Admin notices are always college-wide."
                     }
                     if (session != null) {
-                        require(publishSessions.value.any { it.sessionId == session }) { "Choose a valid academic session." }
+                        requireValid(publishSessions.value.any { it.sessionId == session }) { "Choose a valid academic session." }
                     }
                     if (dept != null) {
-                        require(departments.value.any { it.deptId == dept }) { "Choose a valid department." }
+                        requireValid(departments.value.any { it.deptId == dept }) { "Choose a valid department." }
                     }
                     Triple(role, dept, session)
                 }
                 NotificationPublisherKind.TEACHER -> {
                     val session = draft.sessionId
-                    require(session != null && publishSessions.value.any { it.sessionId == session }) {
+                    requireValid(session != null && publishSessions.value.any { it.sessionId == session }) {
                         "Choose one of your assigned sessions."
                     }
                     Triple(NotificationTargetRole.STUDENT, null, session)
                 }
-                NotificationPublisherKind.NONE -> throw IllegalStateException("Publishing is unavailable for this account.")
+                NotificationPublisherKind.NONE -> throw CmsException.Permission("Publishing is unavailable for this account.")
             }
 
             repository.send(title, body, targetRole, targetSession, accountKey, draft.priority, targetDepartment, draft.expiresAt)
@@ -184,7 +186,7 @@ class NotificationsController(
             _notice.value = null
             val canDelete = publisherKind == NotificationPublisherKind.ADMIN ||
                 notification.createdByUid.equals(accountKey, ignoreCase = true)
-            require(canDelete) { "Only the author or an Admin can delete this notification." }
+            requireValid(canDelete) { "Only the author or an Admin can delete this notification." }
             repository.delete(notification.notificationId)
             _rowErrors.value = _rowErrors.value - notification.notificationId
             _notice.value = "Notification deleted."

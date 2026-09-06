@@ -5,6 +5,8 @@ import com.mbd.cmscommon.domain.model.Room
 import com.mbd.cmscommon.domain.repository.BuildingRepository
 import com.mbd.cmscommon.domain.repository.RoomRepository
 import com.mbd.cmscommon.util.FieldValidators
+import com.mbd.cmscommon.util.orThrowValidation
+import com.mbd.cmscommon.util.requireValid
 import java.time.Instant
 import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
@@ -32,11 +34,11 @@ class BuildingsRoomsController(
     }
 
     fun createBuilding(name: String, code: String?) = launch {
-        FieldValidators.nameError(name, "Building name")?.let { throw IllegalArgumentException(it) }
+        FieldValidators.nameError(name, "Building name").orThrowValidation()
         val cleanCode = code?.trim()?.uppercase(Locale.ROOT)?.takeIf { it.isNotBlank() }
         val slugSource = cleanCode ?: name
         val buildingId = slugify(slugSource)
-        require(buildings.value.none { it.buildingId == buildingId }) { "A building with that name already exists." }
+        requireValid(buildings.value.none { it.buildingId == buildingId }) { "A building with that name already exists." }
 
         val now = Instant.now()
         buildingRepository.createBuilding(
@@ -53,7 +55,7 @@ class BuildingsRoomsController(
     }
 
     fun updateBuilding(existing: Building, name: String, code: String?) = launch {
-        FieldValidators.nameError(name, "Building name")?.let { throw IllegalArgumentException(it) }
+        FieldValidators.nameError(name, "Building name").orThrowValidation()
         buildingRepository.updateBuilding(
             existing.copy(
                 name = name.trim(),
@@ -65,16 +67,16 @@ class BuildingsRoomsController(
     }
 
     fun deleteBuilding(buildingId: String) = launch {
-        require(rooms.value.none { it.buildingId == buildingId }) { "Remove this building's rooms first." }
+        requireValid(rooms.value.none { it.buildingId == buildingId }) { "Remove this building's rooms first." }
         buildingRepository.deleteBuilding(buildingId)
     }
 
     fun createRoom(buildingId: String, roomNo: String, name: String?, capacity: Int?, isOffice: Boolean) = launch {
-        require(buildingId.isNotBlank()) { "Choose a building." }
-        FieldValidators.textError(roomNo, "Room number", maxLength = 30)?.let { throw IllegalArgumentException(it) }
-        require(capacity == null || capacity > 0) { "Capacity must be greater than zero." }
+        requireValid(buildingId.isNotBlank()) { "Choose a building." }
+        FieldValidators.textError(roomNo, "Room number", maxLength = 30).orThrowValidation()
+        requireValid(capacity == null || capacity > 0) { "Capacity must be greater than zero." }
         val roomId = "$buildingId--${slugify(roomNo)}"
-        require(rooms.value.none { it.roomId == roomId }) { "This building already has a room with that number." }
+        requireValid(rooms.value.none { it.roomId == roomId }) { "This building already has a room with that number." }
 
         val now = Instant.now()
         roomRepository.createRoom(
@@ -94,8 +96,8 @@ class BuildingsRoomsController(
     }
 
     fun updateRoom(existing: Room, roomNo: String, name: String?, capacity: Int?, isOffice: Boolean) = launch {
-        FieldValidators.textError(roomNo, "Room number", maxLength = 30)?.let { throw IllegalArgumentException(it) }
-        require(capacity == null || capacity > 0) { "Capacity must be greater than zero." }
+        FieldValidators.textError(roomNo, "Room number", maxLength = 30).orThrowValidation()
+        requireValid(capacity == null || capacity > 0) { "Capacity must be greater than zero." }
         roomRepository.updateRoom(
             existing.copy(
                 roomNo = roomNo.trim(),
