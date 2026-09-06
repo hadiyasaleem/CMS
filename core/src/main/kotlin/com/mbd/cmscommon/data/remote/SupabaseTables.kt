@@ -26,6 +26,7 @@ object SupabaseTables {
     const val EXAM_PAPER_SUBMISSIONS = "exam_paper_submissions"
     const val STUDENT_LINK_REQUESTS = "student_link_requests"
     const val NOTIFICATIONS = "notifications"
+    const val APP_LOGS = "app_logs"
     const val RPC_RECORD_SEMESTER_RESULT = "record_semester_result"
     const val BUCKET_EXAM_PAPERS = "exam-papers"
     const val BUCKET_PHOTOS = "photos"
