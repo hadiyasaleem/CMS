@@ -1,16 +1,14 @@
 package com.mbd.cmscommon.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -18,7 +16,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -26,23 +23,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
-import com.mbd.cmscommon.ui.theme.ModMuted
-import com.mbd.cmscommon.ui.theme.ModGround
-import com.mbd.cmscommon.ui.theme.ModSurface
-import com.mbd.cmscommon.ui.theme.ModSuccess
-import com.mbd.cmscommon.ui.theme.ModAccent
 import com.mbd.cmscommon.ui.theme.CollegeInfo
-
-private val StudentAuthCanvas = ModGround
-private val AuthRed = ModAccent
-private val AuthGreen = ModSuccess
 
 data class StudentAuthUiState(
     val email: String = "",
@@ -61,58 +46,50 @@ data class StudentAuthActions(
     val onPasswordReset: () -> Unit,
 )
 
+/** Mirrors [com.mbd.cmscommon.ui.auth.RoleLoginScreen]'s layout (navy brand hero, flat form,
+ * no card) so the student portal's sign-in/register screen matches admin and teacher. */
 @Composable
 fun StudentAuthWorkspace(state: StudentAuthUiState, actions: StudentAuthActions, modifier: Modifier = Modifier) {
-    LazyColumn(
-        modifier = modifier.fillMaxSize().background(StudentAuthCanvas),
-        contentPadding = PaddingValues(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        item { StudentAuthBrand() }
-        if (!state.errorMessage.isNullOrBlank()) {
-            item { AuthStatusCard(state.errorMessage, error = true) }
-        }
-        if (!state.noticeMessage.isNullOrBlank()) {
-            item { AuthStatusCard(state.noticeMessage, error = false) }
-        }
-        item { StudentAuthForm(state, actions) }
-    }
-}
-
-@Composable
-private fun StudentAuthBrand(modifier: Modifier = Modifier) {
-    Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("GGC-MBD · STUDENT PORTAL", color = CmsTheme.colors.accent, style = CmsTextStyles.eyebrow)
-        Spacer(Modifier.height(8.dp))
-        Text("Student Portal", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineMedium)
-        Spacer(Modifier.height(6.dp))
-        Text(
-            "Attendance, marks, timetable and fee records in one secure student portal.",
-            color = ModMuted,
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        Spacer(Modifier.height(4.dp))
-        Text(CollegeInfo.NAME, color = ModMuted, style = MaterialTheme.typography.bodySmall)
-    }
-}
-
-@Composable
-private fun StudentAuthForm(state: StudentAuthUiState, actions: StudentAuthActions, modifier: Modifier = Modifier) {
     var showPassword by remember { mutableStateOf(false) }
 
-    Surface(modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), color = ModSurface) {
-        Column(Modifier.padding(20.dp)) {
-            Text(if (state.registerMode) "Create your account" else "Welcome back", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+    Column(modifier.fillMaxSize().background(CmsTheme.colors.faint).verticalScroll(rememberScrollState())) {
+        NavyBrandPanel(
+            collegeName = "Student Portal",
+            description = "Attendance, marks, timetable and fee records in one secure student portal.",
+            systemLabel = "GGC-MBD - STUDENT PORTAL",
+        )
+        Column(Modifier.fillMaxWidth().padding(24.dp)) {
             Text(
-                if (state.registerMode) "Use an email you can access. Your college record is linked after verification." else "Sign in to continue to your academic workspace.",
-                color = ModMuted,
+                if (state.registerMode) "Create your account" else "Welcome back",
+                color = CmsTheme.colors.accent,
+                style = MaterialTheme.typography.labelLarge,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                if (state.registerMode) {
+                    "Use an email you can access. Your college record is linked after verification."
+                } else {
+                    "Sign in to continue to your academic workspace."
+                },
+                color = CmsTheme.colors.muted,
                 style = MaterialTheme.typography.bodySmall,
             )
             Spacer(Modifier.height(16.dp))
+
+            if (!state.errorMessage.isNullOrBlank()) {
+                Text(state.errorMessage, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.height(8.dp))
+            }
+            if (!state.noticeMessage.isNullOrBlank()) {
+                Text(state.noticeMessage, color = CmsTheme.colors.success, style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.height(8.dp))
+            }
+
             CmsTextField(
                 value = state.email,
                 onValueChange = actions.onEmailChange,
                 label = "Email address",
+                placeholder = "you@example.com",
                 supportingText = if (state.registerMode) "Use your personal or college email address." else null,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -129,9 +106,10 @@ private fun StudentAuthForm(state: StudentAuthUiState, actions: StudentAuthActio
                 },
                 modifier = Modifier.fillMaxWidth(),
             )
+
             Spacer(Modifier.height(16.dp))
             CmsPrimaryButton(
-                text = if (state.loading) "Please wait..." else if (state.registerMode) "Create account" else "Sign in",
+                text = if (state.loading) "Please wait…" else if (state.registerMode) "Create account" else "Sign in",
                 onClick = actions.onSubmit,
                 enabled = !state.loading && state.email.isNotBlank() && state.password.isNotBlank(),
                 modifier = Modifier.fillMaxWidth(),
@@ -140,6 +118,7 @@ private fun StudentAuthForm(state: StudentAuthUiState, actions: StudentAuthActio
                 Spacer(Modifier.height(8.dp))
                 CircularProgressIndicator(modifier = Modifier.height(20.dp), strokeWidth = 2.dp)
             }
+
             Spacer(Modifier.height(12.dp))
             TextButton(onClick = { actions.onModeChange(!state.registerMode) }) {
                 Text(if (state.registerMode) "Login instead" else "Register instead")
@@ -147,14 +126,15 @@ private fun StudentAuthForm(state: StudentAuthUiState, actions: StudentAuthActio
             if (!state.registerMode) {
                 TextButton(onClick = actions.onPasswordReset) { Text("Forgot password?") }
             }
-        }
-    }
-}
 
-@Composable
-private fun AuthStatusCard(message: String, error: Boolean) {
-    val color = if (error) AuthRed else AuthGreen
-    Surface(shape = RoundedCornerShape(14.dp), color = color.copy(alpha = 0.1f)) {
-        Text(message, modifier = Modifier.padding(14.dp), color = color, style = MaterialTheme.typography.bodyMedium)
+            Spacer(Modifier.height(20.dp))
+            Text(
+                CollegeInfo.NAME,
+                color = CmsTheme.colors.muted,
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
     }
 }
