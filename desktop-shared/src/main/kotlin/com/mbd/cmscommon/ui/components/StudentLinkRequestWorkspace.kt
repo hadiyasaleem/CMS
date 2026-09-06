@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -69,7 +70,7 @@ data class StudentLinkRequestActions(
 @Composable
 fun StudentLinkRequestWorkspace(state: StudentLinkRequestUiState, actions: StudentLinkRequestActions, modifier: Modifier = Modifier) {
     LazyColumn(
-        modifier = modifier.fillMaxWidth().background(LinkCanvas),
+        modifier = modifier.fillMaxSize().background(LinkCanvas),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
