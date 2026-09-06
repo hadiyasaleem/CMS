@@ -31,6 +31,7 @@ fun SessionStudentsScreen(
     }
     val students by controller.students.collectAsState()
     val session by controller.session.collectAsState()
+    val departmentCode by controller.departmentCode.collectAsState()
     val controllerError by controller.error.collectAsState()
     val importResult by controller.importResult.collectAsState()
     val importing by controller.importing.collectAsState()
@@ -40,6 +41,7 @@ fun SessionStudentsScreen(
 
     StudentRosterWorkspace(
         session = session,
+        departmentCode = departmentCode,
         students = students,
         importing = importing,
         importPreview = importPreview,

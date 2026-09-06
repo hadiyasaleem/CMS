@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
 class SessionStudentsController(
@@ -28,6 +29,16 @@ class SessionStudentsController(
     val session: StateFlow<AcademicSession?> =
         repo.observeSession(sessionId).stateIn(scope, SharingStarted.WhileSubscribed(5000), null)
 
+    /**
+     * The session's department display code (e.g. "BOT"), for the UI to pre-fill the
+     * "CODE-YY-" part of a new roll number so an admin only has to type the serial. Null while
+     * the department hasn't loaded yet -- the UI falls back to a free-text field in that case.
+     */
+    val departmentCode: StateFlow<String?> =
+        session.combine(departmentRepo.observeActiveDepartments()) { current, depts ->
+            depts.firstOrNull { it.deptId == current?.deptId }?.code
+        }.stateIn(scope, SharingStarted.WhileSubscribed(5000), null)
+
     private val _importResult = MutableStateFlow<BulkImportSummary?>(null)
     val importResult: StateFlow<BulkImportSummary?> = _importResult.asStateFlow()
 
@@ -35,11 +46,16 @@ class SessionStudentsController(
     val importing: StateFlow<Boolean> = _importing.asStateFlow()
 
     /**
+     * Direct suspend lookup for validation, deliberately not reusing [departmentCode] -- that
+     * StateFlow only stays live while something is collecting it (WhileSubscribed), so relying on
+     * `.value` here could silently validate against a stale/never-populated null if the UI hasn't
+     * subscribed yet. This guarantees a fresh read every time regardless of UI collection state.
+     *
      * [AcademicSession.deptId] is the department's row id (e.g. "botany"), not its display code
-     * (e.g. "BOT") -- validating roll numbers against it let "BOTANY-24-01" through instead of
-     * requiring "BOT-24-01", since normalizeRollNumber uppercases the whole thing before matching.
+     * (e.g. "BOT") -- validating against it let "BOTANY-24-01" through instead of requiring
+     * "BOT-24-01", since normalizeRollNumber uppercases before matching.
      */
-    private suspend fun currentDepartmentCode(currentSession: AcademicSession?): String? =
+    private suspend fun resolveDepartmentCode(currentSession: AcademicSession?): String? =
         currentSession?.deptId?.let { departmentRepo.getDepartment(it)?.code }
 
     fun addStudent(rollNumber: String, name: String, gpa: Double?, cgpa: Double?) = launch {
@@ -47,9 +63,8 @@ class SessionStudentsController(
             val normalizedRoll = FieldValidators.normalizeRollNumber(rollNumber)
             val normalizedName = name.trim()
             val currentSession = session.value
-            val departmentCode = currentDepartmentCode(currentSession)
 
-            FieldValidators.rollNumberError(normalizedRoll, departmentCode, currentSession?.startYear).orThrowValidation()
+            FieldValidators.rollNumberError(normalizedRoll, resolveDepartmentCode(currentSession), currentSession?.startYear).orThrowValidation()
             FieldValidators.nameError(normalizedName, "Student name").orThrowValidation()
             requireValid(gpa == null || gpa in 0.0..4.0) { "GPA must be between 0 and 4." }
             requireValid(cgpa == null || cgpa in 0.0..4.0) { "CGPA must be between 0 and 4." }
@@ -68,14 +83,14 @@ class SessionStudentsController(
         try {
             val knownRolls = students.value.map { it.rollNumber.uppercase() }.toMutableSet()
             val currentSession = session.value
-            val departmentCode = currentDepartmentCode(currentSession)
+            val deptCode = resolveDepartmentCode(currentSession)
             val failures = mutableListOf<String>()
             var succeeded = 0
 
             for (row in rows) {
                 val normalizedRoll = FieldValidators.normalizeRollNumber(row.rollNumber)
                 val normalizedName = row.name.trim()
-                val rollError = FieldValidators.rollNumberError(normalizedRoll, departmentCode, currentSession?.startYear)
+                val rollError = FieldValidators.rollNumberError(normalizedRoll, deptCode, currentSession?.startYear)
                 val nameError = FieldValidators.nameError(normalizedName, "Student name")
                 when {
                     rollError != null -> failures += "Row ${row.rowNumber}: $rollError"

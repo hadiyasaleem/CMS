@@ -49,6 +49,7 @@ class SessionStudentsViewModel @Inject constructor(
     val sessionId = controller.sessionId
     val students = controller.students
     val session = controller.session
+    val departmentCode = controller.departmentCode
     val error = controller.error
     val importResult = controller.importResult
     val importing = controller.importing
@@ -67,6 +68,7 @@ fun SessionStudentsScreen(
 ) {
     val students by viewModel.students.collectAsState()
     val session by viewModel.session.collectAsState()
+    val departmentCode by viewModel.departmentCode.collectAsState()
     val controllerError by viewModel.error.collectAsState()
     val importResult by viewModel.importResult.collectAsState()
     val importing by viewModel.importing.collectAsState()
@@ -90,6 +92,7 @@ fun SessionStudentsScreen(
 
     StudentRosterWorkspace(
         session = session,
+        departmentCode = departmentCode,
         students = students,
         importing = importing,
         importPreview = importPreview,

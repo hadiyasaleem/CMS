@@ -56,6 +56,7 @@ private val RosterRed = ModAccent
 @Composable
 fun StudentRosterWorkspace(
     session: AcademicSession?,
+    departmentCode: String?,
     students: List<SessionStudent>,
     importing: Boolean,
     importPreview: StudentImportResult?,
@@ -75,6 +76,10 @@ fun StudentRosterWorkspace(
     var showAddStudent by remember { mutableStateOf(false) }
     var pendingDelete by remember { mutableStateOf<SessionStudent?>(null) }
 
+    val rollPrefix = departmentCode?.takeIf { it.isNotBlank() }?.let { code ->
+        val year = session?.startYear?.let { (it % 100).toString().padStart(2, '0') }
+        if (year != null) "$code-$year-" else null
+    }
     val maxStudents = session?.maxStudents ?: 0
     val isFull = maxStudents > 0 && students.size >= maxStudents
     val withGpa = students.count { it.cgpa != null }
@@ -141,6 +146,7 @@ fun StudentRosterWorkspace(
         AddRosterStudentDialog(
             existingRolls = students.map { it.rollNumber.uppercase() }.toSet(),
             isFull = isFull,
+            rollPrefix = rollPrefix,
             onDismiss = { showAddStudent = false },
             onConfirm = { roll, name -> onAddStudent(roll, name); showAddStudent = false },
         )
@@ -270,13 +276,16 @@ private fun RosterEmptyState(hasStudents: Boolean, isFull: Boolean, onAdd: () ->
 }
 
 @Composable
-private fun AddRosterStudentDialog(existingRolls: Set<String>, isFull: Boolean, onDismiss: () -> Unit, onConfirm: (String, String) -> Unit) {
+private fun AddRosterStudentDialog(existingRolls: Set<String>, isFull: Boolean, rollPrefix: String?, onDismiss: () -> Unit, onConfirm: (String, String) -> Unit) {
     var roll by remember { mutableStateOf("") }
+    var serial by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
-    val duplicate = roll.trim().uppercase() in existingRolls
+    val effectiveRoll = if (rollPrefix != null) "$rollPrefix$serial" else roll
+    val duplicate = effectiveRoll.trim().uppercase() in existingRolls
+    val blank = if (rollPrefix != null) serial.isBlank() else roll.isBlank()
     val error = when {
         isFull -> "Roster is full"
-        duplicate -> "This roll number is already enrolled."
+        !blank && duplicate -> "This roll number is already enrolled."
         else -> null
     }
 
@@ -285,7 +294,27 @@ private fun AddRosterStudentDialog(existingRolls: Set<String>, isFull: Boolean, 
         title = { Text("Add student", style = MaterialTheme.typography.headlineSmall) },
         text = {
             Column {
-                OutlinedTextField(value = roll, onValueChange = { roll = it }, label = { Text("Class roll number *") }, placeholder = { Text("IT-21-09") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                Text("Class roll number *", style = MaterialTheme.typography.labelLarge, color = ModMuted)
+                Spacer(Modifier.height(6.dp))
+                if (rollPrefix != null) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(shape = RoundedCornerShape(8.dp), color = ModTrack) {
+                            Text(rollPrefix, modifier = Modifier.padding(horizontal = 12.dp, vertical = 16.dp), fontWeight = FontWeight.Bold)
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        OutlinedTextField(
+                            value = serial,
+                            onValueChange = { input -> serial = input.filter { it.isDigit() }.take(3) },
+                            placeholder = { Text("09") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                        )
+                    }
+                    Spacer(Modifier.height(6.dp))
+                    Text("The department and intake year are filled in automatically — just enter this student's number.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                } else {
+                    OutlinedTextField(value = roll, onValueChange = { roll = it }, placeholder = { Text("IT-21-09") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                }
                 Spacer(Modifier.height(10.dp))
                 OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Full name *") }, placeholder = { Text("Student name") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 if (error != null) {
@@ -295,7 +324,7 @@ private fun AddRosterStudentDialog(existingRolls: Set<String>, isFull: Boolean, 
             }
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(roll.trim(), name.trim()) }, enabled = roll.isNotBlank() && name.isNotBlank() && error == null) { Text("Add") }
+            TextButton(onClick = { onConfirm(effectiveRoll.trim(), name.trim()) }, enabled = !blank && name.isNotBlank() && error == null) { Text("Add") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     )
