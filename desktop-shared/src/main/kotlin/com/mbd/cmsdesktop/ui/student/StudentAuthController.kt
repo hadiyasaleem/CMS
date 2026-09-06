@@ -34,6 +34,8 @@ class StudentAuthController(
         private set
     var errorMessage by mutableStateOf<String?>(null)
         private set
+    var infoMessage by mutableStateOf<String?>(null)
+        private set
     var resetSending by mutableStateOf(false)
         private set
     var resetMessage by mutableStateOf<String?>(null)
@@ -44,6 +46,7 @@ class StudentAuthController(
     fun toggleMode() {
         isRegisterMode = !isRegisterMode
         errorMessage = null
+        infoMessage = null
         resetMessage = null
     }
 
@@ -54,6 +57,7 @@ class StudentAuthController(
     fun updateEmail(value: String) {
         email = value
         errorMessage = null
+        infoMessage = null
         resetMessage = null
     }
 
@@ -72,12 +76,24 @@ class StudentAuthController(
         scope.launch {
             loading = true
             errorMessage = null
+            infoMessage = null
             try {
                 if (isRegisterMode) {
-                    sessionManager.registerStudent(email.normalizeEmail(), password)
-                    val accountKey = sessionManager.accountKey ?: error("Registered but no email on account")
-                    userRepository.provisionUnlinkedStudent(accountKey)
-                    onResolved(UserRole.UnlinkedStudent(accountKey))
+                    val normalizedEmail = email.normalizeEmail()
+                    sessionManager.registerStudent(normalizedEmail, password)
+                    val accountKey = sessionManager.accountKey
+                    if (accountKey != null) {
+                        // Email confirmation is disabled on this project -- a session exists immediately.
+                        userRepository.provisionUnlinkedStudent(accountKey)
+                        onResolved(UserRole.UnlinkedStudent(accountKey))
+                    } else {
+                        // Normal case: Supabase requires email confirmation before a session exists.
+                        // The mobile app's AppRootViewModel-equivalent reactive hook isn't ported to
+                        // desktop yet, so on desktop the student must complete registration on mobile
+                        // (or come back and sign in here once the link is opened on the same device
+                        // where the confirmation redirect can be handled).
+                        infoMessage = "We sent a verification link to $normalizedEmail. Open it, then come back and sign in."
+                    }
                 } else {
                     sessionManager.signIn(email.normalizeEmail(), password)
                     val accountKey = sessionManager.accountKey ?: error("Signed in but no email on account")

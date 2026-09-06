@@ -32,6 +32,7 @@ fun StudentAuthScreen(
         registerMode = controller.isRegisterMode,
         loading = controller.loading,
         errorMessage = controller.errorMessage,
+        infoMessage = controller.infoMessage,
         resetSending = controller.resetSending,
         resetMessage = controller.resetMessage,
         resetError = controller.resetError,

@@ -38,6 +38,7 @@ data class StudentAuthUiState(
     val registerMode: Boolean = false,
     val loading: Boolean = false,
     val errorMessage: String? = null,
+    val infoMessage: String? = null,
     val resetSending: Boolean = false,
     val resetMessage: String? = null,
     val resetError: Boolean = false,
@@ -86,6 +87,10 @@ fun StudentAuthWorkspace(state: StudentAuthUiState, actions: StudentAuthActions,
 
             if (!state.errorMessage.isNullOrBlank()) {
                 Text(state.errorMessage, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.height(8.dp))
+            }
+            if (!state.infoMessage.isNullOrBlank()) {
+                Text(state.infoMessage, color = CmsTheme.colors.success, style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.height(8.dp))
             }
 

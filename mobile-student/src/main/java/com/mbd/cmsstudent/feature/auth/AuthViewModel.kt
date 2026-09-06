@@ -23,10 +23,10 @@ class AuthViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(StudentAuthUiState())
     val uiState: StateFlow<StudentAuthUiState> = _uiState.asStateFlow()
 
-    fun onEmailChange(value: String) { _uiState.value = _uiState.value.copy(email = value, errorMessage = null, resetMessage = null) }
+    fun onEmailChange(value: String) { _uiState.value = _uiState.value.copy(email = value, errorMessage = null, infoMessage = null, resetMessage = null) }
     fun onPasswordChange(value: String) { _uiState.value = _uiState.value.copy(password = value, errorMessage = null) }
     fun onModeChange(registerMode: Boolean) {
-        _uiState.value = _uiState.value.copy(registerMode = registerMode, errorMessage = null, resetMessage = null)
+        _uiState.value = _uiState.value.copy(registerMode = registerMode, errorMessage = null, infoMessage = null, resetMessage = null)
     }
 
     fun submit() {
@@ -40,17 +40,32 @@ class AuthViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(loading = true, errorMessage = null)
+            _uiState.value = _uiState.value.copy(loading = true, errorMessage = null, infoMessage = null)
             try {
                 if (state.registerMode) {
                     sessionManager.registerStudent(email, state.password)
+                    val accountKey = sessionManager.accountKey
+                    if (accountKey != null) {
+                        // Email confirmation is disabled on this project -- a session exists immediately.
+                        userRepository.provisionUnlinkedStudent(accountKey)
+                        userRepository.touchLastLogin(accountKey)
+                        _uiState.value = _uiState.value.copy(loading = false)
+                    } else {
+                        // Normal case: Supabase requires email confirmation before a session exists.
+                        // AppRootViewModel's newlyAuthenticatedAccountKey collector finishes the
+                        // account setup once the student opens the verification link on this device.
+                        _uiState.value = _uiState.value.copy(
+                            loading = false,
+                            infoMessage = "We sent a verification link to $email. Open it on this device to finish creating your account.",
+                        )
+                    }
                 } else {
                     sessionManager.signIn(email, state.password)
+                    val accountKey = sessionManager.accountKey ?: error("Signed in but no email on account")
+                    userRepository.provisionUnlinkedStudent(accountKey)
+                    userRepository.touchLastLogin(accountKey)
+                    _uiState.value = _uiState.value.copy(loading = false)
                 }
-                val accountKey = sessionManager.accountKey ?: error("Signed in but no email on account")
-                userRepository.provisionUnlinkedStudent(accountKey)
-                userRepository.touchLastLogin(accountKey)
-                _uiState.value = _uiState.value.copy(loading = false)
             } catch (t: Throwable) {
                 _uiState.value = _uiState.value.copy(loading = false, errorMessage = t.userMessage("Sign-in failed. Please try again."))
             }
