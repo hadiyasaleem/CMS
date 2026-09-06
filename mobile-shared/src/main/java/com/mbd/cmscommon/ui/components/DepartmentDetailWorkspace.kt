@@ -168,6 +168,7 @@ fun DepartmentDetailWorkspace(
     if (showEditDepartment && department != null) {
         EditDepartmentDetailsDialog(
             department = department,
+            teachers = teachers,
             onDismiss = { showEditDepartment = false },
             onConfirm = { name, code, hod, description ->
                 onUpdateDepartment(name, code, hod, description)
@@ -321,6 +322,7 @@ private fun AddDepartmentSessionDialog(onDismiss: () -> Unit, onConfirm: (Int, S
 @Composable
 private fun EditDepartmentDetailsDialog(
     department: Department,
+    teachers: List<Teacher>,
     onDismiss: () -> Unit,
     onConfirm: (String, String, String?, String?) -> Unit,
 ) {
@@ -338,7 +340,13 @@ private fun EditDepartmentDetailsDialog(
                 Spacer(Modifier.height(10.dp))
                 OutlinedTextField(value = code, onValueChange = { code = it }, label = { Text("Code") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 Spacer(Modifier.height(10.dp))
-                OutlinedTextField(value = hodEmail, onValueChange = { hodEmail = it }, label = { Text("Head of department") }, placeholder = { Text("Assign a department HOD") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                CmsEntityPicker(
+                    label = "Head of department",
+                    selectedId = hodEmail.ifBlank { null },
+                    options = teachers.sortedBy { it.name }.map { CmsEntityOption(it.email, it.name, it.email) },
+                    onSelected = { hodEmail = it.orEmpty() },
+                    emptyLabel = "HOD not assigned",
+                )
                 Spacer(Modifier.height(10.dp))
                 OutlinedTextField(
                     value = description,
