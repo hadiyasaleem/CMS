@@ -119,6 +119,7 @@ fun SessionTimetableWorkspace(
                                 },
                             )
                         },
+                        editable = true,
                         onCellClick = { dayKey, slot ->
                             val day = DayOfWeek.valueOf(dayKey)
                             val period = periodByDayAndSlot[day to slot]

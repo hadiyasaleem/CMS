@@ -116,13 +116,17 @@ data class SessionPeriod(
     override val updatedAt: Instant = Instant.EPOCH,
     override val updatedBy: String? = null,
 ) : BaseEntity() {
-    val timeRange: String get() = "$startTime–$endTime"
+    val timeRange: String get() = "${formatClockDisplay(startTime)}–${formatClockDisplay(endTime)}"
 
     companion object {
         fun buildId(sessionId: String, day: DayOfWeek, startTime: String): String =
             "${sessionId}_${day.name}_$startTime"
     }
 }
+
+/** Postgres `time` columns round-trip as "HH:mm:ss"; drop the seconds for display everywhere. */
+private fun formatClockDisplay(value: String): String =
+    Regex("^(\\d{2}:\\d{2}):\\d{2}$").find(value.trim())?.groupValues?.get(1) ?: value
 
 data class SemesterSubject(
     val sessionId: String,

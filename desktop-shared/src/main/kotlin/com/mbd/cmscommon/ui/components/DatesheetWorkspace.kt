@@ -418,6 +418,7 @@ private fun DatesheetScheduleCard(
                                         },
                                     )
                                 },
+                                editable = canManage,
                                 onCellClick = { dateKey, timeKey ->
                                     val existing = byDateAndTime[dateKey to timeKey]
                                     if (existing != null) onViewPaper(existing) else if (canManage) onAddPaperOnDate(dateKey)
