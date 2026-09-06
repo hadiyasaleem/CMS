@@ -1,6 +1,7 @@
 package com.mbd.cmsdesktop.ui.student
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -14,6 +15,7 @@ import com.mbd.cmscommon.ui.components.StudentLinkRequestWorkspace
 import com.mbd.cmscommon.util.Outcome
 import com.mbd.cmscommon.util.userMessage
 import com.mbd.cmsdesktop.di.DesktopAppComponent
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /**
@@ -42,6 +44,12 @@ fun StudentLinkRequestScreen(component: DesktopAppComponent, onLinked: (UserRole
         refreshError = null
         try {
             component.studentLinkRequestRepository().sync()
+            component.departmentRepository().sync()
+            // Session lists are per-department, so every active department needs its own sync once
+            // departments themselves are current -- otherwise the session picker stays empty.
+            component.departmentRepository().observeActiveDepartments().first().forEach { department ->
+                component.academicSessionRepository().syncSessionsForDept(department.deptId)
+            }
             val resolved = component.userRepository().resolveRole(accountKey)
             if (resolved is UserRole.LinkedStudent) {
                 onLinked(resolved)
@@ -53,6 +61,8 @@ fun StudentLinkRequestScreen(component: DesktopAppComponent, onLinked: (UserRole
             refreshing = false
         }
     }
+
+    LaunchedEffect(Unit) { refresh() }
 
     val latestRequest = requests.maxByOrNull { it.createdAt }
     val state = StudentLinkRequestUiState(
