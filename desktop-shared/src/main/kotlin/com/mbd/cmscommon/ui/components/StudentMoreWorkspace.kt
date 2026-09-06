@@ -52,13 +52,11 @@ import com.mbd.cmscommon.ui.theme.ModMuted
 import com.mbd.cmscommon.ui.theme.ModTrack
 import com.mbd.cmscommon.ui.theme.ModGround
 import com.mbd.cmscommon.ui.theme.ModSurface
-import com.mbd.cmscommon.ui.theme.ModAccent
 import com.mbd.cmscommon.ui.theme.ModWarn
 import java.time.format.DateTimeFormatter
 
 private val StudentMoreCanvas = ModGround
 private val StudentMoreGold = ModWarn
-private val StudentMoreRed = ModAccent
 private val StudentMoreBlue = ModInk
 private val MoreDateFormat = DateTimeFormatter.ofPattern("dd MMM yyyy")
 
@@ -95,7 +93,7 @@ fun StudentMoreWorkspace(
     ) {
         item { StudentMoreHeader(heroPainter) }
         if (!errorMessage.isNullOrBlank()) {
-            item { StudentMoreNotice(errorMessage, onRetry) }
+            item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         }
         item { AccountRow(onSignOut = { confirmSignOut = true }) }
 
@@ -208,12 +206,3 @@ private fun MoreSummaryMetric(value: String, label: String) {
     }
 }
 
-@Composable
-private fun StudentMoreNotice(message: String, onRetry: () -> Unit) {
-    Surface(shape = RoundedCornerShape(14.dp), color = StudentMoreRed.copy(alpha = 0.1f), border = BorderStroke(1.dp, StudentMoreRed.copy(alpha = 0.25f))) {
-        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(message, modifier = Modifier.weight(1f), color = StudentMoreRed, style = MaterialTheme.typography.bodyMedium)
-            TextButton(onClick = onRetry) { Text("Retry", color = StudentMoreRed) }
-        }
-    }
-}

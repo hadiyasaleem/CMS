@@ -44,13 +44,11 @@ import com.mbd.cmscommon.ui.theme.ModMuted
 import com.mbd.cmscommon.ui.theme.ModTrack
 import com.mbd.cmscommon.ui.theme.ModGround
 import com.mbd.cmscommon.ui.theme.ModSurface
-import com.mbd.cmscommon.ui.theme.ModAccent
 import com.mbd.cmscommon.ui.theme.ModWarn
 import java.time.format.DateTimeFormatter
 
 private val StudentExamsCanvas = ModGround
 private val StudentExamsGold = ModWarn
-private val StudentExamsRed = ModAccent
 private val ExamDateFormat = DateTimeFormatter.ofPattern("dd MMM yyyy")
 
 enum class StudentExamsDestination { MARKS, RESULTS, DATESHEETS }
@@ -85,7 +83,7 @@ fun StudentExamsHubWorkspace(
     ) {
         item { StudentExamsHeader(heroPainter) }
         if (!errorMessage.isNullOrBlank()) {
-            item { StudentExamsNotice(errorMessage, onRetry) }
+            item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         }
 
         if (loading && snapshot == null) {
@@ -180,12 +178,3 @@ private fun ExamSummaryMetric(value: String, label: String) {
     }
 }
 
-@Composable
-private fun StudentExamsNotice(message: String, onRetry: () -> Unit) {
-    Surface(shape = RoundedCornerShape(14.dp), color = StudentExamsRed.copy(alpha = 0.1f), border = BorderStroke(1.dp, StudentExamsRed.copy(alpha = 0.25f))) {
-        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(message, modifier = Modifier.weight(1f), color = StudentExamsRed, style = MaterialTheme.typography.bodyMedium)
-            TextButton(onClick = onRetry) { Text("Retry", color = StudentExamsRed) }
-        }
-    }
-}

@@ -62,7 +62,7 @@ fun StudentFeeWorkspace(
 
         when {
             loading && snapshot == null -> items(3) { SkeletonRow() }
-            !errorMessage.isNullOrBlank() -> item { FeeErrorCard(errorMessage, onRetry) }
+            !errorMessage.isNullOrBlank() -> item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
             snapshot != null -> {
                 item { FeeOverview(snapshot) }
                 item { FeeDueCard(snapshot) }
@@ -163,12 +163,3 @@ private fun FeeGuidanceCards(snapshot: StudentFeeSnapshot) {
     }
 }
 
-@Composable
-private fun FeeErrorCard(message: String, onRetry: () -> Unit) {
-    Surface(shape = RoundedCornerShape(14.dp), color = FeeRed.copy(alpha = 0.1f), border = BorderStroke(1.dp, FeeRed.copy(alpha = 0.25f))) {
-        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(message, modifier = Modifier.weight(1f), color = FeeRed, style = MaterialTheme.typography.bodyMedium)
-            TextButton(onClick = onRetry) { Text("Retry", color = FeeRed) }
-        }
-    }
-}

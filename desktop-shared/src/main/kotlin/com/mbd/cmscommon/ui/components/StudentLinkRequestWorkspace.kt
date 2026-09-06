@@ -39,7 +39,6 @@ import com.mbd.cmscommon.ui.theme.ModMuted
 import com.mbd.cmscommon.ui.theme.ModTrack
 import com.mbd.cmscommon.ui.theme.ModGround
 import com.mbd.cmscommon.ui.theme.ModSurface
-import com.mbd.cmscommon.ui.theme.ModSuccess
 import com.mbd.cmscommon.ui.theme.ModAccent
 import com.mbd.cmscommon.ui.theme.ModWarn
 import com.mbd.cmscommon.ui.theme.ModRedTint
@@ -48,7 +47,6 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 private val LinkCanvas = ModGround
-private val LinkGreen = ModSuccess
 private val LinkGold = ModWarn
 private val LinkRed = ModAccent
 private val LinkDateFormat = DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a")
@@ -77,7 +75,7 @@ fun StudentLinkRequestWorkspace(state: StudentLinkRequestUiState, actions: Stude
         item { LinkHeader(state.refreshing, actions.onRefresh) }
 
         if (!state.refreshError.isNullOrBlank()) {
-            item { LinkNotice(state.refreshError, LinkRed, "Retry", actions.onRefresh) }
+            item { CmsNotice(state.refreshError, tone = NoticeTone.Error, actionLabel = "Retry", onAction = actions.onRefresh) }
         }
 
         item { LinkGuidanceCard() }
@@ -89,7 +87,7 @@ fun StudentLinkRequestWorkspace(state: StudentLinkRequestUiState, actions: Stude
                 item { RejectedRequestCard(request) }
                 item { LinkRequestForm(state, actions.onSubmit) }
             }
-            LinkRequestStatus.APPROVED -> item { LinkNotice("Your request was approved. Refreshing your account access now.", LinkGreen, null, null) }
+            LinkRequestStatus.APPROVED -> item { CmsNotice("Your request was approved. Refreshing your account access now.", tone = NoticeTone.Success) }
             null -> item { LinkRequestForm(state, actions.onSubmit) }
         }
 
@@ -258,14 +256,3 @@ private fun LinkFieldLabel(text: String) {
     Spacer(Modifier.height(4.dp))
 }
 
-@Composable
-private fun LinkNotice(message: String, color: Color, action: String?, onAction: (() -> Unit)?) {
-    Surface(shape = RoundedCornerShape(14.dp), color = color.copy(alpha = 0.1f), border = BorderStroke(1.dp, color.copy(alpha = 0.25f))) {
-        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(message, modifier = Modifier.weight(1f), color = color, style = MaterialTheme.typography.bodyMedium)
-            if (action != null && onAction != null) {
-                TextButton(onClick = onAction) { Text(action, color = color) }
-            }
-        }
-    }
-}

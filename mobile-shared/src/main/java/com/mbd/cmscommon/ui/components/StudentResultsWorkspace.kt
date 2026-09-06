@@ -61,7 +61,7 @@ fun StudentResultsWorkspace(
             item { StatusCard("Refreshing your semester results...") }
         }
         if (!errorMessage.isNullOrBlank()) {
-            item { ErrorCard(errorMessage, onRetry) }
+            item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         }
 
         if (snapshot != null) {
@@ -187,12 +187,3 @@ private fun StatusCard(message: String) {
     }
 }
 
-@Composable
-private fun ErrorCard(message: String, onRetry: () -> Unit) {
-    Surface(shape = RoundedCornerShape(14.dp), color = ResultsRed.copy(alpha = 0.1f), border = BorderStroke(1.dp, ResultsRed.copy(alpha = 0.25f))) {
-        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(message, modifier = Modifier.weight(1f), color = ResultsRed, style = MaterialTheme.typography.bodyMedium)
-            TextButton(onClick = onRetry) { Text("Retry", color = ResultsRed) }
-        }
-    }
-}
