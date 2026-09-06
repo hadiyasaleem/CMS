@@ -2,6 +2,7 @@ package com.mbd.cmscommon.di
 
 import com.mbd.cmscommon.data.repository.AcademicSessionRepositoryImpl
 import com.mbd.cmscommon.data.repository.AdministratorRepositoryLocalImpl
+import com.mbd.cmscommon.data.repository.AppLogRepositoryImpl
 import com.mbd.cmscommon.data.repository.BuildingRepositoryImpl
 import com.mbd.cmscommon.data.repository.CalendarRepositoryLocalImpl
 import com.mbd.cmscommon.data.repository.CurriculumRepositoryImpl
@@ -18,10 +19,12 @@ import com.mbd.cmscommon.data.repository.SessionFeeRepositoryImpl
 import com.mbd.cmscommon.data.repository.SessionMarksRepositoryImpl
 import com.mbd.cmscommon.data.repository.SessionTimetableRepositoryImpl
 import com.mbd.cmscommon.data.repository.StudentLinkRequestRepositoryImpl
+import com.mbd.cmscommon.data.repository.RoomLogSink
 import com.mbd.cmscommon.data.repository.TeacherRepositoryImpl
 import com.mbd.cmscommon.data.repository.UserRepositoryImpl
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.AdministratorRepository
+import com.mbd.cmscommon.domain.repository.AppLogRepository
 import com.mbd.cmscommon.domain.repository.BuildingRepository
 import com.mbd.cmscommon.domain.repository.CalendarRepository
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
@@ -40,6 +43,7 @@ import com.mbd.cmscommon.domain.repository.SessionTimetableRepository
 import com.mbd.cmscommon.domain.repository.StudentLinkRequestRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
 import com.mbd.cmscommon.domain.repository.UserRepository
+import com.mbd.cmscommon.util.LogSink
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -129,4 +133,12 @@ abstract class RepositoryModule {
     @Singleton
     @Binds
     abstract fun bindUserRepository(impl: UserRepositoryImpl): UserRepository
+
+    @Singleton
+    @Binds
+    abstract fun bindAppLogRepository(impl: AppLogRepositoryImpl): AppLogRepository
+
+    @Singleton
+    @Binds
+    abstract fun bindLogSink(impl: RoomLogSink): LogSink
 }

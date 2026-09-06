@@ -4,6 +4,7 @@ import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.sync.AdminDataBootstrapper
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.AdministratorRepository
+import com.mbd.cmscommon.domain.repository.AppLogRepository
 import com.mbd.cmscommon.domain.repository.BuildingRepository
 import com.mbd.cmscommon.domain.repository.CalendarRepository
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
@@ -22,6 +23,7 @@ import com.mbd.cmscommon.domain.repository.SessionTimetableRepository
 import com.mbd.cmscommon.domain.repository.StudentLinkRequestRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
 import com.mbd.cmscommon.domain.repository.UserRepository
+import com.mbd.cmscommon.util.LogSink
 import com.mbd.cmsdesktop.auth.DesktopRoleResolver
 import dagger.Component
 import io.github.jan.supabase.auth.Auth
@@ -62,6 +64,8 @@ interface DesktopAppComponent {
     fun sessionAttendanceRepository(): SessionAttendanceRepository
     fun sessionMarksRepository(): SessionMarksRepository
     fun fineRepository(): FineRepository
+    fun appLogRepository(): AppLogRepository
+    fun logSink(): LogSink
 
     companion object {
         fun create(): DesktopAppComponent = DaggerDesktopAppComponent.create()

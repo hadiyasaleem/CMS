@@ -3,6 +3,7 @@ package com.mbd.cmscommon.data.sync
 import com.mbd.cmscommon.domain.model.NotificationTargetRole
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.AdministratorRepository
+import com.mbd.cmscommon.domain.repository.AppLogRepository
 import com.mbd.cmscommon.domain.repository.BuildingRepository
 import com.mbd.cmscommon.domain.repository.CalendarRepository
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
@@ -48,6 +49,7 @@ class AdminDataBootstrapper @Inject constructor(
     private val marksRepository: SessionMarksRepository,
     private val linkRequestRepository: StudentLinkRequestRepository,
     private val notificationRepository: NotificationRepository,
+    private val appLogRepository: AppLogRepository,
 ) {
     suspend fun hasCachedData(): Boolean {
         val departments = runCatching { departmentRepository.observeActiveDepartments().first() }.getOrDefault(emptyList())
@@ -130,6 +132,10 @@ class AdminDataBootstrapper @Inject constructor(
                 async { runCatching { notificationRepository.sync(NotificationTargetRole.STUDENT) }.isSuccess },
             ).awaitAll().all { it }
         } && successful
+
+        // Flush buffered crash/critical logs alongside the normal sync cycle. Never allowed to
+        // affect `successful` or throw -- see AppLogRepositoryImpl.flush().
+        runCatching { appLogRepository.flush() }
 
         return successful
     }
