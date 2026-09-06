@@ -23,9 +23,11 @@ class AuthViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(StudentAuthUiState())
     val uiState: StateFlow<StudentAuthUiState> = _uiState.asStateFlow()
 
-    fun onEmailChange(value: String) { _uiState.value = _uiState.value.copy(email = value, errorMessage = null) }
+    fun onEmailChange(value: String) { _uiState.value = _uiState.value.copy(email = value, errorMessage = null, resetMessage = null) }
     fun onPasswordChange(value: String) { _uiState.value = _uiState.value.copy(password = value, errorMessage = null) }
-    fun onModeChange(registerMode: Boolean) { _uiState.value = _uiState.value.copy(registerMode = registerMode, errorMessage = null, noticeMessage = null) }
+    fun onModeChange(registerMode: Boolean) {
+        _uiState.value = _uiState.value.copy(registerMode = registerMode, errorMessage = null, resetMessage = null)
+    }
 
     fun submit() {
         val state = _uiState.value
@@ -38,7 +40,7 @@ class AuthViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(loading = true, errorMessage = null, noticeMessage = null)
+            _uiState.value = _uiState.value.copy(loading = true, errorMessage = null)
             try {
                 if (state.registerMode) {
                     sessionManager.registerStudent(email, state.password)
@@ -58,15 +60,16 @@ class AuthViewModel @Inject constructor(
     fun sendPasswordReset() {
         val email = _uiState.value.email
         if (FieldValidators.emailError(email) != null) {
-            _uiState.value = _uiState.value.copy(errorMessage = "Enter a valid email above first")
+            _uiState.value = _uiState.value.copy(resetMessage = "Enter a valid email above first", resetError = true)
             return
         }
         viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(resetSending = true, resetMessage = null)
             try {
                 sessionManager.sendPasswordReset(FieldValidators.normalizeEmail(email))
-                _uiState.value = _uiState.value.copy(noticeMessage = "Password reset email sent.")
+                _uiState.value = _uiState.value.copy(resetSending = false, resetMessage = "Password reset email sent.", resetError = false)
             } catch (t: Throwable) {
-                _uiState.value = _uiState.value.copy(errorMessage = t.userMessage("Could not send the reset email."))
+                _uiState.value = _uiState.value.copy(resetSending = false, resetMessage = t.userMessage("Could not send the reset email."), resetError = true)
             }
         }
     }

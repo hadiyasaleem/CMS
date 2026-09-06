@@ -16,6 +16,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -24,6 +26,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.ui.theme.CmsTheme
@@ -35,7 +38,9 @@ data class StudentAuthUiState(
     val registerMode: Boolean = false,
     val loading: Boolean = false,
     val errorMessage: String? = null,
-    val noticeMessage: String? = null,
+    val resetSending: Boolean = false,
+    val resetMessage: String? = null,
+    val resetError: Boolean = false,
 )
 
 data class StudentAuthActions(
@@ -59,12 +64,15 @@ fun StudentAuthWorkspace(state: StudentAuthUiState, actions: StudentAuthActions,
             systemLabel = "GGC-MBD - STUDENT PORTAL",
         )
         Column(Modifier.fillMaxWidth().padding(24.dp)) {
-            Text(
-                if (state.registerMode) "Create your account" else "Welcome back",
-                color = CmsTheme.colors.accent,
-                style = MaterialTheme.typography.labelLarge,
-            )
-            Spacer(Modifier.height(4.dp))
+            TabRow(
+                selectedTabIndex = if (state.registerMode) 1 else 0,
+                containerColor = Color.Transparent,
+                contentColor = CmsTheme.colors.accent,
+            ) {
+                Tab(selected = !state.registerMode, onClick = { actions.onModeChange(false) }, text = { Text("Sign in") })
+                Tab(selected = state.registerMode, onClick = { actions.onModeChange(true) }, text = { Text("Register") })
+            }
+            Spacer(Modifier.height(16.dp))
             Text(
                 if (state.registerMode) {
                     "Use an email you can access. Your college record is linked after verification."
@@ -78,10 +86,6 @@ fun StudentAuthWorkspace(state: StudentAuthUiState, actions: StudentAuthActions,
 
             if (!state.errorMessage.isNullOrBlank()) {
                 Text(state.errorMessage, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                Spacer(Modifier.height(8.dp))
-            }
-            if (!state.noticeMessage.isNullOrBlank()) {
-                Text(state.noticeMessage, color = CmsTheme.colors.success, style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.height(8.dp))
             }
 
@@ -120,11 +124,18 @@ fun StudentAuthWorkspace(state: StudentAuthUiState, actions: StudentAuthActions,
             }
 
             Spacer(Modifier.height(12.dp))
-            TextButton(onClick = { actions.onModeChange(!state.registerMode) }) {
-                Text(if (state.registerMode) "Login instead" else "Register instead")
-            }
             if (!state.registerMode) {
-                TextButton(onClick = actions.onPasswordReset) { Text("Forgot password?") }
+                TextButton(onClick = actions.onPasswordReset, enabled = !state.resetSending) {
+                    Text(if (state.resetSending) "Sending reset email…" else "Forgot password?")
+                }
+                if (!state.resetMessage.isNullOrBlank()) {
+                    Text(
+                        state.resetMessage,
+                        color = if (state.resetError) MaterialTheme.colorScheme.error else CmsTheme.colors.success,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                    )
+                }
             }
 
             Spacer(Modifier.height(20.dp))

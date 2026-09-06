@@ -34,7 +34,11 @@ class StudentAuthController(
         private set
     var errorMessage by mutableStateOf<String?>(null)
         private set
+    var resetSending by mutableStateOf(false)
+        private set
     var resetMessage by mutableStateOf<String?>(null)
+        private set
+    var resetError by mutableStateOf(false)
         private set
 
     fun toggleMode() {
@@ -95,17 +99,22 @@ class StudentAuthController(
 
     fun sendPasswordReset() {
         if (FieldValidators.emailError(email) != null) {
-            errorMessage = "Enter your email above first"
+            resetMessage = "Enter a valid email above first"
+            resetError = true
             return
         }
         scope.launch {
-            errorMessage = null
+            resetSending = true
             resetMessage = null
             try {
                 sessionManager.sendPasswordReset(email)
                 resetMessage = "Password reset email sent."
+                resetError = false
             } catch (t: Throwable) {
-                errorMessage = t.userMessage("Could not send the reset email.")
+                resetMessage = t.userMessage("Could not send the reset email.")
+                resetError = true
+            } finally {
+                resetSending = false
             }
         }
     }
