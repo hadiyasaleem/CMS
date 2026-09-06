@@ -2,12 +2,14 @@ package com.mbd.cmscommon.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -67,7 +69,7 @@ fun ExamPaperSubmissionWorkspace(
     selected: ResolvedAssignment?,
     examType: ExamType,
     submissions: List<ExamPaperSubmission>,
-    outcome: Outcome<Unit>,
+    outcome: Outcome<Unit>?,
     onSelect: (ResolvedAssignment) -> Unit,
     onExamType: (ExamType) -> Unit,
     onChooseFile: () -> Unit,
@@ -89,7 +91,10 @@ fun ExamPaperSubmissionWorkspace(
         item { PaperHeader(selected, examType) }
         item { AssignmentPicker(assignments, selected, onSelect) }
         item {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 ExamType.entries.forEach { type ->
                     CmsChip(type.name, selected = examType == type, onClick = { onExamType(type) })
                 }
@@ -183,13 +188,15 @@ private fun PaperMetric(label: String, value: String, modifier: Modifier = Modif
 }
 
 @Composable
-private fun UploadPaperCard(examType: ExamType, outcome: Outcome<Unit>, onChooseFile: () -> Unit) {
+private fun UploadPaperCard(examType: ExamType, outcome: Outcome<Unit>?, onChooseFile: () -> Unit) {
     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Text("Upload $examType paper", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Text("PDF or DOCX, stored securely with this class", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(10.dp))
             when (outcome) {
+                // null = idle (nothing uploaded yet): show only the picker, not a false "success".
+                null -> CmsPrimaryButton(text = "Choose file", onClick = onChooseFile)
                 is Outcome.Loading -> Row(verticalAlignment = Alignment.CenterVertically) {
                     CircularProgressIndicator(modifier = Modifier.height(18.dp), strokeWidth = 2.dp)
                     Spacer(Modifier.width(8.dp))

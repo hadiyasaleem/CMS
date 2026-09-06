@@ -2,6 +2,7 @@ package com.mbd.cmscommon.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -104,7 +106,10 @@ fun SemesterResultsWorkspace(
 
         item { SessionPicker(sessions, sessionId, onSelectSession) }
         item {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 (1..8).forEach { sem -> CmsChip("Sem $sem", selected = semester == sem, onClick = { onSemester(sem) }) }
             }
         }
@@ -285,7 +290,10 @@ private fun ResultEditorDialog(
                 Spacer(Modifier.height(10.dp))
                 Text("RESULT", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     ResultStatuses.forEach { option -> CmsChip(option, selected = status == option, onClick = { status = option }) }
                 }
                 Spacer(Modifier.height(10.dp))
@@ -304,7 +312,10 @@ private fun ResultEditorDialog(
                     Spacer(Modifier.height(10.dp))
                     Text("SUPPLY SUBJECTS", color = ModMuted, style = CmsTextStyles.eyebrow)
                     Spacer(Modifier.height(6.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
                         subjects.forEach { code ->
                             CmsChip(code, selected = code in supplySelection, onClick = {
                                 supplySelection = if (code in supplySelection) supplySelection - code else supplySelection + code

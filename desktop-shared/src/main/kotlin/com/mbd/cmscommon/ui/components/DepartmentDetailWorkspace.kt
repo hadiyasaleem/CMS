@@ -2,6 +2,8 @@ package com.mbd.cmscommon.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -121,7 +123,10 @@ fun DepartmentDetailWorkspace(
                         singleLine = true,
                     )
                     Spacer(Modifier.height(8.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
                         CmsChip("All shifts", selected = shiftFilter == null, onClick = { shiftFilter = null })
                         Session.entries.forEach { shift ->
                             CmsChip(shift.name, selected = shiftFilter == shift, onClick = { shiftFilter = shift })
@@ -296,7 +301,10 @@ private fun AddDepartmentSessionDialog(onDismiss: () -> Unit, onConfirm: (Int, S
                 Spacer(Modifier.height(10.dp))
                 Text("SHIFT", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     Session.entries.forEach { option ->
                         CmsChip(option.name, selected = shift == option, onClick = { shift = option })
                     }

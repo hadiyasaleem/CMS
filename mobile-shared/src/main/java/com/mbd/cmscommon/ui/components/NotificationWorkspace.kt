@@ -2,6 +2,7 @@ package com.mbd.cmscommon.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -95,7 +97,10 @@ fun NotificationControllerWorkspace(controller: NotificationsController, modifie
         item { NotificationSummaryCard(inbox.size, sent.size, urgentCount) }
 
         item {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 NoticeTab.entries.forEach { option ->
                     CmsChip(option.label, selected = tab == option, onClick = { tab = option })
                 }
@@ -264,7 +269,10 @@ private fun ComposeNotificationDialog(
                     Spacer(Modifier.height(10.dp))
                     Text("AUDIENCE", color = ModMuted, style = CmsTextStyles.eyebrow)
                     Spacer(Modifier.height(6.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
                         NotificationTargetRole.entries.forEach { role ->
                             CmsChip(role.name, selected = targetRole == role, onClick = { targetRole = role })
                         }
@@ -303,7 +311,10 @@ private fun ComposeNotificationDialog(
                 Spacer(Modifier.height(10.dp))
                 Text("PRIORITY", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     NotificationPriority.entries.forEach { option ->
                         CmsChip(option.name, selected = priority == option, onClick = { priority = option })
                     }

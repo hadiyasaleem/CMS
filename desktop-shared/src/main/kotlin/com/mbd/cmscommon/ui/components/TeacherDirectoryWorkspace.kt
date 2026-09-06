@@ -620,7 +620,10 @@ private fun TeacherActionDialog(
                 Spacer(Modifier.height(10.dp))
                 Text("GENDER", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     listOf("MALE", "FEMALE", "OTHER").forEach { option -> CmsChip(option, selected = gender == option, onClick = { gender = option }) }
                 }
                 Spacer(Modifier.height(10.dp))

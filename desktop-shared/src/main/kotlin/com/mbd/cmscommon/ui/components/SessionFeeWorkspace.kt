@@ -2,6 +2,7 @@ package com.mbd.cmscommon.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -209,7 +211,10 @@ private fun FeeSummaryCard(total: Double, average: Double, cadence: FeeType, onC
             Spacer(Modifier.height(10.dp))
             Text("COLLECTION CADENCE", color = ModMuted, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 CmsChip("Annual collection", selected = cadence == FeeType.ANNUAL, onClick = { onCadenceChange(FeeType.ANNUAL) })
                 CmsChip("Per-semester collection", selected = cadence == FeeType.SEMESTER, onClick = { onCadenceChange(FeeType.SEMESTER) })
             }

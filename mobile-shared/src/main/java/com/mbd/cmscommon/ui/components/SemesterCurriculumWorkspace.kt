@@ -2,6 +2,8 @@ package com.mbd.cmscommon.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -291,7 +293,10 @@ private fun SubjectEditorDialog(
                 Spacer(Modifier.height(10.dp))
                 Text("SUBJECT TYPE", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     SubjectType.entries.forEach { option -> CmsChip(option.name, selected = type == option, onClick = { type = option }) }
                 }
                 Spacer(Modifier.height(10.dp))
