@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.controller.BulkImportSummary
 import com.mbd.cmscommon.domain.model.AcademicSession
@@ -198,7 +199,7 @@ private fun RosterHero(
 private fun RosterSummaryCard(enrolled: Int, avgCgpa: Double?, gpaRecords: Int, seatsRemaining: Int) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         RosterMetric("Enrolled", enrolled.toString(), Modifier.weight(1f))
-        RosterMetric("Avg CGPA", avgCgpa?.let { "%.2f".format(it) } ?: "No valid CGPA recorded", Modifier.weight(1f))
+        RosterMetric("Avg CGPA", avgCgpa?.let { "%.2f".format(it) } ?: "--", Modifier.weight(1f))
         RosterMetric("GPA records", gpaRecords.toString(), Modifier.weight(1f))
         RosterMetric("Seats remaining", seatsRemaining.toString(), Modifier.weight(1f))
     }
@@ -208,7 +209,7 @@ private fun RosterSummaryCard(enrolled: Int, avgCgpa: Double?, gpaRecords: Int, 
 private fun RosterMetric(label: String, value: String, modifier: Modifier = Modifier) {
     Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(14.dp)) {
-            Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+            Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
