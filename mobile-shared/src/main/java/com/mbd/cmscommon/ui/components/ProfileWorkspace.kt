@@ -103,6 +103,8 @@ fun AdministratorProfileWorkspace(
             dependentSummary = "GGC-MBD will email a secure reset link to ${account?.email ?: accountKey}.",
             onConfirm = { onResetPassword(); confirmReset = false },
             onDismiss = { confirmReset = false },
+            confirmLabel = "Send reset email",
+            showUndoWarning = false,
         )
     }
     if (confirmSignOut) {
@@ -111,6 +113,8 @@ fun AdministratorProfileWorkspace(
             dependentSummary = "You will need to sign in again to access this account.",
             onConfirm = { onSignOut(); confirmSignOut = false },
             onDismiss = { confirmSignOut = false },
+            confirmLabel = "Sign out",
+            showUndoWarning = false,
         )
     }
 }
@@ -189,6 +193,8 @@ fun TeacherProfileWorkspace(
             dependentSummary = "GGC-MBD will email a secure reset link to ${profile?.email ?: accountKey}.",
             onConfirm = { onResetPassword(); confirmReset = false },
             onDismiss = { confirmReset = false },
+            confirmLabel = "Send reset email",
+            showUndoWarning = false,
         )
     }
     if (confirmSignOut) {
@@ -197,6 +203,8 @@ fun TeacherProfileWorkspace(
             dependentSummary = "You will need to sign in again to access this account.",
             onConfirm = { onSignOut(); confirmSignOut = false },
             onDismiss = { confirmSignOut = false },
+            confirmLabel = "Sign out",
+            showUndoWarning = false,
         )
     }
 }
@@ -291,6 +299,8 @@ fun StudentOwnProfileWorkspace(
             dependentSummary = "GGC-MBD will email a secure reset link to ${linkedEmail ?: accountKey}.",
             onConfirm = { onResetPassword(); confirmReset = false },
             onDismiss = { confirmReset = false },
+            confirmLabel = "Send reset email",
+            showUndoWarning = false,
         )
     }
     if (confirmSignOut) {
@@ -299,6 +309,8 @@ fun StudentOwnProfileWorkspace(
             dependentSummary = "You will need to sign in again to access this account.",
             onConfirm = { onSignOut(); confirmSignOut = false },
             onDismiss = { confirmSignOut = false },
+            confirmLabel = "Sign out",
+            showUndoWarning = false,
         )
     }
 }

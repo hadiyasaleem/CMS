@@ -11,13 +11,15 @@ fun ConfirmDestructiveActionDialog(
     dependentSummary: String,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
+    confirmLabel: String = "Delete permanently",
+    showUndoWarning: Boolean = true,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
-        text = { Text("$dependentSummary\n\nThis cannot be undone.") },
+        text = { Text(if (showUndoWarning) "$dependentSummary\n\nThis cannot be undone." else dependentSummary) },
         confirmButton = {
-            TextButton(onClick = onConfirm) { Text("Delete permanently") }
+            TextButton(onClick = onConfirm) { Text(confirmLabel) }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Cancel") }
