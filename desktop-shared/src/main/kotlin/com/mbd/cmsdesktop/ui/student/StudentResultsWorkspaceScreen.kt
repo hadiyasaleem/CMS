@@ -21,11 +21,12 @@ fun StudentResultsScreen(
     val controller = remember(sessionId, rollNumber) { StudentResultsController(sessionId, rollNumber, marksRepository, scope) }
     val results by controller.results.collectAsState()
     val loading by controller.loading.collectAsState()
+    val errorMessage by controller.error.collectAsState()
 
     StudentResultsWorkspace(
         snapshot = if (loading && results.isEmpty()) null else studentResultsSnapshot(results),
         loading = loading,
-        errorMessage = null,
+        errorMessage = errorMessage,
         onRetry = controller::refresh,
     )
 }
