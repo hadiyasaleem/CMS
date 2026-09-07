@@ -12,7 +12,7 @@ import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
 import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider
 import com.mbd.cmscommon.ui.components.TeacherProfileWorkspace
-import com.mbd.cmscommon.util.userMessage
+import com.mbd.cmscommon.util.userMessageLogged
 import kotlinx.coroutines.launch
 
 /** Profile leaf backed by the login-populated teacher cache, with password reset and sign-out. */
@@ -54,7 +54,7 @@ fun TeacherProfileScreen(
                 actionMessage = null
                 runCatching { sessionManager.sendPasswordReset(accountKey) }
                     .onSuccess { actionMessage = "Password reset link sent to $accountKey." }
-                    .onFailure { error = it.userMessage() }
+                    .onFailure { error = it.userMessageLogged("TeacherProfileScreen.resetPassword", "Could not send the reset email.") }
             }
         },
         onSignOut = onSignOut,

@@ -11,7 +11,7 @@ import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.domain.model.administratorDirectorySnapshot
 import com.mbd.cmscommon.domain.repository.AdministratorRepository
 import com.mbd.cmscommon.ui.components.AdministratorProfileWorkspace
-import com.mbd.cmscommon.util.userMessage
+import com.mbd.cmscommon.util.userMessageLogged
 import kotlinx.coroutines.launch
 
 /**
@@ -42,7 +42,7 @@ fun AdminProfileScreen(
         try {
             repository.sync()
         } catch (t: Throwable) {
-            error = t.userMessage()
+            error = t.userMessageLogged("AdminProfileScreen.refresh", "Could not refresh the administrator directory.")
         } finally {
             loading = false
         }
@@ -64,7 +64,7 @@ fun AdminProfileScreen(
                     sessionManager.sendPasswordReset(accountKey)
                     actionMessage = "Password reset email sent to $accountKey."
                 } catch (t: Throwable) {
-                    error = t.userMessage("Could not send the password reset email.")
+                    error = t.userMessageLogged("AdminProfileScreen.resetPassword", "Could not send the password reset email.")
                 }
             }
         },

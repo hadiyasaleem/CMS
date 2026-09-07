@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.domain.model.AdministratorAccount
 import com.mbd.cmscommon.domain.repository.AdministratorRepository
-import com.mbd.cmscommon.util.userMessage
+import com.mbd.cmscommon.util.userMessageLogged
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -48,7 +48,7 @@ class ProfileViewModel @Inject constructor(
         _loading.value = true
         _error.value = null
         runCatching { administratorRepository.sync() }
-            .onFailure { _error.value = it.userMessage() }
+            .onFailure { _error.value = it.userMessageLogged("AdminProfileViewModel.refresh", "Could not refresh the administrator directory.") }
         _loading.value = false
     }
 
@@ -57,7 +57,7 @@ class ProfileViewModel @Inject constructor(
         _actionMessage.value = null
         runCatching { sessionManager.sendPasswordReset(accountKey) }
             .onSuccess { _actionMessage.value = "Password reset link sent to $accountKey." }
-            .onFailure { _error.value = it.userMessage() }
+            .onFailure { _error.value = it.userMessageLogged("AdminProfileViewModel.resetPassword", "Could not send the reset email.") }
     }
 
     fun signOut() = sessionManager.signOut()
