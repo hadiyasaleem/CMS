@@ -17,6 +17,7 @@ fun DepartmentDetailScreen(
     val departmentName by viewModel.deptName.collectAsState()
     val sessions by viewModel.sessions.collectAsState()
     val errorMessage by viewModel.error.collectAsState()
+    val actionMessage by viewModel.notice.collectAsState()
     val teachers by viewModel.teachers.collectAsState()
     val studentCounts = sessions.associate { session ->
         val count by remember(session.sessionId) {
@@ -32,9 +33,11 @@ fun DepartmentDetailScreen(
         studentCounts = studentCounts,
         teachers = teachers,
         errorMessage = errorMessage,
+        actionMessage = actionMessage,
         onOpenSession = onOpenSession,
         onCreateSession = viewModel::createSession,
         onUpdateDepartment = viewModel::updateDetails,
         onClearError = viewModel::clearError,
+        onConsumeNotice = viewModel::consumeNotice,
     )
 }

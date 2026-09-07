@@ -36,6 +36,7 @@ class DepartmentDetailViewModel @Inject constructor(
     val department = controller.department
     val sessions = controller.sessions
     val error = controller.error
+    val notice = controller.notice
     val teachers = teacherRepository.observeActiveTeachers()
         .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5_000), emptyList())
 
@@ -46,4 +47,5 @@ class DepartmentDetailViewModel @Inject constructor(
     fun updateDetails(name: String, code: String, hodEmail: String?, description: String?) =
         controller.updateDetails(name, code, hodEmail, description)
     fun clearError() = controller.clearError()
+    fun consumeNotice() = controller.consumeNotice()
 }

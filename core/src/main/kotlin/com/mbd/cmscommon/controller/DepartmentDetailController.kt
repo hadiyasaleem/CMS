@@ -36,6 +36,13 @@ class DepartmentDetailController(
         .map { departmentDetailSnapshot(it, emptyMap()).sessions }
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    private val _notice = MutableStateFlow<String?>(null)
+    val notice: StateFlow<String?> = _notice.asStateFlow()
+
+    fun consumeNotice() {
+        _notice.value = null
+    }
+
     init {
         launch { _department.value = departmentRepository.getDepartment(deptId) }
     }
@@ -46,6 +53,7 @@ class DepartmentDetailController(
         // ever calls this directly with a 2-digit year like 21 instead of 2021.
         requireValid(startYear in 1900..9999) { "Enter a valid 4-digit intake year." }
         sessionRepository.createSession(deptId, startYear, shift)
+        _notice.value = "Session created."
     }
 
     fun updateDetails(name: String, code: String, hodEmail: String?, description: String?) {
@@ -70,6 +78,7 @@ class DepartmentDetailController(
             )
             departmentRepository.updateDepartment(updated)
             _department.value = updated
+            _notice.value = "Department details updated."
         }
     }
 }

@@ -47,7 +47,6 @@ import com.mbd.cmscommon.ui.theme.ModMuted
 import com.mbd.cmscommon.ui.theme.ModTrack
 import com.mbd.cmscommon.ui.theme.ModSurface
 import com.mbd.cmscommon.ui.theme.ModSuccess
-import com.mbd.cmscommon.ui.theme.ModRedTint
 import java.util.Locale
 
 @Composable
@@ -58,10 +57,12 @@ fun DepartmentDetailWorkspace(
     studentCounts: Map<String, Int>,
     teachers: List<Teacher>,
     errorMessage: String?,
+    actionMessage: String?,
     onOpenSession: (String) -> Unit,
     onCreateSession: (Int, Session) -> Unit,
     onUpdateDepartment: (String, String, String?, String?) -> Unit,
     onClearError: () -> Unit,
+    onConsumeNotice: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var query by remember { mutableStateOf("") }
@@ -87,14 +88,10 @@ fun DepartmentDetailWorkspace(
             }
 
             if (!errorMessage.isNullOrBlank()) {
-                fullSpanItem {
-                    Surface(shape = RoundedCornerShape(14.dp), color = ModRedTint, border = BorderStroke(1.dp, CmsTheme.colors.accent.copy(alpha = 0.25f))) {
-                        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Text(errorMessage, modifier = Modifier.weight(1f), color = CmsTheme.colors.accent, style = MaterialTheme.typography.bodyMedium)
-                            TextButton(onClick = onClearError) { Text("Dismiss") }
-                        }
-                    }
-                }
+                fullSpanItem { CmsNotice(errorMessage, tone = NoticeTone.Error, onDismiss = onClearError) }
+            }
+            if (!actionMessage.isNullOrBlank()) {
+                fullSpanItem { CmsNotice(actionMessage, tone = NoticeTone.Success, onDismiss = onConsumeNotice) }
             }
 
             fullSpanItem {

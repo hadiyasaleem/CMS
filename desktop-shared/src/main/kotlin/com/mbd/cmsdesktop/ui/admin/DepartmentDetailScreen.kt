@@ -30,6 +30,7 @@ fun DepartmentDetailScreen(
     val departmentName by controller.deptName.collectAsState()
     val sessions by controller.sessions.collectAsState()
     val errorMessage by controller.error.collectAsState()
+    val actionMessage by controller.notice.collectAsState()
     val teachers by teacherRepository.observeActiveTeachers().collectAsState(initial = emptyList())
 
     val studentCountsFlow = remember(sessions) {
@@ -50,9 +51,11 @@ fun DepartmentDetailScreen(
         studentCounts = studentCounts,
         teachers = teachers,
         errorMessage = errorMessage,
+        actionMessage = actionMessage,
         onOpenSession = onOpenSession,
         onCreateSession = controller::createSession,
         onUpdateDepartment = controller::updateDetails,
         onClearError = controller::clearError,
+        onConsumeNotice = controller::consumeNotice,
     )
 }
