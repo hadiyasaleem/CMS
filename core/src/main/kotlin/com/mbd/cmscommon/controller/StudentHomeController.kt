@@ -7,6 +7,7 @@ import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
 import com.mbd.cmscommon.domain.repository.SessionTimetableRepository
+import com.mbd.cmscommon.util.orLogCritical
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -59,8 +60,8 @@ class StudentHomeController(
     }.stateIn(scope, SharingStarted.WhileSubscribed(5000), StudentHomeUi())
 
     fun refresh() = launch {
-        runCatching { attendanceRepository.syncSession(sessionId) }
-        runCatching { timetableRepository.syncSession(sessionId) }
+        runCatching { attendanceRepository.syncSession(sessionId) }.orLogCritical("StudentHomeController.refresh.attendance")
+        runCatching { timetableRepository.syncSession(sessionId) }.orLogCritical("StudentHomeController.refresh.timetable")
     }
 }
 
