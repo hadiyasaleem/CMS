@@ -73,6 +73,7 @@ fun SessionOperationsWorkspace(
     currentSemesterTerm: SemesterTerm?,
     canPromote: Boolean,
     errorMessage: String?,
+    notice: String?,
     teachers: List<Teacher>,
     onPromoteSession: () -> Unit,
     onUpdateDetails: (String, String, Int) -> Unit,
@@ -82,6 +83,7 @@ fun SessionOperationsWorkspace(
     onOpenFees: () -> Unit,
     onDeleteSession: () -> Unit,
     onClearError: () -> Unit,
+    onConsumeNotice: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showEditDetails by remember { mutableStateOf(false) }
@@ -101,14 +103,10 @@ fun SessionOperationsWorkspace(
         item { SessionIdentityCard(session, onEdit = { showEditDetails = true }) }
 
         if (!errorMessage.isNullOrBlank()) {
-            item {
-                Surface(shape = RoundedCornerShape(14.dp), color = SessionRed.copy(alpha = 0.1f), border = BorderStroke(1.dp, SessionRed.copy(alpha = 0.25f))) {
-                    Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(errorMessage, modifier = Modifier.weight(1f), color = SessionRed, style = MaterialTheme.typography.bodyMedium)
-                        TextButton(onClick = onClearError) { Text("Dismiss") }
-                    }
-                }
-            }
+            item { CmsNotice(errorMessage, tone = NoticeTone.Error, onDismiss = onClearError) }
+        }
+        if (!notice.isNullOrBlank()) {
+            item { CmsNotice(notice, tone = NoticeTone.Success, onDismiss = onConsumeNotice) }
         }
 
         item {

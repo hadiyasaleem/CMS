@@ -40,6 +40,7 @@ fun SessionDetailScreen(
     val currentSemesterTerm by controller.currentSemesterTerm.collectAsState()
     val canPromote by controller.canPromote.collectAsState()
     val errorMessage by controller.error.collectAsState()
+    val notice by controller.notice.collectAsState()
     val teachers by teacherRepository.observeActiveTeachers().collectAsState(initial = emptyList())
 
     SessionOperationsWorkspace(
@@ -52,6 +53,7 @@ fun SessionDetailScreen(
         currentSemesterTerm = currentSemesterTerm,
         canPromote = canPromote,
         errorMessage = errorMessage,
+        notice = notice,
         teachers = teachers,
         onPromoteSession = controller::promoteSession,
         onUpdateDetails = { programName, inchargeEmail, maxStudents ->
@@ -63,5 +65,6 @@ fun SessionDetailScreen(
         onOpenFees = { onOpenFees(sessionId) },
         onDeleteSession = { controller.deleteSession(onDeleted) },
         onClearError = controller::clearError,
+        onConsumeNotice = controller::consumeNotice,
     )
 }

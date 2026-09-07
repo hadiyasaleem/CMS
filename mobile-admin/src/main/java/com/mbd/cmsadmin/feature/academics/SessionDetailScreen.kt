@@ -47,6 +47,7 @@ class SessionDetailViewModel @Inject constructor(
     val currentSemesterTerm = controller.currentSemesterTerm
     val canPromote = controller.canPromote
     val error = controller.error
+    val notice = controller.notice
     val teachers = teacherRepository.observeActiveTeachers()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
@@ -55,6 +56,7 @@ class SessionDetailViewModel @Inject constructor(
         controller.updateDetails(programName, inchargeEmail, maxStudents)
     fun deleteSession(onDone: () -> Unit) = controller.deleteSession(onDone)
     fun clearError() = controller.clearError()
+    fun consumeNotice() = controller.consumeNotice()
 }
 
 @Composable
@@ -75,6 +77,7 @@ fun SessionDetailScreen(
     val currentSemesterTerm by viewModel.currentSemesterTerm.collectAsState()
     val canPromote by viewModel.canPromote.collectAsState()
     val errorMessage by viewModel.error.collectAsState()
+    val notice by viewModel.notice.collectAsState()
     val teachers by viewModel.teachers.collectAsState()
 
     SessionOperationsWorkspace(
@@ -87,6 +90,7 @@ fun SessionDetailScreen(
         currentSemesterTerm = currentSemesterTerm,
         canPromote = canPromote,
         errorMessage = errorMessage,
+        notice = notice,
         teachers = teachers,
         onPromoteSession = viewModel::promoteSession,
         onUpdateDetails = viewModel::updateDetails,
@@ -96,5 +100,6 @@ fun SessionDetailScreen(
         onOpenFees = { onOpenFees(viewModel.sessionId) },
         onDeleteSession = { viewModel.deleteSession(onDeleted) },
         onClearError = viewModel::clearError,
+        onConsumeNotice = viewModel::consumeNotice,
     )
 }

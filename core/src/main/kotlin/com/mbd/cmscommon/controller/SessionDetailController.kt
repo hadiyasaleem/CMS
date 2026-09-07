@@ -57,6 +57,13 @@ class SessionDetailController(
         .map { term -> term?.endDate?.let { !it.isAfter(LocalDate.now()) } == true }
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), false)
 
+    private val _notice = MutableStateFlow<String?>(null)
+    val notice: StateFlow<String?> = _notice.asStateFlow()
+
+    fun consumeNotice() {
+        _notice.value = null
+    }
+
     init {
         launch {
             try {
@@ -74,7 +81,10 @@ class SessionDetailController(
 
     fun promoteSession() = launch {
         requireValid(canPromote.value) { "This can only be done after the current semester's term end date." }
+        val currentSemester = session.value?.currentSemester ?: 1
+        val graduating = currentSemester >= 8
         sessionRepository.promoteSession(sessionId)
+        _notice.value = if (graduating) "Class marked as graduated." else "Promoted to semester ${currentSemester + 1}."
     }
 
     fun updateDetails(programName: String?, inchargeEmail: String?, maxStudents: Int) = launch {
@@ -82,6 +92,7 @@ class SessionDetailController(
         requireValid(FieldValidators.emailError(inchargeEmail ?: "", required = false) == null) { "Choose a valid session in-charge." }
         requireValid(maxStudents in 1..50) { "Student capacity must be between 1 and 50." }
         sessionRepository.updateSessionDetails(sessionId, programName, inchargeEmail, maxStudents)
+        _notice.value = "Session details updated."
     }
 
     fun deleteSession(onDone: () -> Unit) = launch {
