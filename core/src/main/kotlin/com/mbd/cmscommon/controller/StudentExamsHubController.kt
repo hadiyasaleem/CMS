@@ -34,6 +34,9 @@ class StudentExamsHubController(
     private val _loading = MutableStateFlow(true)
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
 
+    private val _loadError = MutableStateFlow<String?>(null)
+    val loadError: StateFlow<String?> = _loadError.asStateFlow()
+
     val snapshot: StateFlow<StudentExamsHubSnapshot> = combine(
         marksRepository.observeStudentMarks(sessionId, rollNumber),
         results,
@@ -53,6 +56,7 @@ class StudentExamsHubController(
 
     fun refresh(fetchRemote: Boolean = true) = launch {
         clearError()
+        _loadError.value = null
         _loading.value = true
         try {
             coroutineScope {
@@ -64,14 +68,16 @@ class StudentExamsHubController(
                     }
                 }
 
-                marksSync.await()
+                val marksSyncResult = marksSync.await()
                 val resultLoad = async { runCatching { marksRepository.getSemesterGpa(sessionId, rollNumber) } }
 
-                resultLoad.await().getOrNull()?.let { results.value = it }
-                val loadedSheets = sheetLoad.await().getOrDefault(emptyList())
+                val resultLoadResult = resultLoad.await()
+                resultLoadResult.getOrNull()?.let { results.value = it }
+                val sheetLoadResult = sheetLoad.await()
+                val loadedSheets = sheetLoadResult.getOrDefault(emptyList())
                 sheets.value = loadedSheets
 
-                slots.value = loadedSheets
+                val slotResults = loadedSheets
                     .map { sheet ->
                         async {
                             runCatching {
@@ -81,7 +87,11 @@ class StudentExamsHubController(
                         }
                     }
                     .awaitAll()
-                    .flatMap { it.getOrDefault(emptyList()) }
+                slots.value = slotResults.flatMap { it.getOrDefault(emptyList()) }
+
+                _loadError.value = (listOf(marksSyncResult, resultLoadResult, sheetLoadResult) + slotResults)
+                    .firstNotNullOfOrNull { it.exceptionOrNull() }
+                    ?.userMessageLogged("Some exam data could not be loaded.")
             }
         } finally {
             _loading.value = false

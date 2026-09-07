@@ -27,12 +27,13 @@ fun StudentExamsHubScreen(
     }
     val snapshot by controller.snapshot.collectAsState()
     val loading by controller.loading.collectAsState()
+    val errorMessage by controller.loadError.collectAsState()
 
     StudentExamsHubWorkspace(
         heroPainter = painterResource("splash_postgraduate_block.jpg"),
         snapshot = snapshot,
         loading = loading,
-        errorMessage = null,
+        errorMessage = errorMessage,
         onRetry = controller::refresh,
         onOpen = onOpen,
     )
