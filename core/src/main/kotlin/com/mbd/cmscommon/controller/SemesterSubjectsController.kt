@@ -39,6 +39,13 @@ class SemesterSubjectsController(
     private val _loading = MutableStateFlow(true)
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
 
+    private val _notice = MutableStateFlow<String?>(null)
+    val notice: StateFlow<String?> = _notice.asStateFlow()
+
+    fun consumeNotice() {
+        _notice.value = null
+    }
+
     init {
         launch {
             try {
@@ -66,8 +73,10 @@ class SemesterSubjectsController(
             try {
                 repo.saveSemesterTerm(sessionId, semester, start, end)
                 _term.value = SemesterTerm(sessionId, semester, start, end)
+                _notice.value = "Class term dates saved."
                 onDone(true)
             } catch (t: Throwable) {
+                t.userMessageLogged("Could not save the class term.")
                 onDone(false)
             }
         }
@@ -107,6 +116,7 @@ class SemesterSubjectsController(
             outline = outline?.trim()?.takeIf { it.isNotBlank() },
         )
         repo.saveSemesterSubject(subject)
+        _notice.value = if (originalCourseCode != null) "$normalizedCode updated." else "$normalizedCode added."
     }
 
     fun addSubject(courseCode: String, name: String, creditHours: Int, subjectType: SubjectType, isElective: Boolean, outline: String?) {
@@ -115,6 +125,7 @@ class SemesterSubjectsController(
 
     fun removeSubject(courseCode: String) = launch {
         repo.deleteSemesterSubject(sessionId, semester, courseCode)
+        _notice.value = "$courseCode removed."
     }
 
     private fun parseDate(text: String): Pair<LocalDate?, Boolean> {

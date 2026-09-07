@@ -36,12 +36,14 @@ class SemesterSubjectsViewModel @Inject constructor(
     val term = controller.term
     val loading = controller.loading
     val error = controller.error
+    val notice = controller.notice
 
     fun saveTerm(start: String, end: String, onDone: (Boolean) -> Unit) = controller.saveTerm(start, end, onDone)
     fun saveSubject(originalCode: String?, code: String, name: String, credits: Int, type: SubjectType, elective: Boolean, outline: String?) =
         controller.saveSubject(originalCode, code, name, credits, type, elective, outline)
     fun removeSubject(courseCode: String) = controller.removeSubject(courseCode)
     fun clearError() = controller.clearError()
+    fun consumeNotice() = controller.consumeNotice()
 }
 
 @Composable
@@ -51,6 +53,7 @@ fun SemesterSubjectsScreen(viewModel: SemesterSubjectsViewModel = hiltViewModel(
     val term by viewModel.term.collectAsState()
     val loading by viewModel.loading.collectAsState()
     val errorMessage by viewModel.error.collectAsState()
+    val notice by viewModel.notice.collectAsState()
 
     SemesterCurriculumWorkspace(
         sessionId = viewModel.sessionId,
@@ -60,9 +63,11 @@ fun SemesterSubjectsScreen(viewModel: SemesterSubjectsViewModel = hiltViewModel(
         term = term,
         loading = loading,
         errorMessage = errorMessage,
+        notice = notice,
         onSaveSubject = viewModel::saveSubject,
         onRemoveSubject = viewModel::removeSubject,
         onSaveTerm = viewModel::saveTerm,
         onClearError = viewModel::clearError,
+        onConsumeNotice = viewModel::consumeNotice,
     )
 }

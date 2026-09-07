@@ -63,10 +63,12 @@ fun SemesterCurriculumWorkspace(
     term: SemesterTerm?,
     loading: Boolean,
     errorMessage: String?,
+    notice: String?,
     onSaveSubject: (String, String, String, Int, SubjectType, Boolean, String) -> Unit,
     onRemoveSubject: (String) -> Unit,
     onSaveTerm: (String, String, (Boolean) -> Unit) -> Unit,
     onClearError: () -> Unit,
+    onConsumeNotice: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var query by remember { mutableStateOf("") }
@@ -86,7 +88,10 @@ fun SemesterCurriculumWorkspace(
         fullSpanItem { CurriculumHero(session, semester, subjects.size, totalCredits) }
 
         if (!errorMessage.isNullOrBlank()) {
-            fullSpanItem { ValidationMessage(errorMessage) }
+            fullSpanItem { CmsNotice(errorMessage, tone = NoticeTone.Error, onDismiss = onClearError) }
+        }
+        if (!notice.isNullOrBlank()) {
+            fullSpanItem { CmsNotice(notice, tone = NoticeTone.Success, onDismiss = onConsumeNotice) }
         }
 
         fullSpanItem { CurriculumSummaryCard(subjects.size, totalCredits, electiveCount) }
@@ -230,13 +235,6 @@ private fun SubjectCurriculumCard(subject: SemesterSubject, onEdit: () -> Unit, 
                 TextButton(onClick = onRemove) { Text("Remove", color = CmsTheme.colors.accent) }
             }
         }
-    }
-}
-
-@Composable
-private fun ValidationMessage(message: String) {
-    Surface(shape = RoundedCornerShape(14.dp), color = CurriculumRed.copy(alpha = 0.1f), border = BorderStroke(1.dp, CurriculumRed.copy(alpha = 0.25f))) {
-        Text(message, modifier = Modifier.padding(14.dp), color = CurriculumRed, style = MaterialTheme.typography.bodyMedium)
     }
 }
 
