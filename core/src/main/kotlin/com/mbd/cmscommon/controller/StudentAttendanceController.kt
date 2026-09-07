@@ -2,6 +2,7 @@ package com.mbd.cmscommon.controller
 
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
+import com.mbd.cmscommon.util.orLogCritical
 import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
@@ -47,8 +48,8 @@ class StudentAttendanceController(
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), 0f)
 
     fun refresh() = launch {
-        runCatching { attendanceRepository.syncSession(sessionId) }
-        runCatching { curriculumRepository.syncSession(sessionId) }
+        runCatching { attendanceRepository.syncSession(sessionId) }.orLogCritical("StudentAttendanceController.refresh.attendance")
+        runCatching { curriculumRepository.syncSession(sessionId) }.orLogCritical("StudentAttendanceController.refresh.curriculum")
     }
 }
 
