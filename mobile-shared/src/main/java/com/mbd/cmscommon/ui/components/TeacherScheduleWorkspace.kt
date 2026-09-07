@@ -36,7 +36,6 @@ import com.mbd.cmscommon.domain.model.PeriodType
 import com.mbd.cmscommon.domain.model.SessionPeriod
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
-import com.mbd.cmscommon.ui.theme.ModAccent
 import com.mbd.cmscommon.ui.theme.ModGround
 import com.mbd.cmscommon.ui.theme.ModInk
 import com.mbd.cmscommon.ui.theme.ModMuted
@@ -53,7 +52,6 @@ private val ScheduleCanvas = ModGround
 private val ScheduleBorder = ModTrack
 private val ScheduleGreen = ModSuccess
 private val ScheduleGold = ModWarn
-private val ScheduleRed = ModAccent
 private val ScheduleBlue = ModInk
 private val ScheduleDays = listOf(
     DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
@@ -65,8 +63,9 @@ fun TeacherScheduleWorkspace(
     heroPainter: Painter,
     periods: List<SessionPeriod>,
     sessions: List<AcademicSession>,
-    outcome: Outcome<Unit>,
+    outcome: Outcome<Unit>?,
     onRefresh: () -> Unit,
+    onClearError: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val teachingPeriods = periods.filter { it.periodType != PeriodType.BREAK && it.courseCode.isNotBlank() }
@@ -80,7 +79,6 @@ fun TeacherScheduleWorkspace(
     val busiest = ScheduleDays.maxByOrNull { day -> teachingPeriods.count { it.day == day } }
 
     var detailPeriod by remember { mutableStateOf<SessionPeriod?>(null) }
-    var dismissedError by remember { mutableStateOf<String?>(null) }
     val periodByDayAndSlot = teachingPeriods.associateBy { it.day to it.timeRange }
     val timeSlots = teachingPeriods.map { it.timeRange }.distinct().sortedBy { it.substringBefore('–') }
 
@@ -135,14 +133,8 @@ fun TeacherScheduleWorkspace(
         TeacherPeriodDetailDialog(period, sessions.firstOrNull { it.sessionId == period.sessionId }, onDismiss = { detailPeriod = null })
     }
 
-    if (outcome is Outcome.Error && outcome.message != dismissedError) {
-        AlertDialog(
-            onDismissRequest = { dismissedError = outcome.message },
-            title = { Text("Couldn't load schedule") },
-            text = { Text(outcome.message, color = ScheduleRed) },
-            confirmButton = { TextButton(onClick = { dismissedError = null; onRefresh() }) { Text("Retry") } },
-            dismissButton = { TextButton(onClick = { dismissedError = outcome.message }) { Text("Dismiss") } },
-        )
+    if (outcome is Outcome.Error) {
+        CmsErrorDialog(message = outcome.message, onDismiss = onClearError, title = "Couldn't load schedule", onRetry = onRefresh)
     }
 }
 

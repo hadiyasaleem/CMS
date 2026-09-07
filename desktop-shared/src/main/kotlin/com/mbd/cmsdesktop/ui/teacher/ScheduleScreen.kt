@@ -32,7 +32,8 @@ fun ScheduleScreen(
         heroPainter = painterResource("teacher-schedule-hero.jpg"),
         periods = periods,
         sessions = sessions,
-        outcome = refreshState ?: com.mbd.cmscommon.util.Outcome.Success(Unit),
+        outcome = refreshState,
         onRefresh = controller::refresh,
+        onClearError = controller::clearRefreshState,
     )
 }

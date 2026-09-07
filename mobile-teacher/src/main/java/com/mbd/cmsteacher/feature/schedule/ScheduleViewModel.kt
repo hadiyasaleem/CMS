@@ -6,7 +6,7 @@ import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.SessionTimetableRepository
 import com.mbd.cmscommon.util.Outcome
-import com.mbd.cmscommon.util.userMessage
+import com.mbd.cmscommon.util.userMessageLogged
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,8 +32,8 @@ class ScheduleViewModel @Inject constructor(
     val sessions = sessionRepository.observeAllSessions()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    private val _outcome = MutableStateFlow<Outcome<Unit>>(Outcome.Success(Unit))
-    val outcome: StateFlow<Outcome<Unit>> = _outcome.asStateFlow()
+    private val _outcome = MutableStateFlow<Outcome<Unit>?>(null)
+    val outcome: StateFlow<Outcome<Unit>?> = _outcome.asStateFlow()
 
     fun refresh() {
         viewModelScope.launch {
@@ -54,8 +54,12 @@ class ScheduleViewModel @Inject constructor(
                 lastFailure?.let { throw it }
                 Outcome.Success(Unit)
             } catch (t: Throwable) {
-                Outcome.Error(t.userMessage("Refresh failed. Please try again."), t)
+                Outcome.Error(t.userMessageLogged("ScheduleViewModel.refresh", "Refresh failed. Please try again."), t)
             }
         }
+    }
+
+    fun clearOutcome() {
+        _outcome.value = null
     }
 }

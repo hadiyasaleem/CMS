@@ -20,5 +20,6 @@ fun ScheduleScreen(viewModel: ScheduleViewModel = hiltViewModel()) {
         sessions = sessions,
         outcome = outcome,
         onRefresh = viewModel::refresh,
+        onClearError = viewModel::clearOutcome,
     )
 }

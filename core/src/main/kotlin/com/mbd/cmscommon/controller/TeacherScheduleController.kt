@@ -49,4 +49,8 @@ class TeacherScheduleController(
             ?.let { Outcome.Error(it.userMessageLogged("Could not refresh your schedule."), it) }
             ?: Outcome.Success(Unit)
     }
+
+    fun clearRefreshState() {
+        _refreshState.value = null
+    }
 }
