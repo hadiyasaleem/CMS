@@ -6,7 +6,7 @@ import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.domain.repository.UserRepository
 import com.mbd.cmscommon.ui.components.StudentAuthUiState
 import com.mbd.cmscommon.util.FieldValidators
-import com.mbd.cmscommon.util.userMessage
+import com.mbd.cmscommon.util.userMessageLogged
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -67,7 +67,7 @@ class AuthViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(loading = false)
                 }
             } catch (t: Throwable) {
-                _uiState.value = _uiState.value.copy(loading = false, errorMessage = t.userMessage("Sign-in failed. Please try again."))
+                _uiState.value = _uiState.value.copy(loading = false, errorMessage = t.userMessageLogged("AuthViewModel.submit", "Sign-in failed. Please try again."))
             }
         }
     }
@@ -84,7 +84,7 @@ class AuthViewModel @Inject constructor(
                 sessionManager.sendPasswordReset(FieldValidators.normalizeEmail(email))
                 _uiState.value = _uiState.value.copy(resetSending = false, resetMessage = "Password reset email sent.", resetError = false)
             } catch (t: Throwable) {
-                _uiState.value = _uiState.value.copy(resetSending = false, resetMessage = t.userMessage("Could not send the reset email."), resetError = true)
+                _uiState.value = _uiState.value.copy(resetSending = false, resetMessage = t.userMessageLogged("AuthViewModel.sendPasswordReset", "Could not send the reset email."), resetError = true)
             }
         }
     }

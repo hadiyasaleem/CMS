@@ -8,7 +8,7 @@ import com.mbd.cmscommon.auth.normalizeEmail
 import com.mbd.cmscommon.domain.model.UserRole
 import com.mbd.cmscommon.domain.repository.UserRepository
 import com.mbd.cmscommon.util.FieldValidators
-import com.mbd.cmscommon.util.userMessage
+import com.mbd.cmscommon.util.userMessageLogged
 import com.mbd.cmsdesktop.auth.DesktopRoleResolver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -106,7 +106,7 @@ class StudentAuthController(
                     onResolved(role)
                 }
             } catch (t: Throwable) {
-                errorMessage = t.userMessage()
+                errorMessage = t.userMessageLogged("StudentAuthController.submit")
             } finally {
                 loading = false
             }
@@ -127,7 +127,7 @@ class StudentAuthController(
                 resetMessage = "Password reset email sent."
                 resetError = false
             } catch (t: Throwable) {
-                resetMessage = t.userMessage("Could not send the reset email.")
+                resetMessage = t.userMessageLogged("StudentAuthController.sendPasswordReset", "Could not send the reset email.")
                 resetError = true
             } finally {
                 resetSending = false
