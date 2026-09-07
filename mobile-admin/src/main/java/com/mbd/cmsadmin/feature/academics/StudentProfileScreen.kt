@@ -18,7 +18,6 @@ import com.mbd.cmscommon.domain.model.StudentProfile
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.FineRepository
 import com.mbd.cmscommon.ui.components.StudentProfileWorkspace
-import com.mbd.cmscommon.util.Outcome
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -70,7 +69,7 @@ fun StudentProfileScreen(viewModel: StudentProfileViewModel = hiltViewModel()) {
         loadedProfile = loadedProfile,
         session = session,
         fines = fines,
-        saveOutcome = saveState ?: Outcome.Success(Unit),
+        saveOutcome = saveState,
         errorMessage = errorMessage,
         onSave = viewModel::save,
         onIssueFine = viewModel::issueFine,

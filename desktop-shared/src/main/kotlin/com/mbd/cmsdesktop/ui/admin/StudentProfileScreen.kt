@@ -11,7 +11,6 @@ import com.mbd.cmscommon.domain.model.StudentProfile
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.FineRepository
 import com.mbd.cmscommon.ui.components.StudentProfileWorkspace
-import com.mbd.cmscommon.util.Outcome
 
 @Composable
 fun StudentProfileScreen(
@@ -37,7 +36,7 @@ fun StudentProfileScreen(
         loadedProfile = loadedProfile,
         session = session,
         fines = fines,
-        saveOutcome = saveState ?: Outcome.Success(Unit),
+        saveOutcome = saveState,
         errorMessage = errorMessage,
         onSave = controller::save,
         onIssueFine = controller::issueFine,

@@ -61,7 +61,7 @@ fun StudentProfileWorkspace(
     loadedProfile: StudentProfile,
     session: AcademicSession?,
     fines: List<Fine>,
-    saveOutcome: Outcome<Unit>,
+    saveOutcome: Outcome<Unit>?,
     errorMessage: String?,
     onSave: (StudentProfile) -> Unit,
     onIssueFine: (String, Double, String) -> Unit,
@@ -93,14 +93,12 @@ fun StudentProfileWorkspace(
         item { StudentProfileHero(profile, session, completion) }
 
         if (!errorMessage.isNullOrBlank()) {
-            item {
-                Surface(shape = RoundedCornerShape(14.dp), color = ProfileRed.copy(alpha = 0.1f), border = BorderStroke(1.dp, ProfileRed.copy(alpha = 0.25f))) {
-                    Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(errorMessage, modifier = Modifier.weight(1f), color = ProfileRed, style = MaterialTheme.typography.bodyMedium)
-                        TextButton(onClick = onClearError) { Text("Dismiss") }
-                    }
-                }
-            }
+            item { CmsNotice(errorMessage, tone = NoticeTone.Error, onDismiss = onClearError) }
+        }
+        when (saveOutcome) {
+            is Outcome.Success -> item { CmsNotice("Profile saved.", tone = NoticeTone.Success) }
+            is Outcome.Error -> item { CmsNotice(saveOutcome.message, tone = NoticeTone.Error) }
+            else -> {}
         }
 
         item {
