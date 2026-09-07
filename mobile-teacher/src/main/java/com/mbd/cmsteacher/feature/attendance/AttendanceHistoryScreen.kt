@@ -14,6 +14,7 @@ fun AttendanceHistoryScreen(viewModel: AttendanceHistoryViewModel = hiltViewMode
     val loading by viewModel.loading.collectAsState()
     val roster by viewModel.roster.collectAsState()
     val marks by viewModel.marks.collectAsState()
+    val errorMessage by viewModel.error.collectAsState()
 
     AttendanceHistoryWorkspace(
         courseCode = viewModel.courseCode,
@@ -25,5 +26,7 @@ fun AttendanceHistoryScreen(viewModel: AttendanceHistoryViewModel = hiltViewMode
         onNextMonth = viewModel::nextMonth,
         onExportCsv = { viewModel.exportCsv(context) },
         onExportPdf = { viewModel.exportPdf(context) },
+        errorMessage = errorMessage,
+        onClearError = viewModel::clearError,
     )
 }

@@ -84,6 +84,8 @@ fun AttendanceHistoryWorkspace(
     onNextMonth: () -> Unit,
     onExportCsv: () -> Unit,
     onExportPdf: () -> Unit,
+    errorMessage: String?,
+    onClearError: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var query by remember { mutableStateOf("") }
@@ -131,6 +133,10 @@ fun AttendanceHistoryWorkspace(
 
     selectedMark?.let { (name, mark) ->
         MarkDetailDialog(name, mark, onDismiss = { selectedMark = null })
+    }
+
+    if (!errorMessage.isNullOrBlank()) {
+        CmsErrorDialog(message = errorMessage, onDismiss = onClearError)
     }
 }
 

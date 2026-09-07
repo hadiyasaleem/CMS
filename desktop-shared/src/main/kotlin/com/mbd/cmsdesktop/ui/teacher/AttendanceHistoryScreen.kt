@@ -16,6 +16,7 @@ import com.mbd.cmscommon.domain.model.attendanceHistorySummary
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
 import com.mbd.cmscommon.ui.components.AttendanceHistoryWorkspace
+import com.mbd.cmscommon.util.userMessageLogged
 import com.mbd.cmsdesktop.platform.AwtDesktopPlatformServices
 import com.mbd.cmsdesktop.ui.admin.RecordsExporter
 import java.time.LocalDate
@@ -42,6 +43,7 @@ fun AttendanceHistoryScreen(
     var month by remember { mutableStateOf(YearMonth.now()) }
     var marks by remember { mutableStateOf<Map<String, Map<LocalDate, DailyAttendanceMark>>>(emptyMap()) }
     var loading by remember { mutableStateOf(true) }
+    var error by remember { mutableStateOf<String?>(null) }
 
     val days = remember(month) { (1..month.lengthOfMonth()).map { month.atDay(it) } }
     val monthLabel = remember(month) { "${month.month.getDisplayName(TextStyle.SHORT, Locale.ENGLISH)} ${month.year}" }
@@ -49,11 +51,17 @@ fun AttendanceHistoryScreen(
 
     LaunchedEffect(sessionId, courseCode, month) {
         loading = true
-        val from = month.atDay(1)
-        val to = month.atEndOfMonth()
-        val dailyMarks = attendanceRepository.marksBetween(sessionId, courseCode, from, to)
-        marks = dailyMarks.groupBy { it.rollNumber }.mapValues { (_, ms) -> ms.associateBy { it.date } }
-        loading = false
+        error = null
+        try {
+            val from = month.atDay(1)
+            val to = month.atEndOfMonth()
+            val dailyMarks = attendanceRepository.marksBetween(sessionId, courseCode, from, to)
+            marks = dailyMarks.groupBy { it.rollNumber }.mapValues { (_, ms) -> ms.associateBy { it.date } }
+        } catch (t: Throwable) {
+            error = t.userMessageLogged("AttendanceHistoryScreen.load", "Could not load attendance history.")
+        } finally {
+            loading = false
+        }
     }
 
     AttendanceHistoryWorkspace(
@@ -64,8 +72,22 @@ fun AttendanceHistoryScreen(
         marks = marks,
         onPreviousMonth = { month = month.minusMonths(1) },
         onNextMonth = { month = month.plusMonths(1) },
-        onExportCsv = { exportCsv(window, courseCode, monthLabel, days, roster, marks) },
-        onExportPdf = { exportPdf(window, courseCode, monthLabel, roster, marks) },
+        onExportCsv = {
+            try {
+                exportCsv(window, courseCode, monthLabel, days, roster, marks)
+            } catch (t: Throwable) {
+                error = t.userMessageLogged("AttendanceHistoryScreen.exportCsv", "Could not export the attendance CSV.")
+            }
+        },
+        onExportPdf = {
+            try {
+                exportPdf(window, courseCode, monthLabel, roster, marks)
+            } catch (t: Throwable) {
+                error = t.userMessageLogged("AttendanceHistoryScreen.exportPdf", "Could not export the attendance PDF.")
+            }
+        },
+        errorMessage = error,
+        onClearError = { error = null },
     )
 }
 

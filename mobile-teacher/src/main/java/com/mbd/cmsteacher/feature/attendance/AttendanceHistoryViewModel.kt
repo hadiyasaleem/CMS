@@ -10,6 +10,7 @@ import com.mbd.cmscommon.domain.model.DailyAttendanceMark
 import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
+import com.mbd.cmscommon.util.userMessageLogged
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -50,12 +51,16 @@ class AttendanceHistoryViewModel @Inject constructor(
     private val _marks = MutableStateFlow<Map<String, Map<LocalDate, DailyAttendanceMark>>>(emptyMap())
     val marks: StateFlow<Map<String, Map<LocalDate, DailyAttendanceMark>>> = _marks.asStateFlow()
 
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
     init {
         viewModelScope.launch { loadMonth() }
     }
 
     private suspend fun loadMonth() {
         _loading.value = true
+        _error.value = null
         try {
             val from = _month.value
             val to = from.withDayOfMonth(from.lengthOfMonth())
@@ -63,8 +68,8 @@ class AttendanceHistoryViewModel @Inject constructor(
             _marks.value = dailyMarks.groupBy { it.rollNumber }
                 .mapValues { (_, marks) -> marks.associateBy { it.date } }
         } catch (t: Throwable) {
-            // A repository failure here would otherwise be uncaught in viewModelScope and crash the
-            // app; keep the previously loaded marks and just clear the loading flag.
+            // Keep the previously loaded marks on screen (offline-first) but still surface and log it.
+            _error.value = t.userMessageLogged("AttendanceHistoryViewModel.loadMonth", "Could not load attendance history.")
         } finally {
             _loading.value = false
         }
@@ -100,7 +105,7 @@ class AttendanceHistoryViewModel @Inject constructor(
                 val from = _month.value
                 val days = (0 until from.lengthOfMonth()).map { from.plusDays(it.toLong()) }
                 AttendanceExporter.exportCsv(context, meta, courseCode, monthLabel.value, days, roster.value, marks.value)
-            }
+            }.onFailure { _error.value = it.userMessageLogged("AttendanceHistoryViewModel.exportCsv", "Could not export the attendance CSV.") }
         }
     }
 
@@ -109,7 +114,11 @@ class AttendanceHistoryViewModel @Inject constructor(
             runCatching {
                 val meta = exportMeta()
                 AttendanceExporter.exportPdf(context, meta, courseCode, monthLabel.value, roster.value, marks.value)
-            }
+            }.onFailure { _error.value = it.userMessageLogged("AttendanceHistoryViewModel.exportPdf", "Could not export the attendance PDF.") }
         }
+    }
+
+    fun clearError() {
+        _error.value = null
     }
 }
