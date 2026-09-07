@@ -69,6 +69,7 @@ fun NotificationControllerWorkspace(controller: NotificationsController, modifie
     val rowErrors by controller.rowErrors.collectAsState()
     val composeError by controller.composeError.collectAsState()
     val notice by controller.notice.collectAsState()
+    val loadError by controller.error.collectAsState()
 
     var tab by remember { mutableStateOf(NoticeTab.INBOX) }
     var showCompose by remember { mutableStateOf(false) }
@@ -85,6 +86,9 @@ fun NotificationControllerWorkspace(controller: NotificationsController, modifie
     ) {
         item { NotificationHero(controller.viewerRole, inbox.size) }
 
+        if (!loadError.isNullOrBlank()) {
+            item { CmsNotice(loadError ?: "", tone = NoticeTone.Error, actionLabel = "Retry", onAction = controller::refresh) }
+        }
         if (!composeError.isNullOrBlank()) {
             item { CmsNotice(composeError ?: "", tone = NoticeTone.Error, onDismiss = controller::clearComposeError) }
         }
