@@ -16,6 +16,7 @@ import com.mbd.cmscommon.domain.repository.RoomRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
 import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider
 import com.mbd.cmscommon.ui.components.TeacherDirectoryWorkspace
+import com.mbd.cmscommon.util.orLogCritical
 import com.mbd.cmsdesktop.platform.AwtDesktopPlatformServices
 import java.io.File
 import kotlinx.coroutines.Dispatchers
@@ -66,8 +67,13 @@ fun TeachersScreen(
         onPickPhoto = { onPicked ->
             val file = AwtDesktopPlatformServices.pickFile(window, "Choose a photo (JPEG/PNG/WebP)")
             if (file != null) {
-                val bitmap = runCatching { Image.makeFromEncoded(file.readBytes()).toComposeImageBitmap() }.getOrNull()
-                if (bitmap != null) onPicked(bitmap)
+                val result = runCatching { Image.makeFromEncoded(file.readBytes()).toComposeImageBitmap() }
+                val bitmap = result.getOrNull()
+                if (bitmap != null) {
+                    onPicked(bitmap)
+                } else {
+                    controller.reportPhotoPickFailure(result.exceptionOrNull() ?: IllegalStateException("Couldn't decode the selected photo."))
+                }
             }
         },
         onUploadCroppedPhoto = { teacher, cropped ->
@@ -78,6 +84,7 @@ fun TeachersScreen(
                 // local cache with what we just uploaded instead of waiting to re-download it.
                 withContext(Dispatchers.IO) {
                     runCatching { cacheFileFor(photoCacheDir, "teachers/${teacher.teacherId}.jpg").writeBytes(bytes) }
+                        .orLogCritical("TeachersScreen.cacheUploadedPhoto")
                 }
             }
         },
@@ -96,7 +103,7 @@ private suspend fun loadPhotoCached(cacheDir: File, photoPath: String, repositor
         if (cacheFile.exists()) {
             cacheFile.readBytes()
         } else {
-            repository.downloadPhoto(photoPath)?.also { runCatching { cacheFile.writeBytes(it) } }
+            repository.downloadPhoto(photoPath)?.also { runCatching { cacheFile.writeBytes(it) }.orLogCritical("TeachersScreen.cacheDownloadedPhoto") }
         }
     } ?: return null
     return runCatching { Image.makeFromEncoded(bytes).toComposeImageBitmap() }.getOrNull()

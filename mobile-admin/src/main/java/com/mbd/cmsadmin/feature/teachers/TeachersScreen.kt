@@ -19,6 +19,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.mbd.cmscommon.domain.model.TEACHER_PHOTO_COMPRESSED_TARGET_BYTES
 import com.mbd.cmscommon.domain.model.Teacher
 import com.mbd.cmscommon.ui.components.TeacherDirectoryWorkspace
+import com.mbd.cmscommon.util.orLogCritical
 import java.io.ByteArrayOutputStream
 import java.io.File
 import kotlinx.coroutines.Dispatchers
@@ -45,9 +46,15 @@ fun TeachersScreen(viewModel: TeachersViewModel = hiltViewModel()) {
         val onPicked = pendingOnPicked
         if (uri != null && onPicked != null) {
             scope.launch {
-                val bytes = withContext(Dispatchers.IO) { context.contentResolver.openInputStream(uri)?.use { it.readBytes() } }
-                val bitmap = bytes?.let { BitmapFactory.decodeByteArray(it, 0, it.size)?.asImageBitmap() }
-                if (bitmap != null) onPicked(bitmap)
+                try {
+                    val bytes = withContext(Dispatchers.IO) { context.contentResolver.openInputStream(uri)?.use { it.readBytes() } }
+                        ?: throw IllegalStateException("Couldn't read the selected photo.")
+                    val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
+                        ?: throw IllegalStateException("Couldn't decode the selected photo.")
+                    onPicked(bitmap)
+                } catch (t: Throwable) {
+                    viewModel.reportPhotoPickFailure(t)
+                }
             }
         }
     }
@@ -76,6 +83,7 @@ fun TeachersScreen(viewModel: TeachersViewModel = hiltViewModel()) {
                 // local cache with what we just uploaded instead of waiting to re-download it.
                 withContext(Dispatchers.IO) {
                     runCatching { cacheFileFor(photoCacheDir, "teachers/${teacher.teacherId}.jpg").writeBytes(bytes) }
+                        .orLogCritical("TeachersScreen.cacheUploadedPhoto")
                 }
             }
         },
@@ -94,7 +102,7 @@ private suspend fun loadPhotoCached(cacheDir: File, photoPath: String, download:
         if (cacheFile.exists()) {
             cacheFile.readBytes()
         } else {
-            download(photoPath)?.also { runCatching { cacheFile.writeBytes(it) } }
+            download(photoPath)?.also { runCatching { cacheFile.writeBytes(it) }.orLogCritical("TeachersScreen.cacheDownloadedPhoto") }
         }
     } ?: return null
     return BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()

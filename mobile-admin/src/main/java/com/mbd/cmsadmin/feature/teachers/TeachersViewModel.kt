@@ -47,6 +47,7 @@ class TeachersViewModel @Inject constructor(
     fun setStatus(teacher: Teacher, status: TeacherStatus) = controller.setStatus(teacher, status)
     fun deleteTeacher(teacher: Teacher) = controller.deleteTeacher(teacher)
     fun uploadPhoto(teacher: Teacher, imageBytes: ByteArray, mimeType: String) = controller.uploadPhoto(teacher, imageBytes, mimeType)
+    fun reportPhotoPickFailure(t: Throwable) = controller.reportPhotoPickFailure(t)
     suspend fun downloadPhotoBytes(photoPath: String): ByteArray? = teacherRepository.downloadPhoto(photoPath)
     fun consumeNotice() = controller.consumeNotice()
     fun clearError() = controller.clearError()

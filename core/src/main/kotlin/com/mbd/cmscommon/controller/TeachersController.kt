@@ -195,6 +195,9 @@ class TeachersController(
         _notice.value = null
     }
 
+    /** For a picked photo failing to read/decode before [uploadPhoto] ever gets called. */
+    fun reportPhotoPickFailure(t: Throwable) = launch { throw t }
+
     private fun validateDraft(draft: TeacherAccountDraft, creatingAccount: Boolean): TeacherAccountDraft {
         val normalized = draft.copy(
             name = draft.name.trim(),
