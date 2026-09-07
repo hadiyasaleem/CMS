@@ -22,11 +22,12 @@ fun StudentFeeChallanScreen(
     val controller = remember(sessionId) { StudentFeeChallanController(sessionId, feeRepository, scope) }
     val fee by controller.fee.collectAsState()
     val loading by controller.loading.collectAsState()
+    val errorMessage by controller.error.collectAsState()
 
     StudentFeeWorkspace(
         snapshot = if (loading && fee == null) null else studentFeeSnapshot(fee, LocalDate.now()),
         loading = loading,
-        errorMessage = null,
+        errorMessage = errorMessage,
         onRetry = controller::refresh,
     )
 }
