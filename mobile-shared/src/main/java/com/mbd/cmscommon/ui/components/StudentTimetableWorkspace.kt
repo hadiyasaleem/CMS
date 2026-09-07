@@ -48,7 +48,6 @@ import com.mbd.cmscommon.ui.theme.ModMuted
 import com.mbd.cmscommon.ui.theme.ModTrack
 import com.mbd.cmscommon.ui.theme.ModGround
 import com.mbd.cmscommon.ui.theme.ModSurface
-import com.mbd.cmscommon.ui.theme.ModAccent
 import com.mbd.cmscommon.ui.theme.ModWarn
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -63,7 +62,6 @@ private val TimetableDays = listOf(
 
 private val TimetableCanvas = ModGround
 private val TimetableBlue = ModInk
-private val TimetableRed = ModAccent
 private val DayFormat = DateTimeFormatter.ofPattern("EEE, dd MMM")
 
 @Composable
@@ -73,10 +71,10 @@ fun StudentTimetableWorkspace(
     loading: Boolean,
     errorMessage: String?,
     onRetry: () -> Unit,
+    onClearError: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var detailItem by remember { mutableStateOf<StudentScheduledPeriod?>(null) }
-    var dismissedError by remember { mutableStateOf<String?>(null) }
 
     LazyColumn(
         modifier = modifier.fillMaxWidth().background(TimetableCanvas),
@@ -135,14 +133,8 @@ fun StudentTimetableWorkspace(
         StudentPeriodDetailDialog(item, onDismiss = { detailItem = null })
     }
 
-    if (!errorMessage.isNullOrBlank() && errorMessage != dismissedError) {
-        AlertDialog(
-            onDismissRequest = { dismissedError = errorMessage },
-            title = { Text("Couldn't load timetable") },
-            text = { Text(errorMessage, color = TimetableRed) },
-            confirmButton = { TextButton(onClick = { dismissedError = null; onRetry() }) { Text("Retry") } },
-            dismissButton = { TextButton(onClick = { dismissedError = errorMessage }) { Text("Dismiss") } },
-        )
+    if (!errorMessage.isNullOrBlank()) {
+        CmsErrorDialog(message = errorMessage, onDismiss = onClearError, title = "Couldn't load timetable", onRetry = onRetry)
     }
 }
 

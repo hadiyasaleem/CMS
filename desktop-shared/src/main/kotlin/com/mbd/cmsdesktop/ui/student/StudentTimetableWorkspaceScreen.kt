@@ -23,12 +23,14 @@ fun StudentTimetableScreen(
     val controller = remember(sessionId) { StudentTimetableController(sessionId, timetableRepository, scope) }
     val periods by controller.periods.collectAsState()
     val refreshing by controller.refreshing.collectAsState()
+    val errorMessage by controller.error.collectAsState()
 
     StudentTimetableWorkspace(
         heroPainter = painterResource("splash_postgraduate_block.jpg"),
         snapshot = studentTimetableSnapshot(periods, LocalDate.now(), LocalTime.now()),
         loading = refreshing && periods.isEmpty(),
-        errorMessage = null,
+        errorMessage = errorMessage,
         onRetry = controller::refresh,
+        onClearError = controller::clearError,
     )
 }

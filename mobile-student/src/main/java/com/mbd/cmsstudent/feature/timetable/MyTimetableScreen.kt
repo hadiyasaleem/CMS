@@ -11,12 +11,14 @@ import com.mbd.cmsstudent.R
 @Composable
 fun MyTimetableScreen(viewModel: MyTimetableViewModel = hiltViewModel()) {
     val snapshot by viewModel.snapshot.collectAsState()
+    val errorMessage by viewModel.error.collectAsState()
 
     StudentTimetableWorkspace(
         heroPainter = painterResource(R.drawable.student_timetable_hero),
         snapshot = snapshot,
         loading = snapshot == null,
-        errorMessage = null,
+        errorMessage = errorMessage,
         onRetry = viewModel::refresh,
+        onClearError = viewModel::clearError,
     )
 }

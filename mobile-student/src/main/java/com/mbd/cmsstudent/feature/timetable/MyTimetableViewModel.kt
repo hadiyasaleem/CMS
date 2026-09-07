@@ -5,12 +5,16 @@ import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.domain.model.StudentTimetableSnapshot
 import com.mbd.cmscommon.domain.model.studentTimetableSnapshot
 import com.mbd.cmscommon.domain.repository.SessionTimetableRepository
+import com.mbd.cmscommon.util.userMessageLogged
 import com.mbd.cmsstudent.feature.common.CurrentStudentProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
 import java.time.LocalTime
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -25,6 +29,9 @@ class MyTimetableViewModel @Inject constructor(
 ) : ViewModel() {
 
     private var currentSessionId: String? = null
+
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
 
     val snapshot = currentStudentProvider.observeContext()
         .distinctUntilChangedBy { it?.studentId }
@@ -42,6 +49,14 @@ class MyTimetableViewModel @Inject constructor(
 
     fun refresh() {
         val sessionId = currentSessionId ?: return
-        viewModelScope.launch { runCatching { timetableRepository.syncSession(sessionId) } }
+        _error.value = null
+        viewModelScope.launch {
+            val result = runCatching { timetableRepository.syncSession(sessionId) }
+            _error.value = result.exceptionOrNull()?.userMessageLogged("MyTimetableViewModel.refresh", "Could not refresh your timetable.")
+        }
+    }
+
+    fun clearError() {
+        _error.value = null
     }
 }
