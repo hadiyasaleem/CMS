@@ -16,6 +16,7 @@ import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.DatesheetRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
 import com.mbd.cmscommon.ui.components.DatesheetWorkspace
+import com.mbd.cmscommon.util.orLogCritical
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -46,7 +47,7 @@ class DatesheetsViewModel @Inject constructor(
         if (sessionId in _subjectsBySession.value || !loadingSubjects.add(sessionId)) return
         viewModelScope.launch {
             try {
-                runCatching { curriculumRepository.syncSession(sessionId) }
+                runCatching { curriculumRepository.syncSession(sessionId) }.orLogCritical("DatesheetsViewModel.loadSubjects")
                 _subjectsBySession.value += sessionId to curriculumRepository.observeSessionSubjects(sessionId).first()
             } finally {
                 loadingSubjects -= sessionId

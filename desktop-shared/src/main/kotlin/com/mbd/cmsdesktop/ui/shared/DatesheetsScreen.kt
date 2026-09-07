@@ -17,6 +17,7 @@ import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.DatesheetRepository
 import com.mbd.cmscommon.ui.components.DatesheetWorkspace
+import com.mbd.cmscommon.util.orLogCritical
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -45,6 +46,7 @@ fun DatesheetsScreen(
     val loadingSlots by controller.loadingSlots.collectAsState()
     val refreshing by controller.refreshing.collectAsState()
     val busy by controller.busy.collectAsState()
+    val errorMessage by controller.error.collectAsState()
     val actionMessage by controller.actionMessage.collectAsState()
 
     var sessions by remember { mutableStateOf<List<AcademicSession>>(emptyList()) }
@@ -64,14 +66,15 @@ fun DatesheetsScreen(
         viewer = viewer,
         loading = refreshing,
         busy = busy,
-        errorMessage = null,
+        errorMessage = errorMessage,
         actionMessage = actionMessage,
         onRetry = controller::refresh,
         onLoadSlots = controller::loadSlots,
         onLoadSubjects = { sessionId ->
             if (!subjectsBySession.containsKey(sessionId)) {
                 scope.launch {
-                    val subjects = runCatching { curriculumRepository.observeSessionSubjects(sessionId).first() }.getOrDefault(emptyList())
+                    val subjects = runCatching { curriculumRepository.observeSessionSubjects(sessionId).first() }
+                        .orLogCritical("DatesheetsScreen.loadSubjects", emptyList())
                     subjectsBySession[sessionId] = subjects
                 }
             }
