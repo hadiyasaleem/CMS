@@ -101,14 +101,7 @@ fun StudentRosterWorkspace(
         }
 
         if (!errorMessage.isNullOrBlank()) {
-            fullSpanItem {
-                Surface(shape = RoundedCornerShape(14.dp), color = RosterRed.copy(alpha = 0.1f), border = BorderStroke(1.dp, RosterRed.copy(alpha = 0.25f))) {
-                    Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(errorMessage, modifier = Modifier.weight(1f), color = RosterRed, style = MaterialTheme.typography.bodyMedium)
-                        TextButton(onClick = onClearError) { Text("Dismiss") }
-                    }
-                }
-            }
+            fullSpanItem { CmsNotice(errorMessage, tone = NoticeTone.Error, onDismiss = onClearError) }
         }
 
         fullSpanItem { RosterSummaryCard(students.size, avgCgpa, withGpa, (maxStudents - students.size).coerceAtLeast(0)) }

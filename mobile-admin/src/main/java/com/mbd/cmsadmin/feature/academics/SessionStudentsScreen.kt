@@ -21,7 +21,7 @@ import com.mbd.cmscommon.ui.components.StudentRosterWorkspace
 import com.mbd.cmscommon.util.ImportedStudentRow
 import com.mbd.cmscommon.util.StudentImportParser
 import com.mbd.cmscommon.util.StudentImportResult
-import com.mbd.cmscommon.util.userMessage
+import com.mbd.cmscommon.util.userMessageLogged
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -86,7 +86,7 @@ fun SessionStudentsScreen(
                 StudentImportParser.parseCsv(String(bytes, Charsets.UTF_8))
             }
         } catch (t: Throwable) {
-            fileError = t.userMessage("Couldn't read this file.")
+            fileError = t.userMessageLogged("SessionStudentsScreen.importFile", "Couldn't read this file.")
         }
     }
 
