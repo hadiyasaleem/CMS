@@ -13,7 +13,7 @@ import com.mbd.cmscommon.ui.components.StudentLinkRequestActions
 import com.mbd.cmscommon.ui.components.StudentLinkRequestUiState
 import com.mbd.cmscommon.ui.components.StudentLinkRequestWorkspace
 import com.mbd.cmscommon.util.Outcome
-import com.mbd.cmscommon.util.userMessage
+import com.mbd.cmscommon.util.userMessageLogged
 import com.mbd.cmsdesktop.di.DesktopAppComponent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -56,7 +56,7 @@ fun StudentLinkRequestScreen(component: DesktopAppComponent, onLinked: (UserRole
                 return
             }
         } catch (t: Throwable) {
-            refreshError = t.userMessage("Could not check your request status. Cached information is still shown.")
+            refreshError = t.userMessageLogged("StudentLinkRequestScreen.refresh", "Could not check your request status. Cached information is still shown.")
         } finally {
             refreshing = false
         }
@@ -93,7 +93,7 @@ fun StudentLinkRequestScreen(component: DesktopAppComponent, onLinked: (UserRole
                     submitState = Outcome.Success(Unit)
                     refresh()
                 } catch (t: Throwable) {
-                    submitState = Outcome.Error(t.userMessage("Could not submit your request. Please try again."), t)
+                    submitState = Outcome.Error(t.userMessageLogged("StudentLinkRequestScreen.submit", "Could not submit your request. Please try again."), t)
                 }
             }
         },

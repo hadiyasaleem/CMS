@@ -10,7 +10,8 @@ import com.mbd.cmscommon.domain.repository.StudentLinkRequestRepository
 import com.mbd.cmscommon.domain.repository.UserRepository
 import com.mbd.cmscommon.ui.components.StudentLinkRequestUiState
 import com.mbd.cmscommon.util.Outcome
-import com.mbd.cmscommon.util.userMessage
+import com.mbd.cmscommon.util.orLogCritical
+import com.mbd.cmscommon.util.userMessageLogged
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.async
@@ -83,10 +84,12 @@ class LinkRequestViewModel @Inject constructor(
                 // A prior request may have been approved on the admin's device since this screen last
                 // loaded -- re-resolve this account's role so approval actually hands off to the linked
                 // student workspace instead of just updating the (now-stale) request status shown here.
-                sessionManager.accountKey?.let { accountKey -> runCatching { userRepository.resolveRole(accountKey) } }
+                sessionManager.accountKey?.let { accountKey ->
+                    runCatching { userRepository.resolveRole(accountKey) }.orLogCritical("LinkRequestViewModel.refresh.resolveRole")
+                }
                 _refreshError.value = null
             } catch (t: Throwable) {
-                _refreshError.value = t.userMessage("Refresh failed. Please try again.")
+                _refreshError.value = t.userMessageLogged("LinkRequestViewModel.refresh", "Refresh failed. Please try again.")
             } finally {
                 _refreshing.value = false
             }
@@ -110,7 +113,7 @@ class LinkRequestViewModel @Inject constructor(
                 )
                 _submitState.value = Outcome.Success(Unit)
             } catch (t: Throwable) {
-                _submitState.value = Outcome.Error(t.userMessage("Could not submit your request."), t)
+                _submitState.value = Outcome.Error(t.userMessageLogged("LinkRequestViewModel.submit", "Could not submit your request."), t)
             }
         }
     }

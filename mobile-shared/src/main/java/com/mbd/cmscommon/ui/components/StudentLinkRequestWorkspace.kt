@@ -237,7 +237,7 @@ private fun LinkRequestForm(
             Text("Session, class roll number, full name, and CNIC / B-Form are required.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             if (state.submitState is Outcome.Error) {
                 Spacer(Modifier.height(8.dp))
-                Text(state.submitState.message, color = LinkRed, style = MaterialTheme.typography.bodySmall)
+                CmsNotice(state.submitState.message, tone = NoticeTone.Error)
             }
             Spacer(Modifier.height(12.dp))
             CmsPrimaryButton(
