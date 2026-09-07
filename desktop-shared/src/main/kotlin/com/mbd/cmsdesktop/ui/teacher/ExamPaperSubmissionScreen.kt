@@ -10,7 +10,6 @@ import com.mbd.cmscommon.controller.ExamPaperSubmissionController
 import com.mbd.cmscommon.domain.repository.ExamPaperSubmissionRepository
 import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider
 import com.mbd.cmscommon.ui.components.ExamPaperSubmissionWorkspace
-import com.mbd.cmscommon.util.Outcome
 import com.mbd.cmsdesktop.platform.AwtDesktopPlatformServices
 import java.io.File
 
@@ -37,13 +36,17 @@ fun ExamPaperSubmissionScreen(
         selected = selected,
         examType = examType,
         submissions = submissions,
-        outcome = uploadState ?: Outcome.Success(Unit),
+        outcome = uploadState,
         onSelect = controller::select,
         onExamType = controller::selectExamType,
         onChooseFile = {
             val file = AwtDesktopPlatformServices.pickFile(window, "Choose the exam paper (PDF/DOCX)")
             if (file != null) {
-                controller.upload(file.readBytes(), file.name)
+                try {
+                    controller.upload(file.readBytes(), file.name)
+                } catch (t: Throwable) {
+                    controller.reportUploadFailure(t)
+                }
             }
         },
         onOpen = { submission ->

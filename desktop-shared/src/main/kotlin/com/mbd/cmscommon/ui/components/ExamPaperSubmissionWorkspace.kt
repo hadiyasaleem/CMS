@@ -13,13 +13,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -44,11 +42,9 @@ import com.mbd.cmscommon.domain.model.ExamType
 import com.mbd.cmscommon.teacher.ResolvedAssignment
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
-import com.mbd.cmscommon.ui.theme.ModAccent
 import com.mbd.cmscommon.ui.theme.ModGround
 import com.mbd.cmscommon.ui.theme.ModInk
 import com.mbd.cmscommon.ui.theme.ModMuted
-import com.mbd.cmscommon.ui.theme.ModSuccess
 import com.mbd.cmscommon.ui.theme.ModSurface
 import com.mbd.cmscommon.ui.theme.ModTrack
 import com.mbd.cmscommon.ui.theme.ModWarn
@@ -57,10 +53,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 private val PaperCanvas = ModGround
-private val PaperBlue = ModInk
-private val PaperGreen = ModSuccess
 private val PaperGold = ModWarn
-private val PaperRed = ModAccent
 private val PaperDateFormat = DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a")
 
 @Composable
@@ -197,18 +190,14 @@ private fun UploadPaperCard(examType: ExamType, outcome: Outcome<Unit>?, onChoos
             when (outcome) {
                 // null = idle (nothing uploaded yet): show only the picker, not a false "success".
                 null -> CmsPrimaryButton(text = "Choose file", onClick = onChooseFile)
-                is Outcome.Loading -> Row(verticalAlignment = Alignment.CenterVertically) {
-                    CircularProgressIndicator(modifier = Modifier.height(18.dp), strokeWidth = 2.dp)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Uploading...", color = PaperBlue)
-                }
+                is Outcome.Loading -> CmsNotice("Uploading...", tone = NoticeTone.Info, showProgress = true)
                 is Outcome.Success -> {
-                    Text("Paper uploaded successfully.", color = PaperGreen, style = MaterialTheme.typography.bodySmall)
+                    CmsNotice("Paper uploaded successfully.", tone = NoticeTone.Success)
                     Spacer(Modifier.height(8.dp))
                     CmsPrimaryButton(text = "Choose file", onClick = onChooseFile)
                 }
                 is Outcome.Error -> {
-                    Text(outcome.message, color = PaperRed, style = MaterialTheme.typography.bodySmall)
+                    CmsNotice(outcome.message, tone = NoticeTone.Error)
                     Spacer(Modifier.height(8.dp))
                     CmsPrimaryButton(text = "Choose file", onClick = onChooseFile)
                 }

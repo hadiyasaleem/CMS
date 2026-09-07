@@ -30,22 +30,29 @@ fun ExamPaperSubmissionScreen(viewModel: ExamPaperSubmissionViewModel = hiltView
     val pickFile = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
         scope.launch {
-            val resolver = context.contentResolver
-            // Resolve the display name and read bytes off the main thread (files can approach the
-            // 5 MB cap; reading on Main risks an ANR).
-            val (bytes, name) = withContext(Dispatchers.IO) {
-                var displayName = "paper.pdf"
-                resolver.query(uri, null, null, null, null)?.use { cursor ->
-                    val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                    if (index >= 0 && cursor.moveToFirst()) {
-                        cursor.getString(index)?.let { displayName = it }
+            try {
+                val resolver = context.contentResolver
+                // Resolve the display name and read bytes off the main thread (files can approach the
+                // 5 MB cap; reading on Main risks an ANR).
+                val (bytes, name) = withContext(Dispatchers.IO) {
+                    var displayName = "paper.pdf"
+                    resolver.query(uri, null, null, null, null)?.use { cursor ->
+                        val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                        if (index >= 0 && cursor.moveToFirst()) {
+                            cursor.getString(index)?.let { displayName = it }
+                        }
                     }
+                    val read = resolver.openInputStream(uri)?.use { it.readBytes() }
+                    read to displayName
                 }
-                val read = resolver.openInputStream(uri)?.use { it.readBytes() }
-                read to displayName
+                if (bytes == null) {
+                    controller.reportUploadFailure(IllegalStateException("Could not read the selected file."))
+                    return@launch
+                }
+                controller.upload(bytes, name)
+            } catch (t: Throwable) {
+                controller.reportUploadFailure(t)
             }
-            if (bytes == null) return@launch
-            controller.upload(bytes, name)
         }
     }
 

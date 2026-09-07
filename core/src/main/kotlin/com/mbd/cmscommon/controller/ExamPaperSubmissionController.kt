@@ -66,6 +66,11 @@ class ExamPaperSubmissionController(
         }
     }
 
+    /** For a picked file's bytes failing to read, before [upload] ever gets called - reuses the same outcome slot as delete/open failures. */
+    fun reportUploadFailure(t: Throwable) {
+        _uploadState.value = Outcome.Error(t.userMessageLogged("Could not read the selected file."), t)
+    }
+
     fun deleteSubmission(submissionId: String) = launch {
         runCatching { repo.deleteSubmission(submissionId) }
             .onFailure { _uploadState.value = Outcome.Error(it.userMessageLogged("Could not delete the submission."), it) }
