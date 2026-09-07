@@ -6,6 +6,7 @@ import com.mbd.cmscommon.data.local.dao.SessionMarkDao
 import com.mbd.cmscommon.data.mapper.MarkEditRequestEntityMapper
 import com.mbd.cmscommon.data.remote.SupabaseTables
 import com.mbd.cmscommon.data.remote.dto.MarkEditRequestDto
+import com.mbd.cmscommon.data.remote.dto.MarkRowDto
 import com.mbd.cmscommon.data.sync.SyncCheckpoint
 import com.mbd.cmscommon.data.sync.SyncCheckpointDefaults
 import com.mbd.cmscommon.data.sync.SyncCheckpointStore
@@ -79,10 +80,28 @@ class MarkEditRequestRepositoryLocalImpl @Inject constructor(
     override suspend fun approveRequest(requestId: String, reviewedBy: String) {
         val request = requestDao.getById(requestId)
             ?: error("Mark edit request is not available in the local cache. Refresh and try again.")
+
+        // request.semester was captured from the session's current semester when the request was
+        // submitted, but session_marks.semester is part of that table's primary key and the session
+        // can be promoted to its next semester before an admin reviews the request. Trusting the
+        // stale value here makes the update below match zero rows -- no error, no score change, and
+        // the request still gets marked APPROVED. Re-resolve the row's real semester first.
+        val candidates = postgrest.from(SupabaseTables.SESSION_MARKS).select {
+            filter {
+                eq("session_id", request.sessionId)
+                eq("course_code", request.courseCode)
+                eq("exam_type", request.examType)
+                eq("roll_number", request.rollNumber)
+            }
+        }.decodeList<MarkRowDto>()
+        val targetSemester = candidates.singleOrNull()?.semester
+            ?: candidates.firstOrNull { it.semester == request.semester }?.semester
+            ?: error("Could not find the marks record for this request. It may have been removed.")
+
         postgrest.from(SupabaseTables.SESSION_MARKS).update({ set("score", request.requestedScore) }) {
             filter {
                 eq("session_id", request.sessionId)
-                eq("semester", request.semester)
+                eq("semester", targetSemester)
                 eq("course_code", request.courseCode)
                 eq("exam_type", request.examType)
                 eq("roll_number", request.rollNumber)
