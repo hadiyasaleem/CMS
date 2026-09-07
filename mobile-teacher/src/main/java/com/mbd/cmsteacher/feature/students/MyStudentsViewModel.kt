@@ -8,6 +8,7 @@ import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
 import com.mbd.cmscommon.teacher.ResolvedAssignment
 import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider
+import com.mbd.cmscommon.util.orLogCritical
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -55,8 +56,8 @@ class MyStudentsViewModel @Inject constructor(
         // observeStudents/observeTallies are local-cache flows; pull remote data on selection
         // (mirrors MyStudentsController.select) so the roster/tallies populate on a cold cache.
         viewModelScope.launch {
-            runCatching { sessionRepository.syncStudents(assignment.sessionId) }
-            runCatching { attendanceRepository.syncSummary(assignment.sessionId, assignment.courseCode) }
+            runCatching { sessionRepository.syncStudents(assignment.sessionId) }.orLogCritical("MyStudentsViewModel.syncStudents")
+            runCatching { attendanceRepository.syncSummary(assignment.sessionId, assignment.courseCode) }.orLogCritical("MyStudentsViewModel.syncSummary")
         }
     }
 }

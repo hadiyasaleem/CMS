@@ -5,6 +5,7 @@ import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
 import com.mbd.cmscommon.teacher.ResolvedAssignment
+import com.mbd.cmscommon.util.orLogCritical
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -48,8 +49,8 @@ class MyStudentsController(
     fun refresh() {
         val assignment = _selected.value ?: return
         launch {
-            runCatching { sessionRepository.syncStudents(assignment.sessionId) }
-            runCatching { attendanceRepository.syncSummary(assignment.sessionId, assignment.courseCode) }
+            runCatching { sessionRepository.syncStudents(assignment.sessionId) }.orLogCritical("MyStudentsController.syncStudents")
+            runCatching { attendanceRepository.syncSummary(assignment.sessionId, assignment.courseCode) }.orLogCritical("MyStudentsController.syncSummary")
         }
     }
 }
