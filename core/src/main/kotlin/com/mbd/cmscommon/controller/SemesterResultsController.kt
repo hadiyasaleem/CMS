@@ -110,7 +110,7 @@ class SemesterResultsController(
                 requireValid(gpa in 0.0..4.0) { "GPA must be between 0 and 4." }
                 requireValid(cgpa in 0.0..4.0) { "CGPA must be between 0 and 4." }
                 requireValid((termLabel ?: "").trim().length <= 40) { "Term label must not exceed 40 characters." }
-                requireValid(result.uppercase(Locale.ROOT) in setOf("PENDING", "PASS", "FAIL", "SUPPLY", "WITHHELD")) {
+                requireValid(result.uppercase(Locale.ROOT) in setOf("PENDING", "PROMOTED", "PROBATION", "REPEATED")) {
                     "Choose a valid result status."
                 }
                 requireValid(position == null || position > 0) { "Class position must be a positive whole number." }

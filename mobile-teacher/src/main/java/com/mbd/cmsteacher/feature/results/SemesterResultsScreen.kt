@@ -12,7 +12,6 @@ import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.SessionMarksRepository
 import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider
 import com.mbd.cmscommon.ui.components.SemesterResultsWorkspace
-import com.mbd.cmscommon.util.Outcome
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -51,8 +50,8 @@ fun SemesterResultsScreen(viewModel: SemesterResultsViewModel = hiltViewModel())
         roster = roster,
         results = results,
         subjects = subjects,
-        saveOutcome = saveState ?: Outcome.Success(Unit),
-        loadOutcome = loadState ?: Outcome.Success(Unit),
+        saveOutcome = saveState,
+        loadOutcome = loadState,
         onSelectSession = controller::selectSession,
         onSemester = controller::setSemester,
         onRetry = controller::refresh,

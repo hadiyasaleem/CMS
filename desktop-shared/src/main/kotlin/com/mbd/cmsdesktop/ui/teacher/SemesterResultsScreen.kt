@@ -11,7 +11,6 @@ import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.SessionMarksRepository
 import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider
 import com.mbd.cmscommon.ui.components.SemesterResultsWorkspace
-import com.mbd.cmscommon.util.Outcome
 
 /** Semester GPA / result recording leaf reachable from Exams hub. */
 @Composable
@@ -48,8 +47,8 @@ fun SemesterResultsScreen(
         roster = roster,
         results = results,
         subjects = subjects,
-        saveOutcome = saveState ?: Outcome.Success(Unit),
-        loadOutcome = loadState ?: Outcome.Success(Unit),
+        saveOutcome = saveState,
+        loadOutcome = loadState,
         onSelectSession = controller::selectSession,
         onSemester = controller::setSemester,
         onRetry = controller::refresh,
