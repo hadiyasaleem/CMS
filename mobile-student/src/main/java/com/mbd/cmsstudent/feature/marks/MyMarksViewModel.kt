@@ -11,6 +11,7 @@ import com.mbd.cmsstudent.feature.common.CurrentStudentProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -27,19 +28,24 @@ class MyMarksViewModel @Inject constructor(
 
     private var controller: StudentMarksController? = null
 
-    val snapshot = currentStudentProvider.observeContext()
+    private data class MarksState(val snapshot: StudentMarksSnapshot?, val error: String?)
+
+    private val state = currentStudentProvider.observeContext()
         .distinctUntilChangedBy { it?.studentId }
         .flatMapLatest { context ->
             if (context == null) {
                 controller = null
-                flowOf<StudentMarksSnapshot?>(null)
+                flowOf(MarksState(null, null))
             } else {
                 val c = StudentMarksController(context.sessionId, context.rollNumber, marksRepository, curriculumRepository, viewModelScope)
                 controller = c
-                c.rows.map { rows -> studentMarksSnapshot(rows) }
+                combine(c.rows, c.error) { rows, error -> MarksState(studentMarksSnapshot(rows), error) }
             }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MarksState(null, null))
+
+    val snapshot = state.map { it.snapshot }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+    val error = state.map { it.error }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     fun refresh() {
         viewModelScope.launch { controller?.refresh() }

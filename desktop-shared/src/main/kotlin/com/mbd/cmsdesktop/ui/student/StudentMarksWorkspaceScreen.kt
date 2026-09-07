@@ -25,11 +25,12 @@ fun StudentMarksScreen(
     }
     val rows by controller.rows.collectAsState()
     val refreshing by controller.refreshing.collectAsState()
+    val errorMessage by controller.error.collectAsState()
 
     StudentMarksWorkspace(
         snapshot = studentMarksSnapshot(rows),
         loading = refreshing && rows.isEmpty(),
-        errorMessage = null,
+        errorMessage = errorMessage,
         onRetry = controller::refresh,
     )
 }

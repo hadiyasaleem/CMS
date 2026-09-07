@@ -9,11 +9,12 @@ import com.mbd.cmscommon.ui.components.StudentMarksWorkspace
 @Composable
 fun MyMarksScreen(viewModel: MyMarksViewModel = hiltViewModel()) {
     val snapshot by viewModel.snapshot.collectAsState()
+    val errorMessage by viewModel.error.collectAsState()
 
     StudentMarksWorkspace(
         snapshot = snapshot,
         loading = snapshot == null,
-        errorMessage = null,
+        errorMessage = errorMessage,
         onRetry = viewModel::refresh,
     )
 }

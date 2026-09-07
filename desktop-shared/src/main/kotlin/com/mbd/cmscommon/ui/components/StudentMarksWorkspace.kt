@@ -16,7 +16,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,14 +58,7 @@ fun StudentMarksWorkspace(
         item { StudentMarksHeader() }
 
         if (!errorMessage.isNullOrBlank()) {
-            item {
-                Surface(shape = RoundedCornerShape(14.dp), color = MarksRed.copy(alpha = 0.1f), border = BorderStroke(1.dp, MarksRed.copy(alpha = 0.25f))) {
-                    Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(errorMessage, modifier = Modifier.weight(1f), color = MarksRed, style = MaterialTheme.typography.bodyMedium)
-                        TextButton(onClick = onRetry) { Text("Retry", color = MarksRed) }
-                    }
-                }
-            }
+            item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         }
 
         when {
