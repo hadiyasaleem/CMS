@@ -14,6 +14,7 @@ import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.MarkEditRequestRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
+import com.mbd.cmscommon.util.orLogCritical
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -132,11 +133,11 @@ class MarkEditRequestsController(
         val studentName = runCatching {
             sessionRepository.observeStudents(request.sessionId).first()
                 .firstOrNull { it.rollNumber.equals(request.rollNumber, ignoreCase = true) }?.name
-        }.getOrNull()
+        }.orLogCritical("MarkEditRequestsController.detailsFor.studentName")
         val subjectName = runCatching {
             curriculumRepository.observeSemesterSubjects(request.sessionId, request.semester).first()
                 .firstOrNull { it.courseCode.equals(request.courseCode, ignoreCase = true) }?.name
-        }.getOrNull()
+        }.orLogCritical("MarkEditRequestsController.detailsFor.subjectName")
         return request.id to MarkEditRequestDetails(studentName, subjectName)
     }
 
