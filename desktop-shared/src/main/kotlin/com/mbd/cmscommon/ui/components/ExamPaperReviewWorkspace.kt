@@ -35,7 +35,6 @@ import com.mbd.cmscommon.ui.theme.ModAccent
 import com.mbd.cmscommon.ui.theme.ModGround
 import com.mbd.cmscommon.ui.theme.ModInk
 import com.mbd.cmscommon.ui.theme.ModMuted
-import com.mbd.cmscommon.ui.theme.ModSuccess
 import com.mbd.cmscommon.ui.theme.ModSurface
 import com.mbd.cmscommon.ui.theme.ModTrack
 import java.time.ZoneId
@@ -69,10 +68,10 @@ fun ExamPaperReviewWorkspace(
         item { ReviewHeader(pending.size, onRefresh) }
 
         errorMessage?.let { message ->
-            item { ReviewBanner(message, isError = true, onDismiss = onClearError) }
+            item { CmsNotice(message, tone = NoticeTone.Error, onDismiss = onClearError) }
         }
         notice?.let { message ->
-            item { ReviewBanner(message, isError = false, onDismiss = onConsumeNotice) }
+            item { CmsNotice(message, tone = NoticeTone.Success, onDismiss = onConsumeNotice) }
         }
 
         if (loading) {
@@ -127,20 +126,6 @@ private fun ReviewHeader(pendingCount: Int, onRefresh: () -> Unit) {
             Text("Exam paper review", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
             Spacer(Modifier.height(4.dp))
             Text("$pendingCount awaiting review", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
-        }
-    }
-}
-
-@Composable
-private fun ReviewBanner(message: String, isError: Boolean, onDismiss: () -> Unit) {
-    Surface(
-        shape = RoundedCornerShape(14.dp),
-        color = ModSurface,
-        border = BorderStroke(1.dp, if (isError) ModAccent else ModSuccess),
-    ) {
-        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(message, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
-            TextButton(onClick = onDismiss) { Text("Dismiss") }
         }
     }
 }
