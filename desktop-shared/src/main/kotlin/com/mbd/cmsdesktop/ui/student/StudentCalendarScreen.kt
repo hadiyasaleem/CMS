@@ -32,6 +32,7 @@ fun StudentCalendarScreen(
     val events by controller.events.collectAsState()
     val loading by controller.loading.collectAsState()
     val busy by controller.busy.collectAsState()
+    val errorMessage by controller.error.collectAsState()
     val actionMessage by controller.actionMessage.collectAsState()
 
     CalendarWorkspace(
@@ -42,7 +43,7 @@ fun StudentCalendarScreen(
         canEdit = false,
         loading = loading,
         busy = busy,
-        errorMessage = null,
+        errorMessage = errorMessage,
         actionMessage = actionMessage,
         onRetry = controller::refresh,
         onCreate = {},
