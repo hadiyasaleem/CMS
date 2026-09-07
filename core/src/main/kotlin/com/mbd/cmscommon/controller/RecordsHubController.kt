@@ -47,17 +47,10 @@ class RecordsHubController(
             _loading.value = true
             _loadError.value = null
             supervisorScope {
-                if (fetchRemote) {
-                    listOf(
-                        async { calendarRepository.sync() },
-                        async { datesheetRepository.sync() },
-                        async { insightsRepository.sync() },
-                    ).forEach { it.await() }
-                }
                 val sessionsDeferred = async { runCatching { sessionRepository.observeAllSessions().first() } }
-                val eventsDeferred = async { runCatching { calendarRepository.getEvents() } }
-                val datesheetsDeferred = async { runCatching { datesheetRepository.getDatesheets() } }
-                val risksDeferred = async { runCatching { insightsRepository.getAtRiskStudents() } }
+                val eventsDeferred = async { runCatching { if (fetchRemote) calendarRepository.sync(); calendarRepository.getEvents() } }
+                val datesheetsDeferred = async { runCatching { if (fetchRemote) datesheetRepository.sync(); datesheetRepository.getDatesheets() } }
+                val risksDeferred = async { runCatching { if (fetchRemote) insightsRepository.sync(); insightsRepository.getAtRiskStudents() } }
 
                 val sessionsResult = sessionsDeferred.await()
                 val eventsResult = eventsDeferred.await()
