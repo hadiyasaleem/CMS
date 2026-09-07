@@ -19,6 +19,7 @@ import com.mbd.cmscommon.domain.repository.NotificationRepository
 import com.mbd.cmscommon.domain.repository.SessionFeeRepository
 import com.mbd.cmscommon.ui.components.StudentMoreDestination
 import com.mbd.cmscommon.ui.components.StudentMoreWorkspace
+import com.mbd.cmscommon.util.orLogCritical
 import com.mbd.cmsstudent.R
 import com.mbd.cmsstudent.feature.common.CurrentStudentProvider
 import com.mbd.cmsstudent.navigation.StudentDestination
@@ -28,6 +29,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
@@ -46,6 +48,8 @@ class MoreHubViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _refreshTrigger = MutableStateFlow(0)
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
 
     val snapshot: StateFlow<StudentMoreSnapshot?> = currentStudentProvider.observeContext()
         .distinctUntilChangedBy { it?.studentId }
@@ -54,15 +58,24 @@ class MoreHubViewModel @Inject constructor(
                 flowOf<StudentMoreSnapshot?>(null)
             } else {
                 _refreshTrigger.map {
-                    val events = runCatching { calendarRepository.getEvents() }.getOrDefault(emptyList())
-                    val fee = runCatching { feeRepository.getSessionFee(context.sessionId) }.getOrNull()
-                    val profile = runCatching { sessionRepository.getStudentProfile(context.sessionId, context.rollNumber) }.getOrNull()
-                    val unread = runCatching {
+                    val eventsResult = runCatching { calendarRepository.getEvents() }
+                    val events = eventsResult.orLogCritical("MoreHubViewModel.getEvents", emptyList())
+                    val feeResult = runCatching { feeRepository.getSessionFee(context.sessionId) }
+                    val fee = feeResult.orLogCritical("MoreHubViewModel.getSessionFee")
+                    val profileResult = runCatching { sessionRepository.getStudentProfile(context.sessionId, context.rollNumber) }
+                    val profile = profileResult.orLogCritical("MoreHubViewModel.getStudentProfile")
+                    val unreadResult = runCatching {
                         notificationRepository.observeUnreadCount(
                             NotificationTargetRole.STUDENT,
                             NotificationAudienceContext(sessionId = context.sessionId, departmentId = context.deptId),
                         ).first()
-                    }.getOrDefault(0)
+                    }
+                    val unread = unreadResult.orLogCritical("MoreHubViewModel.observeUnreadCount", 0)
+                    _error.value = if (listOf(eventsResult, feeResult, profileResult, unreadResult).any { it.isFailure }) {
+                        "Some account summaries could not be loaded. Pull to refresh to try again."
+                    } else {
+                        null
+                    }
                     studentMoreSnapshot(
                         events = events,
                         fee = fee,
@@ -84,12 +97,13 @@ class MoreHubViewModel @Inject constructor(
 @Composable
 fun MoreHubScreen(onOpen: (String) -> Unit, onSignOut: () -> Unit, viewModel: MoreHubViewModel = hiltViewModel()) {
     val snapshot by viewModel.snapshot.collectAsState()
+    val errorMessage by viewModel.error.collectAsState()
 
     StudentMoreWorkspace(
         heroPainter = painterResource(R.drawable.student_more_hero),
         snapshot = snapshot,
         loading = snapshot == null,
-        errorMessage = null,
+        errorMessage = errorMessage,
         onRetry = viewModel::refresh,
         onOpen = { destination ->
             onOpen(
