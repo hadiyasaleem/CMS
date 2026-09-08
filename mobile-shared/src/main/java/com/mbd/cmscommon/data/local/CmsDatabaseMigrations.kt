@@ -1515,6 +1515,66 @@ val MIGRATION_40_41: Migration = object : Migration(40, 41) {
     }
 }
 
+val MIGRATION_41_42: Migration = object : Migration(41, 42) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // Datesheet rework: scoped to (session, semester), curriculum-linked papers, building/room
+        // FKs instead of free text. The local cache rebuilds itself from Supabase on next sync, so
+        // recreate rather than ALTER (Room offers no in-place column-drop story on SQLite anyway).
+        db.execSQL("DROP TABLE IF EXISTS `datesheets`")
+        db.execSQL("DROP TABLE IF EXISTS `datesheet_slots`")
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `datesheets` (
+                `datesheetId` TEXT NOT NULL,
+                `sessionId` TEXT NOT NULL,
+                `semester` INTEGER NOT NULL,
+                `defaultStartTime` TEXT,
+                `defaultEndTime` TEXT,
+                `defaultBuildingId` TEXT,
+                `published` INTEGER NOT NULL DEFAULT 0,
+                `instructions` TEXT,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `createdBy` TEXT,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedBy` TEXT,
+                `isDeleted` INTEGER NOT NULL DEFAULT 0,
+                `deletedAt` INTEGER,
+                `deletedBy` TEXT,
+                PRIMARY KEY(`datesheetId`)
+            )
+            """.trimIndent(),
+        )
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `datesheet_slots` (
+                `slotId` TEXT NOT NULL,
+                `datesheetId` TEXT NOT NULL,
+                `courseCode` TEXT NOT NULL,
+                `subjectName` TEXT NOT NULL,
+                `examDate` TEXT,
+                `startTime` TEXT,
+                `endTime` TEXT,
+                `buildingId` TEXT,
+                `building` TEXT,
+                `roomId` TEXT,
+                `roomNo` TEXT,
+                `invigilatorEmail` TEXT,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `createdBy` TEXT,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedBy` TEXT,
+                `isDeleted` INTEGER NOT NULL DEFAULT 0,
+                `deletedAt` INTEGER,
+                `deletedBy` TEXT,
+                PRIMARY KEY(`slotId`)
+            )
+            """.trimIndent(),
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_datesheet_slots_datesheetId_examDate` ON `datesheet_slots` (`datesheetId`, `examDate`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_datesheet_slots_datesheetId_courseCode` ON `datesheet_slots` (`datesheetId`, `courseCode`)")
+    }
+}
+
 val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_18_19,
     MIGRATION_19_20,
@@ -1539,4 +1599,5 @@ val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_38_39,
     MIGRATION_39_40,
     MIGRATION_40_41,
+    MIGRATION_41_42,
 )

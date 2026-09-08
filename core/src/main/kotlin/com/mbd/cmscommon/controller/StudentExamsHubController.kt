@@ -5,18 +5,19 @@ import com.mbd.cmscommon.domain.model.DatesheetSlot
 import com.mbd.cmscommon.domain.model.SemesterGpa
 import com.mbd.cmscommon.domain.model.StudentExamsHubSnapshot
 import com.mbd.cmscommon.domain.model.studentExamsHubSnapshot
+import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.DatesheetRepository
 import com.mbd.cmscommon.domain.repository.SessionMarksRepository
 import java.time.LocalDate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 
 class StudentExamsHubController(
@@ -24,12 +25,20 @@ class StudentExamsHubController(
     private val rollNumber: String,
     private val marksRepository: SessionMarksRepository,
     private val datesheetRepository: DatesheetRepository,
+    sessionRepository: AcademicSessionRepository,
     scope: CoroutineScope,
 ) : ScreenController(scope) {
 
     private val results = MutableStateFlow<List<SemesterGpa>>(emptyList())
-    private val sheets = MutableStateFlow<List<Datesheet>>(emptyList())
-    private val slots = MutableStateFlow<List<DatesheetSlot>>(emptyList())
+
+    private val session = sessionRepository.observeSession(sessionId)
+        .stateIn(scope, SharingStarted.WhileSubscribed(5000), null)
+
+    private val sheets: StateFlow<List<Datesheet>> = datesheetRepository.observeDatesheets()
+        .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    private val allSlots: StateFlow<List<DatesheetSlot>> = datesheetRepository.observeAllSlots()
+        .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _loading = MutableStateFlow(true)
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
@@ -40,14 +49,15 @@ class StudentExamsHubController(
     val snapshot: StateFlow<StudentExamsHubSnapshot> = combine(
         marksRepository.observeStudentMarks(sessionId, rollNumber),
         results,
+        session,
         sheets,
-        slots,
-    ) { scores, results, sheets, slots ->
-        studentExamsHubSnapshot(sessionId, scores, results, sheets, slots, LocalDate.now())
+        allSlots,
+    ) { scores, results, session, sheets, slots ->
+        studentExamsHubSnapshot(sessionId, session?.currentSemester ?: 0, scores, results, sheets, slots, LocalDate.now())
     }.stateIn(
         scope,
         SharingStarted.WhileSubscribed(5000),
-        studentExamsHubSnapshot(sessionId, emptyList(), emptyList(), emptyList(), emptyList(), LocalDate.now()),
+        studentExamsHubSnapshot(sessionId, 0, emptyList(), emptyList(), emptyList(), emptyList(), LocalDate.now()),
     )
 
     init {
@@ -61,35 +71,16 @@ class StudentExamsHubController(
         try {
             coroutineScope {
                 val marksSync = async { if (fetchRemote) runCatching { marksRepository.syncSession(sessionId) } else Result.success(Unit) }
-                val sheetLoad = async {
-                    runCatching {
-                        if (fetchRemote) datesheetRepository.sync()
-                        datesheetRepository.getDatesheets()
-                    }
-                }
+                val datesheetSync = async { runCatching { if (fetchRemote) { datesheetRepository.sync(); datesheetRepository.syncAllSlots() } } }
 
                 val marksSyncResult = marksSync.await()
                 val resultLoad = async { runCatching { marksRepository.getSemesterGpa(sessionId, rollNumber) } }
 
                 val resultLoadResult = resultLoad.await()
                 resultLoadResult.getOrNull()?.let { results.value = it }
-                val sheetLoadResult = sheetLoad.await()
-                val loadedSheets = sheetLoadResult.getOrDefault(emptyList())
-                sheets.value = loadedSheets
+                val datesheetSyncResult = datesheetSync.await()
 
-                val slotResults = loadedSheets
-                    .map { sheet ->
-                        async {
-                            runCatching {
-                                if (fetchRemote) datesheetRepository.syncSlots(sheet.id)
-                                datesheetRepository.getSlots(sheet.id)
-                            }
-                        }
-                    }
-                    .awaitAll()
-                slots.value = slotResults.flatMap { it.getOrDefault(emptyList()) }
-
-                _loadError.value = (listOf(marksSyncResult, resultLoadResult, sheetLoadResult) + slotResults)
+                _loadError.value = listOf(marksSyncResult, resultLoadResult, datesheetSyncResult)
                     .firstNotNullOfOrNull { it.exceptionOrNull() }
                     ?.userMessageLogged("Some exam data could not be loaded.")
             }

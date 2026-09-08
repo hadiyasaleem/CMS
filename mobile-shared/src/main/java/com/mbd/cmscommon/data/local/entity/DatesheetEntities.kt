@@ -7,9 +7,11 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "datesheets")
 data class DatesheetEntity(
     @PrimaryKey val datesheetId: String,
-    val title: String,
-    val examType: String,
-    val sessionId: String?,
+    val sessionId: String,
+    val semester: Int,
+    val defaultStartTime: String?,
+    val defaultEndTime: String?,
+    val defaultBuildingId: String?,
     val published: Boolean = false,
     val instructions: String?,
     val createdAt: Long = 0L,
@@ -21,18 +23,22 @@ data class DatesheetEntity(
     val deletedBy: String? = null,
 )
 
-@Entity(tableName = "datesheet_slots", indices = [Index(value = ["datesheetId", "examDate"])])
+@Entity(
+    tableName = "datesheet_slots",
+    indices = [Index(value = ["datesheetId", "examDate"]), Index(value = ["datesheetId", "courseCode"])],
+)
 data class DatesheetSlotEntity(
     @PrimaryKey val slotId: String,
     val datesheetId: String,
-    val examDate: String,
+    val courseCode: String,
+    val subjectName: String,
+    val examDate: String?,
     val startTime: String?,
     val endTime: String?,
-    val durationMinutes: Int?,
-    val courseCode: String?,
-    val subjectName: String?,
-    val roomNo: String?,
+    val buildingId: String?,
     val building: String?,
+    val roomId: String?,
+    val roomNo: String?,
     val invigilatorEmail: String?,
     val createdAt: Long = 0L,
     val createdBy: String? = null,

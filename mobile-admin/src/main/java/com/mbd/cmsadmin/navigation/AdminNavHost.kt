@@ -105,7 +105,9 @@ fun AdminNavHost(navController: NavHostController, onSignedOut: () -> Unit, refr
             com.mbd.cmsadmin.feature.records.AttendanceRecordsScreen()
         }
         composable(AdminLeaf.CALENDAR) { com.mbd.cmsadmin.feature.calendar.CalendarScreen() }
-        composable(AdminLeaf.DATESHEETS) { com.mbd.cmsadmin.feature.datesheets.DatesheetsScreen() }
+        composable(AdminLeaf.DATESHEETS) {
+            com.mbd.cmscommon.ui.datesheets.DatesheetsScreen(viewModel = androidx.hilt.navigation.compose.hiltViewModel())
+        }
         composable(AdminLeaf.INSIGHTS) { com.mbd.cmsadmin.feature.insights.InsightsScreen(refreshVersion = refreshVersion) }
         composable(AdminLeaf.BUILDINGS_ROOMS) { BuildingsRoomsScreen() }
 

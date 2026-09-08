@@ -49,7 +49,7 @@ class RecordsHubController(
             supervisorScope {
                 val sessionsDeferred = async { runCatching { sessionRepository.observeAllSessions().first() } }
                 val eventsDeferred = async { runCatching { if (fetchRemote) calendarRepository.sync(); calendarRepository.getEvents() } }
-                val datesheetsDeferred = async { runCatching { if (fetchRemote) datesheetRepository.sync(); datesheetRepository.getDatesheets() } }
+                val datesheetsDeferred = async { runCatching { if (fetchRemote) datesheetRepository.sync(); datesheetRepository.observeDatesheets().first() } }
                 val risksDeferred = async { runCatching { if (fetchRemote) insightsRepository.sync(); insightsRepository.getAtRiskStudents() } }
 
                 val sessionsResult = sessionsDeferred.await()

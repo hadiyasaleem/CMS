@@ -406,42 +406,20 @@ private fun PeriodEditorDialog(
                         emptyLabel = "Not assigned",
                     )
                     Spacer(Modifier.height(10.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        CmsEntityPicker(
-                            label = "Building (optional)",
-                            selectedId = selectedBuildingId,
-                            options = buildings.map { CmsEntityOption(it.buildingId, it.name) },
-                            onSelected = { id ->
-                                selectedBuildingId = id
-                                building = buildings.firstOrNull { it.buildingId == id }?.name ?: ""
-                                if (selectedRoomId != null && rooms.firstOrNull { it.roomId == selectedRoomId }?.buildingId != id) {
-                                    selectedRoomId = null
-                                    room = ""
-                                }
-                            },
-                            optional = true,
-                            emptyLabel = "Any building",
-                            modifier = Modifier.weight(1f),
-                        )
-                        CmsEntityPicker(
-                            label = "Room (optional)",
-                            selectedId = selectedRoomId,
-                            options = rooms.filter { selectedBuildingId == null || it.buildingId == selectedBuildingId }
-                                .map { CmsEntityOption(it.roomId, it.roomNo, it.name) },
-                            onSelected = { id ->
-                                selectedRoomId = id
-                                val picked = rooms.firstOrNull { it.roomId == id }
-                                room = picked?.roomNo ?: ""
-                                if (picked != null) {
-                                    selectedBuildingId = picked.buildingId
-                                    building = buildings.firstOrNull { it.buildingId == picked.buildingId }?.name ?: building
-                                }
-                            },
-                            optional = true,
-                            emptyLabel = "Not assigned",
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
+                    CmsBuildingRoomPicker(
+                        buildings = buildings,
+                        rooms = rooms,
+                        selectedBuildingId = selectedBuildingId,
+                        selectedRoomId = selectedRoomId,
+                        onChange = { buildingId, buildingName, roomId, roomNo ->
+                            selectedBuildingId = buildingId
+                            building = buildingName ?: ""
+                            selectedRoomId = roomId
+                            room = roomNo ?: ""
+                        },
+                        buildingLabel = "Building (optional)",
+                        roomLabel = "Room (optional)",
+                    )
                 }
                 Spacer(Modifier.height(10.dp))
                 OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("Notes (optional)") }, modifier = Modifier.fillMaxWidth(), minLines = 2)

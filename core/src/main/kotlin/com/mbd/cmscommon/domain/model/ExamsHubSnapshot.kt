@@ -37,7 +37,7 @@ fun examsHubSnapshot(
     val upcomingInvigilation = slots.distinctBy { it.id }.count { slot ->
         publishedIds.contains(slot.datesheetId) &&
             slot.invigilatorEmail.equals(teacherId, ignoreCase = true) &&
-            runCatching { LocalDate.parse(slot.examDate) }.getOrNull()?.let { !it.isBefore(today) } == true
+            slot.examDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() }?.let { !it.isBefore(today) } == true
     }
 
     return ExamsHubSnapshot(

@@ -8,6 +8,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.res.painterResource
 import com.mbd.cmscommon.controller.StudentExamsHubController
+import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.DatesheetRepository
 import com.mbd.cmscommon.domain.repository.SessionMarksRepository
 import com.mbd.cmscommon.ui.components.StudentExamsDestination
@@ -19,11 +20,12 @@ fun StudentExamsHubScreen(
     rollNumber: String,
     marksRepository: SessionMarksRepository,
     datesheetRepository: DatesheetRepository,
+    sessionRepository: AcademicSessionRepository,
     onOpen: (StudentExamsDestination) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val controller = remember(sessionId, rollNumber) {
-        StudentExamsHubController(sessionId, rollNumber, marksRepository, datesheetRepository, scope)
+        StudentExamsHubController(sessionId, rollNumber, marksRepository, datesheetRepository, sessionRepository, scope)
     }
     val snapshot by controller.snapshot.collectAsState()
     val loading by controller.loading.collectAsState()

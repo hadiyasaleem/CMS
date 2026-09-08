@@ -4,25 +4,27 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -32,694 +34,806 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.domain.model.AcademicSession
+import com.mbd.cmscommon.domain.model.Building
 import com.mbd.cmscommon.domain.model.Datesheet
-import com.mbd.cmscommon.domain.model.DatesheetDraft
+import com.mbd.cmscommon.domain.model.DatesheetCurriculumDrift
+import com.mbd.cmscommon.domain.model.DatesheetScheduleQuality
 import com.mbd.cmscommon.domain.model.DatesheetSlot
 import com.mbd.cmscommon.domain.model.DatesheetViewerContext
-import com.mbd.cmscommon.domain.model.SemesterSubject
+import com.mbd.cmscommon.domain.model.Department
+import com.mbd.cmscommon.domain.model.Room
+import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.Teacher
-import com.mbd.cmscommon.domain.model.datesheetDutySummary
-import com.mbd.cmscommon.domain.model.datesheetKey
-import com.mbd.cmscommon.domain.model.datesheetScheduleQuality
+import com.mbd.cmscommon.domain.model.datesheetLabel
 import com.mbd.cmscommon.domain.model.isAssignedTo
-import com.mbd.cmscommon.domain.model.isVisibleTo
+import com.mbd.cmscommon.domain.model.locationLabel
+import com.mbd.cmscommon.domain.model.resolvedEndTime
+import com.mbd.cmscommon.domain.model.resolvedStartTime
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModAccent
 import com.mbd.cmscommon.ui.theme.ModGround
 import com.mbd.cmscommon.ui.theme.ModInk
 import com.mbd.cmscommon.ui.theme.ModMuted
-import com.mbd.cmscommon.ui.theme.ModRedTint
 import com.mbd.cmscommon.ui.theme.ModSurface
 import com.mbd.cmscommon.ui.theme.ModTrack
 import com.mbd.cmscommon.ui.theme.ModWarn
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 private val DatesheetCanvas = ModGround
 private val DatesheetGold = ModWarn
-private val DatesheetNavy = ModInk
-private val DatesheetDateFormat = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy")
+private val DatesheetRed = ModAccent
+private val DATESHEET_DATE_FORMAT = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy")
 
-private val EXAM_TYPES = listOf("MIDTERM", "SESSIONAL")
+enum class DatesheetViewMode { FILTERED, GROUPED, CALENDAR, SEMESTER }
 
-enum class SheetStatus(val label: String) {
-    ALL("All schedules"),
-    PUBLISHED("Published"),
-    DRAFT("Drafts"),
-    NEEDS_REVIEW("Needs review"),
-}
+/** Everything needed to render/edit the currently-open datesheet's detail. */
+data class DatesheetDetailData(
+    val sheet: Datesheet,
+    val session: AcademicSession?,
+    val department: Department?,
+    val slots: List<DatesheetSlot>,
+    val quality: DatesheetScheduleQuality?,
+    val drift: DatesheetCurriculumDrift?,
+    val buildings: List<Building>,
+    val rooms: List<Room>,
+    val teachers: List<Teacher>,
+)
 
 @Composable
 fun DatesheetWorkspace(
-    datesheets: List<Datesheet>,
-    slots: Map<String, List<DatesheetSlot>>,
-    loadingSlots: Set<String>,
-    sessions: List<AcademicSession>,
-    subjectsBySession: Map<String, List<SemesterSubject>>,
-    invigilators: List<Teacher>,
     viewer: DatesheetViewerContext,
+    departments: List<Department>,
+    sessions: List<AcademicSession>,
+    datesheets: List<Datesheet>,
+    allSlots: List<DatesheetSlot>,
+    selectedDeptId: String?,
+    selectedStartYear: Int?,
+    selectedShift: Session?,
+    selectedSemester: Int?,
+    sessionsInDepartment: List<AcademicSession>,
+    shiftsForSelection: List<Session>,
+    resolvedSession: AcademicSession?,
+    onSelectDepartment: (String?) -> Unit,
+    onSelectStartYear: (Int?) -> Unit,
+    onSelectShift: (Session?) -> Unit,
+    onSelectSemester: (Int?) -> Unit,
+    buildings: List<Building>,
     loading: Boolean,
-    busy: Boolean,
     errorMessage: String?,
-    actionMessage: String?,
     onRetry: () -> Unit,
-    onLoadSlots: (String) -> Unit,
-    onLoadSubjects: (String) -> Unit,
-    onCreate: (DatesheetDraft) -> Unit,
-    onUpdate: (String, DatesheetDraft) -> Unit,
-    onSetPublished: (String, Boolean) -> Unit,
-    onDelete: (String) -> Unit,
-    onAddSlot: (DatesheetSlot) -> Unit,
-    onUpdateSlot: (DatesheetSlot) -> Unit,
-    onDeleteSlot: (String, String) -> Unit,
+    onCreateDatesheet: (defaultStart: String?, defaultEnd: String?, defaultBuildingId: String?, instructions: String?) -> Unit,
+    openDatesheetId: String?,
+    onOpenDatesheet: (String?) -> Unit,
+    detail: DatesheetDetailData?,
+    detailBusy: Boolean,
+    onSetPublished: (Boolean) -> Unit,
+    onDeleteDatesheet: () -> Unit,
+    onSyncMissingSubjects: () -> Unit,
+    onRemovePaper: (String) -> Unit,
+    onUpdatePaper: (DatesheetSlot) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var query by remember { mutableStateOf("") }
-    var status by remember { mutableStateOf(SheetStatus.ALL) }
-    var selectedSessionId by remember { mutableStateOf<String?>(null) }
-    var expandedId by remember { mutableStateOf<String?>(null) }
-    var showCreate by remember { mutableStateOf(false) }
-    var editingSheet by remember { mutableStateOf<Datesheet?>(null) }
-    var editingSlot by remember { mutableStateOf<Pair<String, DatesheetSlot?>?>(null) }
-    var addingSlotDate by remember { mutableStateOf<String?>(null) }
-    var detailSlot by remember { mutableStateOf<Pair<String, DatesheetSlot>?>(null) }
-    var pendingDeleteSheet by remember { mutableStateOf<Datesheet?>(null) }
-    var pendingDeleteSlot by remember { mutableStateOf<Pair<String, DatesheetSlot>?>(null) }
+    var viewMode by remember { mutableStateOf(DatesheetViewMode.FILTERED) }
+    val slotsByDatesheet = remember(allSlots) { allSlots.groupBy { it.datesheetId } }
+    val sessionsById = remember(sessions) { sessions.associateBy { it.sessionId } }
 
-    val visibleSheets = datesheets.filter { isVisibleTo(it, viewer) }
-    val duty = datesheetDutySummary(slots, viewer.identityKey)
-
-    val filtered = visibleSheets.filter { sheet ->
-        val sheetSlots = slots[sheet.id].orEmpty()
-        val quality = datesheetScheduleQuality(sheet, sheetSlots)
-        val matchesQuery = query.isBlank() || sheet.title.contains(query, ignoreCase = true)
-        val matchesSession = selectedSessionId == null || sheet.sessionId == selectedSessionId
-        val matchesStatus = when (status) {
-            SheetStatus.ALL -> true
-            SheetStatus.PUBLISHED -> sheet.published
-            SheetStatus.DRAFT -> !sheet.published
-            SheetStatus.NEEDS_REVIEW -> quality.issues.isNotEmpty()
+    Box(modifier.fillMaxWidth()) {
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth().background(DatesheetCanvas),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            item { DatesheetHeader() }
+            if (!errorMessage.isNullOrBlank()) {
+                item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
+            }
+            item {
+                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    CmsChip("Filtered", selected = viewMode == DatesheetViewMode.FILTERED, onClick = { viewMode = DatesheetViewMode.FILTERED })
+                    CmsChip("Grouped", selected = viewMode == DatesheetViewMode.GROUPED, onClick = { viewMode = DatesheetViewMode.GROUPED })
+                    CmsChip("Calendar", selected = viewMode == DatesheetViewMode.CALENDAR, onClick = { viewMode = DatesheetViewMode.CALENDAR })
+                    CmsChip("Semester", selected = viewMode == DatesheetViewMode.SEMESTER, onClick = { viewMode = DatesheetViewMode.SEMESTER })
+                }
+            }
+            if (loading) {
+                item { SkeletonRow() }
+            } else {
+                item {
+                    when (viewMode) {
+                        DatesheetViewMode.FILTERED -> FilteredDatesheetView(
+                            sessionsInDepartment = sessionsInDepartment,
+                            shiftsForSelection = shiftsForSelection,
+                            selectedDeptId = selectedDeptId,
+                            selectedStartYear = selectedStartYear,
+                            selectedShift = selectedShift,
+                            selectedSemester = selectedSemester,
+                            resolvedSession = resolvedSession,
+                            datesheets = datesheets,
+                            departments = departments,
+                            buildings = buildings,
+                            busy = detailBusy,
+                            onSelectDepartment = onSelectDepartment,
+                            onSelectStartYear = onSelectStartYear,
+                            onSelectShift = onSelectShift,
+                            onSelectSemester = onSelectSemester,
+                            onOpenDatesheet = { onOpenDatesheet(it) },
+                            onCreateDatesheet = onCreateDatesheet,
+                        )
+                        DatesheetViewMode.GROUPED -> GroupedDatesheetView(
+                            departments = departments,
+                            sessions = sessions,
+                            datesheets = datesheets,
+                            onOpenDatesheet = { onOpenDatesheet(it) },
+                        )
+                        DatesheetViewMode.CALENDAR -> CalendarDatesheetView(
+                            datesheets = datesheets,
+                            sessionsById = sessionsById,
+                            slotsByDatesheet = slotsByDatesheet,
+                            onOpenDatesheet = { onOpenDatesheet(it) },
+                        )
+                        DatesheetViewMode.SEMESTER -> SemesterDatesheetView(
+                            resolvedSession = resolvedSession,
+                            departments = departments,
+                            sessionsInDepartment = sessionsInDepartment,
+                            shiftsForSelection = shiftsForSelection,
+                            selectedDeptId = selectedDeptId,
+                            selectedStartYear = selectedStartYear,
+                            selectedShift = selectedShift,
+                            datesheets = datesheets,
+                            slotsByDatesheet = slotsByDatesheet,
+                            onSelectDepartment = onSelectDepartment,
+                            onSelectStartYear = onSelectStartYear,
+                            onSelectShift = onSelectShift,
+                            onOpenDatesheet = { onOpenDatesheet(it) },
+                        )
+                    }
+                }
+            }
+            item { Spacer(Modifier.height(72.dp)) }
         }
-        matchesQuery && matchesSession && matchesStatus
     }
 
-    Box(modifier.fillMaxSize()) {
+    if (openDatesheetId != null && detail != null) {
+        DatesheetDetailDialog(
+            detail = detail,
+            viewer = viewer,
+            busy = detailBusy,
+            onDismiss = { onOpenDatesheet(null) },
+            onSetPublished = onSetPublished,
+            onDeleteDatesheet = onDeleteDatesheet,
+            onSyncMissingSubjects = onSyncMissingSubjects,
+            onRemovePaper = onRemovePaper,
+            onUpdatePaper = onUpdatePaper,
+        )
+    }
+}
+
+/** The read-only, single-datesheet view students get: no filters, no view switcher. */
+@Composable
+fun StudentDatesheetWorkspace(
+    sheet: Datesheet?,
+    session: AcademicSession?,
+    slots: List<DatesheetSlot>,
+    loading: Boolean,
+    errorMessage: String?,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     LazyColumn(
-        modifier = Modifier.fillMaxWidth().background(DatesheetCanvas),
+        modifier = modifier.fillMaxWidth().background(DatesheetCanvas),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item { DatesheetHeader() }
-
         if (!errorMessage.isNullOrBlank()) {
             item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         }
-        if (!actionMessage.isNullOrBlank()) {
-            item { CmsNotice(actionMessage, tone = NoticeTone.Success) }
-        }
-
-        item { DatesheetSummaryRow(visibleSheets.size, slots.values.sumOf { it.size }, duty.upcomingDuties, visibleSheets.count { !it.published }) }
-
-        item {
-            DatesheetFilters(
-                query = query,
-                onQueryChange = { query = it },
-                status = status,
-                onStatusChange = { status = it },
-                selectedSessionId = selectedSessionId,
-                onSessionChange = { selectedSessionId = it },
-                sessions = sessions,
-            )
-        }
-
-        when {
-            loading -> items(3) { SkeletonRow() }
-            visibleSheets.isEmpty() -> item {
-                DatesheetEmpty(
-                    filtered = false,
-                    canManage = viewer.canManage,
-                    onAdd = { showCreate = true },
-                )
+        if (loading) {
+            item { SkeletonRow() }
+        } else if (sheet == null) {
+            item {
+                Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
+                    Text(
+                        "Your Mid Term datesheet hasn't been published yet.",
+                        modifier = Modifier.padding(24.dp),
+                        color = ModMuted,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
             }
-            filtered.isEmpty() -> item { DatesheetEmpty(filtered = true, canManage = false, onAdd = {}) }
-            else -> items(filtered, key = { datesheetKey(it) }) { sheet ->
-                val sheetSlots = slots[sheet.id].orEmpty()
-                val expanded = expandedId == sheet.id
-                DatesheetScheduleCard(
-                    sheet = sheet,
-                    slots = sheetSlots,
-                    expanded = expanded,
-                    loadingSlots = sheet.id in loadingSlots,
-                    canManage = viewer.canManage,
-                    identityKey = viewer.identityKey,
-                    onToggle = {
-                        expandedId = if (expanded) null else sheet.id
-                        if (!expanded) {
-                            onLoadSlots(sheet.id)
-                            sheet.sessionId?.let(onLoadSubjects)
-                        }
-                    },
-                    onEdit = { editingSheet = sheet },
-                    onDelete = { pendingDeleteSheet = sheet },
-                    onPublish = { onSetPublished(sheet.id, !sheet.published) },
-                    onAddPaper = { editingSlot = sheet.id to null },
-                    onAddPaperOnDate = { date -> addingSlotDate = date; editingSlot = sheet.id to null },
-                    onEditPaper = { slot -> editingSlot = sheet.id to slot },
-                    onViewPaper = { slot -> detailSlot = sheet.id to slot },
-                    onDeletePaper = { slot -> pendingDeleteSlot = sheet.id to slot },
-                )
+        } else {
+            item { Text(datesheetLabel(sheet, session, null), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) }
+            items(slots.sortedWith(compareBy { it.examDate ?: "9999-99-99" }), key = { it.id }) { slot ->
+                PaperRow(slot = slot, sheet = sheet, canManage = false, identityKey = null, onEdit = {}, onRemove = {})
             }
         }
-
         item { Spacer(Modifier.height(72.dp)) }
-    }
-        if (viewer.canManage) {
-            CmsFab(
-                onClick = { showCreate = true },
-                contentDescription = "New datesheet",
-                modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
-            )
-        }
-    }
-
-    if (showCreate || editingSheet != null) {
-        DatesheetEditorDialog(
-            sheet = editingSheet,
-            sessions = sessions,
-            busy = busy,
-            onDismiss = { showCreate = false; editingSheet = null },
-            onSave = { draft ->
-                val sheet = editingSheet
-                if (sheet != null) onUpdate(sheet.id, draft) else onCreate(draft)
-                showCreate = false
-                editingSheet = null
-            },
-        )
-    }
-
-    editingSlot?.let { (sheetId, slot) ->
-        PaperEditorDialog(
-            slot = slot,
-            initialDate = addingSlotDate.orEmpty(),
-            subjects = subjectsBySession[datesheets.firstOrNull { it.id == sheetId }?.sessionId].orEmpty(),
-            invigilators = invigilators,
-            busy = busy,
-            onDismiss = { editingSlot = null; addingSlotDate = null },
-            onSave = { draft ->
-                if (slot != null) onUpdateSlot(draft) else onAddSlot(draft.copy(datesheetId = sheetId))
-                editingSlot = null
-                addingSlotDate = null
-            },
-        )
-    }
-
-    detailSlot?.let { (sheetId, slot) ->
-        PaperDetailDialog(
-            slot = slot,
-            canManage = viewer.canManage,
-            isMyDuty = isAssignedTo(slot, viewer.identityKey),
-            onEdit = { detailSlot = null; editingSlot = sheetId to slot },
-            onRequestRemove = { detailSlot = null; pendingDeleteSlot = sheetId to slot },
-            onDismiss = { detailSlot = null },
-        )
-    }
-
-    pendingDeleteSheet?.let { sheet ->
-        ConfirmDestructiveActionDialog(
-            title = "Delete datesheet",
-            dependentSummary = "This permanently removes \"${sheet.title}\" and every scheduled paper in it.",
-            onConfirm = { onDelete(sheet.id); pendingDeleteSheet = null },
-            onDismiss = { pendingDeleteSheet = null },
-        )
-    }
-
-    pendingDeleteSlot?.let { (sheetId, slot) ->
-        ConfirmDestructiveActionDialog(
-            title = "Remove paper",
-            dependentSummary = "The paper will be removed from this datesheet.",
-            onConfirm = { onDeleteSlot(sheetId, slot.id); pendingDeleteSlot = null },
-            onDismiss = { pendingDeleteSlot = null },
-        )
     }
 }
 
 @Composable
 private fun DatesheetHeader() {
-    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
+    Surface(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), color = ModInk) {
         Column(Modifier.padding(20.dp)) {
-            Text("Exam Datesheets", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-            Text(
-                "Published schedules, venues and paper timings in one place.",
-                color = CmsTheme.colors.onInkMuted,
-                style = MaterialTheme.typography.bodyMedium,
-            )
+            Text("EXAM DATESHEETS", color = DatesheetGold, style = CmsTextStyles.eyebrow)
+            Spacer(Modifier.height(6.dp))
+            Text("Datesheets", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+            Spacer(Modifier.height(4.dp))
+            Text("Mid Term schedules by department, session, and semester.", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
 
 @Composable
-private fun DatesheetSummaryRow(schedules: Int, papers: Int, upcomingDuties: Int, drafts: Int) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        SummaryTile("Schedules", schedules.toString(), Modifier.weight(1f))
-        SummaryTile("Papers loaded", papers.toString(), Modifier.weight(1f))
-        SummaryTile("My duties", upcomingDuties.toString(), Modifier.weight(1f))
-        SummaryTile("Drafts", drafts.toString(), Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun SummaryTile(label: String, value: String, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Column(Modifier.padding(14.dp)) {
-            Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(Locale.ROOT), color = ModMuted, style = CmsTextStyles.eyebrow)
-        }
-    }
-}
-
-@Composable
-private fun DatesheetFilters(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    status: SheetStatus,
-    onStatusChange: (SheetStatus) -> Unit,
-    selectedSessionId: String?,
-    onSessionChange: (String?) -> Unit,
-    sessions: List<AcademicSession>,
+private fun DatesheetFilterRow(
+    departments: List<Department>,
+    sessionsInDepartment: List<AcademicSession>,
+    shiftsForSelection: List<Session>,
+    selectedDeptId: String?,
+    selectedStartYear: Int?,
+    selectedShift: Session?,
+    onSelectDepartment: (String?) -> Unit,
+    onSelectStartYear: (Int?) -> Unit,
+    onSelectShift: (Session?) -> Unit,
 ) {
-    Column(Modifier.fillMaxWidth()) {
-        OutlinedTextField(
-            value = query,
-            onValueChange = onQueryChange,
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Search datesheets") },
-            singleLine = true,
+    val departmentOptions = departments.sortedBy { it.name }.map { CmsEntityOption(it.deptId, "${it.code} · ${it.name}") }
+    val sessionOptions = sessionsInDepartment.map { it.startYear }.distinct().sorted().map { CmsEntityOption(it.toString(), "$it–${it + 4}") }
+    val shiftOptions = shiftsForSelection.map { CmsEntityOption(it.name, it.name) }
+
+    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        DropdownChip(
+            selectedLabel = departmentOptions.firstOrNull { it.id == selectedDeptId }?.label,
+            emptyLabel = "All departments",
+            options = departmentOptions,
+            onSelected = onSelectDepartment,
         )
-        Spacer(Modifier.height(8.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            SheetStatus.entries.forEach { option ->
-                CmsChip(option.label, selected = status == option, onClick = { onStatusChange(option) })
+        DropdownChip(
+            selectedLabel = selectedStartYear?.let { "$it–${it + 4}" },
+            emptyLabel = "All sessions",
+            options = sessionOptions,
+            onSelected = { onSelectStartYear(it?.toIntOrNull()) },
+            enabled = selectedDeptId != null,
+        )
+        DropdownChip(
+            selectedLabel = selectedShift?.name,
+            emptyLabel = "All shifts",
+            options = shiftOptions,
+            onSelected = { onSelectShift(it?.let(Session::valueOf)) },
+            enabled = selectedStartYear != null,
+        )
+    }
+}
+
+@Composable
+private fun FilteredDatesheetView(
+    departments: List<Department>,
+    sessionsInDepartment: List<AcademicSession>,
+    shiftsForSelection: List<Session>,
+    selectedDeptId: String?,
+    selectedStartYear: Int?,
+    selectedShift: Session?,
+    selectedSemester: Int?,
+    resolvedSession: AcademicSession?,
+    datesheets: List<Datesheet>,
+    buildings: List<Building>,
+    busy: Boolean,
+    onSelectDepartment: (String?) -> Unit,
+    onSelectStartYear: (Int?) -> Unit,
+    onSelectShift: (Session?) -> Unit,
+    onSelectSemester: (Int?) -> Unit,
+    onOpenDatesheet: (String) -> Unit,
+    onCreateDatesheet: (String?, String?, String?, String?) -> Unit,
+) {
+    var showCreateDialog by remember { mutableStateOf(false) }
+
+    Column {
+        DatesheetFilterRow(departments, sessionsInDepartment, shiftsForSelection, selectedDeptId, selectedStartYear, selectedShift, onSelectDepartment, onSelectStartYear, onSelectShift)
+        Spacer(Modifier.height(10.dp))
+        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            CmsChip("All semesters", selected = selectedSemester == null, onClick = { onSelectSemester(null) })
+            (1..8).forEach { sem -> CmsChip("Sem $sem", selected = selectedSemester == sem, onClick = { onSelectSemester(sem) }) }
+        }
+        Spacer(Modifier.height(12.dp))
+        when {
+            resolvedSession == null -> {
+                Text("Choose a department, session, and shift to view or create a datesheet.", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
+            }
+            selectedSemester == null -> {
+                val sessionSheets = datesheets.filter { it.sessionId == resolvedSession.sessionId }.sortedBy { it.semester }
+                if (sessionSheets.isEmpty()) {
+                    Text("No datesheets yet for this session. Pick a semester above to create one.", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        sessionSheets.forEach { sheet -> DatesheetSummaryTile(sheet, resolvedSession, onClick = { onOpenDatesheet(sheet.id) }) }
+                    }
+                }
+            }
+            else -> {
+                val existing = datesheets.firstOrNull { it.sessionId == resolvedSession.sessionId && it.semester == selectedSemester }
+                if (existing != null) {
+                    DatesheetSummaryTile(existing, resolvedSession, onClick = { onOpenDatesheet(existing.id) })
+                } else {
+                    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
+                        Column(Modifier.padding(16.dp)) {
+                            Text("No Mid Term datesheet yet for Semester $selectedSemester.", style = MaterialTheme.typography.bodyMedium)
+                            Spacer(Modifier.height(10.dp))
+                            CmsPrimaryButton(text = "Create datesheet", onClick = { showCreateDialog = true })
+                        }
+                    }
+                }
             }
         }
-        if (sessions.isNotEmpty()) {
-            Spacer(Modifier.height(8.dp))
-            CmsEntityPicker(
-                label = "Academic session",
-                selectedId = selectedSessionId,
-                options = sessions.map { CmsEntityOption(it.sessionId, "${it.startYear}-${it.endYear} ${it.shift}") },
-                onSelected = onSessionChange,
-                optional = true,
-                emptyLabel = "All sessions",
-            )
+    }
+
+    if (showCreateDialog && resolvedSession != null && selectedSemester != null) {
+        CreateDatesheetDialog(
+            session = resolvedSession,
+            semester = selectedSemester,
+            buildings = buildings,
+            busy = busy,
+            onDismiss = { showCreateDialog = false },
+            onConfirm = { start, end, buildingId, instructions ->
+                onCreateDatesheet(start, end, buildingId, instructions)
+                showCreateDialog = false
+            },
+        )
+    }
+}
+
+@Composable
+private fun DatesheetSummaryTile(sheet: Datesheet, session: AcademicSession, onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        shape = RoundedCornerShape(14.dp),
+        color = ModSurface,
+        border = BorderStroke(1.dp, ModTrack),
+    ) {
+        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("Semester ${sheet.semester}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
+                Text("${session.label} · ${session.shift.name}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+            }
+            StatusBadge(if (sheet.published) "PUBLISHED" else "DRAFT", if (sheet.published) BadgeTone.Success else BadgeTone.Neutral)
         }
     }
 }
 
 @Composable
-private fun DatesheetScheduleCard(
-    sheet: Datesheet,
-    slots: List<DatesheetSlot>,
-    expanded: Boolean,
-    loadingSlots: Boolean,
-    canManage: Boolean,
-    identityKey: String?,
-    onToggle: () -> Unit,
-    onEdit: () -> Unit,
-    onDelete: () -> Unit,
-    onPublish: () -> Unit,
-    onAddPaper: () -> Unit,
-    onAddPaperOnDate: (String) -> Unit,
-    onEditPaper: (DatesheetSlot) -> Unit,
-    onViewPaper: (DatesheetSlot) -> Unit,
-    onDeletePaper: (DatesheetSlot) -> Unit,
+private fun GroupedDatesheetView(
+    departments: List<Department>,
+    sessions: List<AcademicSession>,
+    datesheets: List<Datesheet>,
+    onOpenDatesheet: (String) -> Unit,
 ) {
-    val quality = datesheetScheduleQuality(sheet, slots)
-    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Column(Modifier.padding(16.dp)) {
-            Row(Modifier.fillMaxWidth().clickable(onClick = onToggle), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(sheet.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        (sheet.examType ?: "EXAM").uppercase(Locale.ROOT) + " · ${slots.size} papers",
-                        color = ModMuted,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                }
-                StatusBadge(if (sheet.published) "PUBLISHED" else "DRAFT", if (sheet.published) BadgeTone.Success else BadgeTone.Neutral)
-            }
-            if (quality.issues.isNotEmpty()) {
-                Spacer(Modifier.height(8.dp))
-                Text("NEEDS REVIEW", color = CmsTheme.colors.accent, style = CmsTextStyles.eyebrow)
-            }
-            if (canManage) {
-                Spacer(Modifier.height(10.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TextButton(onClick = onEdit) { Text("Edit datesheet") }
-                    TextButton(onClick = onPublish, enabled = quality.canPublish || sheet.published) {
-                        Text(if (sheet.published) "Unpublish" else "Publish")
-                    }
-                    TextButton(onClick = onDelete) { Text("Delete", color = CmsTheme.colors.accent) }
-                }
-            }
-            if (expanded) {
-                Spacer(Modifier.height(10.dp))
-                when {
-                    loadingSlots -> DatesheetSkeletonCard()
-                    slots.isEmpty() -> DatesheetInlineEmpty(canManage, onAddPaper)
-                    else -> {
-                        val timedSlots = slots.filter { !it.startTime.isNullOrBlank() && !it.endTime.isNullOrBlank() }
-                        val untimedSlots = slots - timedSlots.toSet()
-                        if (timedSlots.isNotEmpty()) {
-                            val dates = timedSlots.map { it.examDate }.distinct().sorted()
-                            val timeSlots = timedSlots.map { "${it.startTime}–${it.endTime}" }.distinct().sortedBy { it.substringBefore('–') }
-                            val byDateAndTime = timedSlots.associateBy { it.examDate to "${it.startTime}–${it.endTime}" }
-                            TimetableGrid(
-                                timeSlots = timeSlots,
-                                identityHeader = "DATE",
-                                rows = dates.map { date ->
-                                    val parsed = runCatching { LocalDate.parse(date) }.getOrNull()
-                                    GridRow(
-                                        key = date,
-                                        label = parsed?.format(DatesheetDateFormat) ?: date,
-                                        cells = timeSlots.associateWith { timeKey ->
-                                            byDateAndTime[date to timeKey]?.let { slot ->
-                                                GridCell(
-                                                    title = slot.subjectName ?: slot.courseCode ?: "Untitled paper",
-                                                    subtitle = locationLabel(slot),
-                                                    meta = slot.invigilatorEmail ?: "No invigilator",
-                                                    isAlert = isAssignedTo(slot, identityKey),
-                                                )
-                                            }
-                                        },
-                                    )
-                                },
-                                editable = canManage,
-                                onCellClick = { dateKey, timeKey ->
-                                    val existing = byDateAndTime[dateKey to timeKey]
-                                    if (existing != null) onViewPaper(existing) else if (canManage) onAddPaperOnDate(dateKey)
-                                },
-                            )
+    var expandedDeptId by remember { mutableStateOf<String?>(null) }
+    var expandedSessionId by remember { mutableStateOf<String?>(null) }
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        departments.sortedBy { it.name }.forEach { dept ->
+            val deptSessions = sessions.filter { it.deptId == dept.deptId }
+            val deptSheetCount = datesheets.count { sheet -> deptSessions.any { it.sessionId == sheet.sessionId } }
+            Surface(shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
+                Column(Modifier.padding(4.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth()
+                            .clickable { expandedDeptId = if (expandedDeptId == dept.deptId) null else dept.deptId }
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(dept.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
+                            Text("$deptSheetCount datesheet(s)", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                         }
-                        if (untimedSlots.isNotEmpty()) {
-                            if (timedSlots.isNotEmpty()) Spacer(Modifier.height(10.dp))
-                            Text("UNSCHEDULED", color = ModMuted, style = CmsTextStyles.eyebrow)
-                            Spacer(Modifier.height(6.dp))
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                untimedSlots.sortedBy { it.examDate }.forEach { slot ->
-                                    PaperCard(
-                                        slot = slot,
-                                        canManage = canManage,
-                                        isMyDuty = isAssignedTo(slot, identityKey),
-                                        onEdit = { onEditPaper(slot) },
-                                        onDelete = { onDeletePaper(slot) },
-                                    )
+                    }
+                    if (expandedDeptId == dept.deptId) {
+                        deptSessions.sortedByDescending { it.startYear }.forEach { session ->
+                            val sessionSheets = datesheets.filter { it.sessionId == session.sessionId }.sortedBy { it.semester }
+                            Column(Modifier.padding(start = 12.dp, bottom = 8.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth()
+                                        .clickable { expandedSessionId = if (expandedSessionId == session.sessionId) null else session.sessionId }
+                                        .padding(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text("${session.label} · ${session.shift.name}", modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                                    Text("${sessionSheets.size}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                                }
+                                if (expandedSessionId == session.sessionId) {
+                                    if (sessionSheets.isEmpty()) {
+                                        Text("No datesheets yet.", color = ModMuted, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(start = 12.dp))
+                                    } else {
+                                        Column(Modifier.padding(start = 12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            sessionSheets.forEach { sheet -> DatesheetSummaryTile(sheet, session, onClick = { onOpenDatesheet(sheet.id) }) }
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
-                if (canManage && slots.isNotEmpty()) {
-                    Spacer(Modifier.height(8.dp))
-                    TextButton(onClick = onAddPaper) { Text("Add exam paper") }
-                }
             }
         }
     }
 }
 
 @Composable
-private fun PaperCard(slot: DatesheetSlot, canManage: Boolean, isMyDuty: Boolean, onEdit: () -> Unit, onDelete: () -> Unit) {
-    val date = runCatching { LocalDate.parse(slot.examDate) }.getOrNull()
-    Surface(
-        shape = RoundedCornerShape(12.dp),
-        color = if (isMyDuty) ModRedTint else ModGround,
-        border = if (isMyDuty) BorderStroke(1.dp, DatesheetGold) else null,
-    ) {
-        Column(Modifier.padding(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(slot.subjectName ?: slot.courseCode ?: "Untitled paper", modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold)
-                if (isMyDuty) StatusBadge("MY DUTY", BadgeTone.Gold)
-            }
-            Text(date?.format(DatesheetDateFormat) ?: slot.examDate, color = DatesheetNavy, style = MaterialTheme.typography.bodySmall)
-            MetaLine(timeLabel(slot))
-            MetaLine(locationLabel(slot))
-            MetaLine(slot.invigilatorEmail ?: "No invigilator assigned")
-            if (canManage) {
-                Spacer(Modifier.height(6.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TextButton(onClick = onEdit) { Text("Edit") }
-                    TextButton(onClick = onDelete) { Text("Remove", color = CmsTheme.colors.accent) }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun PaperDetailDialog(
-    slot: DatesheetSlot,
-    canManage: Boolean,
-    isMyDuty: Boolean,
-    onEdit: () -> Unit,
-    onRequestRemove: () -> Unit,
-    onDismiss: () -> Unit,
+private fun CalendarDatesheetView(
+    datesheets: List<Datesheet>,
+    sessionsById: Map<String, AcademicSession>,
+    slotsByDatesheet: Map<String, List<DatesheetSlot>>,
+    onOpenDatesheet: (String) -> Unit,
 ) {
-    val date = runCatching { LocalDate.parse(slot.examDate) }.getOrNull()
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(slot.subjectName ?: slot.courseCode ?: "Exam paper") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                if (isMyDuty) {
-                    StatusBadge("MY DUTY", BadgeTone.Gold)
-                    Spacer(Modifier.height(4.dp))
-                }
-                PaperDetailRow("Date", date?.format(DatesheetDateFormat) ?: slot.examDate)
-                PaperDetailRow("Time", timeLabel(slot))
-                slot.courseCode?.takeIf { it.isNotBlank() }?.let { PaperDetailRow("Course code", it) }
-                PaperDetailRow("Room", locationLabel(slot))
-                PaperDetailRow("Invigilator", slot.invigilatorEmail ?: "Not assigned")
-            }
-        },
-        confirmButton = {
-            if (canManage) TextButton(onClick = onEdit) { Text("Edit") } else TextButton(onClick = onDismiss) { Text("Close") }
-        },
-        dismissButton = {
-            if (canManage) {
-                Row {
-                    TextButton(onClick = onRequestRemove) { Text("Remove", color = CmsTheme.colors.accent) }
-                    TextButton(onClick = onDismiss) { Text("Close") }
-                }
-            }
-        },
+    data class Entry(val rawDate: String, val column: String, val cell: GridCell, val datesheetId: String)
+
+    val entries = datesheets.flatMap { sheet ->
+        val session = sessionsById[sheet.sessionId]
+        val column = "${session?.label ?: sheet.sessionId} · Sem ${sheet.semester}"
+        slotsByDatesheet[sheet.id].orEmpty().mapNotNull { slot ->
+            val date = slot.examDate ?: return@mapNotNull null
+            Entry(date, column, GridCell(title = slot.subjectName, subtitle = locationLabel(slot), meta = paperTimeLabel(slot, sheet)), sheet.id)
+        }
+    }
+    if (entries.isEmpty()) {
+        Text("No papers are scheduled yet.", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
+        return
+    }
+
+    val columns = entries.map { it.column }.distinct().sorted()
+    val rawDates = entries.map { it.rawDate }.distinct().sortedBy { runCatching { LocalDate.parse(it) }.getOrDefault(LocalDate.MAX) }
+    val byKey = entries.associateBy { it.rawDate to it.column }
+    val rows = rawDates.map { date -> GridRow(key = date, label = formatExamDate(date), cells = columns.associateWith { col -> byKey[date to col]?.cell }) }
+
+    TimetableGrid(
+        timeSlots = columns,
+        rows = rows,
+        identityHeader = "DATE",
+        onCellClick = { rowKey, colKey -> byKey[rowKey to colKey]?.let { onOpenDatesheet(it.datesheetId) } },
     )
 }
 
 @Composable
-private fun PaperDetailRow(label: String, value: String) {
+private fun SemesterDatesheetView(
+    resolvedSession: AcademicSession?,
+    departments: List<Department>,
+    sessionsInDepartment: List<AcademicSession>,
+    shiftsForSelection: List<Session>,
+    selectedDeptId: String?,
+    selectedStartYear: Int?,
+    selectedShift: Session?,
+    datesheets: List<Datesheet>,
+    slotsByDatesheet: Map<String, List<DatesheetSlot>>,
+    onSelectDepartment: (String?) -> Unit,
+    onSelectStartYear: (Int?) -> Unit,
+    onSelectShift: (Session?) -> Unit,
+    onOpenDatesheet: (String) -> Unit,
+) {
     Column {
-        Text(label.uppercase(Locale.ROOT), color = ModMuted, style = CmsTextStyles.eyebrow)
-        Text(value, style = MaterialTheme.typography.bodyMedium)
-    }
-}
+        DatesheetFilterRow(departments, sessionsInDepartment, shiftsForSelection, selectedDeptId, selectedStartYear, selectedShift, onSelectDepartment, onSelectStartYear, onSelectShift)
+        Spacer(Modifier.height(12.dp))
 
-private fun timeLabel(slot: DatesheetSlot): String {
-    if (slot.startTime != null && slot.endTime != null) return "${slot.startTime} - ${slot.endTime}"
-    if (slot.durationMinutes != null) return "${slot.durationMinutes} minutes"
-    return "Time not set"
-}
+        if (resolvedSession == null) {
+            Text("Choose a department, session, and shift to view its semester grid.", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
+            return@Column
+        }
 
-private fun locationLabel(slot: DatesheetSlot): String =
-    listOfNotNull(slot.building, slot.roomNo).joinToString(" / ").ifBlank { "No room assigned" }
+        data class Entry(val semester: Int, val rawDate: String, val cell: GridCell, val datesheetId: String)
 
-@Composable
-private fun MetaLine(text: String) {
-    Text(text, color = ModMuted, style = MaterialTheme.typography.bodySmall)
-}
-
-@Composable
-private fun DatesheetEmpty(filtered: Boolean, canManage: Boolean, onAdd: () -> Unit) {
-    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(if (filtered) "No matching schedules" else "No exam schedules yet", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(4.dp))
-            Text(
-                if (filtered) "Try a different search, status or session filter." else "New datesheets start as drafts. Add at least one paper before publishing.",
-                color = ModMuted,
-                style = MaterialTheme.typography.bodySmall,
-            )
-            if (!filtered && canManage) {
-                Spacer(Modifier.height(12.dp))
-                CmsPrimaryButton(text = "New datesheet", onClick = onAdd)
+        val sessionSheets = datesheets.filter { it.sessionId == resolvedSession.sessionId }
+        val entries = sessionSheets.flatMap { sheet ->
+            slotsByDatesheet[sheet.id].orEmpty().mapNotNull { slot ->
+                val date = slot.examDate ?: return@mapNotNull null
+                Entry(sheet.semester, date, GridCell(title = slot.subjectName, subtitle = locationLabel(slot), meta = paperTimeLabel(slot, sheet)), sheet.id)
             }
         }
-    }
-}
-
-@Composable
-private fun DatesheetInlineEmpty(canManage: Boolean, onAdd: () -> Unit) {
-    Column(Modifier.padding(vertical = 8.dp)) {
-        Text("No papers have been scheduled.", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
-        if (canManage) {
-            Spacer(Modifier.height(8.dp))
-            TextButton(onClick = onAdd) { Text("Add exam paper") }
+        if (entries.isEmpty()) {
+            Text("No papers are scheduled yet for this session.", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
+            return@Column
         }
+
+        val rawDates = entries.map { it.rawDate }.distinct().sortedBy { runCatching { LocalDate.parse(it) }.getOrDefault(LocalDate.MAX) }
+        val dateColumns = rawDates.map { formatExamDate(it) }
+        val rawToFormatted = rawDates.zip(dateColumns).toMap()
+        val byKey = entries.associateBy { it.semester.toString() to rawToFormatted[it.rawDate] }
+        val rows = (1..8).mapNotNull { semester ->
+            if (entries.none { it.semester == semester }) return@mapNotNull null
+            GridRow(key = semester.toString(), label = "Semester $semester", cells = dateColumns.associateWith { col -> byKey[semester.toString() to col]?.cell })
+        }
+
+        TimetableGrid(
+            timeSlots = dateColumns,
+            rows = rows,
+            identityHeader = "SEM",
+            onCellClick = { rowKey, colKey -> byKey[rowKey to colKey]?.let { onOpenDatesheet(it.datesheetId) } },
+        )
     }
 }
 
 @Composable
-private fun DatesheetSkeletonCard() {
-    SkeletonRow()
-}
-
-@Composable
-private fun DatesheetEditorDialog(
-    sheet: Datesheet?,
-    sessions: List<AcademicSession>,
+private fun DatesheetDetailDialog(
+    detail: DatesheetDetailData,
+    viewer: DatesheetViewerContext,
     busy: Boolean,
     onDismiss: () -> Unit,
-    onSave: (DatesheetDraft) -> Unit,
+    onSetPublished: (Boolean) -> Unit,
+    onDeleteDatesheet: () -> Unit,
+    onSyncMissingSubjects: () -> Unit,
+    onRemovePaper: (String) -> Unit,
+    onUpdatePaper: (DatesheetSlot) -> Unit,
 ) {
-    var title by remember { mutableStateOf(sheet?.title ?: "") }
-    var examType by remember { mutableStateOf(sheet?.examType ?: "MIDTERM") }
-    var sessionId by remember { mutableStateOf(sheet?.sessionId) }
-    var instructions by remember { mutableStateOf(sheet?.instructions ?: "") }
-    var published by remember { mutableStateOf(sheet?.published ?: false) }
-
-    val draft = DatesheetDraft(title.trim(), examType, sessionId, instructions.trim().ifBlank { null }, published)
+    var editingSlot by remember { mutableStateOf<DatesheetSlot?>(null) }
+    var confirmDelete by remember { mutableStateOf(false) }
+    val sheet = detail.sheet
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (sheet == null) "New datesheet" else "Edit datesheet", style = MaterialTheme.typography.headlineSmall) },
+        title = { Text(datesheetLabel(sheet, detail.session, detail.department)) },
         text = {
-            Column {
-                OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Title") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+            Column(Modifier.heightIn(max = 520.dp).verticalScroll(rememberScrollState())) {
+                StatusBadge(if (sheet.published) "PUBLISHED" else "DRAFT", if (sheet.published) BadgeTone.Success else BadgeTone.Neutral)
                 Spacer(Modifier.height(10.dp))
-                Text("EXAM TYPE", color = ModMuted, style = CmsTextStyles.eyebrow)
-                Spacer(Modifier.height(6.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    EXAM_TYPES.forEach { type ->
-                        CmsChip(type, selected = examType == type, onClick = { examType = type })
+                if (viewer.canManage) {
+                    detail.quality?.issues?.takeIf { it.isNotEmpty() }?.let { issues ->
+                        CmsNotice(issues.joinToString(" "), tone = NoticeTone.Warning)
+                        Spacer(Modifier.height(8.dp))
                     }
+                    detail.drift?.takeIf { !it.isClean }?.let { drift ->
+                        CmsNotice(
+                            buildString {
+                                if (drift.missingSubjects.isNotEmpty()) append("${drift.missingSubjects.size} curriculum subject(s) missing a paper. ")
+                                if (drift.staleSlots.isNotEmpty()) append("${drift.staleSlots.size} scheduled paper(s) no longer in the curriculum.")
+                            },
+                            tone = NoticeTone.Warning,
+                            actionLabel = if (drift.missingSubjects.isNotEmpty()) "Add missing" else null,
+                            onAction = if (drift.missingSubjects.isNotEmpty()) onSyncMissingSubjects else null,
+                        )
+                        Spacer(Modifier.height(8.dp))
+                    }
+                }
+                detail.slots.sortedWith(compareBy { it.examDate ?: "9999-99-99" }).forEach { slot ->
+                    PaperRow(
+                        slot = slot,
+                        sheet = sheet,
+                        canManage = viewer.canManage,
+                        identityKey = viewer.identityKey,
+                        onEdit = { editingSlot = slot },
+                        onRemove = { onRemovePaper(slot.id) },
+                    )
+                    Spacer(Modifier.height(8.dp))
+                }
+                if (viewer.canManage) {
+                    Spacer(Modifier.height(4.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TextButton(
+                            onClick = { onSetPublished(!sheet.published) },
+                            enabled = !busy && (sheet.published || detail.quality?.canPublish == true),
+                        ) { Text(if (sheet.published) "Unpublish" else "Publish") }
+                        TextButton(onClick = { confirmDelete = true }, enabled = !busy) { Text("Delete", color = DatesheetRed) }
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } },
+    )
+
+    editingSlot?.let { slot ->
+        PaperEditorDialog(
+            slot = slot,
+            sheet = sheet,
+            buildings = detail.buildings,
+            rooms = detail.rooms,
+            teachers = detail.teachers,
+            busy = busy,
+            onDismiss = { editingSlot = null },
+            onConfirm = { updated -> onUpdatePaper(updated); editingSlot = null },
+        )
+    }
+
+    if (confirmDelete) {
+        ConfirmDestructiveActionDialog(
+            title = "Delete datesheet",
+            dependentSummary = "This permanently removes the datesheet and every scheduled paper in it.",
+            onConfirm = { confirmDelete = false; onDeleteDatesheet(); onDismiss() },
+            onDismiss = { confirmDelete = false },
+        )
+    }
+}
+
+@Composable
+private fun PaperRow(slot: DatesheetSlot, sheet: Datesheet, canManage: Boolean, identityKey: String?, onEdit: () -> Unit, onRemove: () -> Unit) {
+    Surface(shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
+        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(slot.subjectName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
+                Text(slot.courseCode, color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.height(4.dp))
+                Text(formatExamDate(slot.examDate), style = MaterialTheme.typography.bodySmall)
+                Text(paperTimeLabel(slot, sheet), color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                Text(locationLabel(slot), color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                val invigilator = slot.invigilatorEmail
+                if (!invigilator.isNullOrBlank()) {
+                    Text(invigilator, color = if (isAssignedTo(slot, identityKey)) DatesheetGold else ModMuted, style = MaterialTheme.typography.bodySmall)
+                }
+                if (isAssignedTo(slot, identityKey)) {
+                    Spacer(Modifier.height(4.dp))
+                    StatusBadge("MY DUTY", BadgeTone.Gold)
+                }
+            }
+            if (canManage) {
+                Column {
+                    TextButton(onClick = onEdit) { Text("Edit") }
+                    TextButton(onClick = onRemove) { Text("Remove") }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CreateDatesheetDialog(
+    session: AcademicSession,
+    semester: Int,
+    buildings: List<Building>,
+    busy: Boolean,
+    onDismiss: () -> Unit,
+    onConfirm: (defaultStart: String?, defaultEnd: String?, defaultBuildingId: String?, instructions: String?) -> Unit,
+) {
+    var startTime by remember { mutableStateOf("") }
+    var endTime by remember { mutableStateOf("") }
+    var selectedBuildingId by remember { mutableStateOf<String?>(null) }
+    var instructions by remember { mutableStateOf("") }
+
+    val startTimeValid = startTime.isBlank() || runCatching { LocalTime.parse(startTime) }.isSuccess
+    val endTimeValid = endTime.isBlank() || runCatching { LocalTime.parse(endTime) }.isSuccess
+    val timesConsistent = startTime.isBlank() == endTime.isBlank()
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("New Mid Term datesheet") },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                Text("${session.label} · ${session.shift.name} · Semester $semester", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.height(10.dp))
+                Text("Papers will be prefilled for every subject in this semester's curriculum.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.height(10.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    CmsTimeField(value = startTime, onValueChange = { startTime = it }, label = "Default start", modifier = Modifier.weight(1f))
+                    CmsTimeField(value = endTime, onValueChange = { endTime = it }, label = "Default end", modifier = Modifier.weight(1f))
                 }
                 Spacer(Modifier.height(10.dp))
                 CmsEntityPicker(
-                    label = "Academic session",
-                    selectedId = sessionId,
-                    options = sessions.map { CmsEntityOption(it.sessionId, "${it.startYear}-${it.endYear} ${it.shift}") },
-                    onSelected = { sessionId = it },
+                    label = "Default building",
+                    selectedId = selectedBuildingId,
+                    options = buildings.map { CmsEntityOption(it.buildingId, it.name) },
+                    onSelected = { selectedBuildingId = it },
                     optional = true,
-                    emptyLabel = "College wide",
+                    emptyLabel = "None",
                 )
                 Spacer(Modifier.height(10.dp))
-                OutlinedTextField(value = instructions, onValueChange = { instructions = it }, label = { Text("Instructions") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
-                if (sheet != null) {
-                    Spacer(Modifier.height(10.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Published", modifier = Modifier.weight(1f))
-                        Switch(checked = published, onCheckedChange = { published = it })
-                    }
-                }
+                OutlinedTextField(
+                    value = instructions,
+                    onValueChange = { instructions = it },
+                    label = { Text("Instructions (optional)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 2,
+                )
             }
         },
         confirmButton = {
-            TextButton(onClick = { onSave(draft) }, enabled = title.isNotBlank() && !busy) {
-                Text(if (sheet == null) "Create" else "Save changes")
-            }
+            TextButton(
+                onClick = { onConfirm(startTime.ifBlank { null }, endTime.ifBlank { null }, selectedBuildingId, instructions.ifBlank { null }) },
+                enabled = !busy && startTimeValid && endTimeValid && timesConsistent,
+            ) { Text("Create") }
         },
-        dismissButton = { TextButton(onClick = onDismiss, enabled = !busy) { Text("Cancel") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     )
 }
 
 @Composable
 private fun PaperEditorDialog(
-    slot: DatesheetSlot?,
-    initialDate: String = "",
-    subjects: List<SemesterSubject>,
-    invigilators: List<Teacher>,
+    slot: DatesheetSlot,
+    sheet: Datesheet,
+    buildings: List<Building>,
+    rooms: List<Room>,
+    teachers: List<Teacher>,
     busy: Boolean,
     onDismiss: () -> Unit,
-    onSave: (DatesheetSlot) -> Unit,
+    onConfirm: (DatesheetSlot) -> Unit,
 ) {
-    var courseCode by remember { mutableStateOf(slot?.courseCode ?: "") }
-    var subjectName by remember { mutableStateOf(slot?.subjectName ?: "") }
-    var examDate by remember { mutableStateOf(slot?.examDate ?: initialDate) }
-    var startTime by remember { mutableStateOf(slot?.startTime ?: "") }
-    var endTime by remember { mutableStateOf(slot?.endTime ?: "") }
-    var roomNo by remember { mutableStateOf(slot?.roomNo ?: "") }
-    var building by remember { mutableStateOf(slot?.building ?: "") }
-    var invigilatorEmail by remember { mutableStateOf(slot?.invigilatorEmail) }
+    var examDate by remember { mutableStateOf(slot.examDate ?: "") }
+    var overrideTime by remember { mutableStateOf(slot.startTime != null || slot.endTime != null) }
+    var startTime by remember { mutableStateOf(slot.startTime ?: "") }
+    var endTime by remember { mutableStateOf(slot.endTime ?: "") }
+    var selectedBuildingId by remember { mutableStateOf(slot.buildingId ?: sheet.defaultBuildingId) }
+    var buildingName by remember { mutableStateOf(buildings.firstOrNull { it.buildingId == selectedBuildingId }?.name ?: slot.building ?: "") }
+    var selectedRoomId by remember { mutableStateOf(slot.roomId) }
+    var roomNo by remember { mutableStateOf(slot.roomNo ?: "") }
+    var invigilatorEmail by remember { mutableStateOf(slot.invigilatorEmail ?: "") }
 
-    val draft = (slot ?: DatesheetSlot(id = "", datesheetId = "", examDate = "")).copy(
-        courseCode = courseCode.trim().ifBlank { null },
-        subjectName = subjectName.trim().ifBlank { null },
-        examDate = examDate.trim(),
-        startTime = startTime.trim().ifBlank { null },
-        endTime = endTime.trim().ifBlank { null },
-        roomNo = roomNo.trim().ifBlank { null },
-        building = building.trim().ifBlank { null },
-        invigilatorEmail = invigilatorEmail,
-    )
+    val startTimeValid = startTime.isBlank() || runCatching { LocalTime.parse(startTime) }.isSuccess
+    val endTimeValid = endTime.isBlank() || runCatching { LocalTime.parse(endTime) }.isSuccess
+    val timesConsistent = !overrideTime || startTime.isBlank() == endTime.isBlank()
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (slot == null) "Add exam paper" else "Edit exam paper", style = MaterialTheme.typography.headlineSmall) },
+        title = { Text(slot.subjectName) },
         text = {
-            Column {
-                if (subjects.isNotEmpty()) {
-                    CmsEntityPicker(
-                        label = "Select from curriculum",
-                        selectedId = courseCode.ifBlank { null },
-                        options = subjects.map { CmsEntityOption(it.courseCode, it.name) },
-                        onSelected = { id ->
-                            val subject = subjects.firstOrNull { it.courseCode == id }
-                            courseCode = subject?.courseCode ?: ""
-                            subjectName = subject?.name ?: subjectName
-                        },
-                        optional = true,
-                    )
-                    Spacer(Modifier.height(10.dp))
+            Column(Modifier.heightIn(max = 460.dp).verticalScroll(rememberScrollState())) {
+                Text(slot.courseCode, color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.height(10.dp))
+                CmsDateField(value = examDate, onValueChange = { examDate = it }, label = "Exam date", optional = true)
+                Spacer(Modifier.height(10.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(checked = overrideTime, onCheckedChange = { overrideTime = it })
+                    Text("Override the datesheet's default time")
                 }
-                OutlinedTextField(value = subjectName, onValueChange = { subjectName = it }, label = { Text("Subject") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-                Spacer(Modifier.height(10.dp))
-                CmsDateField(value = examDate, onValueChange = { examDate = it }, label = "Exam date")
-                Spacer(Modifier.height(10.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    CmsTimeField(value = startTime, onValueChange = { startTime = it }, label = "Start time", modifier = Modifier.weight(1f))
-                    CmsTimeField(value = endTime, onValueChange = { endTime = it }, label = "End time", modifier = Modifier.weight(1f))
+                if (overrideTime) {
+                    Spacer(Modifier.height(6.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        CmsTimeField(value = startTime, onValueChange = { startTime = it }, label = "Start", modifier = Modifier.weight(1f))
+                        CmsTimeField(value = endTime, onValueChange = { endTime = it }, label = "End", modifier = Modifier.weight(1f))
+                    }
+                } else if (sheet.defaultStartTime != null && sheet.defaultEndTime != null) {
+                    Text("Uses the datesheet default: ${sheet.defaultStartTime}–${sheet.defaultEndTime}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
                 Spacer(Modifier.height(10.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedTextField(value = roomNo, onValueChange = { roomNo = it }, label = { Text("Room") }, modifier = Modifier.weight(1f), singleLine = true)
-                    OutlinedTextField(value = building, onValueChange = { building = it }, label = { Text("Building") }, modifier = Modifier.weight(1f), singleLine = true)
-                }
+                CmsBuildingRoomPicker(
+                    buildings = buildings,
+                    rooms = rooms,
+                    selectedBuildingId = selectedBuildingId,
+                    selectedRoomId = selectedRoomId,
+                    onChange = { buildingId, name, roomId, roomNumber ->
+                        selectedBuildingId = buildingId
+                        buildingName = name ?: ""
+                        selectedRoomId = roomId
+                        roomNo = roomNumber ?: ""
+                    },
+                    buildingOptional = false,
+                )
                 Spacer(Modifier.height(10.dp))
                 CmsEntityPicker(
-                    label = "Select invigilator",
-                    selectedId = invigilatorEmail,
-                    options = invigilators.map { CmsEntityOption(it.email, it.name) },
-                    onSelected = { invigilatorEmail = it },
+                    label = "Invigilator",
+                    selectedId = invigilatorEmail.ifBlank { null },
+                    options = teachers.map { CmsEntityOption(it.teacherId, it.name) },
+                    onSelected = { invigilatorEmail = it ?: "" },
                     optional = true,
-                    emptyLabel = "No invigilator assigned",
+                    emptyLabel = "Not assigned",
                 )
             }
         },
         confirmButton = {
-            TextButton(onClick = { onSave(draft) }, enabled = examDate.isNotBlank() && !busy) {
-                Text(if (slot == null) "Add paper" else "Save changes")
-            }
+            TextButton(
+                onClick = {
+                    onConfirm(
+                        slot.copy(
+                            examDate = examDate.ifBlank { null },
+                            startTime = if (overrideTime) startTime.ifBlank { null } else null,
+                            endTime = if (overrideTime) endTime.ifBlank { null } else null,
+                            buildingId = selectedBuildingId,
+                            building = buildingName.ifBlank { null },
+                            roomId = selectedRoomId,
+                            roomNo = roomNo.ifBlank { null },
+                            invigilatorEmail = invigilatorEmail.ifBlank { null },
+                        ),
+                    )
+                },
+                enabled = !busy && selectedBuildingId != null && startTimeValid && endTimeValid && timesConsistent,
+            ) { Text("Save") }
         },
-        dismissButton = { TextButton(onClick = onDismiss, enabled = !busy) { Text("Cancel") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     )
+}
+
+private fun formatExamDate(date: String?): String =
+    date?.let { runCatching { LocalDate.parse(it).format(DATESHEET_DATE_FORMAT) }.getOrNull() } ?: "Not scheduled"
+
+private fun paperTimeLabel(slot: DatesheetSlot, sheet: Datesheet): String {
+    val start = slot.resolvedStartTime(sheet)
+    val end = slot.resolvedEndTime(sheet)
+    return if (start != null && end != null) "$start–$end" else "Time not set"
 }

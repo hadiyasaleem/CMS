@@ -16,6 +16,7 @@ data class StudentExamsHubSnapshot(
 
 fun studentExamsHubSnapshot(
     sessionId: String,
+    semester: Int,
     scores: List<SubjectExamScore>,
     results: List<SemesterGpa>,
     datesheets: List<Datesheet>,
@@ -25,13 +26,13 @@ fun studentExamsHubSnapshot(
     val distinctScores = scores.distinctBy { it.courseCode.trim().lowercase() to it.examType }
     val latestResult = results.maxByOrNull { it.semester }
 
-    val viewer = DatesheetViewerContext(DatesheetViewerRole.STUDENT, sessionId)
+    val viewer = DatesheetViewerContext(DatesheetViewerRole.STUDENT, sessionId, semester)
     val visibleDatesheets = datesheets.filter { isVisibleTo(it, viewer) }.distinctBy { it.id }
     val visibleIds = visibleDatesheets.map { it.id }.toSet()
 
     val upcoming = slots.distinctBy { it.id }.mapNotNull { slot ->
         if (!visibleIds.contains(slot.datesheetId)) return@mapNotNull null
-        val date = runCatching { LocalDate.parse(slot.examDate) }.getOrNull() ?: return@mapNotNull null
+        val date = slot.examDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() } ?: return@mapNotNull null
         if (date.isBefore(today)) null else slot to date
     }
 

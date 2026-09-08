@@ -50,22 +50,23 @@ class StudentExamsHubViewModel @Inject constructor(
                         // otherwise the hub only ever shows stale/empty cached data.
                         val syncResult = runCatching { marksRepository.syncSession(context.sessionId) }
                         syncResult.orLogCritical("StudentExamsHubViewModel.syncSession")
+                        val datesheetSyncResult = runCatching { datesheetRepository.sync(); datesheetRepository.syncAllSlots() }
                         val scoresResult = runCatching { marksRepository.observeStudentMarks(context.sessionId, context.rollNumber).first() }
                         val resultsResult = runCatching { marksRepository.getSemesterGpa(context.sessionId, context.rollNumber) }
-                        val datesheetsResult = runCatching { datesheetRepository.getDatesheets() }
+                        val datesheetsResult = runCatching { datesheetRepository.observeDatesheets().first() }
+                        val slotsResult = runCatching { datesheetRepository.observeAllSlots().first() }
                         val scores = scoresResult.orLogCritical("StudentExamsHubViewModel.observeStudentMarks", emptyList())
                         val results = resultsResult.orLogCritical("StudentExamsHubViewModel.getSemesterGpa", emptyList())
-                        val datesheets = datesheetsResult.orLogCritical("StudentExamsHubViewModel.getDatesheets", emptyList())
-                        val slots = datesheets.flatMap { sheet ->
-                            runCatching { datesheetRepository.getSlots(sheet.id) }.orLogCritical("StudentExamsHubViewModel.getSlots", emptyList())
-                        }
-                        _error.value = if (syncResult.isFailure || scoresResult.isFailure || resultsResult.isFailure || datesheetsResult.isFailure) {
+                        val datesheets = datesheetsResult.orLogCritical("StudentExamsHubViewModel.observeDatesheets", emptyList())
+                        val slots = slotsResult.orLogCritical("StudentExamsHubViewModel.observeAllSlots", emptyList())
+                        _error.value = if (syncResult.isFailure || datesheetSyncResult.isFailure || scoresResult.isFailure || resultsResult.isFailure || datesheetsResult.isFailure) {
                             "Some exam data could not be loaded. Pull to refresh to try again."
                         } else {
                             null
                         }
                         studentExamsHubSnapshot(
                             sessionId = context.sessionId,
+                            semester = context.session?.currentSemester ?: 0,
                             scores = scores,
                             results = results,
                             datesheets = datesheets,

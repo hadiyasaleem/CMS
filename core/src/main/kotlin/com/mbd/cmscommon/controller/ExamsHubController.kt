@@ -49,8 +49,11 @@ class ExamsHubController(
         }
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    private val _datesheets = MutableStateFlow<List<Datesheet>>(emptyList())
-    private val _slots = MutableStateFlow<List<DatesheetSlot>>(emptyList())
+    private val datesheets: StateFlow<List<Datesheet>> = datesheetRepository.observeDatesheets()
+        .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    private val allSlots: StateFlow<List<DatesheetSlot>> = datesheetRepository.observeAllSlots()
+        .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _loading = MutableStateFlow(true)
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
@@ -60,8 +63,8 @@ class ExamsHubController(
 
     private var loadVersion = 0
 
-    val snapshot: StateFlow<ExamsHubSnapshot> = combine(assignments, submissions, _datesheets, _slots) { classes, papers, datesheets, slots ->
-        examsHubSnapshot(teacherId, classes, papers, datesheets, slots, today())
+    val snapshot: StateFlow<ExamsHubSnapshot> = combine(assignments, submissions, datesheets, allSlots) { classes, papers, sheets, slots ->
+        examsHubSnapshot(teacherId, classes, papers, sheets, slots, today())
     }.stateIn(
         scope,
         SharingStarted.WhileSubscribed(5000),
@@ -81,12 +84,7 @@ class ExamsHubController(
             try {
                 supervisorScope {
                     val currentAssignments = async { assignmentsProvider.observeAssignmentsFor(teacherId).first() }.await()
-                    val datesheetsDeferred = async {
-                        runCatching {
-                            if (fetchRemote) datesheetRepository.sync()
-                            datesheetRepository.getDatesheets()
-                        }
-                    }
+                    val datesheetsDeferred = async { runCatching { if (fetchRemote) { datesheetRepository.sync(); datesheetRepository.syncAllSlots() } } }
 
                     val offerings = currentAssignments.distinctBy { it.sessionId to it.courseCode }
                     val paperResults = if (fetchRemote) {
@@ -98,23 +96,9 @@ class ExamsHubController(
                     }
 
                     val datesheetResult = datesheetsDeferred.await()
-                    val sheets = datesheetResult.getOrDefault(emptyList())
-                    if (version == loadVersion) _datesheets.value = sheets
-
-                    val slotResults = sheets
-                        .map { sheet ->
-                            async {
-                                runCatching {
-                                    if (fetchRemote) datesheetRepository.syncSlots(sheet.id)
-                                    datesheetRepository.getSlots(sheet.id)
-                                }
-                            }
-                        }
-                        .awaitAll()
 
                     if (version == loadVersion) {
-                        _slots.value = slotResults.flatMap { it.getOrDefault(emptyList()) }
-                        val firstFailure = (paperResults + datesheetResult + slotResults).firstNotNullOfOrNull { it.exceptionOrNull() }
+                        val firstFailure = (paperResults + datesheetResult).firstNotNullOfOrNull { it.exceptionOrNull() }
                         _loadError.value = firstFailure?.userMessageLogged("Some exam data could not be loaded.")
                     }
                 }

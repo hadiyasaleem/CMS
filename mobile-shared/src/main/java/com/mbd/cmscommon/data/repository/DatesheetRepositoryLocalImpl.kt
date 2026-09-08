@@ -12,12 +12,16 @@ import com.mbd.cmscommon.data.sync.SyncCheckpointDefaults
 import com.mbd.cmscommon.data.sync.SyncCheckpointStore
 import com.mbd.cmscommon.data.sync.maxRemoteUpdatedAt
 import com.mbd.cmscommon.domain.model.Datesheet
+import com.mbd.cmscommon.domain.model.DatesheetDraft
 import com.mbd.cmscommon.domain.model.DatesheetSlot
+import com.mbd.cmscommon.domain.model.SemesterSubject
 import com.mbd.cmscommon.domain.repository.DatesheetRepository
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.query.Order
 import java.time.Instant
 import javax.inject.Inject
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 class DatesheetRepositoryLocalImpl @Inject constructor(
     private val postgrest: Postgrest,
@@ -28,23 +32,32 @@ class DatesheetRepositoryLocalImpl @Inject constructor(
 
     private fun syncOwnerKey(): String = sessionManager.accountKey ?: SyncCheckpointDefaults.ownerKey("anonymous-local")
 
-    override suspend fun getDatesheets(): List<Datesheet> =
-        datesheetDao.getDatesheets().map { DatesheetMapper.entityToDomain(it) }
+    override fun observeDatesheets(): Flow<List<Datesheet>> =
+        datesheetDao.observeDatesheets().map { rows -> rows.map { DatesheetMapper.entityToDomain(it) } }
+
+    override fun observeSlots(datesheetId: String): Flow<List<DatesheetSlot>> =
+        datesheetDao.observeSlots(datesheetId).map { rows -> rows.map { DatesheetMapper.slotEntityToDomain(it) } }
+
+    override fun observeAllSlots(): Flow<List<DatesheetSlot>> =
+        datesheetDao.observeAllSlots().map { rows -> rows.map { DatesheetMapper.slotEntityToDomain(it) } }
 
     override suspend fun sync() {
         syncDatesheets()
     }
 
-    override suspend fun getSlots(datesheetId: String): List<DatesheetSlot> =
-        datesheetDao.getSlots(datesheetId).map { DatesheetMapper.slotEntityToDomain(it) }
+    override suspend fun syncAllSlots() {
+        syncSlotsDelta()
+    }
 
-    override suspend fun createDatesheet(title: String, examType: String, sessionId: String?, instructions: String, published: Boolean, createdBy: String): String {
+    override suspend fun createDatesheet(draft: DatesheetDraft, createdBy: String): String {
         val dto = DatesheetDto(
-            title = title.trim(),
-            examType = examType,
-            sessionId = sessionId,
-            published = published,
-            instructions = instructions,
+            sessionId = draft.sessionId,
+            semester = draft.semester,
+            defaultStartTime = draft.defaultStartTime,
+            defaultEndTime = draft.defaultEndTime,
+            defaultBuildingId = draft.defaultBuildingId,
+            published = draft.published,
+            instructions = draft.instructions,
             createdBy = createdBy,
         )
         val inserted = postgrest.from(SupabaseTables.DATESHEETS).insert(dto) { select() }.decodeList<DatesheetDto>().first()
@@ -52,25 +65,29 @@ class DatesheetRepositoryLocalImpl @Inject constructor(
         return inserted.id ?: ""
     }
 
-    override suspend fun updateDatesheet(id: String, title: String, examType: String, sessionId: String?, instructions: String, published: Boolean) {
+    override suspend fun updateDatesheet(id: String, draft: DatesheetDraft) {
         postgrest.from(SupabaseTables.DATESHEETS).update({
-            set("title", title.trim())
-            set("exam_type", examType)
-            set("session_id", sessionId)
-            set("instructions", instructions)
-            set("published", published)
+            set("session_id", draft.sessionId)
+            set("semester", draft.semester)
+            set("default_start_time", draft.defaultStartTime)
+            set("default_end_time", draft.defaultEndTime)
+            set("default_building_id", draft.defaultBuildingId)
+            set("instructions", draft.instructions)
+            set("published", draft.published)
         }) {
             filter { eq("id", id) }
         }
-        datesheetDao.getDatesheets().firstOrNull { it.datesheetId == id }?.let { cached ->
+        datesheetDao.getDatesheetById(id)?.let { cached ->
             datesheetDao.upsertDatesheets(
                 listOf(
                     cached.copy(
-                        title = title.trim(),
-                        examType = examType,
-                        sessionId = sessionId,
-                        instructions = instructions,
-                        published = published,
+                        sessionId = draft.sessionId,
+                        semester = draft.semester,
+                        defaultStartTime = draft.defaultStartTime,
+                        defaultEndTime = draft.defaultEndTime,
+                        defaultBuildingId = draft.defaultBuildingId,
+                        instructions = draft.instructions,
+                        published = draft.published,
                         updatedAt = System.currentTimeMillis(),
                     ),
                 ),
@@ -82,10 +99,8 @@ class DatesheetRepositoryLocalImpl @Inject constructor(
         postgrest.from(SupabaseTables.DATESHEETS).update({ set("published", published) }) {
             filter { eq("id", id) }
         }
-        datesheetDao.getDatesheets().firstOrNull { it.datesheetId == id }?.let { cached ->
-            datesheetDao.upsertDatesheets(
-                listOf(cached.copy(published = published, updatedAt = System.currentTimeMillis())),
-            )
+        datesheetDao.getDatesheetById(id)?.let { cached ->
+            datesheetDao.upsertDatesheets(listOf(cached.copy(published = published, updatedAt = System.currentTimeMillis())))
         }
     }
 
@@ -100,17 +115,27 @@ class DatesheetRepositoryLocalImpl @Inject constructor(
         datesheetDao.deleteSlotsForDatesheet(id)
     }
 
+    override suspend fun prefillPapers(datesheetId: String, subjects: List<SemesterSubject>) {
+        if (subjects.isEmpty()) return
+        val dtos = subjects.map { subject ->
+            DatesheetSlotDto(datesheetId = datesheetId, courseCode = subject.courseCode, subjectName = subject.name)
+        }
+        val inserted = postgrest.from(SupabaseTables.DATESHEET_SLOTS).insert(dtos) { select() }.decodeList<DatesheetSlotDto>()
+        datesheetDao.upsertSlots(inserted.map { DatesheetMapper.slotDtoToEntity(it) })
+    }
+
     override suspend fun addSlot(slot: DatesheetSlot) {
         val dto = DatesheetSlotDto(
             datesheetId = slot.datesheetId,
+            courseCode = slot.courseCode,
+            subjectName = slot.subjectName,
             examDate = slot.examDate,
             startTime = slot.startTime,
             endTime = slot.endTime,
-            durationMinutes = slot.durationMinutes,
-            courseCode = slot.courseCode,
-            subjectName = slot.subjectName,
-            roomNo = slot.roomNo,
+            buildingId = slot.buildingId,
             building = slot.building,
+            roomId = slot.roomId,
+            roomNo = slot.roomNo,
             invigilatorEmail = slot.invigilatorEmail,
         )
         val inserted = postgrest.from(SupabaseTables.DATESHEET_SLOTS).insert(dto) { select() }.decodeList<DatesheetSlotDto>().first()
@@ -119,30 +144,32 @@ class DatesheetRepositoryLocalImpl @Inject constructor(
 
     override suspend fun updateSlot(slot: DatesheetSlot) {
         postgrest.from(SupabaseTables.DATESHEET_SLOTS).update({
+            set("course_code", slot.courseCode)
+            set("subject_name", slot.subjectName)
             set("exam_date", slot.examDate)
             set("start_time", slot.startTime)
             set("end_time", slot.endTime)
-            set("duration_minutes", slot.durationMinutes)
-            set("course_code", slot.courseCode)
-            set("subject_name", slot.subjectName)
-            set("room_no", slot.roomNo)
+            set("building_id", slot.buildingId)
             set("building", slot.building)
+            set("room_id", slot.roomId)
+            set("room_no", slot.roomNo)
             set("invigilator_email", slot.invigilatorEmail)
         }) {
             filter { eq("id", slot.id) }
         }
-        datesheetDao.getSlots(slot.datesheetId).firstOrNull { it.slotId == slot.id }?.let { cached ->
+        datesheetDao.getSlotById(slot.id)?.let { cached ->
             datesheetDao.upsertSlots(
                 listOf(
                     cached.copy(
+                        courseCode = slot.courseCode,
+                        subjectName = slot.subjectName,
                         examDate = slot.examDate,
                         startTime = slot.startTime,
                         endTime = slot.endTime,
-                        durationMinutes = slot.durationMinutes,
-                        courseCode = slot.courseCode,
-                        subjectName = slot.subjectName,
-                        roomNo = slot.roomNo,
+                        buildingId = slot.buildingId,
                         building = slot.building,
+                        roomId = slot.roomId,
+                        roomNo = slot.roomNo,
                         invigilatorEmail = slot.invigilatorEmail,
                         updatedAt = System.currentTimeMillis(),
                     ),
@@ -156,6 +183,11 @@ class DatesheetRepositoryLocalImpl @Inject constructor(
             filter { eq("id", id) }
         }
         datesheetDao.deleteSlotById(id)
+    }
+
+    override suspend fun getPapersOnDates(dates: Set<String>): List<DatesheetSlot> {
+        if (dates.isEmpty()) return emptyList()
+        return datesheetDao.getSlotsOnDates(dates.toList()).map { DatesheetMapper.slotEntityToDomain(it) }
     }
 
     private suspend fun syncDatesheets() {
@@ -186,9 +218,9 @@ class DatesheetRepositoryLocalImpl @Inject constructor(
         checkpointStore.upsert(SyncCheckpoint(ownerKey, SupabaseTables.DATESHEETS, scopeKey, maxUpdatedAt, PgTime.format(Instant.now()) ?: since))
     }
 
-    override suspend fun syncSlots(datesheetId: String) {
+    private suspend fun syncSlotsDelta() {
         val ownerKey = syncOwnerKey()
-        val scopeKey = SyncCheckpointDefaults.scoped("datesheet" to datesheetId)
+        val scopeKey = SyncCheckpointDefaults.globalScope()
         val checkpoint = checkpointStore.get(ownerKey, SupabaseTables.DATESHEET_SLOTS, scopeKey)
         val since = checkpoint?.lastUpdatedAt ?: SyncCheckpointDefaults.EPOCH
         var maxUpdatedAt = since
@@ -196,10 +228,7 @@ class DatesheetRepositoryLocalImpl @Inject constructor(
         var offset = 0L
         while (true) {
             val page = postgrest.from(SupabaseTables.DATESHEET_SLOTS).select {
-                filter {
-                    eq("datesheet_id", datesheetId)
-                    gte("updated_at", since)
-                }
+                filter { gte("updated_at", since) }
                 order("updated_at", Order.ASCENDING)
                 range(offset, offset + PAGE_SIZE - 1)
             }.decodeList<DatesheetSlotDto>()

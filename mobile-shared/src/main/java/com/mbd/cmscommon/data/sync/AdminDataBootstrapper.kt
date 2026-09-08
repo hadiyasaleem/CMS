@@ -119,12 +119,7 @@ class AdminDataBootstrapper @Inject constructor(
             }.awaitAll().all { it }
         } && successful
 
-        val datesheets = runCatching { datesheetRepository.getDatesheets() }.getOrDefault(emptyList())
-        successful = supervisorScope {
-            datesheets.map { sheet ->
-                async { runCatching { datesheetRepository.syncSlots(sheet.id) }.isSuccessLogged("sync.datesheetSlots") }
-            }.awaitAll().all { it }
-        } && successful
+        successful = runCatching { datesheetRepository.syncAllSlots() }.isSuccessLogged("sync.datesheetSlots") && successful
         successful = supervisorScope {
             listOf(
                 async { runCatching { linkRequestRepository.sync() }.isSuccessLogged("sync.linkRequests") },

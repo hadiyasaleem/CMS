@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -220,3 +221,55 @@ private fun toDatePickerMillis(value: String): Long? =
 
 private fun toIsoDate(millis: Long): String =
     Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate().toString()
+
+/**
+ * Linked building/room pickers: picking a room back-fills its building, and changing the building
+ * clears a room that no longer belongs to it. [onChange] always reports the full, self-consistent
+ * (buildingId, buildingName, roomId, roomNo) result of either interaction.
+ */
+@Composable
+fun CmsBuildingRoomPicker(
+    buildings: List<com.mbd.cmscommon.domain.model.Building>,
+    rooms: List<com.mbd.cmscommon.domain.model.Room>,
+    selectedBuildingId: String?,
+    selectedRoomId: String?,
+    onChange: (buildingId: String?, buildingName: String?, roomId: String?, roomNo: String?) -> Unit,
+    modifier: Modifier = Modifier,
+    buildingOptional: Boolean = true,
+    buildingLabel: String = "Building",
+    roomLabel: String = "Room",
+    buildingEmptyLabel: String = "Any building",
+    roomEmptyLabel: String = "Not assigned",
+) {
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        CmsEntityPicker(
+            label = buildingLabel,
+            selectedId = selectedBuildingId,
+            options = buildings.map { CmsEntityOption(it.buildingId, it.name) },
+            onSelected = { id ->
+                val name = buildings.firstOrNull { it.buildingId == id }?.name
+                val currentRoom = rooms.firstOrNull { it.roomId == selectedRoomId }
+                val keepRoom = currentRoom != null && currentRoom.buildingId == id
+                onChange(id, name, if (keepRoom) selectedRoomId else null, if (keepRoom) currentRoom?.roomNo else null)
+            },
+            optional = buildingOptional,
+            emptyLabel = buildingEmptyLabel,
+            modifier = Modifier.weight(1f),
+        )
+        CmsEntityPicker(
+            label = roomLabel,
+            selectedId = selectedRoomId,
+            options = rooms.filter { selectedBuildingId == null || it.buildingId == selectedBuildingId }
+                .map { CmsEntityOption(it.roomId, it.roomNo, it.name) },
+            onSelected = { id ->
+                val picked = rooms.firstOrNull { it.roomId == id }
+                val buildingId = picked?.buildingId ?: selectedBuildingId
+                val buildingName = buildings.firstOrNull { it.buildingId == buildingId }?.name
+                onChange(buildingId, buildingName, id, picked?.roomNo)
+            },
+            optional = true,
+            emptyLabel = roomEmptyLabel,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}

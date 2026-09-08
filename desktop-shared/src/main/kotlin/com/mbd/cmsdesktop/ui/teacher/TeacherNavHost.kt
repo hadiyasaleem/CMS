@@ -243,18 +243,20 @@ fun TeacherNavHost(role: UserRole.Teacher, component: DesktopAppComponent, windo
                 }
 
                 TeacherScreen.Datesheets -> {
-                    val signedInTeacher by component.teacherRepository().observeTeacher(teacherId).collectAsState(initial = null)
                     DatesheetsScreen(
-                        repository = component.datesheetRepository(),
+                        datesheetRepository = component.datesheetRepository(),
                         sessionRepository = component.academicSessionRepository(),
+                        departmentRepository = component.departmentRepository(),
                         curriculumRepository = component.curriculumRepository(),
+                        teacherRepository = component.teacherRepository(),
+                        buildingRepository = component.buildingRepository(),
+                        roomRepository = component.roomRepository(),
                         viewer = DatesheetViewerContext(
                             role = DatesheetViewerRole.TEACHER,
                             canManage = role.permissions.canManageDatesheets,
                             identityKey = teacherId,
                         ),
-                        invigilators = listOfNotNull(signedInTeacher),
-                        createdBy = component.sessionManager().accountKey,
+                        createdBy = component.sessionManager().accountKey.orEmpty(),
                     )
                 }
 

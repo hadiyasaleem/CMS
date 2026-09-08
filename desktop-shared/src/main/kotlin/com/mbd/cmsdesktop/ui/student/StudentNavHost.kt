@@ -26,8 +26,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.unit.dp
-import com.mbd.cmscommon.domain.model.DatesheetViewerContext
-import com.mbd.cmscommon.domain.model.DatesheetViewerRole
 import com.mbd.cmscommon.domain.model.NotificationTargetRole
 import com.mbd.cmscommon.domain.model.UserRole
 import com.mbd.cmscommon.ui.components.CmsTopBar
@@ -37,8 +35,8 @@ import com.mbd.cmscommon.ui.components.StudentHomeDestination
 import com.mbd.cmscommon.ui.components.StudentMoreDestination
 import com.mbd.cmscommon.ui.theme.CmsTheme
 import com.mbd.cmsdesktop.di.DesktopAppComponent
-import com.mbd.cmsdesktop.ui.shared.DatesheetsScreen
 import com.mbd.cmsdesktop.ui.shared.NotificationsScreen
+import com.mbd.cmsdesktop.ui.shared.StudentDatesheetsScreen
 import com.mbd.cmscommon.util.StudentIdCodec
 import kotlinx.coroutines.launch
 
@@ -49,7 +47,7 @@ import kotlinx.coroutines.launch
  * unlinked account gets approved, so the caller (`Main.kt`) can swap this composable's `role` input
  * without a full re-login.
  *
- * Uses the shared [DatesheetsScreen]/[NotificationsScreen] composables from
+ * Uses the shared [StudentDatesheetsScreen]/[NotificationsScreen] composables from
  * `ui.shared` for the Datesheets/Notifications leaves instead of inlining controller +
  * workspace wiring per leaf (that inlining is what the earlier stopgap version of this file did).
  */
@@ -148,6 +146,7 @@ private fun StudentShell(role: UserRole.LinkedStudent, component: DesktopAppComp
                         )
                         StudentScreen.ExamsHub -> StudentExamsHubScreen(
                             sessionId, rollNumber, component.sessionMarksRepository(), component.datesheetRepository(),
+                            component.academicSessionRepository(),
                         ) { destination ->
                             when (destination) {
                                 StudentExamsDestination.MARKS -> open(StudentScreen.Marks)
@@ -172,11 +171,10 @@ private fun StudentShell(role: UserRole.LinkedStudent, component: DesktopAppComp
                         )
                         StudentScreen.Marks -> StudentMarksScreen(sessionId, rollNumber, component.sessionMarksRepository(), component.curriculumRepository())
                         StudentScreen.Results -> StudentResultsScreen(sessionId, rollNumber, component.sessionMarksRepository())
-                        StudentScreen.Datesheets -> DatesheetsScreen(
-                            repository = component.datesheetRepository(),
+                        StudentScreen.Datesheets -> StudentDatesheetsScreen(
+                            sessionId = sessionId,
+                            datesheetRepository = component.datesheetRepository(),
                             sessionRepository = component.academicSessionRepository(),
-                            curriculumRepository = component.curriculumRepository(),
-                            viewer = DatesheetViewerContext(role = DatesheetViewerRole.STUDENT, sessionId = sessionId, canManage = false),
                         )
                         StudentScreen.Events -> StudentCalendarScreen(sessionId, deptId, component.calendarRepository(), component.departmentRepository(), component.academicSessionRepository())
                         StudentScreen.Fees -> StudentFeeChallanScreen(sessionId, rollNumber, component.sessionFeeRepository())

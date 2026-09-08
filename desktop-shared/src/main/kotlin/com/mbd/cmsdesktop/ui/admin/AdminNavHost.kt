@@ -269,9 +269,13 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                     )
 
                     AdminScreen.Datesheets -> DatesheetsScreen(
-                        repository = component.datesheetRepository(),
+                        datesheetRepository = component.datesheetRepository(),
                         sessionRepository = component.academicSessionRepository(),
+                        departmentRepository = component.departmentRepository(),
                         curriculumRepository = component.curriculumRepository(),
+                        teacherRepository = component.teacherRepository(),
+                        buildingRepository = component.buildingRepository(),
+                        roomRepository = component.roomRepository(),
                         viewer = DatesheetViewerContext(role = DatesheetViewerRole.ADMIN, canManage = true),
                         createdBy = accountKey,
                     )

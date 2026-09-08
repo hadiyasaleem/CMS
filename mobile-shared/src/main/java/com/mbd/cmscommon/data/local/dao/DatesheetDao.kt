@@ -6,14 +6,27 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.mbd.cmscommon.data.local.entity.DatesheetEntity
 import com.mbd.cmscommon.data.local.entity.DatesheetSlotEntity
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface DatesheetDao {
-    @Query("SELECT * FROM datesheets WHERE isDeleted = 0 ORDER BY title")
-    suspend fun getDatesheets(): List<DatesheetEntity>
+    @Query("SELECT * FROM datesheets WHERE isDeleted = 0 ORDER BY sessionId, semester")
+    fun observeDatesheets(): Flow<List<DatesheetEntity>>
+
+    @Query("SELECT * FROM datesheets WHERE datesheetId = :id LIMIT 1")
+    suspend fun getDatesheetById(id: String): DatesheetEntity?
 
     @Query("SELECT * FROM datesheet_slots WHERE datesheetId = :datesheetId AND isDeleted = 0 ORDER BY examDate, startTime")
-    suspend fun getSlots(datesheetId: String): List<DatesheetSlotEntity>
+    fun observeSlots(datesheetId: String): Flow<List<DatesheetSlotEntity>>
+
+    @Query("SELECT * FROM datesheet_slots WHERE isDeleted = 0")
+    fun observeAllSlots(): Flow<List<DatesheetSlotEntity>>
+
+    @Query("SELECT * FROM datesheet_slots WHERE slotId = :id LIMIT 1")
+    suspend fun getSlotById(id: String): DatesheetSlotEntity?
+
+    @Query("SELECT * FROM datesheet_slots WHERE examDate IN (:dates) AND isDeleted = 0")
+    suspend fun getSlotsOnDates(dates: List<String>): List<DatesheetSlotEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertDatesheets(items: List<DatesheetEntity>)
