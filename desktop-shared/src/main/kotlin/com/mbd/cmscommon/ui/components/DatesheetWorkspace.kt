@@ -465,11 +465,17 @@ private fun CalendarDatesheetView(
         val column = "${session?.label ?: sheet.sessionId} · Sem ${sheet.semester}"
         slotsByDatesheet[sheet.id].orEmpty().mapNotNull { slot ->
             val date = slot.examDate ?: return@mapNotNull null
-            Entry(date, column, GridCell(title = slot.subjectName, subtitle = locationLabel(slot), meta = paperTimeLabel(slot, sheet)), sheet.id)
+            Entry(date, column, GridCell(title = slot.subjectName, subtitle = paperLocationLabel(slot, sheet), meta = paperTimeLabel(slot, sheet)), sheet.id)
         }
     }
     if (entries.isEmpty()) {
-        Text("No papers are scheduled yet.", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
+        val totalPapers = datesheets.sumOf { sheet -> slotsByDatesheet[sheet.id].orEmpty().size }
+        val message = if (totalPapers == 0) {
+            "No datesheets exist yet."
+        } else {
+            "$totalPapers paper(s) are waiting to be scheduled -- open a datesheet from the Filtered or Grouped view to set their dates."
+        }
+        Text(message, color = ModMuted, style = MaterialTheme.typography.bodyMedium)
         return
     }
 
@@ -514,14 +520,20 @@ private fun SemesterDatesheetView(
         data class Entry(val semester: Int, val rawDate: String, val cell: GridCell, val datesheetId: String)
 
         val sessionSheets = datesheets.filter { it.sessionId == resolvedSession.sessionId }
+        val sessionSlots = sessionSheets.flatMap { sheet -> slotsByDatesheet[sheet.id].orEmpty() }
         val entries = sessionSheets.flatMap { sheet ->
             slotsByDatesheet[sheet.id].orEmpty().mapNotNull { slot ->
                 val date = slot.examDate ?: return@mapNotNull null
-                Entry(sheet.semester, date, GridCell(title = slot.subjectName, subtitle = locationLabel(slot), meta = paperTimeLabel(slot, sheet)), sheet.id)
+                Entry(sheet.semester, date, GridCell(title = slot.subjectName, subtitle = paperLocationLabel(slot, sheet), meta = paperTimeLabel(slot, sheet)), sheet.id)
             }
         }
         if (entries.isEmpty()) {
-            Text("No papers are scheduled yet for this session.", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
+            val message = if (sessionSlots.isEmpty()) {
+                "No datesheets yet for this session."
+            } else {
+                "${sessionSlots.size} paper(s) are waiting to be scheduled -- open a semester's datesheet from the Filtered or Grouped view to set their dates."
+            }
+            Text(message, color = ModMuted, style = MaterialTheme.typography.bodyMedium)
             return@Column
         }
 
