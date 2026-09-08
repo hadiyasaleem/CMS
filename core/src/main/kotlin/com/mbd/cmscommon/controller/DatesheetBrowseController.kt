@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 /**
@@ -37,8 +38,11 @@ class DatesheetBrowseController(
     val departments: StateFlow<List<Department>> =
         departmentRepository.observeActiveDepartments().stateIn(scope, SharingStarted.Eagerly, emptyList())
 
+    /** Graduated sessions are excluded here -- there is no legitimate reason to create or browse
+     * Mid Term datesheets for a batch that has already finished, and this is the single source
+     * every filter/picker/grouping in the datesheet UI is built from. */
     val sessions: StateFlow<List<AcademicSession>> =
-        sessionRepository.observeAllSessions().stateIn(scope, SharingStarted.Eagerly, emptyList())
+        sessionRepository.observeAllSessions().map { it.filter(AcademicSession::isActive) }.stateIn(scope, SharingStarted.Eagerly, emptyList())
 
     val datesheets: StateFlow<List<Datesheet>> =
         datesheetRepository.observeDatesheets().stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
