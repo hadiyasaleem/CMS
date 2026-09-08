@@ -496,15 +496,17 @@ private fun CalendarDatesheetView(
         return
     }
 
-    val columns = entries.map { it.column }.distinct().sorted()
+    val sessionLabels = entries.map { it.column }.distinct().sorted()
     val rawDates = entries.map { it.rawDate }.distinct().sortedBy { runCatching { LocalDate.parse(it) }.getOrDefault(LocalDate.MAX) }
-    val byKey = entries.associateBy { it.rawDate to it.column }
-    val rows = rawDates.map { date -> GridRow(key = date, label = formatExamDate(date), cells = columns.associateWith { col -> byKey[date to col]?.cell }) }
+    val dateColumns = rawDates.map { formatExamDate(it) }
+    val rawToFormatted = rawDates.zip(dateColumns).toMap()
+    val byKey = entries.associateBy { it.column to rawToFormatted[it.rawDate] }
+    val rows = sessionLabels.map { session -> GridRow(key = session, label = session, cells = dateColumns.associateWith { col -> byKey[session to col]?.cell }) }
 
     TimetableGrid(
-        timeSlots = columns,
+        timeSlots = dateColumns,
         rows = rows,
-        identityHeader = "DATE",
+        identityHeader = "SESSION",
         onCellClick = { rowKey, colKey -> byKey[rowKey to colKey]?.let { onOpenDatesheet(it.datesheetId) } },
     )
 }

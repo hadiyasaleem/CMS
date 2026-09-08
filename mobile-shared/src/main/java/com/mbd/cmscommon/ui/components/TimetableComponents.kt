@@ -111,7 +111,7 @@ fun TimetableGrid(
                         Text(
                             row.label,
                             color = MaterialTheme.colorScheme.onSurface,
-                            maxLines = 2,
+                            maxLines = 3,
                             overflow = TextOverflow.Ellipsis,
                             style = MaterialTheme.typography.titleSmall,
                             textAlign = TextAlign.Center,
