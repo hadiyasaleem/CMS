@@ -147,6 +147,34 @@ class SessionTimetableRepositoryImpl @Inject constructor(
         checkpointStore.upsert(SyncCheckpoint(ownerKey, SupabaseTables.TIMETABLE_PERIODS, scopeKey, maxUpdatedAt, PgTime.format(Instant.now()) ?: since))
     }
 
+    override suspend fun syncAll() {
+        val ownerKey = syncOwnerKey()
+        val scopeKey = SyncCheckpointDefaults.globalScope()
+        val checkpoint = checkpointStore.get(ownerKey, SupabaseTables.TIMETABLE_PERIODS, scopeKey)
+        val since = checkpoint?.lastUpdatedAt ?: SyncCheckpointDefaults.EPOCH
+        var maxUpdatedAt = since
+
+        var offset = 0L
+        while (true) {
+            val page = postgrest.from(SupabaseTables.TIMETABLE_PERIODS).select {
+                filter { gte("updated_at", since) }
+                order("updated_at", Order.ASCENDING)
+                range(offset, offset + PAGE_SIZE - 1)
+            }.decodeList<TimetablePeriodDto>()
+            if (page.isEmpty()) break
+
+            val entities = page.map { dto -> val sid = dto.sessionId ?: ""; dto.toEntity(sid, deptOf(sid)) }
+            val (deleted, active) = entities.partition { it.isDeleted }
+            periodDao.applyDelta(active, deleted.map { it.id })
+            maxUpdatedAt = page.maxRemoteUpdatedAt(maxUpdatedAt) { it.updatedAt }
+
+            if (page.size < PAGE_SIZE) break
+            offset += PAGE_SIZE
+        }
+
+        checkpointStore.upsert(SyncCheckpoint(ownerKey, SupabaseTables.TIMETABLE_PERIODS, scopeKey, maxUpdatedAt, PgTime.format(Instant.now()) ?: since))
+    }
+
     private companion object {
         const val PAGE_SIZE = 500L
     }

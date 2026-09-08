@@ -174,6 +174,17 @@ class SessionAttendanceRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun syncAll() {
+        syncAttendanceDelta(SyncCheckpointDefaults.globalScope()) { since, offset ->
+            postgrest.from(SupabaseTables.SESSION_ATTENDANCE).select {
+                filter { gte("updated_at", since) }
+                order("updated_at", Order.ASCENDING)
+                order("entity_id", Order.ASCENDING)
+                range(offset, offset + PAGE_SIZE - 1)
+            }.decodeList<AttendanceRowDto>()
+        }
+    }
+
     private suspend fun syncAttendanceDelta(scopeKey: String, fetchPage: suspend (since: String, offset: Long) -> List<AttendanceRowDto>) {
         val ownerKey = syncOwnerKey()
         val checkpoint = checkpointStore.get(ownerKey, SupabaseTables.SESSION_ATTENDANCE, scopeKey)

@@ -372,6 +372,62 @@ class AcademicSessionRepositoryImpl @Inject constructor(
         checkpointStore.upsert(SyncCheckpoint(ownerKey, SupabaseTables.SESSION_STUDENTS, scopeKey, maxUpdatedAt, PgTime.format(Instant.now()) ?: since))
     }
 
+    override suspend fun syncAllSessions() {
+        val ownerKey = syncOwnerKey()
+        val scopeKey = SyncCheckpointDefaults.globalScope()
+        val checkpoint = checkpointStore.get(ownerKey, SupabaseTables.ACADEMIC_SESSIONS, scopeKey)
+        val since = checkpoint?.lastUpdatedAt ?: SyncCheckpointDefaults.EPOCH
+        var maxUpdatedAt = since
+
+        var offset = 0L
+        while (true) {
+            val page = postgrest.from(SupabaseTables.ACADEMIC_SESSIONS).select {
+                filter { gte("updated_at", since) }
+                order("updated_at", Order.ASCENDING)
+                range(offset, offset + PAGE_SIZE - 1)
+            }.decodeList<AcademicSessionDto>()
+            if (page.isEmpty()) break
+
+            val entities = page.map { it.toEntity(it.deptId ?: "") }
+            val (deleted, active) = entities.partition { it.isDeleted }
+            sessionDao.applyDelta(active, deleted.map { it.sessionId })
+            maxUpdatedAt = page.maxRemoteUpdatedAt(maxUpdatedAt) { it.updatedAt }
+
+            if (page.size < PAGE_SIZE) break
+            offset += PAGE_SIZE
+        }
+
+        checkpointStore.upsert(SyncCheckpoint(ownerKey, SupabaseTables.ACADEMIC_SESSIONS, scopeKey, maxUpdatedAt, PgTime.format(Instant.now()) ?: since))
+    }
+
+    override suspend fun syncAllStudents() {
+        val ownerKey = syncOwnerKey()
+        val scopeKey = SyncCheckpointDefaults.globalScope()
+        val checkpoint = checkpointStore.get(ownerKey, SupabaseTables.SESSION_STUDENTS, scopeKey)
+        val since = checkpoint?.lastUpdatedAt ?: SyncCheckpointDefaults.EPOCH
+        var maxUpdatedAt = since
+
+        var offset = 0L
+        while (true) {
+            val page = postgrest.from(SupabaseTables.SESSION_STUDENTS).select {
+                filter { gte("updated_at", since) }
+                order("updated_at", Order.ASCENDING)
+                range(offset, offset + PAGE_SIZE - 1)
+            }.decodeList<StudentProfileDto>()
+            if (page.isEmpty()) break
+
+            val entities = page.map { dto -> val sid = dto.sessionId ?: ""; dto.toEntity(sid, deptOf(sid)) }
+            val (deleted, active) = entities.partition { it.isDeleted }
+            studentDao.applyDelta(active, deleted.map { it.id })
+            maxUpdatedAt = page.maxRemoteUpdatedAt(maxUpdatedAt) { it.updatedAt }
+
+            if (page.size < PAGE_SIZE) break
+            offset += PAGE_SIZE
+        }
+
+        checkpointStore.upsert(SyncCheckpoint(ownerKey, SupabaseTables.SESSION_STUDENTS, scopeKey, maxUpdatedAt, PgTime.format(Instant.now()) ?: since))
+    }
+
     private companion object {
         const val PAGE_SIZE = 500L
     }

@@ -37,6 +37,10 @@ interface AcademicSessionRepository {
     suspend fun saveStudentProfile(profile: StudentProfile)
     suspend fun syncSessionsForDept(deptId: String)
     suspend fun syncStudents(sessionId: String)
+    /** One delta query across every session's roster instead of one per session -- RLS already
+     * restricts the rows a non-admin caller gets back, so this is a strict improvement for every role. */
+    suspend fun syncAllSessions()
+    suspend fun syncAllStudents()
 }
 
 interface CurriculumRepository {
@@ -48,6 +52,8 @@ interface CurriculumRepository {
     suspend fun deleteSemesterSubject(sessionId: String, semester: Int, courseCode: String)
     suspend fun saveSemesterTerm(sessionId: String, semester: Int, startDate: LocalDate?, endDate: LocalDate?)
     suspend fun syncSession(sessionId: String)
+    /** Global delta sync (all sessions in one paginated query) for a full system-wide refresh. */
+    suspend fun syncAll()
 }
 
 interface SessionAttendanceRepository {
@@ -68,6 +74,7 @@ interface SessionAttendanceRepository {
     suspend fun semesterMarks(sessionId: String, semester: Int): List<DailyAttendanceMark>
     suspend fun syncSession(sessionId: String)
     suspend fun syncSummary(sessionId: String, courseCode: String)
+    suspend fun syncAll()
 }
 
 interface SessionMarksRepository {
@@ -100,6 +107,7 @@ interface SessionMarksRepository {
     )
     suspend fun sync(sessionId: String, courseCode: String, examType: ExamType)
     suspend fun syncSession(sessionId: String)
+    suspend fun syncAll()
 }
 
 interface SessionTimetableRepository {
@@ -111,10 +119,12 @@ interface SessionTimetableRepository {
     suspend fun removePeriod(period: SessionPeriod)
     suspend fun savePeriod(period: SessionPeriod)
     suspend fun syncSession(sessionId: String)
+    suspend fun syncAll()
 }
 
 interface SessionFeeRepository {
     suspend fun getSessionFee(sessionId: String): com.mbd.cmscommon.domain.model.SessionFeeStructure?
     suspend fun syncSession(sessionId: String) = Unit
+    suspend fun syncAll() = Unit
     suspend fun saveSessionFee(structure: com.mbd.cmscommon.domain.model.SessionFeeStructure, updatedBy: String)
 }

@@ -60,6 +60,13 @@ class AdminDataBootstrapper @Inject constructor(
     }
 
     suspend fun refreshAll(): Boolean {
+        // Every table below is fetched with ONE global "WHERE updated_at >= checkpoint" delta query
+        // instead of one call per department/session -- RLS (see 20260714000002_rls.sql) already
+        // restricts each row to what the calling admin/teacher/student is allowed to see, so scoping
+        // the client-side query by session/department bought nothing but N extra round trips. This
+        // is also why `syncAllSessions()` runs in its own stage first: `syncAllStudents()` and the
+        // per-table `syncAll()`s below resolve each row's deptId via a local lookup on the session
+        // that row belongs to, which only works once that session has landed in the local cache.
         var successful = supervisorScope {
             listOf(
                 async { runCatching { administratorRepository.sync() }.isSuccessLogged("sync.administrators") },
@@ -71,37 +78,24 @@ class AdminDataBootstrapper @Inject constructor(
                 async { runCatching { datesheetRepository.sync() }.isSuccessLogged("sync.datesheets") },
                 async { runCatching { insightsRepository.sync() }.isSuccessLogged("sync.insights") },
                 async { runCatching { markEditRequestRepository.sync() }.isSuccessLogged("sync.markEditRequests") },
+                async { runCatching { sessionRepository.syncAllSessions() }.isSuccessLogged("sync.sessions") },
             ).awaitAll().all { it }
         }
 
-        val departments = runCatching { departmentRepository.observeActiveDepartments().first() }.getOrDefault(emptyList())
         successful = supervisorScope {
-            departments.map { department ->
-                async { runCatching { sessionRepository.syncSessionsForDept(department.deptId) }.isSuccessLogged("sync.sessionsForDept") }
-            }.awaitAll().all { it }
+            listOf(
+                async { runCatching { sessionRepository.syncAllStudents() }.isSuccessLogged("sync.sessionStudents") },
+                async { runCatching { curriculumRepository.syncAll() }.isSuccessLogged("sync.curriculum") },
+                async { runCatching { timetableRepository.syncAll() }.isSuccessLogged("sync.timetable") },
+                async { runCatching { attendanceRepository.syncAll() }.isSuccessLogged("sync.attendance") },
+                async { runCatching { marksRepository.syncAll() }.isSuccessLogged("sync.marks") },
+                async { runCatching { feeRepository.syncAll() }.isSuccessLogged("sync.fees") },
+                async { runCatching { fineRepository.syncAll() }.isSuccessLogged("sync.fines") },
+                async { runCatching { examPaperRepository.syncAll() }.isSuccessLogged("sync.examPapers") },
+                async { runCatching { datesheetRepository.syncAllSlots() }.isSuccessLogged("sync.datesheetSlots") },
+            ).awaitAll().all { it }
         } && successful
 
-        val sessions = runCatching { sessionRepository.observeAllSessions().first() }.getOrDefault(emptyList())
-        successful = supervisorScope {
-            sessions.map { session ->
-                async {
-                    supervisorScope {
-                        listOf(
-                            async { runCatching { sessionRepository.syncStudents(session.sessionId) }.isSuccessLogged("sync.sessionStudents") },
-                            async { runCatching { curriculumRepository.syncSession(session.sessionId) }.isSuccessLogged("sync.curriculum") },
-                            async { runCatching { timetableRepository.syncSession(session.sessionId) }.isSuccessLogged("sync.timetable") },
-                            async { runCatching { attendanceRepository.syncSession(session.sessionId) }.isSuccessLogged("sync.attendance") },
-                            async { runCatching { marksRepository.syncSession(session.sessionId) }.isSuccessLogged("sync.marks") },
-                            async { runCatching { feeRepository.syncSession(session.sessionId) }.isSuccessLogged("sync.fees") },
-                            async { runCatching { fineRepository.syncSession(session.sessionId) }.isSuccessLogged("sync.fines") },
-                            async { runCatching { examPaperRepository.syncSession(session.sessionId) }.isSuccessLogged("sync.examPapers") },
-                        ).awaitAll().all { it }
-                    }
-                }
-            }.awaitAll().all { it }
-        } && successful
-
-        successful = runCatching { datesheetRepository.syncAllSlots() }.isSuccessLogged("sync.datesheetSlots") && successful
         successful = supervisorScope {
             listOf(
                 async { runCatching { linkRequestRepository.sync() }.isSuccessLogged("sync.linkRequests") },

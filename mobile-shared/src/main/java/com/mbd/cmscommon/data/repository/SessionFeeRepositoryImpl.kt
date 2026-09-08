@@ -117,4 +117,45 @@ class SessionFeeRepositoryImpl @Inject constructor(
             }.decodeList()
         }
     }
+
+    override suspend fun syncAll() {
+        val scope = SyncCheckpointDefaults.globalScope()
+        val owner = syncOwnerKey()
+        fetchIncrementalDelta(
+            checkpointStore = checkpointStore,
+            ownerKey = owner,
+            tableName = SupabaseTables.SESSION_FEES,
+            scopeKey = scope,
+            updatedAtOf = SessionFeeDto::updatedAt,
+            applyDelta = { feeDelta ->
+                val feeEntities = feeDelta.map(SessionFeeMapper::feeDtoToEntity)
+                val (deletedFees, activeFees) = feeEntities.partition { it.isDeleted }
+                feeDao.applyFeeDelta(activeFees, deletedFees.map { it.sessionId })
+            },
+        ) { since, from, to ->
+            postgrest.from(SupabaseTables.SESSION_FEES).select {
+                filter { gte("updated_at", since) }
+                order("updated_at", Order.ASCENDING)
+                range(from, to)
+            }.decodeList()
+        }
+        fetchIncrementalDelta(
+            checkpointStore = checkpointStore,
+            ownerKey = owner,
+            tableName = SupabaseTables.SESSION_FEE_HEADS,
+            scopeKey = scope,
+            updatedAtOf = SessionFeeHeadDto::updatedAt,
+            applyDelta = { headDelta ->
+                val headEntities = headDelta.map(SessionFeeMapper::headDtoToEntity)
+                val (deletedHeads, activeHeads) = headEntities.partition { it.isDeleted }
+                feeDao.applyHeadDelta(activeHeads, deletedHeads.map { it.id })
+            },
+        ) { since, from, to ->
+            postgrest.from(SupabaseTables.SESSION_FEE_HEADS).select {
+                filter { gte("updated_at", since) }
+                order("updated_at", Order.ASCENDING)
+                range(from, to)
+            }.decodeList()
+        }
+    }
 }

@@ -161,6 +161,34 @@ class FineRepositoryLocalImpl @Inject constructor(
         checkpointStore.upsert(SyncCheckpoint(ownerKey, SupabaseTables.FINES, scopeKey, maxUpdatedAt, PgTime.format(Instant.now()) ?: since))
     }
 
+    override suspend fun syncAll() {
+        val ownerKey = sessionManager.syncOwnerKey()
+        val scopeKey = SyncCheckpointDefaults.globalScope()
+        val checkpoint = checkpointStore.get(ownerKey, SupabaseTables.FINES, scopeKey)
+        val since = checkpoint?.lastUpdatedAt ?: SyncCheckpointDefaults.EPOCH
+        var maxUpdatedAt = since
+
+        var offset = 0L
+        while (true) {
+            val page = postgrest.from(SupabaseTables.FINES).select {
+                filter { gte("updated_at", since) }
+                order("updated_at", Order.ASCENDING)
+                range(offset, offset + RECORDS_DELTA_PAGE_SIZE - 1)
+            }.decodeList<FineDto>()
+            if (page.isEmpty()) break
+
+            val entities = page.map { FineMapper.dtoToEntity(it) }
+            val (deleted, active) = entities.partition { it.isDeleted }
+            fineDao.applyDelta(active, deleted.map { it.fineId })
+            maxUpdatedAt = page.maxRemoteUpdatedAt(maxUpdatedAt) { it.updatedAt }
+
+            if (page.size < RECORDS_DELTA_PAGE_SIZE) break
+            offset += RECORDS_DELTA_PAGE_SIZE
+        }
+
+        checkpointStore.upsert(SyncCheckpoint(ownerKey, SupabaseTables.FINES, scopeKey, maxUpdatedAt, PgTime.format(Instant.now()) ?: since))
+    }
+
     suspend fun syncFines(sessionId: String, rollNumber: String) {
         val ownerKey = sessionManager.syncOwnerKey()
         val scopeKey = SyncCheckpointDefaults.scoped("session" to sessionId, "roll" to rollNumber)

@@ -17,6 +17,10 @@ interface ExamPaperSubmissionRepository {
      * refresh instead of calling [sync] once per course code. */
     suspend fun syncSession(offeringId: String)
 
+    /** One delta query across every session's submissions instead of one per session -- RLS already
+     * restricts the rows a non-admin caller gets back, so this is a strict improvement for every role. */
+    suspend fun syncAll()
+
     /** All submissions still awaiting review, across every session — for the admin review queue. */
     suspend fun getPendingReview(): List<ExamPaperSubmission>
     suspend fun markReviewed(submissionId: String, reviewedBy: String, notes: String?)

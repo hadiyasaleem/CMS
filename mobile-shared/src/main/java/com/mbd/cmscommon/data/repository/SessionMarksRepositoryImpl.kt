@@ -184,6 +184,24 @@ class SessionMarksRepositoryImpl @Inject constructor(
         syncGpaForSession(sessionId)
     }
 
+    override suspend fun syncAll() {
+        val globalScope = SyncCheckpointDefaults.globalScope()
+        syncMarksDelta(globalScope) { since, offset ->
+            postgrest.from(SupabaseTables.SESSION_MARKS).select {
+                filter { gte("updated_at", since) }
+                order("updated_at", Order.ASCENDING)
+                range(offset, offset + PAGE_SIZE - 1)
+            }.decodeList<MarkRowDto>()
+        }
+        syncGpaDelta(globalScope) { since, offset ->
+            postgrest.from(SupabaseTables.STUDENT_SEMESTER_GPA).select {
+                filter { gte("updated_at", since) }
+                order("updated_at", Order.ASCENDING)
+                range(offset, offset + PAGE_SIZE - 1)
+            }.decodeList<SemesterGpaDto>()
+        }
+    }
+
     private suspend fun syncMarksDelta(scopeKey: String, fetchPage: suspend (since: String, offset: Long) -> List<MarkRowDto>) {
         val ownerKey = syncOwnerKey()
         val checkpoint = checkpointStore.get(ownerKey, SupabaseTables.SESSION_MARKS, scopeKey)
