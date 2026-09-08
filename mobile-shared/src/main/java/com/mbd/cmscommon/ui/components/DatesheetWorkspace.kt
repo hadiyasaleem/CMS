@@ -176,6 +176,7 @@ fun DatesheetWorkspace(
                         DatesheetViewMode.CALENDAR -> CalendarDatesheetView(
                             datesheets = datesheets,
                             sessionsById = sessionsById,
+                            departments = departments,
                             slotsByDatesheet = slotsByDatesheet,
                             onOpenDatesheet = { onOpenDatesheet(it) },
                         )
@@ -463,14 +464,18 @@ private fun GroupedDatesheetView(
 private fun CalendarDatesheetView(
     datesheets: List<Datesheet>,
     sessionsById: Map<String, AcademicSession>,
+    departments: List<Department>,
     slotsByDatesheet: Map<String, List<DatesheetSlot>>,
     onOpenDatesheet: (String) -> Unit,
 ) {
     data class Entry(val rawDate: String, val column: String, val cell: GridCell, val datesheetId: String)
 
+    val departmentsById = departments.associateBy { it.deptId }
     val entries = datesheets.flatMap { sheet ->
         val session = sessionsById[sheet.sessionId]
-        val column = "${session?.label ?: sheet.sessionId} · Sem ${sheet.semester}"
+        val deptCode = session?.let { departmentsById[it.deptId]?.code }
+        val column = listOfNotNull(deptCode, "Semester ${sheet.semester}", session?.shift?.name).joinToString(" · ")
+            .ifBlank { sheet.sessionId }
         slotsByDatesheet[sheet.id].orEmpty().mapNotNull { slot ->
             val date = slot.examDate ?: return@mapNotNull null
             Entry(date, column, GridCell(title = slot.subjectName, subtitle = paperLocationLabel(slot, sheet), meta = paperTimeLabel(slot, sheet)), sheet.id)
