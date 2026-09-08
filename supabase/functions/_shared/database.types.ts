@@ -89,6 +89,99 @@ export type Database = {
           },
         ]
       }
+      app_logs: {
+        Row: {
+          account_email: string | null
+          app_id: string | null
+          app_version: string | null
+          created_at: string
+          created_by: string | null
+          device_info: string | null
+          kind: string | null
+          log_id: string
+          message: string
+          occurred_at: string
+          platform: string | null
+          severity: string
+          stack_trace: string | null
+          tag: string | null
+        }
+        Insert: {
+          account_email?: string | null
+          app_id?: string | null
+          app_version?: string | null
+          created_at?: string
+          created_by?: string | null
+          device_info?: string | null
+          kind?: string | null
+          log_id: string
+          message: string
+          occurred_at: string
+          platform?: string | null
+          severity: string
+          stack_trace?: string | null
+          tag?: string | null
+        }
+        Update: {
+          account_email?: string | null
+          app_id?: string | null
+          app_version?: string | null
+          created_at?: string
+          created_by?: string | null
+          device_info?: string | null
+          kind?: string | null
+          log_id?: string
+          message?: string
+          occurred_at?: string
+          platform?: string | null
+          severity?: string
+          stack_trace?: string | null
+          tag?: string | null
+        }
+        Relationships: []
+      }
+      buildings: {
+        Row: {
+          building_id: string
+          code: string | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          is_active: boolean
+          is_deleted: boolean
+          name: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          building_id: string
+          code?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          is_active?: boolean
+          is_deleted?: boolean
+          name: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          building_id?: string
+          code?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          is_active?: boolean
+          is_deleted?: boolean
+          name?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       calendar_events: {
         Row: {
           audience: Database["public"]["Enums"]["notif_target"]
@@ -173,65 +266,75 @@ export type Database = {
       datesheet_slots: {
         Row: {
           building: string | null
-          course_code: string | null
+          building_id: string | null
+          course_code: string
           created_at: string
           created_by: string | null
           datesheet_id: string
           deleted_at: string | null
           deleted_by: string | null
-          duration_minutes: number | null
           end_time: string | null
-          exam_date: string
+          exam_date: string | null
           id: string
           invigilator_email: string | null
           is_deleted: boolean
+          room_id: string | null
           room_no: string | null
           start_time: string | null
-          subject_name: string | null
+          subject_name: string
           updated_at: string
           updated_by: string | null
         }
         Insert: {
           building?: string | null
-          course_code?: string | null
+          building_id?: string | null
+          course_code: string
           created_at?: string
           created_by?: string | null
           datesheet_id: string
           deleted_at?: string | null
           deleted_by?: string | null
-          duration_minutes?: number | null
           end_time?: string | null
-          exam_date: string
+          exam_date?: string | null
           id?: string
           invigilator_email?: string | null
           is_deleted?: boolean
+          room_id?: string | null
           room_no?: string | null
           start_time?: string | null
-          subject_name?: string | null
+          subject_name: string
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
           building?: string | null
-          course_code?: string | null
+          building_id?: string | null
+          course_code?: string
           created_at?: string
           created_by?: string | null
           datesheet_id?: string
           deleted_at?: string | null
           deleted_by?: string | null
-          duration_minutes?: number | null
           end_time?: string | null
-          exam_date?: string
+          exam_date?: string | null
           id?: string
           invigilator_email?: string | null
           is_deleted?: boolean
+          room_id?: string | null
           room_no?: string | null
           start_time?: string | null
-          subject_name?: string | null
+          subject_name?: string
           updated_at?: string
           updated_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "datesheet_slots_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["building_id"]
+          },
           {
             foreignKeyName: "datesheet_slots_datesheet_id_fkey"
             columns: ["datesheet_id"]
@@ -246,55 +349,75 @@ export type Database = {
             referencedRelation: "teachers"
             referencedColumns: ["email"]
           },
+          {
+            foreignKeyName: "datesheet_slots_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["room_id"]
+          },
         ]
       }
       datesheets: {
         Row: {
           created_at: string
           created_by: string | null
+          default_building_id: string | null
+          default_end_time: string | null
+          default_start_time: string | null
           deleted_at: string | null
           deleted_by: string | null
-          exam_type: Database["public"]["Enums"]["exam_type"] | null
           id: string
           instructions: string | null
           is_deleted: boolean
           published: boolean
-          session_id: string | null
-          title: string
+          semester: number
+          session_id: string
           updated_at: string
           updated_by: string | null
         }
         Insert: {
           created_at?: string
           created_by?: string | null
+          default_building_id?: string | null
+          default_end_time?: string | null
+          default_start_time?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
-          exam_type?: Database["public"]["Enums"]["exam_type"] | null
           id?: string
           instructions?: string | null
           is_deleted?: boolean
           published?: boolean
-          session_id?: string | null
-          title: string
+          semester: number
+          session_id: string
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
           created_at?: string
           created_by?: string | null
+          default_building_id?: string | null
+          default_end_time?: string | null
+          default_start_time?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
-          exam_type?: Database["public"]["Enums"]["exam_type"] | null
           id?: string
           instructions?: string | null
           is_deleted?: boolean
           published?: boolean
-          session_id?: string | null
-          title?: string
+          semester?: number
+          session_id?: string
           updated_at?: string
           updated_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "datesheets_default_building_id_fkey"
+            columns: ["default_building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["building_id"]
+          },
           {
             foreignKeyName: "datesheets_session_id_fkey"
             columns: ["session_id"]
@@ -833,6 +956,65 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "teachers"
             referencedColumns: ["email"]
+          },
+        ]
+      }
+      rooms: {
+        Row: {
+          building_id: string
+          capacity: number | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          is_active: boolean
+          is_deleted: boolean
+          is_office: boolean
+          name: string | null
+          room_id: string
+          room_no: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          building_id: string
+          capacity?: number | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          is_active?: boolean
+          is_deleted?: boolean
+          is_office?: boolean
+          name?: string | null
+          room_id: string
+          room_no: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          building_id?: string
+          capacity?: number | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          is_active?: boolean
+          is_deleted?: boolean
+          is_office?: boolean
+          name?: string | null
+          room_id?: string
+          room_no?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rooms_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["building_id"]
           },
         ]
       }
@@ -1699,7 +1881,6 @@ export type Database = {
     Enums: {
       account_status: "ACTIVE" | "DISABLED" | "BANNED"
       attendance_status: "PRESENT" | "ABSENT" | "LEAVE"
-      doc_kind: "PROSPECTUS" | "RULES" | "REPORT" | "OTHER"
       enrollment_status:
         | "ACTIVE"
         | "PROMOTED"
@@ -1862,7 +2043,6 @@ export const Constants = {
     Enums: {
       account_status: ["ACTIVE", "DISABLED", "BANNED"],
       attendance_status: ["PRESENT", "ABSENT", "LEAVE"],
-      doc_kind: ["PROSPECTUS", "RULES", "REPORT", "OTHER"],
       enrollment_status: [
         "ACTIVE",
         "PROMOTED",
