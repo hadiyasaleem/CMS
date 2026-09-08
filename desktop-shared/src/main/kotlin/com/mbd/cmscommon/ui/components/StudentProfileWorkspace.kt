@@ -258,9 +258,9 @@ private fun AcademicAndRolesCard(profile: StudentProfile, onToggleCr: () -> Unit
             Text("Grades are read-only and update from recorded results.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(10.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                AcademicMetric("GPA", profile.gpa?.let { "%.2f".format(it) } ?: "--")
-                AcademicMetric("CGPA", profile.cgpa?.let { "%.2f".format(it) } ?: "--")
-                AcademicMetric("Account", if (profile.linkedEmail.isNotBlank()) "Linked" else "Not linked")
+                AcademicMetric("GPA", profile.gpa?.let { "%.2f".format(it) } ?: "--", Modifier.weight(1f))
+                AcademicMetric("CGPA", profile.cgpa?.let { "%.2f".format(it) } ?: "--", Modifier.weight(1f))
+                AcademicMetric("Account", if (profile.linkedEmail.isNotBlank()) "Linked" else "Not linked", Modifier.weight(1f))
             }
             Spacer(Modifier.height(10.dp))
             Text("CLASS REPRESENTATIVE ROLES", color = ModMuted, style = CmsTextStyles.eyebrow)
@@ -277,8 +277,8 @@ private fun AcademicAndRolesCard(profile: StudentProfile, onToggleCr: () -> Unit
 }
 
 @Composable
-private fun AcademicMetric(label: String, value: String) {
-    Column {
+private fun AcademicMetric(label: String, value: String, modifier: Modifier = Modifier) {
+    Column(modifier) {
         Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
         Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
     }

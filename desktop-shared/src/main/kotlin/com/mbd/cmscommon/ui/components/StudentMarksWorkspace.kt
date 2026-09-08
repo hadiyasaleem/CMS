@@ -110,17 +110,17 @@ private fun MarksOverviewCard(snapshot: StudentMarksSnapshot) {
             )
             Spacer(Modifier.height(10.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                MarksMetric("Recorded", snapshot.assessmentsEntered.toString())
-                MarksMetric("Absent", snapshot.absentAssessments.toString())
-                MarksMetric("Subjects", snapshot.fullyRecordedSubjects.toString())
+                MarksMetric("Recorded", snapshot.assessmentsEntered.toString(), Modifier.weight(1f))
+                MarksMetric("Absent", snapshot.absentAssessments.toString(), Modifier.weight(1f))
+                MarksMetric("Subjects", snapshot.fullyRecordedSubjects.toString(), Modifier.weight(1f))
             }
         }
     }
 }
 
 @Composable
-private fun MarksMetric(label: String, value: String) {
-    Column {
+private fun MarksMetric(label: String, value: String, modifier: Modifier = Modifier) {
+    Column(modifier) {
         Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
         Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
     }

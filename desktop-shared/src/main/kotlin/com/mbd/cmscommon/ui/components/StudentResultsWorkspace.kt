@@ -110,17 +110,17 @@ private fun ResultsOverview(snapshot: StudentResultsSnapshot) {
             snapshot.currentGpa?.let { Text("Latest semester GPA %.2f".format(it), color = ModMuted, style = MaterialTheme.typography.bodySmall) }
             Spacer(Modifier.height(10.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                ResultMetric(snapshot.promotedSemesters.toString(), "Promoted")
-                ResultMetric(snapshot.semesters.size.toString(), "Semesters")
-                ResultMetric(snapshot.cgpaChange?.let { (if (it >= 0) "+" else "") + "%.2f".format(it) } ?: "--", "CGPA change")
+                ResultMetric(snapshot.promotedSemesters.toString(), "Promoted", Modifier.weight(1f))
+                ResultMetric(snapshot.semesters.size.toString(), "Semesters", Modifier.weight(1f))
+                ResultMetric(snapshot.cgpaChange?.let { (if (it >= 0) "+" else "") + "%.2f".format(it) } ?: "--", "CGPA change", Modifier.weight(1f))
             }
         }
     }
 }
 
 @Composable
-private fun ResultMetric(value: String, label: String) {
-    Column {
+private fun ResultMetric(value: String, label: String, modifier: Modifier = Modifier) {
+    Column(modifier) {
         Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
         Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
     }
@@ -167,10 +167,10 @@ private fun SemesterResultCard(row: StudentSemesterResult) {
             }
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                ResultMetric("%.2f".format(result.gpa), "GPA")
-                ResultMetric("%.2f".format(result.cgpa), "CGPA")
-                ResultMetric(result.classPosition?.toString() ?: "--", "Position")
-                row.gpaChange?.let { ResultMetric((if (it >= 0) "+" else "") + "%.2f".format(it), "Change") }
+                ResultMetric("%.2f".format(result.gpa), "GPA", Modifier.weight(1f))
+                ResultMetric("%.2f".format(result.cgpa), "CGPA", Modifier.weight(1f))
+                ResultMetric(result.classPosition?.toString() ?: "--", "Position", Modifier.weight(1f))
+                row.gpaChange?.let { ResultMetric((if (it >= 0) "+" else "") + "%.2f".format(it), "Change", Modifier.weight(1f)) }
             }
             if (result.supplyCourses.isNotEmpty()) {
                 Spacer(Modifier.height(6.dp))

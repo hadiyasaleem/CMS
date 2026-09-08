@@ -250,9 +250,9 @@ private fun SessionInsightCard(overview: SessionOverview, sessionLabel: String, 
             }
             Spacer(Modifier.height(10.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                MetricPill("Students", overview.students.toString(), InsightsNavy)
-                MetricPill("Average CGPA", overview.avgCgpa?.let { "%.2f".format(it) } ?: "--", InsightsGreen)
-                MetricPill("Average attendance", overview.avgAttendance?.let { "${it.roundToInt()}%" } ?: "--", InsightsGold)
+                MetricPill("Students", overview.students.toString(), InsightsNavy, Modifier.weight(1f))
+                MetricPill("Average CGPA", overview.avgCgpa?.let { "%.2f".format(it) } ?: "--", InsightsGreen, Modifier.weight(1f))
+                MetricPill("Average attendance", overview.avgAttendance?.let { "${it.roundToInt()}%" } ?: "--", InsightsGold, Modifier.weight(1f))
             }
             if (reasons.isNotEmpty()) {
                 Spacer(Modifier.height(8.dp))
@@ -275,8 +275,8 @@ private fun RiskStudentCard(student: AtRiskStudent, sessionLabel: String) {
             }
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                MetricPill("CGPA", student.cgpa?.let { "%.2f".format(it) } ?: "--", if (signals.contains(RiskSignal.CGPA)) InsightsRed else InsightsNavy)
-                MetricPill("Attendance", student.attendance?.let { "${it.roundToInt()}%" } ?: "--", if (signals.contains(RiskSignal.ATTENDANCE)) InsightsRed else InsightsNavy)
+                MetricPill("CGPA", student.cgpa?.let { "%.2f".format(it) } ?: "--", if (signals.contains(RiskSignal.CGPA)) InsightsRed else InsightsNavy, Modifier.weight(1f))
+                MetricPill("Attendance", student.attendance?.let { "${it.roundToInt()}%" } ?: "--", if (signals.contains(RiskSignal.ATTENDANCE)) InsightsRed else InsightsNavy, Modifier.weight(1f))
             }
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -326,8 +326,8 @@ private fun ExamInsightCard(stat: ExamStat, sessionLabel: String) {
 }
 
 @Composable
-private fun MetricPill(label: String, value: String, tone: Color) {
-    Surface(shape = RoundedCornerShape(10.dp), color = tone.copy(alpha = 0.1f), border = BorderStroke(1.dp, tone.copy(alpha = 0.25f))) {
+private fun MetricPill(label: String, value: String, tone: Color, modifier: Modifier = Modifier) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(10.dp), color = tone.copy(alpha = 0.1f), border = BorderStroke(1.dp, tone.copy(alpha = 0.25f))) {
         Column(Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
             Text(value, color = tone, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
             Text(label.uppercase(Locale.ROOT), color = tone, style = CmsTextStyles.eyebrow)

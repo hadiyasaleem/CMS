@@ -168,10 +168,10 @@ private fun TimetableOverview(snapshot: StudentTimetableSnapshot) {
             Text("${snapshot.weekStart.format(DayFormat)} - ${snapshot.weekEnd.format(DayFormat)}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(10.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                ScheduleMetric(snapshot.lectureCount.toString(), "Lectures")
-                ScheduleMetric(snapshot.classDays.toString(), "Class days")
-                ScheduleMetric(formatDuration(snapshot.weeklyMinutes), "Weekly time")
-                ScheduleMetric(snapshot.todayPeriods.toString(), "Today")
+                ScheduleMetric(snapshot.lectureCount.toString(), "Lectures", Modifier.weight(1f))
+                ScheduleMetric(snapshot.classDays.toString(), "Class days", Modifier.weight(1f))
+                ScheduleMetric(formatDuration(snapshot.weeklyMinutes), "Weekly time", Modifier.weight(1f))
+                ScheduleMetric(snapshot.todayPeriods.toString(), "Today", Modifier.weight(1f))
             }
         }
     }
@@ -188,8 +188,8 @@ private fun formatDuration(minutes: Int): String {
 }
 
 @Composable
-private fun ScheduleMetric(value: String, label: String) {
-    Column {
+private fun ScheduleMetric(value: String, label: String, modifier: Modifier = Modifier) {
+    Column(modifier) {
         Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
         Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
     }
