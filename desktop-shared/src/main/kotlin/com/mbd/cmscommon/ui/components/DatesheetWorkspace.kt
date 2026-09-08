@@ -542,7 +542,7 @@ private fun SemesterDatesheetView(
             }
             Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
                 candidateSessions.forEach { session ->
-                    SessionCurrentSemesterSection(session, datesheets, slotsByDatesheet, onOpenDatesheet)
+                    SessionCurrentSemesterSection(session, departments, datesheets, slotsByDatesheet, onOpenDatesheet)
                 }
             }
             return@Column
@@ -590,17 +590,19 @@ private fun SemesterDatesheetView(
 @Composable
 private fun SessionCurrentSemesterSection(
     session: AcademicSession,
+    departments: List<Department>,
     datesheets: List<Datesheet>,
     slotsByDatesheet: Map<String, List<DatesheetSlot>>,
     onOpenDatesheet: (String) -> Unit,
 ) {
     val semester = session.currentSemester
     val sheet = datesheets.firstOrNull { it.sessionId == session.sessionId && it.semester == semester }
+    val deptCode = departments.firstOrNull { it.deptId == session.deptId }?.code
 
     Column {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                "${session.label} · ${session.shift.name} · Semester $semester",
+                listOfNotNull(deptCode, "Semester $semester", session.shift.name).joinToString(" · "),
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleSmall,
                 modifier = Modifier.weight(1f),
