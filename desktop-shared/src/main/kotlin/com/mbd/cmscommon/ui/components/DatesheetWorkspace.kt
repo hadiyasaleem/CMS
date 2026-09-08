@@ -439,7 +439,11 @@ private fun GroupedDatesheetView(
                                         .padding(8.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
-                                    Text("${session.label} · ${session.shift.name}", modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                                    Text(
+                                        listOfNotNull(dept.code, "Semester ${session.currentSemester}", session.shift.name).joinToString(" · "),
+                                        modifier = Modifier.weight(1f),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                    )
                                     Text("${sessionSheets.size}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                                 }
                                 if (expandedSessionId == session.sessionId) {
