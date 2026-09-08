@@ -69,12 +69,14 @@ fun DepartmentDetailWorkspace(
     var shiftFilter by remember { mutableStateOf<Session?>(null) }
     var showAddSession by remember { mutableStateOf(false) }
     var showEditDepartment by remember { mutableStateOf(false) }
+    var showGraduated by remember { mutableStateOf(false) }
 
     val snapshot = departmentDetailSnapshot(sessions, studentCounts)
-    val filtered = snapshot.sessions
-        .filter { shiftFilter == null || it.shift == shiftFilter }
+    fun List<AcademicSession>.matchingQuery() = filter { shiftFilter == null || it.shift == shiftFilter }
         .filter { query.isBlank() || it.label.contains(query, ignoreCase = true) || (it.programName ?: "").contains(query, ignoreCase = true) }
         .sortedByDescending { it.startYear }
+    val filtered = snapshot.sessions.matchingQuery()
+    val graduatedSessions = sessions.filter { !it.isActive }.matchingQuery()
 
     Box(modifier.fillMaxSize()) {
         CardGrid(Modifier.fillMaxWidth()) {
@@ -143,6 +145,33 @@ fun DepartmentDetailWorkspace(
             } else {
                 items(filtered, key = { it.sessionId }) { session ->
                     DepartmentSessionCard(session, studentCounts[session.sessionId] ?: 0, onClick = { onOpenSession(session.sessionId) })
+                }
+            }
+
+            if (graduatedSessions.isNotEmpty()) {
+                fullSpanItem {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth().clickable { showGraduated = !showGraduated },
+                        shape = RoundedCornerShape(14.dp),
+                        color = ModSurface,
+                        border = BorderStroke(1.dp, ModTrack),
+                    ) {
+                        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text("Graduated sessions", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
+                                Text(
+                                    "${graduatedSessions.size} session(s) no longer active -- tap to ${if (showGraduated) "hide" else "view"}.",
+                                    color = ModMuted,
+                                    style = MaterialTheme.typography.bodySmall,
+                                )
+                            }
+                        }
+                    }
+                }
+                if (showGraduated) {
+                    items(graduatedSessions, key = { "graduated_${it.sessionId}" }) { session ->
+                        DepartmentSessionCard(session, studentCounts[session.sessionId] ?: 0, onClick = { onOpenSession(session.sessionId) })
+                    }
                 }
             }
 
@@ -245,7 +274,12 @@ private fun DepartmentSessionCard(session: AcademicSession, studentCount: Int, o
                 Text("${session.shift} · Semester ${session.currentSemester}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             }
             Spacer(Modifier.height(8.dp))
-            StatusBadge(session.shift.name, if (session.shift == Session.MORNING) BadgeTone.Navy else BadgeTone.Gold)
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                StatusBadge(session.shift.name, if (session.shift == Session.MORNING) BadgeTone.Navy else BadgeTone.Gold)
+                if (!session.isActive) {
+                    StatusBadge("GRADUATED", BadgeTone.Neutral)
+                }
+            }
             Spacer(Modifier.height(8.dp))
             Text(
                 session.programName?.takeIf { it.isNotBlank() } ?: "Program name not configured",

@@ -347,6 +347,14 @@ private fun FilteredDatesheetView(
                 val existing = datesheets.firstOrNull { it.sessionId == resolvedSession.sessionId && it.semester == semester }
                 if (existing != null) {
                     DatesheetSummaryTile(existing, resolvedSession, onClick = { onOpenDatesheet(existing.id) })
+                } else if (!resolvedSession.isActive) {
+                    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
+                        Column(Modifier.padding(16.dp)) {
+                            Text("This session has graduated.", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+                            Spacer(Modifier.height(4.dp))
+                            Text("New Mid Term datesheets can no longer be created for it.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
                 } else {
                     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
                         Column(Modifier.padding(16.dp)) {

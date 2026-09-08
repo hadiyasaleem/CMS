@@ -10,6 +10,7 @@ import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.DatesheetRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.util.orThrowValidation
+import com.mbd.cmscommon.util.requireValid
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -91,6 +92,8 @@ class DatesheetBrowseController(
 
     /** Creates the datesheet shell for (session, semester); DatesheetEditorController prefills its papers once mounted. */
     suspend fun createDatesheet(sessionId: String, semester: Int, defaultStartTime: String?, defaultEndTime: String?, defaultBuildingId: String?, instructions: String?, createdBy: String): String {
+        val session = sessions.value.firstOrNull { it.sessionId == sessionId }
+        requireValid(session?.isActive == true) { "This session has graduated and can no longer have new datesheets created for it." }
         val draft = DatesheetDraft(sessionId, semester, defaultStartTime, defaultEndTime, defaultBuildingId, instructions, published = false)
         validationMessage(draft).orThrowValidation()
         return datesheetRepository.createDatesheet(draft, createdBy)

@@ -32,8 +32,11 @@ class DepartmentDetailController(
         .map { it?.name ?: deptId }
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), deptId)
 
+    /** All sessions for this department, active and graduated alike -- the UI splits them into
+     * the "Current intakes" grid and a separate "Graduated sessions" section so a graduated
+     * session's curriculum, timetable, and datesheets stay reachable even after it stops
+     * counting toward department stats. */
     val sessions: StateFlow<List<AcademicSession>> = sessionRepository.observeSessionsForDept(deptId)
-        .map { departmentDetailSnapshot(it, emptyMap()).sessions }
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _notice = MutableStateFlow<String?>(null)
