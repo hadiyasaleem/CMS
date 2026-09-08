@@ -3,6 +3,7 @@ package com.mbd.cmscommon.domain.model
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 data class AcademicSession(
@@ -31,13 +32,15 @@ data class AcademicSession(
     }
 }
 
-/** Result of the `promote-session` edge function: either the pointer advanced, or the class graduated at semester 8. */
+/** Result of the `promote-session` edge function: either the pointer advanced, or the class graduated at semester 8.
+ * @SerialName pins these back to the literal camelCase keys the function's `ok({...})` response body uses,
+ * overriding the client's global snake_case naming strategy (meant for Postgrest row DTOs, not this). */
 @Serializable
 data class SessionPromotionResult(
-    val sessionId: String,
+    @SerialName("sessionId") val sessionId: String,
     val graduated: Boolean = false,
-    val promotedTo: Int? = null,
-    val papersDeleted: Int = 0,
+    @SerialName("promotedTo") val promotedTo: Int? = null,
+    @SerialName("papersDeleted") val papersDeleted: Int = 0,
 )
 
 data class AttendanceEntry(

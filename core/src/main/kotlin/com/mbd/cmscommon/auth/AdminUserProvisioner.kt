@@ -5,15 +5,19 @@ import io.github.jan.supabase.functions.Functions
 import io.ktor.client.call.body
 import io.ktor.client.request.setBody
 import javax.inject.Inject
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+// The edge function reads req.json() with plain JS destructuring (camelCase keys), but the
+// client's global Json serializer rewrites every property to snake_case for Postgrest's sake --
+// @SerialName pins deptId back to the literal camelCase the function expects.
 @Serializable
 private data class CreateUserRequest(
     val email: String,
     val password: String,
     val role: String,
     val name: String? = null,
-    val deptId: String? = null,
+    @SerialName("deptId") val deptId: String? = null,
     val designation: String? = null,
     val phone: String? = null,
 )

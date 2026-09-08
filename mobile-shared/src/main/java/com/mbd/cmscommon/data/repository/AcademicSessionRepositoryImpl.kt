@@ -32,6 +32,7 @@ import java.time.Instant
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -47,8 +48,11 @@ class AcademicSessionRepositoryImpl @Inject constructor(
     private val sessionManager: SessionManager,
 ) : AcademicSessionRepository {
 
+    // The edge function reads req.json() with plain JS destructuring (camelCase keys), but the
+    // client's global Json serializer rewrites every property to snake_case for Postgrest's sake --
+    // @SerialName pins this one request/response pair back to the literal camelCase the function expects.
     @Serializable
-    private data class PromoteSessionRequest(val sessionId: String)
+    private data class PromoteSessionRequest(@SerialName("sessionId") val sessionId: String)
 
     private val profileJson = Json {
         ignoreUnknownKeys = true
