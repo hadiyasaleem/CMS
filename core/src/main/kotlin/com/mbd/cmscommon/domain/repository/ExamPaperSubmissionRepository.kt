@@ -13,6 +13,10 @@ interface ExamPaperSubmissionRepository {
     suspend fun deleteSubmission(id: String)
     suspend fun sync(offeringId: String, subjectId: String)
 
+    /** Bulk delta sync for a whole session in one request -- use this for bootstrap/background
+     * refresh instead of calling [sync] once per course code. */
+    suspend fun syncSession(offeringId: String)
+
     /** All submissions still awaiting review, across every session — for the admin review queue. */
     suspend fun getPendingReview(): List<ExamPaperSubmission>
     suspend fun markReviewed(submissionId: String, reviewedBy: String, notes: String?)

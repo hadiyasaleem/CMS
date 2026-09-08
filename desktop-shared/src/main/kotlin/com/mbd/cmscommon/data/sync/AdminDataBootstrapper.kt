@@ -93,27 +93,9 @@ class AdminDataBootstrapper @Inject constructor(
                             async { runCatching { attendanceRepository.syncSession(session.sessionId) }.isSuccessLogged("sync.attendance") },
                             async { runCatching { marksRepository.syncSession(session.sessionId) }.isSuccessLogged("sync.marks") },
                             async { runCatching { feeRepository.syncSession(session.sessionId) }.isSuccessLogged("sync.fees") },
+                            async { runCatching { fineRepository.syncSession(session.sessionId) }.isSuccessLogged("sync.fines") },
+                            async { runCatching { examPaperRepository.syncSession(session.sessionId) }.isSuccessLogged("sync.examPapers") },
                         ).awaitAll().all { it }
-                    }
-                }
-            }.awaitAll().all { it }
-        } && successful
-
-        successful = supervisorScope {
-            sessions.map { session ->
-                async {
-                    val students = runCatching { sessionRepository.observeStudents(session.sessionId).first() }
-                        .getOrDefault(emptyList())
-                    val subjects = runCatching { curriculumRepository.observeSessionSubjects(session.sessionId).first() }
-                        .getOrDefault(emptyList())
-                    supervisorScope {
-                        val fineSyncs = students.map { student ->
-                            async { runCatching { fineRepository.sync(session.sessionId, student.rollNumber) }.isSuccessLogged("sync.fines") }
-                        }
-                        val paperSyncs = subjects.distinctBy { it.courseCode }.map { subject ->
-                            async { runCatching { examPaperRepository.sync(session.sessionId, subject.courseCode) }.isSuccessLogged("sync.examPapers") }
-                        }
-                        (fineSyncs + paperSyncs).awaitAll().all { it }
                     }
                 }
             }.awaitAll().all { it }
