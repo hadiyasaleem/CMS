@@ -74,30 +74,37 @@ fun TimetableGrid(
 
     CmsCard(modifier.fillMaxWidth()) {
         Column {
+            // The identity column (label header + row labels) stays fixed; only the timeSlot
+            // columns scroll, sharing one hScroll state so every row tracks the same offset.
             Row(
-                modifier = Modifier.horizontalScroll(hScroll).background(CmsTheme.colors.ink).padding(16.dp),
+                modifier = Modifier.fillMaxWidth().background(CmsTheme.colors.ink).padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(Modifier.width(labelWidth), contentAlignment = Alignment.Center) {
                     Text(identityHeader, color = CmsTheme.colors.onInk, style = CmsTextStyles.eyebrow, textAlign = TextAlign.Center)
                 }
-                timeSlots.forEach { slot ->
-                    Box(Modifier.width(slotWidth).padding(horizontal = 4.dp), contentAlignment = Alignment.Center) {
-                        Text(
-                            slot,
-                            color = CmsTheme.colors.onInk,
-                            style = CmsTextStyles.eyebrow,
-                            maxLines = 3,
-                            overflow = TextOverflow.Ellipsis,
-                            textAlign = TextAlign.Center,
-                        )
+                Row(
+                    modifier = Modifier.weight(1f).horizontalScroll(hScroll),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    timeSlots.forEach { slot ->
+                        Box(Modifier.width(slotWidth).padding(horizontal = 4.dp), contentAlignment = Alignment.Center) {
+                            Text(
+                                slot,
+                                color = CmsTheme.colors.onInk,
+                                style = CmsTextStyles.eyebrow,
+                                maxLines = 3,
+                                overflow = TextOverflow.Ellipsis,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
                     }
                 }
             }
             HorizontalDivider(thickness = 2.dp, color = CmsTheme.colors.rule)
             rows.forEach { row ->
                 Row(
-                    modifier = Modifier.horizontalScroll(hScroll),
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(Modifier.width(labelWidth), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -113,13 +120,18 @@ fun TimetableGrid(
                             Text(row.sublabel, color = CmsTheme.colors.muted, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
                         }
                     }
-                    timeSlots.forEach { slot ->
-                        GridCellBox(
-                            cell = row.cells[slot],
-                            width = slotWidth,
-                            editable = editable,
-                            onClick = onCellClick?.let { { it(row.key, slot) } },
-                        )
+                    Row(
+                        modifier = Modifier.weight(1f).horizontalScroll(hScroll),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        timeSlots.forEach { slot ->
+                            GridCellBox(
+                                cell = row.cells[slot],
+                                width = slotWidth,
+                                editable = editable,
+                                onClick = onCellClick?.let { { it(row.key, slot) } },
+                            )
+                        }
                     }
                 }
                 HorizontalDivider(color = CmsTheme.colors.rule.copy(alpha = 0.35f))
