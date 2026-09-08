@@ -20,9 +20,11 @@ import kotlinx.coroutines.flow.stateIn
 
 /**
  * Cross-datesheet browsing: the department/intake-year/shift cascade (same shape as
- * MasterTimetableController) plus a semester filter, and the datesheet list those narrow down to.
- * Grid views (grouped, filtered, calendar, semester) are all built from [datesheets] /
- * [filteredDatesheets] in the UI layer.
+ * MasterTimetableController). Grid views (grouped, filtered, calendar, semester) are all built
+ * from [datesheets] in the UI layer. There is no manual semester picker -- a datesheet is always
+ * created for whichever semester [resolvedSession] is currently in, the same way
+ * SessionTimetableController derives subjects from the session's own currentSemester rather than
+ * letting the caller pick one.
  */
 class DatesheetBrowseController(
     private val datesheetRepository: DatesheetRepository,
@@ -49,9 +51,6 @@ class DatesheetBrowseController(
     private val _selectedShift = MutableStateFlow<Session?>(null)
     val selectedShift: StateFlow<Session?> = _selectedShift.asStateFlow()
 
-    private val _selectedSemester = MutableStateFlow<Int?>(null)
-    val selectedSemester: StateFlow<Int?> = _selectedSemester.asStateFlow()
-
     val sessionsInDepartment: StateFlow<List<AcademicSession>> = combine(sessions, _selectedDeptId) { all, deptId ->
         if (deptId == null) emptyList() else all.filter { it.deptId == deptId }
     }.stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -69,10 +68,6 @@ class DatesheetBrowseController(
             }
         }.stateIn(scope, SharingStarted.WhileSubscribed(5000), null)
 
-    val filteredDatesheets: StateFlow<List<Datesheet>> = combine(datesheets, resolvedSession, _selectedSemester) { sheets, session, semester ->
-        sheets.filter { (session == null || it.sessionId == session.sessionId) && (semester == null || it.semester == semester) }
-    }.stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
-
     fun selectDepartment(deptId: String?) {
         _selectedDeptId.value = deptId
         _selectedStartYear.value = null
@@ -86,10 +81,6 @@ class DatesheetBrowseController(
 
     fun selectShift(shift: Session?) {
         _selectedShift.value = shift
-    }
-
-    fun selectSemester(semester: Int?) {
-        _selectedSemester.value = semester
     }
 
     fun refresh() = launch {

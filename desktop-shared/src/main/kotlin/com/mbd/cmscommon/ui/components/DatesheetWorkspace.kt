@@ -95,14 +95,12 @@ fun DatesheetWorkspace(
     selectedDeptId: String?,
     selectedStartYear: Int?,
     selectedShift: Session?,
-    selectedSemester: Int?,
     sessionsInDepartment: List<AcademicSession>,
     shiftsForSelection: List<Session>,
     resolvedSession: AcademicSession?,
     onSelectDepartment: (String?) -> Unit,
     onSelectStartYear: (Int?) -> Unit,
     onSelectShift: (Session?) -> Unit,
-    onSelectSemester: (Int?) -> Unit,
     buildings: List<Building>,
     loading: Boolean,
     errorMessage: String?,
@@ -152,7 +150,6 @@ fun DatesheetWorkspace(
                             selectedDeptId = selectedDeptId,
                             selectedStartYear = selectedStartYear,
                             selectedShift = selectedShift,
-                            selectedSemester = selectedSemester,
                             resolvedSession = resolvedSession,
                             datesheets = datesheets,
                             departments = departments,
@@ -161,7 +158,6 @@ fun DatesheetWorkspace(
                             onSelectDepartment = onSelectDepartment,
                             onSelectStartYear = onSelectStartYear,
                             onSelectShift = onSelectShift,
-                            onSelectSemester = onSelectSemester,
                             onOpenDatesheet = { onOpenDatesheet(it) },
                             onCreateDatesheet = onCreateDatesheet,
                         )
@@ -318,7 +314,6 @@ private fun FilteredDatesheetView(
     selectedDeptId: String?,
     selectedStartYear: Int?,
     selectedShift: Session?,
-    selectedSemester: Int?,
     resolvedSession: AcademicSession?,
     datesheets: List<Datesheet>,
     buildings: List<Building>,
@@ -326,7 +321,6 @@ private fun FilteredDatesheetView(
     onSelectDepartment: (String?) -> Unit,
     onSelectStartYear: (Int?) -> Unit,
     onSelectShift: (Session?) -> Unit,
-    onSelectSemester: (Int?) -> Unit,
     onOpenDatesheet: (String) -> Unit,
     onCreateDatesheet: (String?, String?, String?, String?) -> Unit,
 ) {
@@ -334,34 +328,22 @@ private fun FilteredDatesheetView(
 
     Column {
         DatesheetFilterRow(departments, sessionsInDepartment, shiftsForSelection, selectedDeptId, selectedStartYear, selectedShift, onSelectDepartment, onSelectStartYear, onSelectShift)
-        Spacer(Modifier.height(10.dp))
-        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            CmsChip("All semesters", selected = selectedSemester == null, onClick = { onSelectSemester(null) })
-            (1..8).forEach { sem -> CmsChip("Sem $sem", selected = selectedSemester == sem, onClick = { onSelectSemester(sem) }) }
-        }
         Spacer(Modifier.height(12.dp))
+        // No manual semester picker -- a datesheet is always for whichever semester the session is
+        // currently in, same as timetable periods and marks entry.
         when {
             resolvedSession == null -> {
                 Text("Choose a department, session, and shift to view or create a datesheet.", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
             }
-            selectedSemester == null -> {
-                val sessionSheets = datesheets.filter { it.sessionId == resolvedSession.sessionId }.sortedBy { it.semester }
-                if (sessionSheets.isEmpty()) {
-                    Text("No datesheets yet for this session. Pick a semester above to create one.", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
-                } else {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        sessionSheets.forEach { sheet -> DatesheetSummaryTile(sheet, resolvedSession, onClick = { onOpenDatesheet(sheet.id) }) }
-                    }
-                }
-            }
             else -> {
-                val existing = datesheets.firstOrNull { it.sessionId == resolvedSession.sessionId && it.semester == selectedSemester }
+                val semester = resolvedSession.currentSemester
+                val existing = datesheets.firstOrNull { it.sessionId == resolvedSession.sessionId && it.semester == semester }
                 if (existing != null) {
                     DatesheetSummaryTile(existing, resolvedSession, onClick = { onOpenDatesheet(existing.id) })
                 } else {
                     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
                         Column(Modifier.padding(16.dp)) {
-                            Text("No Mid Term datesheet yet for Semester $selectedSemester.", style = MaterialTheme.typography.bodyMedium)
+                            Text("No Mid Term datesheet yet for Semester $semester (the session's current semester).", style = MaterialTheme.typography.bodyMedium)
                             Spacer(Modifier.height(10.dp))
                             CmsPrimaryButton(text = "Create datesheet", onClick = { showCreateDialog = true })
                         }
@@ -371,10 +353,10 @@ private fun FilteredDatesheetView(
         }
     }
 
-    if (showCreateDialog && resolvedSession != null && selectedSemester != null) {
+    if (showCreateDialog && resolvedSession != null) {
         CreateDatesheetDialog(
             session = resolvedSession,
-            semester = selectedSemester,
+            semester = resolvedSession.currentSemester,
             buildings = buildings,
             busy = busy,
             onDismiss = { showCreateDialog = false },

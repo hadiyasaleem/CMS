@@ -62,7 +62,6 @@ fun DatesheetsScreen(
     val selectedDeptId by browseController.selectedDeptId.collectAsState()
     val selectedStartYear by browseController.selectedStartYear.collectAsState()
     val selectedShift by browseController.selectedShift.collectAsState()
-    val selectedSemester by browseController.selectedSemester.collectAsState()
     val sessionsInDepartment by browseController.sessionsInDepartment.collectAsState()
     val shiftsForSelection by browseController.shiftsForSelection.collectAsState()
     val resolvedSession by browseController.resolvedSession.collectAsState()
@@ -83,25 +82,22 @@ fun DatesheetsScreen(
         selectedDeptId = selectedDeptId,
         selectedStartYear = selectedStartYear,
         selectedShift = selectedShift,
-        selectedSemester = selectedSemester,
         sessionsInDepartment = sessionsInDepartment,
         shiftsForSelection = shiftsForSelection,
         resolvedSession = resolvedSession,
         onSelectDepartment = browseController::selectDepartment,
         onSelectStartYear = browseController::selectStartYear,
         onSelectShift = browseController::selectShift,
-        onSelectSemester = browseController::selectSemester,
         buildings = buildings,
         loading = false,
         errorMessage = browseError ?: detailError,
         onRetry = { browseController.refresh() },
         onCreateDatesheet = { defaultStart, defaultEnd, defaultBuildingId, instructions ->
             val session = resolvedSession
-            val semester = selectedSemester
-            if (session != null && semester != null) {
+            if (session != null) {
                 scope.launch {
                     runCatching {
-                        val id = browseController.createDatesheet(session.sessionId, semester, defaultStart, defaultEnd, defaultBuildingId, instructions, createdBy)
+                        val id = browseController.createDatesheet(session.sessionId, session.currentSemester, defaultStart, defaultEnd, defaultBuildingId, instructions, createdBy)
                         openDatesheetId = id
                     }
                 }

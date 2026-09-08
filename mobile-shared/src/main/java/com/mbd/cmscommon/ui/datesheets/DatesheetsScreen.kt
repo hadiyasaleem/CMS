@@ -21,7 +21,6 @@ fun DatesheetsScreen(
     val selectedDeptId by controller.selectedDeptId.collectAsState()
     val selectedStartYear by controller.selectedStartYear.collectAsState()
     val selectedShift by controller.selectedShift.collectAsState()
-    val selectedSemester by controller.selectedSemester.collectAsState()
     val sessionsInDepartment by controller.sessionsInDepartment.collectAsState()
     val shiftsForSelection by controller.shiftsForSelection.collectAsState()
     val resolvedSession by controller.resolvedSession.collectAsState()
@@ -45,23 +44,20 @@ fun DatesheetsScreen(
         selectedDeptId = selectedDeptId,
         selectedStartYear = selectedStartYear,
         selectedShift = selectedShift,
-        selectedSemester = selectedSemester,
         sessionsInDepartment = sessionsInDepartment,
         shiftsForSelection = shiftsForSelection,
         resolvedSession = resolvedSession,
         onSelectDepartment = controller::selectDepartment,
         onSelectStartYear = controller::selectStartYear,
         onSelectShift = controller::selectShift,
-        onSelectSemester = controller::selectSemester,
         buildings = buildings,
         loading = false,
         errorMessage = browseError ?: detailError,
         onRetry = { controller.refresh() },
         onCreateDatesheet = { defaultStart, defaultEnd, defaultBuildingId, instructions ->
             val session = resolvedSession
-            val semester = selectedSemester
-            if (session != null && semester != null) {
-                viewModel.createDatesheet(session.sessionId, semester, defaultStart, defaultEnd, defaultBuildingId, instructions)
+            if (session != null) {
+                viewModel.createDatesheet(session.sessionId, session.currentSemester, defaultStart, defaultEnd, defaultBuildingId, instructions)
             }
         },
         openDatesheetId = openDatesheetId,
