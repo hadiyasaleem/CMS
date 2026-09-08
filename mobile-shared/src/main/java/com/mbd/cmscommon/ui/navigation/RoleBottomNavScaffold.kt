@@ -19,6 +19,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.mbd.cmscommon.ui.components.CmsTopBar
 import com.mbd.cmscommon.ui.components.RefreshBox
+import com.mbd.cmscommon.ui.components.SyncProgressDialog
 import com.mbd.cmscommon.ui.state.GlobalRefreshViewModel
 import com.mbd.cmscommon.ui.theme.CmsTheme
 
@@ -36,8 +37,13 @@ fun RoleBottomNavScaffold(
     val refreshVm: GlobalRefreshViewModel = hiltViewModel()
     val refreshing by refreshVm.refreshing.collectAsState()
     val refreshVersion by refreshVm.refreshVersion.collectAsState()
+    val tasksCompleted by refreshVm.tasksCompleted.collectAsState()
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
     val activity = LocalContext.current as? Activity
+
+    if (refreshing) {
+        SyncProgressDialog(completed = tasksCompleted, total = refreshVm.totalTasks)
+    }
 
     Scaffold(
         topBar = {

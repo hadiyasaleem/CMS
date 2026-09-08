@@ -21,6 +21,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.mbd.cmscommon.ui.components.RefreshBox
 import com.mbd.cmscommon.ui.components.CmsTopBar
+import com.mbd.cmscommon.ui.components.SyncProgressDialog
 import com.mbd.cmscommon.ui.state.GlobalRefreshViewModel
 import com.mbd.cmscommon.ui.theme.CmsTheme
 import com.mbd.cmsadmin.feature.notifications.NotificationsBadgeViewModel
@@ -35,7 +36,12 @@ fun AdminScaffold(onSignedOut: () -> Unit) {
     val badgeVm: NotificationsBadgeViewModel = hiltViewModel()
     val refreshing by refreshVm.refreshing.collectAsState()
     val refreshVersion by refreshVm.refreshVersion.collectAsState()
+    val tasksCompleted by refreshVm.tasksCompleted.collectAsState()
     val unreadCount by badgeVm.unreadCount.collectAsState()
+
+    if (refreshing) {
+        SyncProgressDialog(completed = tasksCompleted, total = refreshVm.totalTasks)
+    }
 
     Scaffold(
         topBar = {

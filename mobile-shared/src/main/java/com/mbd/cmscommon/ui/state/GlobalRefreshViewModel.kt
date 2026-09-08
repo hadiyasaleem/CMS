@@ -8,6 +8,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
@@ -30,12 +31,21 @@ class GlobalRefreshViewModel @Inject constructor(
     private val _refreshVersion = MutableStateFlow(0)
     val refreshVersion: StateFlow<Int> = _refreshVersion.asStateFlow()
 
+    private val _tasksCompleted = MutableStateFlow(0)
+    val tasksCompleted: StateFlow<Int> = _tasksCompleted.asStateFlow()
+
+    val totalTasks: Int = AdminDataBootstrapper.TOTAL_SYNC_TASKS
+
     fun refresh() {
         if (_refreshing.value) return
         viewModelScope.launch {
+            _tasksCompleted.value = 0
             _refreshing.value = true
             try {
-                dataBootstrapper.refreshAll()
+                // onTaskDone fires from whichever sync task's own coroutine finishes it, so several
+                // can land concurrently -- update() does an atomic read-modify-write, a plain
+                // `_tasksCompleted.value += 1` here would drop updates under that concurrency.
+                dataBootstrapper.refreshAll(onTaskDone = { _tasksCompleted.update { it + 1 } })
             } finally {
                 _refreshVersion.value += 1
                 _refreshing.value = false

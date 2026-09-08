@@ -59,7 +59,10 @@ class AdminDataBootstrapper @Inject constructor(
         return departments.isNotEmpty() && teachers.isNotEmpty() && sessions.isNotEmpty()
     }
 
-    suspend fun refreshAll(): Boolean {
+    /** [onTaskDone] fires once per completed sync task (see [TOTAL_SYNC_TASKS]) -- purely a UI
+     * progress hook, called from whichever task's own coroutine finishes it, so callers must not
+     * assume a particular thread. */
+    suspend fun refreshAll(onTaskDone: () -> Unit = {}): Boolean {
         // Every table below is fetched with ONE global "WHERE updated_at >= checkpoint" delta query
         // instead of one call per department/session -- RLS (see 20260714000002_rls.sql) already
         // restricts each row to what the calling admin/teacher/student is allowed to see, so scoping
@@ -69,46 +72,53 @@ class AdminDataBootstrapper @Inject constructor(
         // that row belongs to, which only works once that session has landed in the local cache.
         var successful = supervisorScope {
             listOf(
-                async { runCatching { administratorRepository.sync() }.isSuccessLogged("sync.administrators") },
-                async { runCatching { departmentRepository.sync() }.isSuccessLogged("sync.departments") },
-                async { runCatching { buildingRepository.sync() }.isSuccessLogged("sync.buildings") },
-                async { runCatching { roomRepository.sync() }.isSuccessLogged("sync.rooms") },
-                async { runCatching { teacherRepository.sync() }.isSuccessLogged("sync.teachers") },
-                async { runCatching { calendarRepository.sync() }.isSuccessLogged("sync.calendar") },
-                async { runCatching { datesheetRepository.sync() }.isSuccessLogged("sync.datesheets") },
-                async { runCatching { insightsRepository.sync() }.isSuccessLogged("sync.insights") },
-                async { runCatching { markEditRequestRepository.sync() }.isSuccessLogged("sync.markEditRequests") },
-                async { runCatching { sessionRepository.syncAllSessions() }.isSuccessLogged("sync.sessions") },
+                async { runCatching { administratorRepository.sync() }.isSuccessLogged("sync.administrators").also { onTaskDone() } },
+                async { runCatching { departmentRepository.sync() }.isSuccessLogged("sync.departments").also { onTaskDone() } },
+                async { runCatching { buildingRepository.sync() }.isSuccessLogged("sync.buildings").also { onTaskDone() } },
+                async { runCatching { roomRepository.sync() }.isSuccessLogged("sync.rooms").also { onTaskDone() } },
+                async { runCatching { teacherRepository.sync() }.isSuccessLogged("sync.teachers").also { onTaskDone() } },
+                async { runCatching { calendarRepository.sync() }.isSuccessLogged("sync.calendar").also { onTaskDone() } },
+                async { runCatching { datesheetRepository.sync() }.isSuccessLogged("sync.datesheets").also { onTaskDone() } },
+                async { runCatching { insightsRepository.sync() }.isSuccessLogged("sync.insights").also { onTaskDone() } },
+                async { runCatching { markEditRequestRepository.sync() }.isSuccessLogged("sync.markEditRequests").also { onTaskDone() } },
+                async { runCatching { sessionRepository.syncAllSessions() }.isSuccessLogged("sync.sessions").also { onTaskDone() } },
             ).awaitAll().all { it }
         }
 
         successful = supervisorScope {
             listOf(
-                async { runCatching { sessionRepository.syncAllStudents() }.isSuccessLogged("sync.sessionStudents") },
-                async { runCatching { curriculumRepository.syncAll() }.isSuccessLogged("sync.curriculum") },
-                async { runCatching { timetableRepository.syncAll() }.isSuccessLogged("sync.timetable") },
-                async { runCatching { attendanceRepository.syncAll() }.isSuccessLogged("sync.attendance") },
-                async { runCatching { marksRepository.syncAll() }.isSuccessLogged("sync.marks") },
-                async { runCatching { feeRepository.syncAll() }.isSuccessLogged("sync.fees") },
-                async { runCatching { fineRepository.syncAll() }.isSuccessLogged("sync.fines") },
-                async { runCatching { examPaperRepository.syncAll() }.isSuccessLogged("sync.examPapers") },
-                async { runCatching { datesheetRepository.syncAllSlots() }.isSuccessLogged("sync.datesheetSlots") },
+                async { runCatching { sessionRepository.syncAllStudents() }.isSuccessLogged("sync.sessionStudents").also { onTaskDone() } },
+                async { runCatching { curriculumRepository.syncAll() }.isSuccessLogged("sync.curriculum").also { onTaskDone() } },
+                async { runCatching { timetableRepository.syncAll() }.isSuccessLogged("sync.timetable").also { onTaskDone() } },
+                async { runCatching { attendanceRepository.syncAll() }.isSuccessLogged("sync.attendance").also { onTaskDone() } },
+                async { runCatching { marksRepository.syncAll() }.isSuccessLogged("sync.marks").also { onTaskDone() } },
+                async { runCatching { feeRepository.syncAll() }.isSuccessLogged("sync.fees").also { onTaskDone() } },
+                async { runCatching { fineRepository.syncAll() }.isSuccessLogged("sync.fines").also { onTaskDone() } },
+                async { runCatching { examPaperRepository.syncAll() }.isSuccessLogged("sync.examPapers").also { onTaskDone() } },
+                async { runCatching { datesheetRepository.syncAllSlots() }.isSuccessLogged("sync.datesheetSlots").also { onTaskDone() } },
             ).awaitAll().all { it }
         } && successful
 
         successful = supervisorScope {
             listOf(
-                async { runCatching { linkRequestRepository.sync() }.isSuccessLogged("sync.linkRequests") },
-                async { runCatching { notificationRepository.sync(NotificationTargetRole.ADMIN) }.isSuccessLogged("sync.notifications.admin") },
-                async { runCatching { notificationRepository.sync(NotificationTargetRole.TEACHER) }.isSuccessLogged("sync.notifications.teacher") },
-                async { runCatching { notificationRepository.sync(NotificationTargetRole.STUDENT) }.isSuccessLogged("sync.notifications.student") },
+                async { runCatching { linkRequestRepository.sync() }.isSuccessLogged("sync.linkRequests").also { onTaskDone() } },
+                async { runCatching { notificationRepository.sync(NotificationTargetRole.ADMIN) }.isSuccessLogged("sync.notifications.admin").also { onTaskDone() } },
+                async { runCatching { notificationRepository.sync(NotificationTargetRole.TEACHER) }.isSuccessLogged("sync.notifications.teacher").also { onTaskDone() } },
+                async { runCatching { notificationRepository.sync(NotificationTargetRole.STUDENT) }.isSuccessLogged("sync.notifications.student").also { onTaskDone() } },
             ).awaitAll().all { it }
         } && successful
 
         // Flush buffered crash/critical logs alongside the normal sync cycle. Never allowed to
         // affect `successful` or throw -- see AppLogRepositoryImpl.flush().
         runCatching { appLogRepository.flush() }
+        onTaskDone()
 
         return successful
+    }
+
+    companion object {
+        /** Must track the exact number of `onTaskDone()` calls in [refreshAll] -- 10 + 9 + 4 sync
+         * tasks plus the final log flush. Drives the refresh progress dialog's determinate bar. */
+        const val TOTAL_SYNC_TASKS = 24
     }
 }
