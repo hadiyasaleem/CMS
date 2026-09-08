@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.mbd.cmscommon.data.local.entity.AcademicSessionEntity
 import com.mbd.cmscommon.data.local.entity.SemesterSubjectEntity
+import com.mbd.cmscommon.data.local.entity.SemesterTermEntity
 import com.mbd.cmscommon.data.local.entity.SessionAttendanceRowEntity
 import com.mbd.cmscommon.data.local.entity.SessionAttendanceTallyEntity
 import com.mbd.cmscommon.data.local.entity.SessionMarkEntity
@@ -84,6 +85,26 @@ interface SemesterSubjectDao {
     suspend fun applyDelta(upserts: List<SemesterSubjectEntity>, deletedIds: List<String>) {
         if (upserts.isNotEmpty()) upsertAll(upserts)
         if (deletedIds.isNotEmpty()) deleteByIds(deletedIds)
+    }
+}
+
+@Dao
+interface SemesterTermDao {
+    @Query("SELECT * FROM semester_terms WHERE sessionId = :sessionId AND semester = :semester AND isDeleted = 0 LIMIT 1")
+    suspend fun getForSemester(sessionId: String, semester: Int): SemesterTermEntity?
+
+    @Query("SELECT * FROM semester_terms WHERE sessionId = :sessionId AND isDeleted = 0")
+    suspend fun getForSession(sessionId: String): List<SemesterTermEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertAll(items: List<SemesterTermEntity>)
+
+    @Query("DELETE FROM semester_terms WHERE sessionId = :sessionId AND semester = :semester")
+    suspend fun deleteForSemester(sessionId: String, semester: Int)
+
+    suspend fun applyDelta(upserts: List<SemesterTermEntity>, deleted: List<Pair<String, Int>>) {
+        if (upserts.isNotEmpty()) upsertAll(upserts)
+        deleted.forEach { (sessionId, semester) -> deleteForSemester(sessionId, semester) }
     }
 }
 

@@ -22,6 +22,7 @@ import com.mbd.cmscommon.data.local.entity.MarkEditRequestEntity
 import com.mbd.cmscommon.data.local.entity.NotificationEntity
 import com.mbd.cmscommon.data.local.entity.RoomEntity
 import com.mbd.cmscommon.data.local.entity.SemesterSubjectEntity
+import com.mbd.cmscommon.data.local.entity.SemesterTermEntity
 import com.mbd.cmscommon.data.local.entity.SessionAttendanceTallyEntity
 import com.mbd.cmscommon.data.local.entity.SessionAttendanceRowEntity
 import com.mbd.cmscommon.data.local.entity.SessionFeeEntity
@@ -53,7 +54,7 @@ import com.mbd.cmscommon.data.local.entity.UserEntity
         StudentLinkRequestEntity::class,
         ExamPaperSubmissionEntity::class, NotificationEntity::class,
         SyncStateEntity::class, TableSyncStateEntity::class,
-        AcademicSessionEntity::class, SemesterSubjectEntity::class, SessionStudentEntity::class,
+        AcademicSessionEntity::class, SemesterSubjectEntity::class, SemesterTermEntity::class, SessionStudentEntity::class,
         SessionPeriodEntity::class, SessionAttendanceTallyEntity::class, SessionAttendanceRowEntity::class,
         SessionMarkEntity::class, StudentSemesterGpaEntity::class,
         SessionFeeEntity::class, SessionFeeHeadEntity::class,

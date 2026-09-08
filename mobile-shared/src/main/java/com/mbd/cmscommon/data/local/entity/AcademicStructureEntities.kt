@@ -45,6 +45,21 @@ data class SemesterSubjectEntity(
     val deletedBy: String? = null,
 )
 
+@Entity(tableName = "semester_terms", primaryKeys = ["sessionId", "semester"])
+data class SemesterTermEntity(
+    val sessionId: String,
+    val semester: Int,
+    val startDate: String?,
+    val endDate: String?,
+    val createdAt: Long = 0L,
+    val createdBy: String? = null,
+    val updatedAt: Long = 0L,
+    val updatedBy: String? = null,
+    val isDeleted: Boolean = false,
+    val deletedAt: Long? = null,
+    val deletedBy: String? = null,
+)
+
 @Entity(
     tableName = "session_attendance_rows",
     indices = [

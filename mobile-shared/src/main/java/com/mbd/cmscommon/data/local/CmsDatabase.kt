@@ -15,6 +15,7 @@ import com.mbd.cmscommon.data.local.dao.MarkEditRequestDao
 import com.mbd.cmscommon.data.local.dao.NotificationDao
 import com.mbd.cmscommon.data.local.dao.RoomDao
 import com.mbd.cmscommon.data.local.dao.SemesterSubjectDao
+import com.mbd.cmscommon.data.local.dao.SemesterTermDao
 import com.mbd.cmscommon.data.local.dao.SessionAttendanceDao
 import com.mbd.cmscommon.data.local.dao.SessionFeeDao
 import com.mbd.cmscommon.data.local.dao.SessionMarkDao
@@ -27,7 +28,7 @@ import com.mbd.cmscommon.data.local.dao.TableSyncStateDao
 import com.mbd.cmscommon.data.local.dao.TeacherDao
 import com.mbd.cmscommon.data.local.dao.UserDao
 
-const val CMS_DATABASE_VERSION = 42
+const val CMS_DATABASE_VERSION = 43
 
 abstract class CmsDatabase : RoomDatabase() {
     abstract fun departmentDao(): DepartmentDao
@@ -48,6 +49,7 @@ abstract class CmsDatabase : RoomDatabase() {
     abstract fun tableSyncStateDao(): TableSyncStateDao
     abstract fun academicSessionDao(): AcademicSessionDao
     abstract fun semesterSubjectDao(): SemesterSubjectDao
+    abstract fun semesterTermDao(): SemesterTermDao
     abstract fun sessionStudentDao(): SessionStudentDao
     abstract fun sessionPeriodDao(): SessionPeriodDao
     abstract fun sessionAttendanceDao(): SessionAttendanceDao

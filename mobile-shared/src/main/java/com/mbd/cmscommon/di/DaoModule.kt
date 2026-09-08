@@ -15,6 +15,7 @@ import com.mbd.cmscommon.data.local.dao.MarkEditRequestDao
 import com.mbd.cmscommon.data.local.dao.NotificationDao
 import com.mbd.cmscommon.data.local.dao.RoomDao
 import com.mbd.cmscommon.data.local.dao.SemesterSubjectDao
+import com.mbd.cmscommon.data.local.dao.SemesterTermDao
 import com.mbd.cmscommon.data.local.dao.SessionAttendanceDao
 import com.mbd.cmscommon.data.local.dao.SessionFeeDao
 import com.mbd.cmscommon.data.local.dao.SessionMarkDao
@@ -89,6 +90,9 @@ object DaoModule {
 
     @Provides
     fun provideSemesterSubjectDao(db: CmsDatabase): SemesterSubjectDao = db.semesterSubjectDao()
+
+    @Provides
+    fun provideSemesterTermDao(db: CmsDatabase): SemesterTermDao = db.semesterTermDao()
 
     @Provides
     fun provideSessionStudentDao(db: CmsDatabase): SessionStudentDao = db.sessionStudentDao()

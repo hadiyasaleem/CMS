@@ -2,7 +2,9 @@ package com.mbd.cmscommon.data.repository
 
 import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.local.dao.SemesterSubjectDao
+import com.mbd.cmscommon.data.local.dao.SemesterTermDao
 import com.mbd.cmscommon.data.local.entity.SemesterSubjectEntity
+import com.mbd.cmscommon.data.local.entity.SemesterTermEntity
 import com.mbd.cmscommon.data.mapper.AcademicStructureMapper
 import com.mbd.cmscommon.data.remote.PgTime
 import com.mbd.cmscommon.data.remote.SupabaseTables
@@ -21,7 +23,6 @@ import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.postgrest.query.filter.FilterOperator
 import java.time.Instant
 import java.time.LocalDate
-import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -29,13 +30,10 @@ import kotlinx.coroutines.flow.map
 class CurriculumRepositoryImpl @Inject constructor(
     private val postgrest: Postgrest,
     private val subjectDao: SemesterSubjectDao,
+    private val termDao: SemesterTermDao,
     private val checkpointStore: SyncCheckpointStore,
     private val sessionManager: SessionManager,
 ) : CurriculumRepository {
-
-    private val terms = ConcurrentHashMap<String, SemesterTermDto>()
-
-    private fun termKey(sessionId: String, semester: Int) = "$sessionId|$semester"
 
     private fun syncOwnerKey(): String = sessionManager.accountKey ?: SyncCheckpointDefaults.ownerKey("anonymous-local")
 
@@ -71,6 +69,20 @@ class CurriculumRepositoryImpl @Inject constructor(
         deletedBy = deletedBy,
     )
 
+    private fun SemesterTermDto.toEntity(): SemesterTermEntity = SemesterTermEntity(
+        sessionId = sessionId ?: "",
+        semester = semester,
+        startDate = startDate,
+        endDate = endDate,
+        createdAt = PgTime.parseOrEpoch(createdAt).toEpochMilli(),
+        createdBy = createdBy,
+        updatedAt = PgTime.parseOrEpoch(updatedAt).toEpochMilli(),
+        updatedBy = updatedBy,
+        isDeleted = isDeleted,
+        deletedAt = PgTime.parse(deletedAt)?.toEpochMilli(),
+        deletedBy = deletedBy,
+    )
+
     override fun observeSemesterSubjects(sessionId: String, semester: Int): Flow<List<SemesterSubject>> =
         subjectDao.observeSemesterSubjects(sessionId, semester).map { rows -> rows.map { AcademicStructureMapper.subjectEntityToDomain(it) } }
 
@@ -94,15 +106,8 @@ class CurriculumRepositoryImpl @Inject constructor(
         subjectDao.deleteByCourseCode(sessionId, semester, courseCode)
     }
 
-    override suspend fun getSemesterTerm(sessionId: String, semester: Int): SemesterTerm? {
-        val dto = terms[termKey(sessionId, semester)] ?: return null
-        return SemesterTerm(
-            sessionId = sessionId,
-            semester = semester,
-            startDate = dto.startDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() },
-            endDate = dto.endDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() },
-        )
-    }
+    override suspend fun getSemesterTerm(sessionId: String, semester: Int): SemesterTerm? =
+        termDao.getForSemester(sessionId, semester)?.let { AcademicStructureMapper.termEntityToDomain(it) }
 
     override suspend fun saveSemesterTerm(sessionId: String, semester: Int, startDate: LocalDate?, endDate: LocalDate?) {
         val dto = SemesterTermDto(
@@ -112,7 +117,7 @@ class CurriculumRepositoryImpl @Inject constructor(
             endDate = endDate?.toString(),
         )
         postgrest.from(SupabaseTables.SEMESTER_TERMS).upsert(dto) { onConflict = "session_id,semester" }
-        terms[termKey(sessionId, semester)] = dto
+        termDao.upsertAll(listOf(dto.toEntity()))
     }
 
     override suspend fun syncSession(sessionId: String) {
@@ -145,17 +150,16 @@ class CurriculumRepositoryImpl @Inject constructor(
 
         checkpointStore.upsert(SyncCheckpoint(ownerKey, SupabaseTables.SESSION_SUBJECTS, scopeKey, maxUpdatedAt, PgTime.format(Instant.now()) ?: since))
 
-        val termDelta = fetchIncrementalDelta(
+        fetchIncrementalDelta(
             checkpointStore,
             ownerKey,
             SupabaseTables.SEMESTER_TERMS,
             scopeKey,
             SemesterTermDto::updatedAt,
             applyDelta = { termDelta ->
-                termDelta.forEach { dto ->
-                    val key = termKey(dto.sessionId ?: sessionId, dto.semester)
-                    if (dto.isDeleted) terms.remove(key) else terms[key] = dto
-                }
+                val entities = termDelta.map { it.toEntity() }
+                val (deleted, active) = entities.partition { it.isDeleted }
+                termDao.applyDelta(active, deleted.map { it.sessionId to it.semester })
             },
         ) { termSince, from, to ->
             postgrest.from(SupabaseTables.SEMESTER_TERMS).select {
@@ -166,9 +170,7 @@ class CurriculumRepositoryImpl @Inject constructor(
                 order("updated_at", Order.ASCENDING)
                 range(from, to)
             }.decodeList()
-
         }
-
     }
 
     private companion object {

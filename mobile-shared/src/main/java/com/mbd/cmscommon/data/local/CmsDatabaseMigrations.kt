@@ -1575,6 +1575,33 @@ val MIGRATION_41_42: Migration = object : Migration(41, 42) {
     }
 }
 
+val MIGRATION_42_43: Migration = object : Migration(42, 43) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // Semester terms were previously cached only in an in-memory map (CurriculumRepositoryImpl),
+        // which meant the cache was empty on every cold start and never survived a partial sync --
+        // silently blocking session promotion since canPromote() couldn't see a term that had
+        // already ended. Give it a real local cache like every other synced table.
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `semester_terms` (
+                `sessionId` TEXT NOT NULL,
+                `semester` INTEGER NOT NULL,
+                `startDate` TEXT,
+                `endDate` TEXT,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `createdBy` TEXT,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedBy` TEXT,
+                `isDeleted` INTEGER NOT NULL DEFAULT 0,
+                `deletedAt` INTEGER,
+                `deletedBy` TEXT,
+                PRIMARY KEY(`sessionId`, `semester`)
+            )
+            """.trimIndent(),
+        )
+    }
+}
+
 val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_18_19,
     MIGRATION_19_20,
@@ -1600,4 +1627,5 @@ val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_39_40,
     MIGRATION_40_41,
     MIGRATION_41_42,
+    MIGRATION_42_43,
 )

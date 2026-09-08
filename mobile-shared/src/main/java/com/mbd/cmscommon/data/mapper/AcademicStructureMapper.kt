@@ -2,11 +2,13 @@ package com.mbd.cmscommon.data.mapper
 
 import com.mbd.cmscommon.data.local.entity.AcademicSessionEntity
 import com.mbd.cmscommon.data.local.entity.SemesterSubjectEntity
+import com.mbd.cmscommon.data.local.entity.SemesterTermEntity
 import com.mbd.cmscommon.data.local.entity.SessionPeriodEntity
 import com.mbd.cmscommon.data.local.entity.SessionStudentEntity
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.PeriodType
 import com.mbd.cmscommon.domain.model.SemesterSubject
+import com.mbd.cmscommon.domain.model.SemesterTerm
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.SessionPeriod
 import com.mbd.cmscommon.domain.model.SessionStudent
@@ -79,6 +81,17 @@ object AcademicStructureMapper {
         createdBy = s.createdBy,
         updatedAt = s.updatedAt.toEpochMilli(),
         updatedBy = s.updatedBy,
+    )
+
+    fun termEntityToDomain(e: SemesterTermEntity): SemesterTerm = SemesterTerm(
+        sessionId = e.sessionId,
+        semester = e.semester,
+        startDate = e.startDate?.let { raw -> runCatching { LocalDate.parse(raw) }.getOrNull() },
+        endDate = e.endDate?.let { raw -> runCatching { LocalDate.parse(raw) }.getOrNull() },
+        createdAt = Instant.ofEpochMilli(e.createdAt),
+        createdBy = e.createdBy,
+        updatedAt = Instant.ofEpochMilli(e.updatedAt),
+        updatedBy = e.updatedBy,
     )
 
     fun studentEntityToDomain(e: SessionStudentEntity): SessionStudent = SessionStudent(
