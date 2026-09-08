@@ -161,9 +161,18 @@ class DatesheetEditorController(
         validationMessage(normalizedSlot).orThrowValidation()
         val existing = slots.value
         requireValid(existing.any { it.id == normalizedSlot.id }) { "This paper is no longer in the datesheet. Refresh and try again." }
-        val merged = existing.map { if (it.id == normalizedSlot.id) normalizedSlot else it }
-        val withinSheetQuality = datesheetScheduleQuality(current, merged)
-        requireValid(withinSheetQuality.issues.isEmpty()) { withinSheetQuality.issues.joinToString(" ") }
+
+        // Only the structural constraint the database itself enforces for this one paper (one paper
+        // per date within a datesheet) -- NOT full-datesheet publish-readiness. Every other paper
+        // still needing a date/time/building must never block saving *this* paper's edit; that
+        // full-sheet completeness check belongs to setPublished()/the "needs review" banner only.
+        if (normalizedSlot.examDate != null) {
+            val dateClash = existing.firstOrNull { it.id != normalizedSlot.id && it.examDate == normalizedSlot.examDate }
+            if (dateClash != null) {
+                val label = dateClash.subjectName.ifBlank { dateClash.courseCode }
+                throw CmsException.Validation("$label is already scheduled on ${normalizedSlot.examDate} in this datesheet.")
+            }
+        }
 
         // Client-side warning for a room/invigilator clash on another datesheet -- the database
         // trigger is the authoritative guard; this just surfaces the same problem before the save

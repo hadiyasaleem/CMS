@@ -32,6 +32,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -114,6 +115,7 @@ fun DatesheetWorkspace(
     onOpenDatesheet: (String?) -> Unit,
     detail: DatesheetDetailData?,
     detailBusy: Boolean,
+    detailErrorMessage: String?,
     onSetPublished: (Boolean) -> Unit,
     onDeleteDatesheet: () -> Unit,
     onSyncMissingSubjects: () -> Unit,
@@ -204,6 +206,7 @@ fun DatesheetWorkspace(
             detail = detail,
             viewer = viewer,
             busy = detailBusy,
+            errorMessage = detailErrorMessage,
             onDismiss = { onOpenDatesheet(null) },
             onSetPublished = onSetPublished,
             onDeleteDatesheet = onDeleteDatesheet,
@@ -545,6 +548,7 @@ private fun DatesheetDetailDialog(
     detail: DatesheetDetailData,
     viewer: DatesheetViewerContext,
     busy: Boolean,
+    errorMessage: String?,
     onDismiss: () -> Unit,
     onSetPublished: (Boolean) -> Unit,
     onDeleteDatesheet: () -> Unit,
@@ -615,8 +619,9 @@ private fun DatesheetDetailDialog(
             rooms = detail.rooms,
             teachers = detail.teachers,
             busy = busy,
+            errorMessage = errorMessage,
             onDismiss = { editingSlot = null },
-            onConfirm = { updated -> onUpdatePaper(updated); editingSlot = null },
+            onSave = { updated -> onUpdatePaper(updated) },
         )
     }
 
@@ -745,8 +750,9 @@ private fun PaperEditorDialog(
     rooms: List<Room>,
     teachers: List<Teacher>,
     busy: Boolean,
+    errorMessage: String?,
     onDismiss: () -> Unit,
-    onConfirm: (DatesheetSlot) -> Unit,
+    onSave: (DatesheetSlot) -> Unit,
 ) {
     var examDate by remember { mutableStateOf(slot.examDate ?: "") }
     var overrideTime by remember { mutableStateOf(slot.startTime != null || slot.endTime != null) }
@@ -758,6 +764,24 @@ private fun PaperEditorDialog(
     var roomNo by remember { mutableStateOf(slot.roomNo ?: "") }
     var invigilatorEmail by remember { mutableStateOf(slot.invigilatorEmail ?: "") }
 
+    // The save itself is fire-and-forget (updatePaper runs async on the controller), so this dialog
+    // can't just close on click -- it has to wait for busy to flip back off and check whether that
+    // landed with an error. Only saveAttempted's own outcome is shown, not a leftover error from
+    // something else that happened before this dialog opened.
+    var saveAttempted by remember { mutableStateOf(false) }
+    var displayedError by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(busy) {
+        if (saveAttempted && !busy) {
+            saveAttempted = false
+            if (errorMessage != null) {
+                displayedError = errorMessage
+            } else {
+                onDismiss()
+            }
+        }
+    }
+
     val startTimeValid = startTime.isBlank() || runCatching { LocalTime.parse(startTime) }.isSuccess
     val endTimeValid = endTime.isBlank() || runCatching { LocalTime.parse(endTime) }.isSuccess
     val timesConsistent = !overrideTime || startTime.isBlank() == endTime.isBlank()
@@ -768,6 +792,10 @@ private fun PaperEditorDialog(
         text = {
             Column(Modifier.heightIn(max = 460.dp).verticalScroll(rememberScrollState())) {
                 Text(slot.courseCode, color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                displayedError?.let { message ->
+                    Spacer(Modifier.height(10.dp))
+                    CmsNotice(message, tone = NoticeTone.Error, onDismiss = { displayedError = null })
+                }
                 Spacer(Modifier.height(10.dp))
                 CmsDateField(value = examDate, onValueChange = { examDate = it }, label = "Exam date", optional = true)
                 Spacer(Modifier.height(10.dp))
@@ -820,7 +848,9 @@ private fun PaperEditorDialog(
         confirmButton = {
             TextButton(
                 onClick = {
-                    onConfirm(
+                    displayedError = null
+                    saveAttempted = true
+                    onSave(
                         slot.copy(
                             examDate = examDate.ifBlank { null },
                             startTime = if (overrideTime) startTime.ifBlank { null } else null,

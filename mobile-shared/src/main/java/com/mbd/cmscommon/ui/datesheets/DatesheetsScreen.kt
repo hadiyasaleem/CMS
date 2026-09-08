@@ -64,6 +64,7 @@ fun DatesheetsScreen(
         onOpenDatesheet = viewModel::openDatesheet,
         detail = detail,
         detailBusy = detailBusy,
+        detailErrorMessage = detailError,
         onSetPublished = { published -> editorController?.setPublished(published) },
         onDeleteDatesheet = { editorController?.deleteDatesheet(); viewModel.openDatesheet(null) },
         onSyncMissingSubjects = { editorController?.syncMissingSubjects() },

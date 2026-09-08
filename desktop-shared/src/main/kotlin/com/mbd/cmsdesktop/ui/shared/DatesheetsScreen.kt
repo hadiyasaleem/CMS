@@ -107,6 +107,7 @@ fun DatesheetsScreen(
         onOpenDatesheet = { openDatesheetId = it },
         detail = detail,
         detailBusy = detailBusy,
+        detailErrorMessage = detailError,
         onSetPublished = { published -> editorController?.setPublished(published) },
         onDeleteDatesheet = { editorController?.deleteDatesheet(); openDatesheetId = null },
         onSyncMissingSubjects = { editorController?.syncMissingSubjects() },
