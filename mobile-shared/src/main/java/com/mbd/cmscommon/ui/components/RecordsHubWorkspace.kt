@@ -6,17 +6,18 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Assessment
@@ -40,6 +41,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.domain.model.RecordsHubSnapshot
 import com.mbd.cmscommon.domain.model.RecordsSummarySource
@@ -84,26 +86,29 @@ fun RecordsHubWorkspace(
     onOpen: (RecordsDestination) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LazyColumn(
-        modifier = modifier.fillMaxWidth().background(RecordsCanvas),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        item { RecordsHeader(heroPainter) }
-        if (!errorMessage.isNullOrBlank()) {
-            item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
+    BoxWithConstraints(modifier.fillMaxWidth()) {
+        val columns = when {
+            maxWidth < 700.dp -> 2
+            maxWidth < 1100.dp -> 3
+            else -> 4
         }
-        if (snapshot != null) {
-            item { RecordsSummaryRow(snapshot) }
-        }
+        CardGrid(Modifier.fillMaxWidth().background(RecordsCanvas), columns = columns) {
+            fullSpanItem { RecordsHeader(heroPainter) }
+            if (!errorMessage.isNullOrBlank()) {
+                fullSpanItem { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
+            }
+            if (snapshot != null) {
+                fullSpanItem { RecordsSummaryRow(snapshot) }
+            }
 
-        if (loading && snapshot == null) {
-            items(3) { SkeletonRow() }
-        } else if (snapshot != null) {
-            items(recordsCards(snapshot), key = { it.destination }) { card -> RecordsActionCard(card, onClick = { onOpen(card.destination) }) }
-        }
+            if (loading && snapshot == null) {
+                fullSpanItems(3) { SkeletonRow() }
+            } else if (snapshot != null) {
+                items(recordsCards(snapshot), key = { it.destination }) { card -> RecordsActionCard(card, onClick = { onOpen(card.destination) }) }
+            }
 
-        item { Spacer(Modifier.height(72.dp)) }
+            fullSpanItem { Spacer(Modifier.height(72.dp)) }
+        }
     }
 }
 
@@ -204,22 +209,27 @@ private fun recordsCards(snapshot: RecordsHubSnapshot): List<RecordsCard> = list
 @Composable
 private fun RecordsActionCard(card: RecordsCard, onClick: () -> Unit) {
     Surface(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        modifier = Modifier.fillMaxHeight().clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         color = ModSurface,
         border = BorderStroke(1.dp, card.tone.copy(alpha = 0.25f)),
     ) {
-        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.padding(16.dp).heightIn(min = 168.dp)) {
             Box(Modifier.size(44.dp).background(card.tone.copy(alpha = 0.12f), RoundedCornerShape(13.dp)), contentAlignment = Alignment.Center) {
                 Icon(card.icon, contentDescription = null, tint = card.tone)
             }
-            Spacer(Modifier.size(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(card.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                Text(card.detail, color = ModMuted, style = MaterialTheme.typography.bodySmall)
-                Spacer(Modifier.height(4.dp))
-                Text(if (card.unavailable) "Data unavailable - tap to retry" else card.status, color = if (card.unavailable) RecordsRed else card.tone, style = MaterialTheme.typography.labelMedium)
-            }
+            Spacer(Modifier.height(12.dp))
+            Text(card.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(4.dp))
+            Text(card.detail, color = ModMuted, style = MaterialTheme.typography.bodySmall, maxLines = 3, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(8.dp))
+            Text(
+                if (card.unavailable) "Data unavailable - tap to retry" else card.status,
+                color = if (card.unavailable) RecordsRed else card.tone,
+                style = MaterialTheme.typography.labelMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }

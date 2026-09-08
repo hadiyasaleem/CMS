@@ -162,4 +162,4 @@ fun main() = application {
     }
 }
 
-private val ADMIN_MOBILE_CANVAS_WIDTH = 412.dp
+private val ADMIN_MOBILE_CANVAS_WIDTH = 1120.dp

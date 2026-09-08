@@ -99,7 +99,7 @@ Assert-Contains $desktopNavHost "RefreshBox\(" "Desktop Admin shell must expose 
 
 $desktopMain = "desktop-admin\src\main\kotlin\com\mbd\cmsdesktopadmin\Main.kt"
 Assert-Contains $desktopMain "width\(ADMIN_MOBILE_CANVAS_WIDTH\)" "Desktop Admin must render in the centered mobile canvas"
-Assert-Contains $desktopMain "ADMIN_MOBILE_CANVAS_WIDTH\s*=\s*412\.dp" "Desktop Admin reference canvas must remain 412dp wide"
+Assert-Contains $desktopMain "ADMIN_MOBILE_CANVAS_WIDTH\s*=\s*1120\.dp" "Desktop Admin reference canvas must remain 1120dp wide"
 
 Assert-Contains "mobile-shared\src\main\java\com\mbd\cmscommon\ui\components\CardGrid.kt" "const val CardGridColumns\s*=\s*2" "Mobile Admin card grids must use two columns"
 Assert-Contains "desktop-shared\src\main\kotlin\com\mbd\cmscommon\ui\components\CardGrid.kt" "const val CardGridColumns\s*=\s*2" "Desktop Admin card grids must use two columns"
