@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -235,6 +237,7 @@ private fun InsightSummaryTile(label: String, value: String, modifier: Modifier 
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SessionInsightCard(overview: SessionOverview, sessionLabel: String, viewer: InsightsViewer, reasons: List<String>) {
     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
@@ -249,10 +252,10 @@ private fun SessionInsightCard(overview: SessionOverview, sessionLabel: String, 
                 }
             }
             Spacer(Modifier.height(10.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                MetricPill("Students", overview.students.toString(), InsightsNavy, Modifier.weight(1f))
-                MetricPill("Average CGPA", overview.avgCgpa?.let { "%.2f".format(it) } ?: "--", InsightsGreen, Modifier.weight(1f))
-                MetricPill("Average attendance", overview.avgAttendance?.let { "${it.roundToInt()}%" } ?: "--", InsightsGold, Modifier.weight(1f))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                MetricPill("Students", overview.students.toString(), InsightsNavy)
+                MetricPill("Average CGPA", overview.avgCgpa?.let { "%.2f".format(it) } ?: "--", InsightsGreen)
+                MetricPill("Average attendance", overview.avgAttendance?.let { "${it.roundToInt()}%" } ?: "--", InsightsGold)
             }
             if (reasons.isNotEmpty()) {
                 Spacer(Modifier.height(8.dp))
@@ -262,6 +265,7 @@ private fun SessionInsightCard(overview: SessionOverview, sessionLabel: String, 
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun RiskStudentCard(student: AtRiskStudent, sessionLabel: String) {
     val signals = riskSignals(student)
@@ -274,9 +278,9 @@ private fun RiskStudentCard(student: AtRiskStudent, sessionLabel: String) {
                 }
             }
             Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                MetricPill("CGPA", student.cgpa?.let { "%.2f".format(it) } ?: "--", if (signals.contains(RiskSignal.CGPA)) InsightsRed else InsightsNavy, Modifier.weight(1f))
-                MetricPill("Attendance", student.attendance?.let { "${it.roundToInt()}%" } ?: "--", if (signals.contains(RiskSignal.ATTENDANCE)) InsightsRed else InsightsNavy, Modifier.weight(1f))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                MetricPill("CGPA", student.cgpa?.let { "%.2f".format(it) } ?: "--", if (signals.contains(RiskSignal.CGPA)) InsightsRed else InsightsNavy)
+                MetricPill("Attendance", student.attendance?.let { "${it.roundToInt()}%" } ?: "--", if (signals.contains(RiskSignal.ATTENDANCE)) InsightsRed else InsightsNavy)
             }
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {

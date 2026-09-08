@@ -4,6 +4,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -97,6 +99,7 @@ private fun StudentMarksHeader() {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun MarksOverviewCard(snapshot: StudentMarksSnapshot) {
     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
@@ -109,10 +112,10 @@ private fun MarksOverviewCard(snapshot: StudentMarksSnapshot) {
                 style = MaterialTheme.typography.headlineSmall,
             )
             Spacer(Modifier.height(10.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                MarksMetric("Recorded", snapshot.assessmentsEntered.toString(), Modifier.weight(1f))
-                MarksMetric("Absent", snapshot.absentAssessments.toString(), Modifier.weight(1f))
-                MarksMetric("Subjects", snapshot.fullyRecordedSubjects.toString(), Modifier.weight(1f))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                MarksMetric("Recorded", snapshot.assessmentsEntered.toString())
+                MarksMetric("Absent", snapshot.absentAssessments.toString())
+                MarksMetric("Subjects", snapshot.fullyRecordedSubjects.toString())
             }
         }
     }

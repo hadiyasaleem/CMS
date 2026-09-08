@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -250,6 +252,7 @@ private fun ProfileChipPicker(label: String, options: List<String>, selected: St
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun AcademicAndRolesCard(profile: StudentProfile, onToggleCr: () -> Unit, onToggleGr: () -> Unit) {
     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
@@ -257,10 +260,10 @@ private fun AcademicAndRolesCard(profile: StudentProfile, onToggleCr: () -> Unit
             Text("Academic standing & class roles", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Text("Grades are read-only and update from recorded results.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(10.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                AcademicMetric("GPA", profile.gpa?.let { "%.2f".format(it) } ?: "--", Modifier.weight(1f))
-                AcademicMetric("CGPA", profile.cgpa?.let { "%.2f".format(it) } ?: "--", Modifier.weight(1f))
-                AcademicMetric("Account", if (profile.linkedEmail.isNotBlank()) "Linked" else "Not linked", Modifier.weight(1f))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                AcademicMetric("GPA", profile.gpa?.let { "%.2f".format(it) } ?: "--")
+                AcademicMetric("CGPA", profile.cgpa?.let { "%.2f".format(it) } ?: "--")
+                AcademicMetric("Account", if (profile.linkedEmail.isNotBlank()) "Linked" else "Not linked")
             }
             Spacer(Modifier.height(10.dp))
             Text("CLASS REPRESENTATIVE ROLES", color = ModMuted, style = CmsTextStyles.eyebrow)

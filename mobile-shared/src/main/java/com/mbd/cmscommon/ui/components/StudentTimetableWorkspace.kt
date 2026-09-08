@@ -6,6 +6,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -161,17 +163,18 @@ private fun StudentTimetableHeader(heroPainter: Painter) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TimetableOverview(snapshot: StudentTimetableSnapshot) {
     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Text("${snapshot.weekStart.format(DayFormat)} - ${snapshot.weekEnd.format(DayFormat)}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(10.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                ScheduleMetric(snapshot.lectureCount.toString(), "Lectures", Modifier.weight(1f))
-                ScheduleMetric(snapshot.classDays.toString(), "Class days", Modifier.weight(1f))
-                ScheduleMetric(formatDuration(snapshot.weeklyMinutes), "Weekly time", Modifier.weight(1f))
-                ScheduleMetric(snapshot.todayPeriods.toString(), "Today", Modifier.weight(1f))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                ScheduleMetric(snapshot.lectureCount.toString(), "Lectures")
+                ScheduleMetric(snapshot.classDays.toString(), "Class days")
+                ScheduleMetric(formatDuration(snapshot.weeklyMinutes), "Weekly time")
+                ScheduleMetric(snapshot.todayPeriods.toString(), "Today")
             }
         }
     }

@@ -4,6 +4,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -100,6 +102,7 @@ private fun StudentResultsHeader() {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ResultsOverview(snapshot: StudentResultsSnapshot) {
     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
@@ -109,10 +112,10 @@ private fun ResultsOverview(snapshot: StudentResultsSnapshot) {
             Text(snapshot.currentCgpa?.let { "%.2f".format(it) } ?: "Not available", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
             snapshot.currentGpa?.let { Text("Latest semester GPA %.2f".format(it), color = ModMuted, style = MaterialTheme.typography.bodySmall) }
             Spacer(Modifier.height(10.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                ResultMetric(snapshot.promotedSemesters.toString(), "Promoted", Modifier.weight(1f))
-                ResultMetric(snapshot.semesters.size.toString(), "Semesters", Modifier.weight(1f))
-                ResultMetric(snapshot.cgpaChange?.let { (if (it >= 0) "+" else "") + "%.2f".format(it) } ?: "--", "CGPA change", Modifier.weight(1f))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                ResultMetric(snapshot.promotedSemesters.toString(), "Promoted")
+                ResultMetric(snapshot.semesters.size.toString(), "Semesters")
+                ResultMetric(snapshot.cgpaChange?.let { (if (it >= 0) "+" else "") + "%.2f".format(it) } ?: "--", "CGPA change")
             }
         }
     }
@@ -148,6 +151,7 @@ private fun SupplyCard(courses: List<String>) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SemesterResultCard(row: StudentSemesterResult) {
     val result = row.result
@@ -166,11 +170,11 @@ private fun SemesterResultCard(row: StudentSemesterResult) {
                 StatusBadge(result.resultStatus.ifBlank { "PENDING" }, if (result.resultStatus == "PROMOTED") BadgeTone.Success else if (result.resultStatus.isBlank() || result.resultStatus == "PENDING") BadgeTone.Neutral else BadgeTone.Error)
             }
             Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                ResultMetric("%.2f".format(result.gpa), "GPA", Modifier.weight(1f))
-                ResultMetric("%.2f".format(result.cgpa), "CGPA", Modifier.weight(1f))
-                ResultMetric(result.classPosition?.toString() ?: "--", "Position", Modifier.weight(1f))
-                row.gpaChange?.let { ResultMetric((if (it >= 0) "+" else "") + "%.2f".format(it), "Change", Modifier.weight(1f)) }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                ResultMetric("%.2f".format(result.gpa), "GPA")
+                ResultMetric("%.2f".format(result.cgpa), "CGPA")
+                ResultMetric(result.classPosition?.toString() ?: "--", "Position")
+                row.gpaChange?.let { ResultMetric((if (it >= 0) "+" else "") + "%.2f".format(it), "Change") }
             }
             if (result.supplyCourses.isNotEmpty()) {
                 Spacer(Modifier.height(6.dp))
