@@ -78,17 +78,18 @@ fun TimetableGrid(
                 modifier = Modifier.horizontalScroll(hScroll).background(CmsTheme.colors.ink).padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(Modifier.width(labelWidth)) {
-                    Text(identityHeader, color = CmsTheme.colors.onInk, style = CmsTextStyles.eyebrow)
+                Box(Modifier.width(labelWidth), contentAlignment = Alignment.Center) {
+                    Text(identityHeader, color = CmsTheme.colors.onInk, style = CmsTextStyles.eyebrow, textAlign = TextAlign.Center)
                 }
                 timeSlots.forEach { slot ->
-                    Box(Modifier.width(slotWidth).padding(horizontal = 4.dp)) {
+                    Box(Modifier.width(slotWidth).padding(horizontal = 4.dp), contentAlignment = Alignment.Center) {
                         Text(
                             slot,
                             color = CmsTheme.colors.onInk,
                             style = CmsTextStyles.eyebrow,
                             maxLines = 3,
                             overflow = TextOverflow.Ellipsis,
+                            textAlign = TextAlign.Center,
                         )
                     }
                 }
@@ -99,16 +100,17 @@ fun TimetableGrid(
                     modifier = Modifier.horizontalScroll(hScroll),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Column(Modifier.width(labelWidth)) {
+                    Column(Modifier.width(labelWidth), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
                             row.label,
                             color = MaterialTheme.colorScheme.onSurface,
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
                             style = MaterialTheme.typography.titleSmall,
+                            textAlign = TextAlign.Center,
                         )
                         if (row.sublabel.isNotBlank()) {
-                            Text(row.sublabel, color = CmsTheme.colors.muted, style = MaterialTheme.typography.bodySmall)
+                            Text(row.sublabel, color = CmsTheme.colors.muted, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
                         }
                     }
                     timeSlots.forEach { slot ->
