@@ -513,7 +513,25 @@ private fun SemesterDatesheetView(
         Spacer(Modifier.height(12.dp))
 
         if (resolvedSession == null) {
-            Text("Choose a department, session, and shift to view its semester grid.", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
+            if (selectedDeptId == null) {
+                Text("Choose a department, session, and shift to view its semester grid.", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
+                return@Column
+            }
+            // A department without a fully resolved session -- show every matching session's own
+            // current-semester schedule as its own titled section instead of demanding a single pick.
+            val candidateSessions = sessionsInDepartment
+                .filter { selectedStartYear == null || it.startYear == selectedStartYear }
+                .filter { selectedShift == null || it.shift == selectedShift }
+                .sortedWith(compareByDescending<AcademicSession> { it.startYear }.thenBy { it.shift.name })
+            if (candidateSessions.isEmpty()) {
+                Text("This department has no sessions yet.", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
+                return@Column
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                candidateSessions.forEach { session ->
+                    SessionCurrentSemesterSection(session, datesheets, slotsByDatesheet, onOpenDatesheet)
+                }
+            }
             return@Column
         }
 
@@ -551,6 +569,73 @@ private fun SemesterDatesheetView(
             rows = rows,
             identityHeader = "SEM",
             onCellClick = { rowKey, colKey -> byKey[rowKey to colKey]?.let { onOpenDatesheet(it.datesheetId) } },
+        )
+    }
+}
+
+/** One session's own current-semester exam grid, titled with the session so several can sit under one department. */
+@Composable
+private fun SessionCurrentSemesterSection(
+    session: AcademicSession,
+    datesheets: List<Datesheet>,
+    slotsByDatesheet: Map<String, List<DatesheetSlot>>,
+    onOpenDatesheet: (String) -> Unit,
+) {
+    val semester = session.currentSemester
+    val sheet = datesheets.firstOrNull { it.sessionId == session.sessionId && it.semester == semester }
+
+    Column {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                "${session.label} · ${session.shift.name} · Semester $semester",
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.weight(1f),
+            )
+            if (sheet != null) {
+                StatusBadge(if (sheet.published) "PUBLISHED" else "DRAFT", if (sheet.published) BadgeTone.Success else BadgeTone.Neutral)
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+
+        if (sheet == null) {
+            Text("No Mid Term datesheet yet for this semester.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+            return@Column
+        }
+
+        data class Entry(val rawDate: String, val cell: GridCell)
+
+        val slots = slotsByDatesheet[sheet.id].orEmpty()
+        val entries = slots.mapNotNull { slot ->
+            val date = slot.examDate ?: return@mapNotNull null
+            Entry(date, GridCell(title = slot.subjectName, subtitle = paperLocationLabel(slot, sheet), meta = paperTimeLabel(slot, sheet)))
+        }
+        if (entries.isEmpty()) {
+            val message = if (slots.isEmpty()) {
+                "No papers yet -- open this datesheet to add some."
+            } else {
+                "${slots.size} paper(s) are waiting to be scheduled -- open this datesheet to set their dates."
+            }
+            Text(
+                message,
+                color = ModMuted,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.clickable { onOpenDatesheet(sheet.id) },
+            )
+            return@Column
+        }
+
+        val rawDates = entries.map { it.rawDate }.distinct().sortedBy { runCatching { LocalDate.parse(it) }.getOrDefault(LocalDate.MAX) }
+        val dateColumns = rawDates.map { formatExamDate(it) }
+        val rawToFormatted = rawDates.zip(dateColumns).toMap()
+        val byColumn = entries.associateBy { rawToFormatted[it.rawDate] }
+        val rows = listOf(GridRow(key = sheet.id, label = "Semester $semester", cells = dateColumns.associateWith { col -> byColumn[col]?.cell }))
+
+        TimetableGrid(
+            timeSlots = dateColumns,
+            rows = rows,
+            identityHeader = "SEM",
+            onCellClick = { _, _ -> onOpenDatesheet(sheet.id) },
         )
     }
 }
