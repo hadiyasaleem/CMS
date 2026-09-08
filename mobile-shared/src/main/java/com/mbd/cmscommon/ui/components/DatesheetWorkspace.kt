@@ -15,13 +15,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -561,7 +565,7 @@ private fun DatesheetDetailDialog(
                 Spacer(Modifier.height(10.dp))
                 if (viewer.canManage) {
                     detail.quality?.issues?.takeIf { it.isNotEmpty() }?.let { issues ->
-                        CmsNotice(issues.joinToString(" "), tone = NoticeTone.Warning)
+                        DatesheetIssuesCard(issues)
                         Spacer(Modifier.height(8.dp))
                     }
                     detail.drift?.takeIf { !it.isClean }?.let { drift ->
@@ -627,6 +631,23 @@ private fun DatesheetDetailDialog(
 }
 
 @Composable
+private fun DatesheetIssuesCard(issues: List<String>) {
+    Surface(shape = RoundedCornerShape(14.dp), color = DatesheetGold.copy(alpha = 0.1f), border = BorderStroke(1.dp, DatesheetGold.copy(alpha = 0.3f))) {
+        Column(Modifier.padding(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Outlined.WarningAmber, contentDescription = null, tint = DatesheetGold)
+                Spacer(Modifier.width(8.dp))
+                Text("NEEDS REVIEW", color = DatesheetGold, style = CmsTextStyles.eyebrow)
+            }
+            Spacer(Modifier.height(6.dp))
+            issues.forEach { issue ->
+                Text("· $issue", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+            }
+        }
+    }
+}
+
+@Composable
 private fun PaperRow(slot: DatesheetSlot, sheet: Datesheet, canManage: Boolean, identityKey: String?, onEdit: () -> Unit, onRemove: () -> Unit) {
     Surface(shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -636,7 +657,7 @@ private fun PaperRow(slot: DatesheetSlot, sheet: Datesheet, canManage: Boolean, 
                 Spacer(Modifier.height(4.dp))
                 Text(formatExamDate(slot.examDate), style = MaterialTheme.typography.bodySmall)
                 Text(paperTimeLabel(slot, sheet), color = ModMuted, style = MaterialTheme.typography.bodySmall)
-                Text(locationLabel(slot), color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                Text(paperLocationLabel(slot, sheet), color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 val invigilator = slot.invigilatorEmail
                 if (!invigilator.isNullOrBlank()) {
                     Text(invigilator, color = if (isAssignedTo(slot, identityKey)) DatesheetGold else ModMuted, style = MaterialTheme.typography.bodySmall)
@@ -777,6 +798,14 @@ private fun PaperEditorDialog(
                     },
                     buildingOptional = false,
                 )
+                if (selectedBuildingId == null) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        "A building is needed before this paper counts as scheduled and the datesheet can publish. You can still save without one for now.",
+                        color = DatesheetGold,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
                 Spacer(Modifier.height(10.dp))
                 CmsEntityPicker(
                     label = "Invigilator",
@@ -804,7 +833,7 @@ private fun PaperEditorDialog(
                         ),
                     )
                 },
-                enabled = !busy && selectedBuildingId != null && startTimeValid && endTimeValid && timesConsistent,
+                enabled = !busy && startTimeValid && endTimeValid && timesConsistent,
             ) { Text("Save") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
@@ -818,4 +847,15 @@ private fun paperTimeLabel(slot: DatesheetSlot, sheet: Datesheet): String {
     val start = slot.resolvedStartTime(sheet)
     val end = slot.resolvedEndTime(sheet)
     return if (start != null && end != null) "$start–$end" else "Time not set"
+}
+
+/**
+ * [locationLabel] only reads the paper's own building/room text, which stays blank whenever a
+ * paper is still relying on the datesheet's default building -- that made every freshly prefilled
+ * paper wrongly read "No room assigned" even when a default building was set. Say so instead of
+ * claiming there's no room at all.
+ */
+private fun paperLocationLabel(slot: DatesheetSlot, sheet: Datesheet): String {
+    if (slot.building != null || slot.roomNo != null) return locationLabel(slot)
+    return if (sheet.defaultBuildingId != null) "Uses the datesheet's default building" else "No building assigned"
 }
