@@ -87,7 +87,7 @@ fun TimetableGrid(
                             slot,
                             color = CmsTheme.colors.onInk,
                             style = CmsTextStyles.eyebrow,
-                            maxLines = 1,
+                            maxLines = 3,
                             overflow = TextOverflow.Ellipsis,
                         )
                     }
