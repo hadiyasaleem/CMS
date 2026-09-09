@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -181,7 +182,7 @@ private fun AssignmentPicker(assignments: List<ResolvedAssignment>, selected: Re
             Text(selected?.let { "${it.subjectLabel} (${it.courseCode})" } ?: "Select a class", modifier = Modifier.weight(1f))
             Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
         }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.heightIn(max = 240.dp)) {
             assignments.forEach { assignment ->
                 DropdownMenuItem(
                     text = { Text("${assignment.subjectLabel} · ${assignment.sessionLabel}") },

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -166,7 +167,7 @@ private fun SessionPicker(sessions: List<Pair<String, String>>, selected: String
             Text(sessions.firstOrNull { it.first == selected }?.second ?: "Select a class", modifier = Modifier.weight(1f))
             Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
         }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.heightIn(max = 240.dp)) {
             sessions.forEach { (id, label) ->
                 DropdownMenuItem(text = { Text(label) }, onClick = { onSelect(id); expanded = false })
             }

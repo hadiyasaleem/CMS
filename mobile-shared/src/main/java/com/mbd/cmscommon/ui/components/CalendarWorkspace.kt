@@ -498,7 +498,7 @@ private fun DropdownField(label: String, value: String, options: List<String>, o
         Spacer(Modifier.height(6.dp))
         Box {
             OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) { Text(value) }
-            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.heightIn(max = 240.dp)) {
                 options.forEach { option ->
                     DropdownMenuItem(text = { Text(option) }, onClick = { onSelect(option); expanded = false })
                 }
