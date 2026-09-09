@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.unit.dp
+import com.mbd.cmscommon.data.sync.AdminDataBootstrapper
 import com.mbd.cmscommon.domain.model.NotificationTargetRole
 import com.mbd.cmscommon.domain.model.UserRole
 import com.mbd.cmscommon.ui.components.CmsTopBar
@@ -33,11 +34,14 @@ import com.mbd.cmscommon.ui.components.NotificationBadge
 import com.mbd.cmscommon.ui.components.StudentExamsDestination
 import com.mbd.cmscommon.ui.components.StudentHomeDestination
 import com.mbd.cmscommon.ui.components.StudentMoreDestination
+import com.mbd.cmscommon.ui.components.SyncProgressDialog
 import com.mbd.cmscommon.ui.theme.CmsTheme
 import com.mbd.cmsdesktop.di.DesktopAppComponent
 import com.mbd.cmsdesktop.ui.shared.NotificationsScreen
 import com.mbd.cmsdesktop.ui.shared.StudentDatesheetsScreen
 import com.mbd.cmscommon.util.StudentIdCodec
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
@@ -67,6 +71,8 @@ private fun StudentShell(role: UserRole.LinkedStudent, component: DesktopAppComp
     var screen by remember { mutableStateOf<StudentScreen>(StudentTab.Home.root) }
     var shellRefreshing by remember { mutableStateOf(false) }
     var refreshVersion by remember { mutableIntStateOf(0) }
+    val tasksCompleted = remember { MutableStateFlow(0) }
+    val tasksCompletedCount by tasksCompleted.collectAsState()
 
     val accountKey = component.sessionManager().accountKey.orEmpty()
     val sessionId = StudentIdCodec.sessionIdOf(role.studentId)
@@ -80,14 +86,19 @@ private fun StudentShell(role: UserRole.LinkedStudent, component: DesktopAppComp
     fun refreshCurrentScreen() {
         if (shellRefreshing) return
         scope.launch {
+            tasksCompleted.value = 0
             shellRefreshing = true
             try {
-                component.adminDataBootstrapper().refreshAll()
+                component.adminDataBootstrapper().refreshAll(onTaskDone = { tasksCompleted.update { it + 1 } })
                 refreshVersion += 1
             } finally {
                 shellRefreshing = false
             }
         }
+    }
+
+    if (shellRefreshing) {
+        SyncProgressDialog(completed = tasksCompletedCount, total = AdminDataBootstrapper.TOTAL_SYNC_TASKS)
     }
 
     fun open(target: StudentScreen) {

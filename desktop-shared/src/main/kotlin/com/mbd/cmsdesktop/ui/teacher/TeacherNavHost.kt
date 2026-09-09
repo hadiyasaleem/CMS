@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.res.painterResource
 import com.mbd.cmscommon.controller.NotificationPublisherKind
+import com.mbd.cmscommon.data.sync.AdminDataBootstrapper
 import com.mbd.cmscommon.domain.model.CalendarViewerContext
 import com.mbd.cmscommon.domain.model.CalendarViewerRole
 import com.mbd.cmscommon.domain.model.DatesheetViewerContext
@@ -34,6 +35,7 @@ import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider
 import com.mbd.cmscommon.ui.components.CmsTopBar
 import com.mbd.cmscommon.ui.components.ExamsDestination
 import com.mbd.cmscommon.ui.components.InsightsViewer
+import com.mbd.cmscommon.ui.components.SyncProgressDialog
 import com.mbd.cmscommon.ui.components.TeacherMenuWorkspace
 import com.mbd.cmscommon.ui.theme.CmsTheme
 import com.mbd.cmsdesktop.di.DesktopAppComponent
@@ -44,7 +46,9 @@ import com.mbd.cmsdesktop.ui.shared.DatesheetsScreen
 import com.mbd.cmsdesktop.ui.shared.InsightsScreen
 import com.mbd.cmsdesktop.ui.shared.NotificationsScreen
 import java.awt.event.WindowEvent
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
@@ -61,6 +65,8 @@ fun TeacherNavHost(role: UserRole.Teacher, component: DesktopAppComponent, windo
     val refreshScope = rememberCoroutineScope()
     var shellRefreshing by remember { mutableStateOf(false) }
     var refreshVersion by remember { mutableIntStateOf(0) }
+    val tasksCompleted = remember { MutableStateFlow(0) }
+    val tasksCompletedCount by tasksCompleted.collectAsState()
 
     val notificationRepository = component.notificationRepository()
     var notificationContext by remember { mutableStateOf(NotificationAudienceContext()) }
@@ -87,11 +93,16 @@ fun TeacherNavHost(role: UserRole.Teacher, component: DesktopAppComponent, windo
     fun refreshCurrentScreen() {
         if (shellRefreshing) return
         refreshScope.launch {
+            tasksCompleted.value = 0
             shellRefreshing = true
-            runCatching { component.adminDataBootstrapper().refreshAll() }
+            runCatching { component.adminDataBootstrapper().refreshAll(onTaskDone = { tasksCompleted.update { it + 1 } }) }
             refreshVersion++
             shellRefreshing = false
         }
+    }
+
+    if (shellRefreshing) {
+        SyncProgressDialog(completed = tasksCompletedCount, total = AdminDataBootstrapper.TOTAL_SYNC_TASKS)
     }
 
     fun goTab(tab: TeacherTab) {
