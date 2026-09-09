@@ -110,6 +110,7 @@ fun TeacherDirectoryWorkspace(
     onCreate: (TeacherAccountDraft) -> Unit,
     onUpdate: (Teacher, TeacherAccountDraft) -> Unit,
     onSetStatus: (Teacher, TeacherStatus) -> Unit,
+    onResetPassword: (Teacher, String) -> Unit,
     onDelete: (Teacher) -> Unit,
     onPickPhoto: (onPicked: (ImageBitmap) -> Unit) -> Unit,
     onUploadCroppedPhoto: (Teacher, ImageBitmap) -> Unit,
@@ -126,6 +127,7 @@ fun TeacherDirectoryWorkspace(
     var editingTeacher by remember { mutableStateOf<Teacher?>(null) }
     var pendingStatus by remember { mutableStateOf<Pair<Teacher, TeacherStatus>?>(null) }
     var pendingDelete by remember { mutableStateOf<Teacher?>(null) }
+    var pendingResetPassword by remember { mutableStateOf<Teacher?>(null) }
 
     fun completeness(teacher: Teacher): Int {
         val fields = listOf(teacher.deptId, teacher.designation, teacher.qualification, teacher.specialization, teacher.officeRoom, teacher.phone)
@@ -206,6 +208,7 @@ fun TeacherDirectoryWorkspace(
                         busy = busyTeacherId == teacher.teacherId,
                         onEdit = { editingTeacher = teacher },
                         onRequestStatus = { status -> pendingStatus = teacher to status },
+                        onRequestResetPassword = { pendingResetPassword = teacher },
                         onRequestDelete = { pendingDelete = teacher },
                         onLoadPhoto = onLoadPhoto,
                     )
@@ -274,6 +277,15 @@ fun TeacherDirectoryWorkspace(
             dependentSummary = "Removes ${teacher.name}'s faculty account and revokes access.",
             onConfirm = { onDelete(teacher); pendingDelete = null },
             onDismiss = { pendingDelete = null },
+        )
+    }
+
+    pendingResetPassword?.let { teacher ->
+        ResetPasswordDialog(
+            teacher = teacher,
+            busy = busyTeacherId == teacher.teacherId,
+            onConfirm = { newPassword -> onResetPassword(teacher, newPassword); pendingResetPassword = null },
+            onDismiss = { pendingResetPassword = null },
         )
     }
 
@@ -392,6 +404,7 @@ private fun TeacherCard(
     busy: Boolean,
     onEdit: () -> Unit,
     onRequestStatus: (TeacherStatus) -> Unit,
+    onRequestResetPassword: () -> Unit,
     onRequestDelete: () -> Unit,
     onLoadPhoto: suspend (String) -> ImageBitmap?,
 ) {
@@ -440,6 +453,10 @@ private fun TeacherCard(
                             TeacherStatus.ACTIVE -> DropdownMenuItem(text = { Text("Disable") }, onClick = { menuExpanded = false; onRequestStatus(TeacherStatus.DISABLED) })
                             else -> DropdownMenuItem(text = { Text("Reactivate") }, onClick = { menuExpanded = false; onRequestStatus(TeacherStatus.ACTIVE) })
                         }
+                        DropdownMenuItem(
+                            text = { Text("Reset password") },
+                            onClick = { menuExpanded = false; onRequestResetPassword() },
+                        )
                         DropdownMenuItem(
                             text = { Text("Remove", color = CmsTheme.colors.accent) },
                             onClick = { menuExpanded = false; onRequestDelete() },
@@ -656,6 +673,53 @@ private fun TeacherActionDialog(
             onCropped = { cropped -> pendingCrop = null; pendingPhoto = cropped },
         )
     }
+}
+
+@Composable
+private fun ResetPasswordDialog(
+    teacher: Teacher,
+    busy: Boolean,
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var newPassword by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    val passwordError = FieldValidators.passwordError(newPassword)
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Reset ${teacher.name}'s password", style = MaterialTheme.typography.headlineSmall) },
+        text = {
+            Column {
+                Text(
+                    "Set a new temporary password. Share it with ${teacher.name} directly -- they'll sign in with it.",
+                    color = ModMuted,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Spacer(Modifier.height(10.dp))
+                OutlinedTextField(
+                    value = newPassword,
+                    onValueChange = { newPassword = it },
+                    label = { Text("New temporary password") },
+                    isError = newPassword.isNotBlank() && passwordError != null,
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility, contentDescription = if (passwordVisible) "Hide password" else "Show password")
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(newPassword) }, enabled = passwordError == null && !busy) {
+                Text(if (busy) "Resetting" else "Reset password")
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss, enabled = !busy) { Text("Cancel") } },
+    )
 }
 
 @Composable

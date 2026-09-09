@@ -45,6 +45,7 @@ class TeachersViewModel @Inject constructor(
     fun createTeacher(draft: TeacherAccountDraft) = controller.createTeacher(draft)
     fun updateTeacher(teacher: Teacher, draft: TeacherAccountDraft) = controller.updateTeacher(teacher, draft)
     fun setStatus(teacher: Teacher, status: TeacherStatus) = controller.setStatus(teacher, status)
+    fun resetPassword(teacher: Teacher, newPassword: String) = controller.resetPassword(teacher, newPassword)
     fun deleteTeacher(teacher: Teacher) = controller.deleteTeacher(teacher)
     fun uploadPhoto(teacher: Teacher, imageBytes: ByteArray, mimeType: String) = controller.uploadPhoto(teacher, imageBytes, mimeType)
     fun reportPhotoPickFailure(t: Throwable) = controller.reportPhotoPickFailure(t)

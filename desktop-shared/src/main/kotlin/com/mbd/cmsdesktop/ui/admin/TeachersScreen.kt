@@ -63,6 +63,7 @@ fun TeachersScreen(
         onCreate = controller::createTeacher,
         onUpdate = controller::updateTeacher,
         onSetStatus = controller::setStatus,
+        onResetPassword = controller::resetPassword,
         onDelete = controller::deleteTeacher,
         onPickPhoto = { onPicked ->
             val file = AwtDesktopPlatformServices.pickFile(window, "Choose a photo (JPEG/PNG/WebP)")

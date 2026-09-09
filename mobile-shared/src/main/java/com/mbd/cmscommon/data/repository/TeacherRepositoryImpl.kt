@@ -112,6 +112,10 @@ class TeacherRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun resetPassword(teacherId: String, newPassword: String) {
+        provisioner.resetTeacherPassword(teacherId, newPassword)
+    }
+
     override suspend fun uploadPhoto(teacherId: String, imageBytes: ByteArray, mimeType: String) {
         teacherPhotoUploadError(mimeType, imageBytes)?.let { throw IllegalArgumentException(it) }
         val path = "teachers/$teacherId.${teacherPhotoExtension(mimeType)}"

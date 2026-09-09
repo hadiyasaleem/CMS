@@ -73,6 +73,7 @@ fun TeachersScreen(viewModel: TeachersViewModel = hiltViewModel()) {
         onCreate = viewModel::createTeacher,
         onUpdate = viewModel::updateTeacher,
         onSetStatus = viewModel::setStatus,
+        onResetPassword = viewModel::resetPassword,
         onDelete = viewModel::deleteTeacher,
         onPickPhoto = { onPicked -> pendingOnPicked = onPicked; pickPhoto.launch("image/*") },
         onUploadCroppedPhoto = { teacher: Teacher, cropped: ImageBitmap ->

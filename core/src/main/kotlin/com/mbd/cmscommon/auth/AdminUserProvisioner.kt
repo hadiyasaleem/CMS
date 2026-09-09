@@ -35,6 +35,12 @@ private data class SetStatusRequest(
     val status: String,
 )
 
+@Serializable
+private data class ResetPasswordRequest(
+    val email: String,
+    @SerialName("newPassword") val newPassword: String,
+)
+
 class AdminUserProvisioner @Inject constructor(
     private val functions: Functions,
 ) {
@@ -60,5 +66,10 @@ class AdminUserProvisioner @Inject constructor(
     suspend fun setTeacherStatus(email: String, status: String) {
         val body = SetStatusRequest(email.normalizeEmail(), status)
         functions.invoke(SupabaseTables.FN_SET_TEACHER_STATUS) { setBody(body) }
+    }
+
+    suspend fun resetTeacherPassword(email: String, newPassword: String) {
+        val body = ResetPasswordRequest(email.normalizeEmail(), newPassword)
+        functions.invoke(SupabaseTables.FN_RESET_TEACHER_PASSWORD) { setBody(body) }
     }
 }

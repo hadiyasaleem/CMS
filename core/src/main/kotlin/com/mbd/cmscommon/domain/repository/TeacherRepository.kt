@@ -13,6 +13,7 @@ interface TeacherRepository {
     suspend fun updateTeacher(teacher: Teacher)
     suspend fun deleteTeacher(teacherId: String)
     suspend fun setStatus(teacherId: String, status: TeacherStatus)
+    suspend fun resetPassword(teacherId: String, newPassword: String)
     suspend fun resolveNameOrFallback(teacherId: String): String
     suspend fun sync()
     suspend fun syncSelf(teacherId: String)

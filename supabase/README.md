@@ -11,7 +11,8 @@ supabase projects create cms-mbd --region <pick-nearest>   # or via dashboard/MC
 supabase link --project-ref <ref>
 supabase db push                                            # applies migrations/ in order
 supabase functions deploy admin-create-user promote-session \
-  archive-and-delete-session set-teacher-status revoke-student-link
+  archive-and-delete-session set-teacher-status revoke-student-link \
+  reset-teacher-password
 ```
 
 Then, in the dashboard:

@@ -169,6 +169,18 @@ class TeachersController(
         }
     }
 
+    fun resetPassword(teacher: Teacher, newPassword: String) = launch {
+        try {
+            _busyTeacherId.value = teacher.teacherId
+            _notice.value = null
+            FieldValidators.passwordError(newPassword).orThrowValidation()
+            teacherRepository.resetPassword(teacher.teacherId, newPassword)
+            _notice.value = "${teacher.name}'s password was reset."
+        } finally {
+            _busyTeacherId.value = null
+        }
+    }
+
     fun deleteTeacher(teacher: Teacher) = launch {
         try {
             _busyTeacherId.value = teacher.teacherId

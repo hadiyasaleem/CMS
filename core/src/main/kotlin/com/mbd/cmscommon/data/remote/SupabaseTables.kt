@@ -35,4 +35,5 @@ object SupabaseTables {
     const val FN_ARCHIVE_DELETE_SESSION = "archive-and-delete-session"
     const val FN_SET_TEACHER_STATUS = "set-teacher-status"
     const val FN_REVOKE_STUDENT_LINK = "revoke-student-link"
+    const val FN_RESET_TEACHER_PASSWORD = "reset-teacher-password"
 }
