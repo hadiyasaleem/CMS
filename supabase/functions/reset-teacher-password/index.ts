@@ -15,8 +15,15 @@ Deno.serve(handle(async (req) => {
   const svc = serviceClient();
   const caller = await requireAdmin(req, svc);
 
-  const { email, newPassword } = await req.json();
-  if (!email || !newPassword) throw httpError(400, "email and newPassword are required");
+  const body = await req.json();
+  // Accept both casings -- the Kotlin client's global JSON naming strategy can rewrite
+  // camelCase fields to snake_case depending on which call path serializes the request,
+  // so don't assume a single casing.
+  const email = body.email;
+  const newPassword = body.newPassword ?? body.new_password;
+  if (!email || !newPassword) {
+    throw httpError(400, `email and newPassword are required (got keys: ${Object.keys(body).join(", ")})`);
+  }
   const normalized = String(email).trim().toLowerCase();
 
   const { data: teacher } = await svc.from("teachers")
