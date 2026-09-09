@@ -3,7 +3,6 @@ package com.mbd.cmscommon.auth
 import com.mbd.cmscommon.data.remote.SupabaseTables
 import io.github.jan.supabase.functions.Functions
 import io.ktor.client.call.body
-import io.ktor.client.request.setBody
 import javax.inject.Inject
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -53,23 +52,26 @@ class AdminUserProvisioner @Inject constructor(
         phone: String?,
     ): String {
         val body = CreateUserRequest(email.normalizeEmail(), password, "TEACHER", name, deptId, designation, phone)
-        val response = functions.invoke(SupabaseTables.FN_ADMIN_CREATE_USER) { setBody(body) }
+        val response = functions.invoke(SupabaseTables.FN_ADMIN_CREATE_USER, body)
         return response.body<CreateUserResponse>().uid
     }
 
     suspend fun createAdmin(email: String, password: String): String {
         val body = CreateUserRequest(email.normalizeEmail(), password, "ADMIN")
-        val response = functions.invoke(SupabaseTables.FN_ADMIN_CREATE_USER) { setBody(body) }
+        val response = functions.invoke(SupabaseTables.FN_ADMIN_CREATE_USER, body)
         return response.body<CreateUserResponse>().uid
     }
 
     suspend fun setTeacherStatus(email: String, status: String) {
         val body = SetStatusRequest(email.normalizeEmail(), status)
-        functions.invoke(SupabaseTables.FN_SET_TEACHER_STATUS) { setBody(body) }
+        functions.invoke(SupabaseTables.FN_SET_TEACHER_STATUS, body)
     }
 
     suspend fun resetTeacherPassword(email: String, newPassword: String) {
         val body = ResetPasswordRequest(email.normalizeEmail(), newPassword)
-        functions.invoke(SupabaseTables.FN_RESET_TEACHER_PASSWORD) { setBody(body) }
+        // The typed `invoke(function, body)` overload (reified) hands Ktor the compile-time type
+        // so it can serialize correctly -- unlike `invoke(function) { setBody(body) }`, which loses
+        // that type info inside the builder lambda and fails at runtime with a null Content-Type.
+        functions.invoke(SupabaseTables.FN_RESET_TEACHER_PASSWORD, body)
     }
 }
