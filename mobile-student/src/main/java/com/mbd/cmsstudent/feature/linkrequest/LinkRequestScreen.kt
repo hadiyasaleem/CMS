@@ -30,6 +30,7 @@ fun LinkRequestScreen(viewModel: LinkRequestViewModel = hiltViewModel()) {
             state = state,
             actions = StudentLinkRequestActions(
                 onRefresh = viewModel::refresh,
+                onSessionSelected = viewModel::onSessionSelected,
                 onSubmit = viewModel::submit,
             ),
         )

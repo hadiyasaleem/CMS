@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.Department
 import com.mbd.cmscommon.domain.model.LinkRequestStatus
+import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.StudentLinkRequest
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
@@ -54,6 +55,9 @@ private val LinkDateFormat = DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a")
 data class StudentLinkRequestUiState(
     val departments: List<Department> = emptyList(),
     val sessions: List<AcademicSession> = emptyList(),
+    /** Unclaimed roll numbers for the selected session -- null while loading/unselected, empty once
+     * loaded if the session has none left. Backs the roll-number dropdown in [LinkRequestForm]. */
+    val availableRollNumbers: List<String>? = null,
     val latestRequest: StudentLinkRequest? = null,
     val submitState: Outcome<Unit> = Outcome.Success(Unit),
     val refreshing: Boolean = false,
@@ -62,6 +66,9 @@ data class StudentLinkRequestUiState(
 
 data class StudentLinkRequestActions(
     val onRefresh: () -> Unit,
+    /** Fired whenever the form's session selection changes (including back to null) so the caller
+     * can (re)fetch [StudentLinkRequestUiState.availableRollNumbers] for it. */
+    val onSessionSelected: (String?) -> Unit,
     val onSubmit: (String, String, String, String, String, String, String, String) -> Unit,
 )
 
@@ -85,10 +92,10 @@ fun StudentLinkRequestWorkspace(state: StudentLinkRequestUiState, actions: Stude
             LinkRequestStatus.PENDING -> item { PendingRequestCard(request) }
             LinkRequestStatus.REJECTED -> {
                 item { RejectedRequestCard(request) }
-                item { LinkRequestForm(state, actions.onSubmit) }
+                item { LinkRequestForm(state, actions.onSessionSelected, actions.onSubmit) }
             }
             LinkRequestStatus.APPROVED -> item { CmsNotice("Your request was approved. Refreshing your account access now.", tone = NoticeTone.Success) }
-            null -> item { LinkRequestForm(state, actions.onSubmit) }
+            null -> item { LinkRequestForm(state, actions.onSessionSelected, actions.onSubmit) }
         }
 
         item { Spacer(Modifier.height(72.dp)) }
@@ -173,11 +180,13 @@ private fun ClaimLine(label: String, value: String) {
 @Composable
 private fun LinkRequestForm(
     state: StudentLinkRequestUiState,
+    onSessionSelected: (String?) -> Unit,
     onSubmit: (String, String, String, String, String, String, String, String) -> Unit,
 ) {
     var deptId by remember { mutableStateOf<String?>(null) }
+    var shift by remember { mutableStateOf<Session?>(null) }
     var sessionId by remember { mutableStateOf<String?>(null) }
-    var rollNumber by remember { mutableStateOf("") }
+    var rollNumber by remember { mutableStateOf<String?>(null) }
     var name by remember { mutableStateOf("") }
     var cnic by remember { mutableStateOf("") }
     var dob by remember { mutableStateOf("") }
@@ -186,8 +195,23 @@ private fun LinkRequestForm(
     var message by remember { mutableStateOf("") }
 
     val sessionsForDept = state.sessions.filter { deptId == null || it.deptId == deptId }
+    val shiftsForDept = sessionsForDept.map { it.shift }.distinct()
+    val sessionsForDeptAndShift = sessionsForDept.filter { shift == null || it.shift == shift }
     val busy = state.submitState is Outcome.Loading
-    val valid = sessionId != null && rollNumber.isNotBlank() && name.isNotBlank() && cnic.isNotBlank()
+    val valid = sessionId != null && !rollNumber.isNullOrBlank() && name.isNotBlank() && cnic.isNotBlank()
+
+    fun selectDept(id: String?) {
+        deptId = id; shift = null; sessionId = null; rollNumber = null
+        onSessionSelected(null)
+    }
+    fun selectShift(picked: Session?) {
+        shift = picked; sessionId = null; rollNumber = null
+        onSessionSelected(null)
+    }
+    fun selectSession(id: String?) {
+        sessionId = id; rollNumber = null
+        onSessionSelected(id)
+    }
 
     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
@@ -200,23 +224,43 @@ private fun LinkRequestForm(
                     label = "Department",
                     selectedId = deptId,
                     options = state.departments.map { CmsEntityOption(it.deptId, it.name) },
-                    onSelected = { deptId = it; sessionId = null },
+                    onSelected = ::selectDept,
                 )
                 Spacer(Modifier.height(10.dp))
-                if (deptId == null || sessionsForDept.isEmpty()) {
-                    Text("Select a department and shift first.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                if (deptId == null || shiftsForDept.isEmpty()) {
+                    Text("Select a department first.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 } else {
                     CmsEntityPicker(
-                        label = "Academic session",
-                        selectedId = sessionId,
-                        options = sessionsForDept.map { CmsEntityOption(it.sessionId, "${it.label} · ${it.shift}") },
-                        onSelected = { sessionId = it },
+                        label = "Shift",
+                        selectedId = shift?.name,
+                        options = shiftsForDept.map { CmsEntityOption(it.name, it.name) },
+                        onSelected = { picked -> selectShift(picked?.let { Session.valueOf(it) }) },
                     )
+                    Spacer(Modifier.height(10.dp))
+                    if (shift == null || sessionsForDeptAndShift.isEmpty()) {
+                        Text("Select a shift first.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                    } else {
+                        CmsEntityPicker(
+                            label = "Academic session",
+                            selectedId = sessionId,
+                            options = sessionsForDeptAndShift.map { CmsEntityOption(it.sessionId, it.label) },
+                            onSelected = ::selectSession,
+                        )
+                        Spacer(Modifier.height(10.dp))
+                        when {
+                            sessionId == null -> Text("Select a session first.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                            state.availableRollNumbers == null -> Text("Loading roll numbers…", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                            state.availableRollNumbers.isEmpty() -> Text("No unclaimed roll numbers found for this session.", color = LinkRed, style = MaterialTheme.typography.bodySmall)
+                            else -> CmsEntityPicker(
+                                label = "Class roll number",
+                                selectedId = rollNumber,
+                                options = state.availableRollNumbers.map { CmsEntityOption(it, it) },
+                                onSelected = { rollNumber = it },
+                            )
+                        }
+                    }
                 }
             }
-            Spacer(Modifier.height(10.dp))
-            LinkFieldLabel("Class roll number")
-            OutlinedTextField(value = rollNumber, onValueChange = { rollNumber = it }, placeholder = { Text("IT-21-09") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
             Spacer(Modifier.height(10.dp))
             LinkFieldLabel("Student name")
             OutlinedTextField(value = name, onValueChange = { name = it }, placeholder = { Text("As on college record") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
@@ -242,7 +286,7 @@ private fun LinkRequestForm(
             Spacer(Modifier.height(12.dp))
             CmsPrimaryButton(
                 text = if (busy) "Submitting..." else if (state.latestRequest != null) "Submit corrected request" else "Submit for verification",
-                onClick = { onSubmit(sessionId ?: "", rollNumber.trim(), name.trim(), cnic.trim(), dob.trim(), universityRoll.trim(), registrationNo.trim(), message.trim()) },
+                onClick = { onSubmit(sessionId ?: "", rollNumber.orEmpty().trim(), name.trim(), cnic.trim(), dob.trim(), universityRoll.trim(), registrationNo.trim(), message.trim()) },
                 enabled = valid && !busy,
                 modifier = Modifier.fillMaxWidth(),
             )

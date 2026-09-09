@@ -38,6 +38,18 @@ fun StudentLinkRequestScreen(component: DesktopAppComponent, onLinked: (UserRole
     var submitState by remember { mutableStateOf<Outcome<Unit>>(Outcome.Success(Unit)) }
     var refreshing by remember { mutableStateOf(false) }
     var refreshError by remember { mutableStateOf<String?>(null) }
+    var selectedSessionId by remember { mutableStateOf<String?>(null) }
+    var availableRollNumbers by remember { mutableStateOf<List<String>?>(null) }
+
+    LaunchedEffect(selectedSessionId) {
+        val sessionId = selectedSessionId
+        if (sessionId == null) {
+            availableRollNumbers = null
+        } else {
+            availableRollNumbers = null
+            availableRollNumbers = runCatching { component.academicSessionRepository().getAvailableRollNumbers(sessionId) }.getOrDefault(emptyList())
+        }
+    }
 
     suspend fun refresh() {
         refreshing = true
@@ -68,6 +80,7 @@ fun StudentLinkRequestScreen(component: DesktopAppComponent, onLinked: (UserRole
     val state = StudentLinkRequestUiState(
         departments = departments,
         sessions = sessions,
+        availableRollNumbers = availableRollNumbers,
         latestRequest = latestRequest,
         submitState = submitState,
         refreshing = refreshing,
@@ -75,6 +88,7 @@ fun StudentLinkRequestScreen(component: DesktopAppComponent, onLinked: (UserRole
     )
     val actions = StudentLinkRequestActions(
         onRefresh = { scope.launch { refresh() } },
+        onSessionSelected = { selectedSessionId = it },
         onSubmit = { sessionId, roll, name, cnic, dob, universityRoll, registrationNo, message ->
             scope.launch {
                 submitState = Outcome.Loading

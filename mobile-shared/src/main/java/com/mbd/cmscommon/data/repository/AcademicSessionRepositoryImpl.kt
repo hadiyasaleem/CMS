@@ -37,6 +37,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 class AcademicSessionRepositoryImpl @Inject constructor(
     private val postgrest: Postgrest,
@@ -237,6 +239,14 @@ class AcademicSessionRepositoryImpl @Inject constructor(
             }
         }
         studentDao.deleteById(studentId)
+    }
+
+    @Serializable
+    private data class RollNumberRow(@SerialName("roll_number") val rollNumber: String)
+
+    override suspend fun getAvailableRollNumbers(sessionId: String): List<String> {
+        val params = buildJsonObject { put("p_session", sessionId) }
+        return postgrest.rpc(SupabaseTables.RPC_AVAILABLE_ROLL_NUMBERS, params).decodeList<RollNumberRow>().map { it.rollNumber }
     }
 
     override suspend fun getStudentProfile(sessionId: String, rollNumber: String): StudentProfile? {

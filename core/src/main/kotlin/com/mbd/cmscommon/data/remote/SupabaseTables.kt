@@ -28,6 +28,7 @@ object SupabaseTables {
     const val NOTIFICATIONS = "notifications"
     const val APP_LOGS = "app_logs"
     const val RPC_RECORD_SEMESTER_RESULT = "record_semester_result"
+    const val RPC_AVAILABLE_ROLL_NUMBERS = "available_roll_numbers"
     const val BUCKET_EXAM_PAPERS = "exam-papers"
     const val BUCKET_PHOTOS = "photos"
     const val FN_ADMIN_CREATE_USER = "admin-create-user"

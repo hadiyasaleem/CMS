@@ -23,6 +23,9 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -39,6 +42,18 @@ class LinkRequestViewModel @Inject constructor(
     private val _refreshing = MutableStateFlow(false)
     private val _refreshError = MutableStateFlow<String?>(null)
     private val _submitState = MutableStateFlow<Outcome<Unit>>(Outcome.Success(Unit))
+    private val _selectedSessionId = MutableStateFlow<String?>(null)
+
+    private val availableRollNumbers: Flow<List<String>?> = _selectedSessionId.flatMapLatest { sessionId ->
+        if (sessionId == null) {
+            flowOf(null)
+        } else {
+            flow {
+                emit(null)
+                emit(runCatching { sessionRepository.getAvailableRollNumbers(sessionId) }.getOrDefault(emptyList()))
+            }
+        }
+    }
 
     private val latestRequest: Flow<StudentLinkRequest?> =
         linkRequestRepository.observeRequestsForStudentUid(sessionManager.accountKey.orEmpty())
@@ -54,16 +69,21 @@ class LinkRequestViewModel @Inject constructor(
         Triple(refreshing, refreshError, submitState)
     }
 
-    val uiState: StateFlow<StudentLinkRequestUiState> = combine(referenceData, transientState) { reference, transient ->
+    val uiState: StateFlow<StudentLinkRequestUiState> = combine(referenceData, transientState, availableRollNumbers) { reference, transient, rollNumbers ->
         StudentLinkRequestUiState(
             departments = reference.first,
             sessions = reference.second,
+            availableRollNumbers = rollNumbers,
             latestRequest = reference.third,
             submitState = transient.third,
             refreshing = transient.first,
             refreshError = transient.second,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), StudentLinkRequestUiState())
+
+    fun onSessionSelected(sessionId: String?) {
+        _selectedSessionId.value = sessionId
+    }
 
     fun refresh() {
         _refreshing.value = true

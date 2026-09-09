@@ -34,6 +34,10 @@ interface AcademicSessionRepository {
     suspend fun addStudent(sessionId: String, rollNumber: String, name: String, gpa: Double? = null, cgpa: Double? = null)
     suspend fun deleteStudent(studentId: String)
     suspend fun getStudentProfile(sessionId: String, rollNumber: String): StudentProfile?
+    /** Roll numbers in this session not yet claimed by a linked Student account -- backs the
+     * account-linking form's roll-number picker. Goes through a SECURITY DEFINER RPC (not a plain
+     * select) since an unlinked caller has no RLS visibility into session_students otherwise. */
+    suspend fun getAvailableRollNumbers(sessionId: String): List<String>
     suspend fun saveStudentProfile(profile: StudentProfile)
     suspend fun syncSessionsForDept(deptId: String)
     suspend fun syncStudents(sessionId: String)
