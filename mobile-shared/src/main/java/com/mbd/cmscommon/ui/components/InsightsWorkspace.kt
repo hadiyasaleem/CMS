@@ -302,6 +302,7 @@ private fun RiskStudentCard(student: AtRiskStudent, sessionLabel: String) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ExamInsightCard(stat: ExamStat, sessionLabel: String) {
     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
@@ -314,7 +315,7 @@ private fun ExamInsightCard(stat: ExamStat, sessionLabel: String) {
                 StatusBadge("Entered ${stat.entered}", BadgeTone.Neutral)
             }
             Spacer(Modifier.height(10.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 MetricPill("Average score", averagePercentage(stat)?.let { "${it.roundToInt()}%" } ?: "--", InsightsNavy)
                 MetricPill("Pass rate", stat.passRate?.let { "${it.roundToInt()}%" } ?: "--", InsightsGreen)
                 MetricPill("Range", "${stat.minScore ?: "--"} - ${stat.maxScore ?: "--"} / ${stat.outOf}", InsightsGold)
