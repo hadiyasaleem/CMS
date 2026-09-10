@@ -15,7 +15,7 @@ import com.mbd.cmscommon.ui.components.StudentLinkRequestWorkspace
 import com.mbd.cmscommon.ui.theme.CmsTheme
 
 @Composable
-fun LinkRequestScreen(viewModel: LinkRequestViewModel = hiltViewModel()) {
+fun LinkRequestScreen(onSignOut: () -> Unit, viewModel: LinkRequestViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsState()
 
     LaunchedEffect(Unit) { viewModel.refresh() }
@@ -32,6 +32,7 @@ fun LinkRequestScreen(viewModel: LinkRequestViewModel = hiltViewModel()) {
                 onRefresh = viewModel::refresh,
                 onSessionSelected = viewModel::onSessionSelected,
                 onSubmit = viewModel::submit,
+                onSignOut = onSignOut,
             ),
         )
     }

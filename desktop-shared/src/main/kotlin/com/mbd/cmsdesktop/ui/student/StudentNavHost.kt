@@ -59,7 +59,7 @@ import kotlinx.coroutines.launch
 fun StudentNavHost(role: UserRole, component: DesktopAppComponent, window: ComposeWindow, onSignOut: () -> Unit, onRoleChanged: (UserRole) -> Unit) {
     when (role) {
         is UserRole.LinkedStudent -> StudentShell(role, component, window, onSignOut)
-        is UserRole.UnlinkedStudent -> StudentLinkRequestScreen(component, onLinked = onRoleChanged)
+        is UserRole.UnlinkedStudent -> StudentLinkRequestScreen(component, onLinked = onRoleChanged, onSignOut = onSignOut)
         else -> Text("This account is not a student account.", modifier = Modifier.padding(24.dp))
     }
 }

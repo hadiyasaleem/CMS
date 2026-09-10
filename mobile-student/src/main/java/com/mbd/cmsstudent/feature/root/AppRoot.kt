@@ -38,7 +38,7 @@ fun AppRoot(viewModel: AppRootViewModel = hiltViewModel()) {
             if (resolvedRole is UserRole.LinkedStudent) {
                 StudentScaffold(onSignedOut = { viewModel.signOut() })
             } else {
-                LinkRequestScreen()
+                LinkRequestScreen(onSignOut = { viewModel.signOut() })
             }
         },
     )

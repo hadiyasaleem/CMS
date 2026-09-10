@@ -70,6 +70,7 @@ data class StudentLinkRequestActions(
      * can (re)fetch [StudentLinkRequestUiState.availableRollNumbers] for it. */
     val onSessionSelected: (String?) -> Unit,
     val onSubmit: (String, String, String, String, String, String, String, String) -> Unit,
+    val onSignOut: () -> Unit,
 )
 
 @Composable
@@ -79,7 +80,7 @@ fun StudentLinkRequestWorkspace(state: StudentLinkRequestUiState, actions: Stude
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { LinkHeader(state.refreshing, actions.onRefresh) }
+        item { LinkHeader(state.refreshing, actions.onRefresh, actions.onSignOut) }
 
         if (!state.refreshError.isNullOrBlank()) {
             item { CmsNotice(state.refreshError, tone = NoticeTone.Error, actionLabel = "Retry", onAction = actions.onRefresh) }
@@ -103,7 +104,7 @@ fun StudentLinkRequestWorkspace(state: StudentLinkRequestUiState, actions: Stude
 }
 
 @Composable
-private fun LinkHeader(refreshing: Boolean, onRefresh: () -> Unit) {
+private fun LinkHeader(refreshing: Boolean, onRefresh: () -> Unit, onSignOut: () -> Unit) {
     Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
@@ -111,7 +112,10 @@ private fun LinkHeader(refreshing: Boolean, onRefresh: () -> Unit) {
                 Spacer(Modifier.height(6.dp))
                 Text("Connect your college record", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
             }
-            TextButton(onClick = onRefresh, enabled = !refreshing) { Text(if (refreshing) "Checking" else "Refresh", color = CmsTheme.colors.onInk) }
+            Column(horizontalAlignment = Alignment.End) {
+                TextButton(onClick = onRefresh, enabled = !refreshing) { Text(if (refreshing) "Checking" else "Refresh", color = CmsTheme.colors.onInk) }
+                TextButton(onClick = onSignOut) { Text("Sign out", color = CmsTheme.colors.onInkMuted) }
+            }
         }
     }
 }

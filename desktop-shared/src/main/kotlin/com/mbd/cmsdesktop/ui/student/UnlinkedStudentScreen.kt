@@ -27,7 +27,7 @@ import kotlinx.coroutines.launch
  * caller into the normal student shell.
  */
 @Composable
-fun StudentLinkRequestScreen(component: DesktopAppComponent, onLinked: (UserRole.LinkedStudent) -> Unit) {
+fun StudentLinkRequestScreen(component: DesktopAppComponent, onLinked: (UserRole.LinkedStudent) -> Unit, onSignOut: () -> Unit) {
     val scope = rememberCoroutineScope()
     val accountKey = component.sessionManager().accountKey.orEmpty()
 
@@ -89,6 +89,7 @@ fun StudentLinkRequestScreen(component: DesktopAppComponent, onLinked: (UserRole
     val actions = StudentLinkRequestActions(
         onRefresh = { scope.launch { refresh() } },
         onSessionSelected = { selectedSessionId = it },
+        onSignOut = onSignOut,
         onSubmit = { sessionId, roll, name, cnic, dob, universityRoll, registrationNo, message ->
             scope.launch {
                 submitState = Outcome.Loading
