@@ -42,7 +42,7 @@ interface AcademicSessionRepository {
      * linked_roll), so it goes back to unlinked and a fresh account-linking claim can be approved
      * for it -- used both for an admin-initiated delink and as the "previous account" side effect
      * of [com.mbd.cmscommon.domain.repository.StudentLinkRequestRepository.approveRequest]. */
-    suspend fun delinkStudent(sessionId: String, rollNumber: String)
+    suspend fun delinkStudent(sessionId: String, rollNumber: String, reviewedBy: String? = null)
     suspend fun saveStudentProfile(profile: StudentProfile)
     suspend fun syncSessionsForDept(deptId: String)
     suspend fun syncStudents(sessionId: String)

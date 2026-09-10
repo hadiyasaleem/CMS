@@ -249,7 +249,7 @@ class AcademicSessionRepositoryImpl @Inject constructor(
         return postgrest.rpc(SupabaseTables.RPC_AVAILABLE_ROLL_NUMBERS, params).decodeList<RollNumberRow>().map { it.rollNumber }
     }
 
-    override suspend fun delinkStudent(sessionId: String, rollNumber: String) {
+    override suspend fun delinkStudent(sessionId: String, rollNumber: String, reviewedBy: String?) {
         val roll = rollNumber.trim()
         val cached = studentDao.findByRoll(sessionId, roll)
         val linkedEmail = cached?.linkedEmail?.takeIf { it.isNotBlank() }
@@ -259,6 +259,20 @@ class AcademicSessionRepositoryImpl @Inject constructor(
                 set("linked_roll", null as String?)
             }) {
                 filter { eq("email", linkedEmail) }
+            }
+            // Same reasoning as the relink path in StudentLinkRequestRepositoryImpl.approveRequest:
+            // without this, the delinked account's own APPROVED request keeps its LinkRequestScreen
+            // stuck showing "approved, refreshing your account" instead of letting them reapply.
+            postgrest.from(SupabaseTables.STUDENT_LINK_REQUESTS).update({
+                set("status", "REJECTED")
+                set("rejection_reason", "This account was delinked by an administrator.")
+                set("reviewed_by", reviewedBy)
+                set("reviewed_at", Instant.now().toString())
+            }) {
+                filter {
+                    eq("requested_by_email", linkedEmail)
+                    eq("status", "APPROVED")
+                }
             }
         }
         postgrest.from(SupabaseTables.SESSION_STUDENTS).update({ set("linked_email", "") }) {

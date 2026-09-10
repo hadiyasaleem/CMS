@@ -71,7 +71,7 @@ class StudentProfileEditController(
     fun delinkAccount() = launch {
         try {
             _saveState.value = Outcome.Loading
-            sessionRepository.delinkStudent(sessionId, rollNumber)
+            sessionRepository.delinkStudent(sessionId, rollNumber, reviewedBy = issuedBy)
             _profile.value = _profile.value?.copy(linkedEmail = "")
             _saveState.value = Outcome.Success(Unit)
         } catch (t: Throwable) {

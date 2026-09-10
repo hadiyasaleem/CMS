@@ -163,6 +163,20 @@ class StudentLinkRequestRepositoryImpl @Inject constructor(
             }) {
                 filter { eq("email", previousEmail) }
             }
+            // The previous account's own request for this roll is still marked APPROVED, which
+            // would otherwise leave its LinkRequestScreen stuck showing "approved, refreshing your
+            // account" forever -- downgrade it so that account sees it was relinked and can reapply.
+            postgrest.from(SupabaseTables.STUDENT_LINK_REQUESTS).update({
+                set("status", "REJECTED")
+                set("rejection_reason", "This roll number was relinked to a different account.")
+                set("reviewed_by", reviewedByUid)
+                set("reviewed_at", Instant.now().toString())
+            }) {
+                filter {
+                    eq("requested_by_email", previousEmail)
+                    eq("status", "APPROVED")
+                }
+            }
         }
 
         postgrest.from(SupabaseTables.SESSION_STUDENTS).update({ set("linked_email", requester) }) {
