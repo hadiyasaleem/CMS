@@ -46,6 +46,7 @@ class StudentProfileViewModel @Inject constructor(
     fun issueFine(category: String, amount: Double, reason: String) = controller.issueFine(category, amount, reason)
     fun deleteFine(id: String) = controller.deleteFine(id)
     fun save(profile: StudentProfile) = controller.save(profile)
+    fun delinkAccount() = controller.delinkAccount()
     fun clearError() = controller.clearError()
 }
 
@@ -74,6 +75,7 @@ fun StudentProfileScreen(viewModel: StudentProfileViewModel = hiltViewModel()) {
         onSave = viewModel::save,
         onIssueFine = viewModel::issueFine,
         onDeleteFine = { viewModel.deleteFine(it.id) },
+        onDelink = viewModel::delinkAccount,
         onClearError = viewModel::clearError,
     )
 }

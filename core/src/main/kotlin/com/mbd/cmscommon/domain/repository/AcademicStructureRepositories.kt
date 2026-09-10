@@ -38,6 +38,11 @@ interface AcademicSessionRepository {
      * account-linking form's roll-number picker. Goes through a SECURITY DEFINER RPC (not a plain
      * select) since an unlinked caller has no RLS visibility into session_students otherwise. */
     suspend fun getAvailableRollNumbers(sessionId: String): List<String>
+    /** Clears this roster row's linked account (and the corresponding profile's linked_session_id/
+     * linked_roll), so it goes back to unlinked and a fresh account-linking claim can be approved
+     * for it -- used both for an admin-initiated delink and as the "previous account" side effect
+     * of [com.mbd.cmscommon.domain.repository.StudentLinkRequestRepository.approveRequest]. */
+    suspend fun delinkStudent(sessionId: String, rollNumber: String)
     suspend fun saveStudentProfile(profile: StudentProfile)
     suspend fun syncSessionsForDept(deptId: String)
     suspend fun syncStudents(sessionId: String)

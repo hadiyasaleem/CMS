@@ -41,6 +41,7 @@ fun StudentProfileScreen(
         onSave = controller::save,
         onIssueFine = controller::issueFine,
         onDeleteFine = { controller.deleteFine(it.id) },
+        onDelink = controller::delinkAccount,
         onClearError = controller::clearError,
     )
 }

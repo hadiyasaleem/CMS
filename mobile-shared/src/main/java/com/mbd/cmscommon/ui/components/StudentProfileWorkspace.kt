@@ -68,6 +68,7 @@ fun StudentProfileWorkspace(
     onSave: (StudentProfile) -> Unit,
     onIssueFine: (String, Double, String) -> Unit,
     onDeleteFine: (Fine) -> Unit,
+    onDelink: () -> Unit,
     onClearError: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -150,6 +151,7 @@ fun StudentProfileWorkspace(
                 profile = profile,
                 onToggleCr = { profile = profile.copy(isCr = !profile.isCr) },
                 onToggleGr = { profile = profile.copy(isGr = !profile.isGr) },
+                onDelink = onDelink,
             )
         }
 
@@ -254,7 +256,9 @@ private fun ProfileChipPicker(label: String, options: List<String>, selected: St
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun AcademicAndRolesCard(profile: StudentProfile, onToggleCr: () -> Unit, onToggleGr: () -> Unit) {
+private fun AcademicAndRolesCard(profile: StudentProfile, onToggleCr: () -> Unit, onToggleGr: () -> Unit, onDelink: () -> Unit) {
+    var confirmDelink by remember { mutableStateOf(false) }
+
     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Text("Academic standing & class roles", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
@@ -264,6 +268,13 @@ private fun AcademicAndRolesCard(profile: StudentProfile, onToggleCr: () -> Unit
                 AcademicMetric("GPA", profile.gpa?.let { "%.2f".format(it) } ?: "--")
                 AcademicMetric("CGPA", profile.cgpa?.let { "%.2f".format(it) } ?: "--")
                 AcademicMetric("Account", if (profile.linkedEmail.isNotBlank()) "Linked" else "Not linked")
+            }
+            if (profile.linkedEmail.isNotBlank()) {
+                Spacer(Modifier.height(6.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(profile.linkedEmail, modifier = Modifier.weight(1f), color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                    TextButton(onClick = { confirmDelink = true }) { Text("Delink account", color = CmsTheme.colors.accent) }
+                }
             }
             Spacer(Modifier.height(10.dp))
             Text("CLASS REPRESENTATIVE ROLES", color = ModMuted, style = CmsTextStyles.eyebrow)
@@ -276,6 +287,17 @@ private fun AcademicAndRolesCard(profile: StudentProfile, onToggleCr: () -> Unit
                 Switch(checked = profile.isGr, onCheckedChange = { onToggleGr() })
             }
         }
+    }
+
+    if (confirmDelink) {
+        ConfirmDestructiveActionDialog(
+            title = "Delink account",
+            dependentSummary = "Removes ${profile.linkedEmail}'s access to this student record. They'll need a new approved link request to regain access.",
+            confirmLabel = "Delink",
+            showUndoWarning = false,
+            onConfirm = { onDelink(); confirmDelink = false },
+            onDismiss = { confirmDelink = false },
+        )
     }
 }
 

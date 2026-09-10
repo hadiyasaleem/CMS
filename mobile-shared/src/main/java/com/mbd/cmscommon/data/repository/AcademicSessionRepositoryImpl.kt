@@ -249,6 +249,27 @@ class AcademicSessionRepositoryImpl @Inject constructor(
         return postgrest.rpc(SupabaseTables.RPC_AVAILABLE_ROLL_NUMBERS, params).decodeList<RollNumberRow>().map { it.rollNumber }
     }
 
+    override suspend fun delinkStudent(sessionId: String, rollNumber: String) {
+        val roll = rollNumber.trim()
+        val cached = studentDao.findByRoll(sessionId, roll)
+        val linkedEmail = cached?.linkedEmail?.takeIf { it.isNotBlank() }
+        if (linkedEmail != null) {
+            postgrest.from(SupabaseTables.PROFILES).update({
+                set("linked_session_id", null as String?)
+                set("linked_roll", null as String?)
+            }) {
+                filter { eq("email", linkedEmail) }
+            }
+        }
+        postgrest.from(SupabaseTables.SESSION_STUDENTS).update({ set("linked_email", "") }) {
+            filter {
+                eq("session_id", sessionId)
+                eq("roll_number", roll)
+            }
+        }
+        cached?.let { studentDao.upsert(it.copy(linkedEmail = "")) }
+    }
+
     override suspend fun getStudentProfile(sessionId: String, rollNumber: String): StudentProfile? {
         val cached = studentDao.findByRoll(sessionId, rollNumber) ?: return null
         val dto = cached.profileJson?.let { encoded ->

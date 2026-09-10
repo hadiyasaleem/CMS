@@ -68,6 +68,17 @@ class StudentProfileEditController(
         loadFines()
     }
 
+    fun delinkAccount() = launch {
+        try {
+            _saveState.value = Outcome.Loading
+            sessionRepository.delinkStudent(sessionId, rollNumber)
+            _profile.value = _profile.value?.copy(linkedEmail = "")
+            _saveState.value = Outcome.Success(Unit)
+        } catch (t: Throwable) {
+            _saveState.value = Outcome.Error(t.userMessageLogged("Could not delink the account."), t)
+        }
+    }
+
     fun save(edited: StudentProfile) = launch {
         try {
             _saveState.value = Outcome.Loading
