@@ -38,7 +38,7 @@ class LinkRequestsViewModel @Inject constructor(
     val error = controller.error
 
     fun refresh() = controller.refresh()
-    fun approve(request: StudentLinkRequest) = controller.approve(request)
+    fun approve(request: StudentLinkRequest, override: Boolean = false) = controller.approve(request, override)
     fun reject(request: StudentLinkRequest, reason: String) = controller.reject(request, reason)
     fun consumeNotice() = controller.consumeNotice()
     fun clearError() = controller.clearError()

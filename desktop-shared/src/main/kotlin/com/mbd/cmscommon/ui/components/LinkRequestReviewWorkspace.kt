@@ -87,7 +87,7 @@ fun LinkRequestReviewWorkspace(
     notice: String?,
     errorMessage: String?,
     onRefresh: () -> Unit,
-    onApprove: (StudentLinkRequest) -> Unit,
+    onApprove: (StudentLinkRequest, Boolean) -> Unit,
     onReject: (StudentLinkRequest, String) -> Unit,
     onConsumeNotice: () -> Unit,
     onClearError: () -> Unit,
@@ -97,6 +97,7 @@ fun LinkRequestReviewWorkspace(
     var filter by remember { mutableStateOf(LinkRequestFilter.ALL) }
     var sort by remember { mutableStateOf(LinkRequestSort.NEWEST) }
     var approvalTarget by remember { mutableStateOf<StudentLinkRequest?>(null) }
+    var overrideTarget by remember { mutableStateOf<StudentLinkRequest?>(null) }
     var rejectionTarget by remember { mutableStateOf<StudentLinkRequest?>(null) }
 
     if (access != LinkRequestAccess.GRANTED) {
@@ -213,6 +214,7 @@ fun LinkRequestReviewWorkspace(
                     rowError = rowErrors[key],
                     now = Instant.now(),
                     onApprove = { approvalTarget = request },
+                    onOverrideApprove = { overrideTarget = request },
                     onReject = { rejectionTarget = request },
                 )
             }
@@ -236,9 +238,42 @@ fun LinkRequestReviewWorkspace(
                 )
             },
             confirmButton = {
-                TextButton(onClick = { onApprove(request); approvalTarget = null }) { Text("Approve link") }
+                TextButton(onClick = { onApprove(request, false); approvalTarget = null }) { Text("Approve link") }
             },
             dismissButton = { TextButton(onClick = { approvalTarget = null }) { Text("Cancel") } },
+        )
+    }
+
+    overrideTarget?.let { request ->
+        val verification = verifications[linkRequestVerificationKey(request)]
+        AlertDialog(
+            onDismissRequest = { overrideTarget = null },
+            title = { Text("Override and approve?", style = MaterialTheme.typography.headlineSmall) },
+            text = {
+                Column {
+                    Text(
+                        "The claimed details don't fully match the official record -- review the identity claim below before overriding.",
+                        color = ModMuted,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    if (verification != null && verification.identityComparisons.isNotEmpty()) {
+                        Spacer(Modifier.height(10.dp))
+                        IdentityCheckSummary(verification)
+                    }
+                    if (!verification?.linkedEmail.isNullOrBlank()) {
+                        Spacer(Modifier.height(10.dp))
+                        Text(
+                            "This roll number is currently linked to ${verification?.linkedEmail}. That account will be delinked and replaced with ${request.requestedByUid}.",
+                            color = LinkRed,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { onApprove(request, true); overrideTarget = null }) { Text("Override & approve", color = LinkRed) }
+            },
+            dismissButton = { TextButton(onClick = { overrideTarget = null }) { Text("Cancel") } },
         )
     }
 
@@ -326,11 +361,13 @@ private fun LinkRequestCard(
     rowError: String?,
     now: Instant,
     onApprove: () -> Unit,
+    onOverrideApprove: () -> Unit,
     onReject: () -> Unit,
 ) {
     val (badgeLabel, badgeTone) = verificationTone(verification?.state)
     val quality = linkRequestClaimQuality(request)
     val canApprove = verification?.state == RosterVerificationState.MATCHED || verification?.state == RosterVerificationState.RELINK
+    val canOverride = verification?.state == RosterVerificationState.IDENTITY_MISMATCH
 
     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
@@ -364,6 +401,9 @@ private fun LinkRequestCard(
             Spacer(Modifier.height(10.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = onApprove, enabled = canApprove && !busy) { Text(if (busy) "Working..." else "Approve link") }
+                if (canOverride) {
+                    TextButton(onClick = onOverrideApprove, enabled = !busy) { Text("Override & approve", color = LinkRed) }
+                }
                 TextButton(onClick = onReject, enabled = !busy) { Text("Reject request", color = CmsTheme.colors.accent) }
             }
         }

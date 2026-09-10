@@ -91,7 +91,13 @@ class LinkRequestsController(
         }
     }
 
-    fun approve(request: StudentLinkRequest) = launch {
+    /** [override] is the admin's explicit "I've checked this by hand, link it anyway" escape hatch --
+     * it skips the roster-state and identity-match gates below (still requires an actual roster row
+     * to link to), for a claim whose details don't cleanly match but the reviewer can see is
+     * legitimate (e.g. a nickname on the claim vs. the full legal name on file). Either way,
+     * [com.mbd.cmscommon.domain.repository.StudentLinkRequestRepository.approveRequest] delinks
+     * whatever account the roll number is currently linked to before linking the new one. */
+    fun approve(request: StudentLinkRequest, override: Boolean = false) = launch {
         val requestKey = linkRequestVerificationKey(request)
         try {
             _busyRequestId.value = requestKey
@@ -105,7 +111,12 @@ class LinkRequestsController(
             }
 
             val verification = verifications.value[requestKey]
-            requireValid(verification?.state == RosterVerificationState.MATCHED || verification?.state == RosterVerificationState.RELINK) {
+            val approvableStates = if (override) {
+                setOf(RosterVerificationState.MATCHED, RosterVerificationState.RELINK, RosterVerificationState.IDENTITY_MISMATCH)
+            } else {
+                setOf(RosterVerificationState.MATCHED, RosterVerificationState.RELINK)
+            }
+            requireValid(verification?.state in approvableStates) {
                 "Verify that this student exists in the selected session before approval."
             }
 
@@ -113,10 +124,12 @@ class LinkRequestsController(
             val currentProfile = sessionRepository.getStudentProfile(sessionId, request.rollNumberClaimed.trim())
                 ?: throw CmsException.NotFound("The official student profile could not be loaded. Refresh before approval.")
 
-            val currentIdentity = verifyLinkIdentityClaims(request, currentProfile)
-            requireValid(!currentIdentity.hasMismatch) {
-                val fields = currentIdentity.mismatches.joinToString { it.field.label }
-                "Official student details conflict with the request: $fields."
+            if (!override) {
+                val currentIdentity = verifyLinkIdentityClaims(request, currentProfile)
+                requireValid(!currentIdentity.hasMismatch) {
+                    val fields = currentIdentity.mismatches.joinToString { it.field.label }
+                    "Official student details conflict with the request: $fields."
+                }
             }
 
             repository.approveRequest(request.requestId, reviewerId)
