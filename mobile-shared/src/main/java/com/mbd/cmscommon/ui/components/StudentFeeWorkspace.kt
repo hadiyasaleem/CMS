@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -23,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.mbd.cmscommon.domain.model.FeeChallanHeader
 import com.mbd.cmscommon.domain.model.FeeDueState
 import com.mbd.cmscommon.domain.model.FeeHead
 import com.mbd.cmscommon.domain.model.StudentFeeSnapshot
@@ -47,10 +49,12 @@ private val FeeDateFormat = DateTimeFormatter.ofPattern("dd MMM yyyy")
 
 @Composable
 fun StudentFeeWorkspace(
+    header: FeeChallanHeader?,
     snapshot: StudentFeeSnapshot?,
     loading: Boolean,
     errorMessage: String?,
     onRetry: () -> Unit,
+    onDownloadPdf: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -64,25 +68,80 @@ fun StudentFeeWorkspace(
             loading && snapshot == null -> items(3) { SkeletonRow() }
             !errorMessage.isNullOrBlank() -> item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
             snapshot != null -> {
+                if (header != null) item { ChallanHeaderCard(header) }
                 item { FeeOverview(snapshot) }
                 item { FeeDueCard(snapshot) }
                 val structure = snapshot.structure
                 if (structure != null && snapshot.itemCount > 0) {
                     item {
-                        Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-                            Column(Modifier.padding(16.dp)) {
-                                Text("Fee component", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                                Spacer(Modifier.height(8.dp))
-                                structure.heads.filter { it.label.isNotBlank() && it.amount >= 0.0 }.forEach { head -> FeeHeadCard(head) }
-                            }
-                        }
+                        FeeHeadsGrid(
+                            heads = structure.heads.filter { it.label.isNotBlank() && it.amount >= 0.0 },
+                            total = snapshot.totalAmount,
+                        )
                     }
                 }
                 item { FeeGuidanceCards(snapshot) }
+                if (header != null && structure != null) {
+                    item { CmsPrimaryButton(text = "Download PDF", onClick = onDownloadPdf, modifier = Modifier.fillMaxWidth()) }
+                }
             }
         }
 
         item { Spacer(Modifier.height(72.dp)) }
+    }
+}
+
+@Composable
+private fun ChallanHeaderCard(header: FeeChallanHeader) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
+        Column(Modifier.padding(16.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("Challan No. ${header.challanNumber}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                Text(header.issueDate, color = ModMuted, style = MaterialTheme.typography.bodySmall)
+            }
+            Spacer(Modifier.height(10.dp))
+            Text(header.studentName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(6.dp))
+            ChallanFieldRow("Roll No", header.rollNumber)
+            header.fatherName?.takeIf { it.isNotBlank() }?.let { ChallanFieldRow("Father's Name", it) }
+            ChallanFieldRow("Session", header.sessionLabel)
+            ChallanFieldRow("Shift", header.shift)
+            header.deptCode?.let { ChallanFieldRow("Department", it) }
+        }
+    }
+}
+
+@Composable
+private fun ChallanFieldRow(label: String, value: String) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
+        Text(label, modifier = Modifier.weight(1f), color = ModMuted, style = MaterialTheme.typography.bodySmall)
+        Text(value, style = MaterialTheme.typography.bodySmall)
+    }
+}
+
+@Composable
+private fun FeeHeadsGrid(heads: List<FeeHead>, total: Double) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
+        Column(Modifier.padding(16.dp)) {
+            Text("Fee heads", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
+            Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                Text("FEE HEAD", modifier = Modifier.weight(1f), color = ModMuted, style = CmsTextStyles.eyebrow)
+                Text("AMOUNT", color = ModMuted, style = CmsTextStyles.eyebrow)
+            }
+            HorizontalDivider(color = ModTrack)
+            heads.forEach { head ->
+                Row(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+                    Text(head.label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                    Text("Rs ${head.amount}", style = MaterialTheme.typography.bodyMedium)
+                }
+                HorizontalDivider(color = ModTrack.copy(alpha = 0.4f))
+            }
+            Row(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+                Text("Total", modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+                Text("Rs $total", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+            }
+        }
     }
 }
 
@@ -137,14 +196,6 @@ private fun FeeDueCard(snapshot: StudentFeeSnapshot) {
             Text(snapshot.dueDate?.format(FeeDateFormat) ?: "Not specified", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Text(message, color = color, style = MaterialTheme.typography.bodyMedium)
         }
-    }
-}
-
-@Composable
-private fun FeeHeadCard(head: FeeHead) {
-    Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-        Text(head.label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
-        Text("Rs ${head.amount}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
     }
 }
 

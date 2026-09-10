@@ -27,7 +27,6 @@ import com.mbd.cmscommon.domain.model.SessionPeriod
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
-import com.mbd.cmscommon.domain.repository.SessionFeeRepository
 import com.mbd.cmscommon.domain.repository.SessionMarksRepository
 import com.mbd.cmscommon.domain.repository.SessionTimetableRepository
 import com.mbd.cmscommon.ui.components.CmsCard
@@ -166,9 +165,3 @@ private fun PeriodRow(period: SessionPeriod) {
     }
 }
 
-@Composable
-fun LegacyStudentFeeChallanScreen(
-    sessionId: String,
-    rollNumber: String,
-    feeRepository: SessionFeeRepository,
-) = StudentFeeChallanScreen(sessionId, rollNumber, feeRepository)

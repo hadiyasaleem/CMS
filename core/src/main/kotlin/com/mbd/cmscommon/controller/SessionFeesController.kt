@@ -1,10 +1,12 @@
 package com.mbd.cmscommon.controller
 
 import com.mbd.cmscommon.domain.model.AcademicSession
+import com.mbd.cmscommon.domain.model.Department
 import com.mbd.cmscommon.domain.model.FeeHead
 import com.mbd.cmscommon.domain.model.FeeType
 import com.mbd.cmscommon.domain.model.SessionFeeStructure
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
+import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.SessionFeeRepository
 import com.mbd.cmscommon.util.FieldValidators
 import com.mbd.cmscommon.util.orThrowValidation
@@ -16,18 +18,26 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 
 class SessionFeesController(
     val sessionId: String,
     private val repo: SessionFeeRepository,
     sessionRepository: AcademicSessionRepository,
+    departmentRepository: DepartmentRepository,
     private val updatedBy: String,
     scope: CoroutineScope,
 ) : ScreenController(scope) {
 
     val session: StateFlow<AcademicSession?> =
         sessionRepository.observeSession(sessionId).stateIn(scope, SharingStarted.WhileSubscribed(5000), null)
+
+    /** For the sample-challan preview's department code -- looked up reactively as [session] resolves. */
+    val department: StateFlow<Department?> = session
+        .flatMapLatest { s -> if (s == null) flowOf(null) else flowOf(departmentRepository.getDepartment(s.deptId)) }
+        .stateIn(scope, SharingStarted.WhileSubscribed(5000), null)
 
     private val _structure = MutableStateFlow<SessionFeeStructure?>(null)
     val structure: StateFlow<SessionFeeStructure?> = _structure.asStateFlow()

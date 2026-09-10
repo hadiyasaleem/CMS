@@ -188,7 +188,14 @@ private fun StudentShell(role: UserRole.LinkedStudent, component: DesktopAppComp
                             sessionRepository = component.academicSessionRepository(),
                         )
                         StudentScreen.Events -> StudentCalendarScreen(sessionId, deptId, component.calendarRepository(), component.departmentRepository(), component.academicSessionRepository())
-                        StudentScreen.Fees -> StudentFeeChallanScreen(sessionId, rollNumber, component.sessionFeeRepository())
+                        StudentScreen.Fees -> StudentFeeChallanScreen(
+                            sessionId = sessionId,
+                            rollNumber = rollNumber,
+                            feeRepository = component.sessionFeeRepository(),
+                            sessionRepository = component.academicSessionRepository(),
+                            departmentRepository = component.departmentRepository(),
+                            window = window,
+                        )
                         StudentScreen.Notifications -> NotificationsScreen(
                             repository = component.notificationRepository(),
                             role = NotificationTargetRole.STUDENT,

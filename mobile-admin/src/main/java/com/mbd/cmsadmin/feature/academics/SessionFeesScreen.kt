@@ -3,6 +3,7 @@ package com.mbd.cmsadmin.feature.academics
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -11,10 +12,14 @@ import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.controller.SessionFeesController
 import com.mbd.cmscommon.domain.model.FeeHead
 import com.mbd.cmscommon.domain.model.FeeType
+import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.SessionFeeRepository
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.ui.components.SessionFeeWorkspace
+import com.mbd.cmscommon.util.FeeChallanPdfGenerator
+import com.mbd.cmscommon.util.FileOpener
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
@@ -22,12 +27,14 @@ class SessionFeesViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     feeRepository: SessionFeeRepository,
     sessionRepository: AcademicSessionRepository,
+    departmentRepository: DepartmentRepository,
     sessionManager: SessionManager,
 ) : ViewModel() {
     private val controller = SessionFeesController(
         sessionId = checkNotNull(savedStateHandle["sessionId"]),
         repo = feeRepository,
         sessionRepository = sessionRepository,
+        departmentRepository = departmentRepository,
         updatedBy = sessionManager.accountKey.orEmpty(),
         scope = viewModelScope,
     )
@@ -35,6 +42,7 @@ class SessionFeesViewModel @Inject constructor(
     val sessionId = controller.sessionId
     val structure = controller.structure
     val session = controller.session
+    val department = controller.department
     val loading = controller.loading
     val saving = controller.saving
     val saved = controller.saved
@@ -55,8 +63,10 @@ class SessionFeesViewModel @Inject constructor(
 
 @Composable
 fun SessionFeesScreen(viewModel: SessionFeesViewModel = hiltViewModel()) {
+    val context = LocalContext.current
     val structure by viewModel.structure.collectAsState()
     val session by viewModel.session.collectAsState()
+    val department by viewModel.department.collectAsState()
     val loading by viewModel.loading.collectAsState()
     val saving by viewModel.saving.collectAsState()
     val saved by viewModel.saved.collectAsState()
@@ -65,6 +75,7 @@ fun SessionFeesScreen(viewModel: SessionFeesViewModel = hiltViewModel()) {
     SessionFeeWorkspace(
         sessionId = viewModel.sessionId,
         session = session,
+        department = department,
         structure = structure,
         loading = loading,
         saving = saving,
@@ -73,5 +84,11 @@ fun SessionFeesScreen(viewModel: SessionFeesViewModel = hiltViewModel()) {
         onSave = viewModel::save,
         onConsumeSaved = viewModel::consumeSaved,
         onClearError = viewModel::clearError,
+        onDownloadSamplePdf = { header, sampleStructure ->
+            val bytes = FeeChallanPdfGenerator.generate(header, sampleStructure)
+            val file = File(context.cacheDir, "${header.challanNumber}.pdf")
+            file.writeBytes(bytes)
+            FileOpener.open(context, file, "application/pdf")
+        },
     )
 }

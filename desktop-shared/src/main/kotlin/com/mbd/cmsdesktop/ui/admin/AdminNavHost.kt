@@ -401,7 +401,9 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         sessionId = current.sessionId,
                         feeRepository = component.sessionFeeRepository(),
                         sessionRepository = component.academicSessionRepository(),
+                        departmentRepository = component.departmentRepository(),
                         updatedBy = accountKey,
+                        window = window,
                     )
                 }
             }
