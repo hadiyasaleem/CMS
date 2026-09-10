@@ -124,8 +124,11 @@ class ExamPaperSubmissionController(
                 onSuccess = { Outcome.Success(Unit) },
                 onFailure = { Outcome.Error(it.userMessageLogged("Upload failed."), it) },
             )
+            // Deliberately NOT clearing stagedFile here: it and uploadState are set in the same
+            // recomposition pass, so clearing it alongside a Success result would drop the "staged
+            // file + success notice" screen before it ever renders. It clears naturally on the next
+            // selectSlot()/stageFile() call instead.
             _uploadState.value = result
-            if (result is Outcome.Success) _stagedFile.value = null
         }
     }
 
