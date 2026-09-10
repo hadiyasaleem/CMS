@@ -11,11 +11,11 @@ data class PeopleHubSnapshot(
     val delegatedTeacherCount: Int,
     val pendingLinkRequests: Int,
     val pendingMarkEdits: Int,
-    val pendingExamReviews: Int,
+    val submittedPapers: Int,
     val repeatLinkRequests: Int,
     val oldestPendingDays: Long?,
 ) {
-    val pendingReviews: Int get() = pendingLinkRequests + pendingMarkEdits + pendingExamReviews
+    val pendingReviews: Int get() = pendingLinkRequests + pendingMarkEdits
     val inactiveAdministratorCount: Int get() = (administratorCount - activeAdministratorCount).coerceAtLeast(0)
 }
 
@@ -25,7 +25,7 @@ fun peopleHubSnapshot(
     studentCount: Int,
     linkRequests: List<StudentLinkRequest>,
     markEditRequests: List<MarkEditRequest>,
-    pendingExamReviews: Int = 0,
+    submittedPapers: Int = 0,
     now: Instant = Instant.now(),
 ): PeopleHubSnapshot {
     val uniqueAdministrators = administrators.distinctBy { it.id }
@@ -49,7 +49,7 @@ fun peopleHubSnapshot(
         delegatedTeacherCount = delegatedTeacherCount,
         pendingLinkRequests = pendingLinks.size,
         pendingMarkEdits = pendingEdits.size,
-        pendingExamReviews = pendingExamReviews.coerceAtLeast(0),
+        submittedPapers = submittedPapers.coerceAtLeast(0),
         repeatLinkRequests = repeatLinkRequests,
         oldestPendingDays = oldest?.let { Duration.between(it, now).toDays().coerceAtLeast(0) },
     )

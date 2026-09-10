@@ -49,7 +49,7 @@ fun AdminNavHost(navController: NavHostController, onSignedOut: () -> Unit, refr
                         PeopleDestination.STUDENTS -> AdminTab.Academics.route
                         PeopleDestination.LINK_REQUESTS -> AdminLeaf.LINK_REQUESTS
                         PeopleDestination.MARK_EDIT_REQUESTS -> AdminLeaf.MARK_EDIT_REQUESTS
-                        PeopleDestination.EXAM_PAPER_REVIEW -> AdminLeaf.EXAM_PAPER_REVIEW
+                        PeopleDestination.SUBMITTED_PAPERS -> AdminLeaf.SUBMITTED_PAPERS
                     },
                 )
             })
@@ -89,8 +89,8 @@ fun AdminNavHost(navController: NavHostController, onSignedOut: () -> Unit, refr
         composable(AdminLeaf.MARK_EDIT_REQUESTS) {
             com.mbd.cmsadmin.feature.markrequests.MarkEditRequestsScreen(refreshVersion = refreshVersion)
         }
-        composable(AdminLeaf.EXAM_PAPER_REVIEW) {
-            com.mbd.cmsadmin.feature.examreview.ExamPaperReviewScreen()
+        composable(AdminLeaf.SUBMITTED_PAPERS) {
+            com.mbd.cmsadmin.feature.exampapers.SubmittedPapersScreen()
         }
         composable(AdminLeaf.NOTIFICATIONS) { NotificationsScreen(refreshVersion = refreshVersion) }
         composable(AdminLeaf.PROFILE) { ProfileScreen(onSignedOut = onSignedOut) }

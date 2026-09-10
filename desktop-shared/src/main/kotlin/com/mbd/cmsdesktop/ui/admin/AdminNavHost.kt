@@ -192,7 +192,7 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                                 PeopleDestination.STUDENTS -> popOrSwitchTab(AdminTab.Academics)
                                 PeopleDestination.LINK_REQUESTS -> push(AdminScreen.LinkRequests)
                                 PeopleDestination.MARK_EDIT_REQUESTS -> push(AdminScreen.MarkEditRequests)
-                                PeopleDestination.EXAM_PAPER_REVIEW -> push(AdminScreen.ExamPaperReview)
+                                PeopleDestination.SUBMITTED_PAPERS -> push(AdminScreen.SubmittedPapers)
                             }
                         },
                     )
@@ -257,10 +257,11 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         reviewedBy = accountKey,
                     )
 
-                    AdminScreen.ExamPaperReview -> ExamPaperReviewScreen(
+                    AdminScreen.SubmittedPapers -> SubmittedPapersScreen(
                         examPaperRepository = component.examPaperRepository(),
-                        reviewedBy = accountKey,
-                        window = window,
+                        teacherRepository = component.teacherRepository(),
+                        departmentRepository = component.departmentRepository(),
+                        sessionRepository = component.academicSessionRepository(),
                     )
 
                     AdminScreen.AttendanceRecords -> AttendanceRecordsScreen(

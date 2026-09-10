@@ -10,7 +10,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mbd.cmscommon.ui.components.ExamPaperSubmissionWorkspace
-import com.mbd.cmscommon.util.Outcome
 import com.mbd.cmscommon.util.FileOpener
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -21,10 +20,10 @@ fun ExamPaperSubmissionScreen(viewModel: ExamPaperSubmissionViewModel = hiltView
     val controller = viewModel.controller
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val assignments by viewModel.assignments.collectAsState()
+    val slots by controller.slots.collectAsState()
+    val sessions by controller.sessions.collectAsState()
     val selected by controller.selected.collectAsState()
-    val examType by controller.examType.collectAsState()
-    val submissions by controller.submissions.collectAsState()
+    val stagedFile by controller.stagedFile.collectAsState()
     val uploadState by controller.uploadState.collectAsState()
 
     val pickFile = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -46,25 +45,26 @@ fun ExamPaperSubmissionScreen(viewModel: ExamPaperSubmissionViewModel = hiltView
                     read to displayName
                 }
                 if (bytes == null) {
-                    controller.reportUploadFailure(IllegalStateException("Could not read the selected file."))
+                    controller.reportPickFailure(IllegalStateException("Could not read the selected file."))
                     return@launch
                 }
-                controller.upload(bytes, name)
+                controller.stageFile(bytes, name)
             } catch (t: Throwable) {
-                controller.reportUploadFailure(t)
+                controller.reportPickFailure(t)
             }
         }
     }
 
     ExamPaperSubmissionWorkspace(
-        assignments = assignments,
+        slots = slots,
+        sessions = sessions,
         selected = selected,
-        examType = examType,
-        submissions = submissions,
-        outcome = uploadState,
-        onSelect = controller::select,
-        onExamType = controller::selectExamType,
+        stagedFile = stagedFile,
+        uploadState = uploadState,
+        onSelectSlot = controller::selectSlot,
         onChooseFile = { pickFile.launch("application/pdf") },
+        onClearStagedFile = controller::clearStagedFile,
+        onConfirmUpload = controller::confirmUpload,
         onOpen = { submission ->
             controller.downloadAndOpen(submission, context.cacheDir) { file ->
                 FileOpener.open(context, file, "application/pdf")

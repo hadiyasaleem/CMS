@@ -1,28 +1,37 @@
 package com.mbd.cmscommon.domain.repository
 
 import com.mbd.cmscommon.domain.model.ExamPaperSubmission
-import com.mbd.cmscommon.domain.model.ExamType
 import java.io.File
 import kotlinx.coroutines.flow.Flow
 
 interface ExamPaperSubmissionRepository {
-    fun observeSubmissionsForOffering(offeringId: String, subjectId: String): Flow<List<ExamPaperSubmission>>
+    /** The active (non-deleted) submission for one datesheet slot, if any -- at most one by the
+     * table's own unique index. */
+    fun observeSubmissionForSlot(datesheetSlotId: String): Flow<ExamPaperSubmission?>
 
-    suspend fun uploadSubmission(offeringId: String, subjectId: String, examType: ExamType, teacherId: String, fileBytes: ByteArray, fileName: String)
+    /** Every active submission, across every session/teacher -- backs the admin browse screen. */
+    fun observeAllSubmissions(): Flow<List<ExamPaperSubmission>>
+
+    /** Upserts the paper for [datesheetSlotId]: replaces the file in place (same storage object,
+     * `upsert = true`) and updates the existing row if one is already active for this slot, or
+     * inserts a new one otherwise -- so a reupload never leaves an orphaned object or row behind. */
+    suspend fun uploadSubmission(
+        datesheetSlotId: String,
+        sessionId: String,
+        semester: Int,
+        courseCode: String,
+        teacherId: String,
+        fileBytes: ByteArray,
+        fileName: String,
+        description: String?,
+    )
+
+    /** Returns a local copy, serving a previously-cached download instead of re-fetching from
+     * Storage when one already exists on disk. */
     suspend fun downloadTo(submission: ExamPaperSubmission, targetDir: File): File
     suspend fun deleteSubmission(id: String)
-    suspend fun sync(offeringId: String, subjectId: String)
-
-    /** Bulk delta sync for a whole session in one request -- use this for bootstrap/background
-     * refresh instead of calling [sync] once per course code. */
-    suspend fun syncSession(offeringId: String)
 
     /** One delta query across every session's submissions instead of one per session -- RLS already
      * restricts the rows a non-admin caller gets back, so this is a strict improvement for every role. */
     suspend fun syncAll()
-
-    /** All submissions still awaiting review, across every session — for the admin review queue. */
-    suspend fun getPendingReview(): List<ExamPaperSubmission>
-    suspend fun markReviewed(submissionId: String, reviewedBy: String, notes: String?)
-    suspend fun uploadAnswerKey(submission: ExamPaperSubmission, fileBytes: ByteArray, fileName: String)
 }

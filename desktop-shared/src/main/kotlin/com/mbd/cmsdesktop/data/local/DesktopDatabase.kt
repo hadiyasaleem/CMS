@@ -57,7 +57,7 @@ import com.mbd.cmsdesktop.data.local.entity.DesktopAuthSessionEntity
         BuildingEntity::class, RoomEntity::class,
         AppLogEntity::class,
     ],
-    version = 8,
+    version = 9,
     // Schema export is disabled: Room 2.8.4's schema-bundle serializers are incompatible with the
     // project's kotlinx-serialization 1.8.0 (KSP AbstractMethodError in SchemaBundle.deserialize).
     // The desktop DB is a local cache with no Room migration tests, so exported schemas aren't needed.

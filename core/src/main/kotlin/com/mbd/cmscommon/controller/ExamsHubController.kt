@@ -12,15 +12,11 @@ import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider
 import java.time.LocalDate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.supervisorScope
 
@@ -36,17 +32,7 @@ class ExamsHubController(
     val assignments: StateFlow<List<ResolvedAssignment>> = assignmentsProvider.observeAssignmentsFor(teacherId)
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    private val submissions: StateFlow<List<ExamPaperSubmission>> = assignments
-        .flatMapLatest { current ->
-            val offerings = current.distinctBy { it.sessionId to it.courseCode }
-            if (offerings.isEmpty()) {
-                flowOf(emptyList())
-            } else {
-                combine(offerings.map { examPaperRepository.observeSubmissionsForOffering(it.sessionId, it.courseCode) }) { arr ->
-                    arr.flatMap { it }.distinctBy { it.submissionId }
-                }
-            }
-        }
+    private val submissions: StateFlow<List<ExamPaperSubmission>> = examPaperRepository.observeAllSubmissions()
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val datesheets: StateFlow<List<Datesheet>> = datesheetRepository.observeDatesheets()
@@ -83,22 +69,14 @@ class ExamsHubController(
             _loadError.value = null
             try {
                 supervisorScope {
-                    val currentAssignments = async { assignmentsProvider.observeAssignmentsFor(teacherId).first() }.await()
                     val datesheetsDeferred = async { runCatching { if (fetchRemote) { datesheetRepository.sync(); datesheetRepository.syncAllSlots() } } }
-
-                    val offerings = currentAssignments.distinctBy { it.sessionId to it.courseCode }
-                    val paperResults = if (fetchRemote) {
-                        offerings.map { assignment ->
-                            async { runCatching { examPaperRepository.sync(assignment.sessionId, assignment.courseCode) } }
-                        }.awaitAll()
-                    } else {
-                        emptyList()
-                    }
+                    val papersDeferred = async { runCatching { if (fetchRemote) examPaperRepository.syncAll() } }
 
                     val datesheetResult = datesheetsDeferred.await()
+                    val paperResult = papersDeferred.await()
 
                     if (version == loadVersion) {
-                        val firstFailure = (paperResults + datesheetResult).firstNotNullOfOrNull { it.exceptionOrNull() }
+                        val firstFailure = listOf(paperResult, datesheetResult).firstNotNullOfOrNull { it.exceptionOrNull() }
                         _loadError.value = firstFailure?.userMessageLogged("Some exam data could not be loaded.")
                     }
                 }

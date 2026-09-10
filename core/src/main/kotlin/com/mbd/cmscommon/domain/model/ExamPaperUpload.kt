@@ -9,7 +9,7 @@ fun examPaperUploadError(fileName: String, fileBytes: ByteArray): String? {
     if (cleanName.isEmpty()) return "The selected file must have a name."
     if (cleanName.length > 255) return "The file name must not exceed 255 characters."
     if (cleanName.any { it == '/' || it == '\\' || it < ' ' }) return "The file name contains unsupported characters."
-    if (extension !in setOf("pdf", "docx")) return "Exam papers must be PDF or DOCX files."
+    if (extension != "pdf") return "Exam papers must be PDF files."
     if (fileBytes.isEmpty()) return "The selected file is empty."
     if (fileBytes.size > MAX_EXAM_PAPER_BYTES) return "The selected file exceeds the 5 MB limit."
     return null

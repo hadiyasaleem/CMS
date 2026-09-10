@@ -190,7 +190,9 @@ fun TeacherNavHost(role: UserRole.Teacher, component: DesktopAppComponent, windo
                 TeacherScreen.ExamPaper -> ExamPaperSubmissionScreen(
                     teacherId = teacherId,
                     examPaperRepository = component.examPaperRepository(),
+                    datesheetRepository = component.datesheetRepository(),
                     assignmentsProvider = assignmentsProvider,
+                    academicSessionRepository = component.academicSessionRepository(),
                     window = window,
                 )
 

@@ -9,8 +9,11 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ExamPaperSubmissionDao {
-    @Query("SELECT * FROM exam_paper_submissions WHERE offeringId = :offeringId AND subjectId = :subjectId AND isDeleted = 0 ORDER BY uploadedAt DESC")
-    fun observeForOffering(offeringId: String, subjectId: String): Flow<List<ExamPaperSubmissionEntity>>
+    @Query("SELECT * FROM exam_paper_submissions WHERE isDeleted = 0 ORDER BY uploadedAt DESC")
+    fun observeAll(): Flow<List<ExamPaperSubmissionEntity>>
+
+    @Query("SELECT * FROM exam_paper_submissions WHERE datesheetSlotId = :datesheetSlotId AND isDeleted = 0 LIMIT 1")
+    fun observeForSlot(datesheetSlotId: String): Flow<ExamPaperSubmissionEntity?>
 
     @Query("SELECT * FROM exam_paper_submissions WHERE submissionId = :id LIMIT 1")
     suspend fun getById(id: String): ExamPaperSubmissionEntity?

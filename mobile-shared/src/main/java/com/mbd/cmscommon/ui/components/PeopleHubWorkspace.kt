@@ -60,7 +60,7 @@ private val PeopleGreen = ModSuccess
 private val PeopleGold = ModWarn
 private val PeopleRed = ModAccent
 
-enum class PeopleDestination { ADMINISTRATORS, TEACHERS, STUDENTS, LINK_REQUESTS, MARK_EDIT_REQUESTS, EXAM_PAPER_REVIEW }
+enum class PeopleDestination { ADMINISTRATORS, TEACHERS, STUDENTS, LINK_REQUESTS, MARK_EDIT_REQUESTS, SUBMITTED_PAPERS }
 
 private data class PeopleCard(
     val destination: PeopleDestination,
@@ -190,10 +190,10 @@ private fun peopleCards(snapshot: PeopleHubSnapshot): List<PeopleCard> = listOf(
         Icons.Outlined.EditNote, if (snapshot.pendingMarkEdits > 0) PeopleGold else PeopleGreen,
     ),
     PeopleCard(
-        PeopleDestination.EXAM_PAPER_REVIEW, "Exam Paper Review",
-        "Review teacher-submitted exam papers and attach answer keys.",
-        "${snapshot.pendingExamReviews} awaiting review",
-        Icons.Outlined.Assignment, if (snapshot.pendingExamReviews > 0) PeopleGold else PeopleGreen,
+        PeopleDestination.SUBMITTED_PAPERS, "Submitted Exam Papers",
+        "Browse and download exam papers submitted by teachers for printing.",
+        "${snapshot.submittedPapers} submitted",
+        Icons.Outlined.Assignment, PeopleNavy,
     ),
 )
 

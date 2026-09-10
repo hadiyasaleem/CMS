@@ -45,7 +45,7 @@ class PeopleHubController(
     private var cachedStudentCount: Int = 0
     private var cachedLinks: List<StudentLinkRequest> = emptyList()
     private var cachedEdits: List<MarkEditRequest> = emptyList()
-    private var cachedExamReviews: Int = 0
+    private var cachedSubmittedPapers: Int = 0
 
     init {
         refresh(fetchRemote = false)
@@ -92,8 +92,11 @@ class PeopleHubController(
                         markEditRequestRepository.getPendingRequests()
                     }
                 }
-                val examReviewsDeferred = async {
-                    runCatching { examPaperSubmissionRepository.getPendingReview().size }
+                val submittedPapersDeferred = async {
+                    runCatching {
+                        if (fetchRemote) examPaperSubmissionRepository.syncAll()
+                        examPaperSubmissionRepository.observeAllSubmissions().first().size
+                    }
                 }
 
                 val administratorsResult = administratorsDeferred.await()
@@ -101,7 +104,7 @@ class PeopleHubController(
                 val studentsResult = studentsDeferred.await()
                 val linksResult = linksDeferred.await()
                 val editsResult = editsDeferred.await()
-                val examReviewsResult = examReviewsDeferred.await()
+                val submittedPapersResult = submittedPapersDeferred.await()
 
                 if (version == loadVersion) {
                     administratorsResult.getOrNull()?.let { cachedAdministrators = it }
@@ -109,7 +112,7 @@ class PeopleHubController(
                     studentsResult.getOrNull()?.let { cachedStudentCount = it }
                     linksResult.getOrNull()?.let { cachedLinks = it }
                     editsResult.getOrNull()?.let { cachedEdits = it }
-                    examReviewsResult.getOrNull()?.let { cachedExamReviews = it }
+                    submittedPapersResult.getOrNull()?.let { cachedSubmittedPapers = it }
 
                     _snapshot.value = peopleHubSnapshot(
                         cachedAdministrators,
@@ -117,9 +120,9 @@ class PeopleHubController(
                         cachedStudentCount,
                         cachedLinks,
                         cachedEdits,
-                        cachedExamReviews,
+                        cachedSubmittedPapers,
                     )
-                    _loadError.value = listOf(administratorsResult, teachersResult, studentsResult, linksResult, editsResult, examReviewsResult)
+                    _loadError.value = listOf(administratorsResult, teachersResult, studentsResult, linksResult, editsResult, submittedPapersResult)
                         .firstNotNullOfOrNull { it.exceptionOrNull() }
                         ?.userMessageLogged("Some people summaries could not be loaded.")
                     _loading.value = false

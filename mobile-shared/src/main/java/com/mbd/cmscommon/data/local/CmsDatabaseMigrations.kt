@@ -1602,6 +1602,43 @@ val MIGRATION_42_43: Migration = object : Migration(42, 43) {
     }
 }
 
+val MIGRATION_43_44: Migration = object : Migration(43, 44) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // Exam paper submissions now bind to a specific published datesheet slot instead of a free
+        // (session, course, exam type) choice, and the admin review columns are gone -- admin just
+        // downloads papers to print, doesn't grade them. Existing local rows are stale under the old
+        // model (no slot to map to), so this recreates the table empty rather than force-fitting old
+        // data; the next global sync repopulates it correctly shaped.
+        db.execSQL("DROP TABLE IF EXISTS `exam_paper_submissions`")
+        db.execSQL(
+            """
+            CREATE TABLE `exam_paper_submissions` (
+                `submissionId` TEXT NOT NULL,
+                `datesheetSlotId` TEXT NOT NULL,
+                `offeringId` TEXT NOT NULL,
+                `semester` INTEGER NOT NULL,
+                `subjectId` TEXT NOT NULL,
+                `teacherId` TEXT NOT NULL,
+                `storagePath` TEXT,
+                `fileName` TEXT,
+                `fileSizeBytes` INTEGER,
+                `uploadedAt` INTEGER NOT NULL,
+                `mimeType` TEXT,
+                `description` TEXT,
+                `createdBy` TEXT,
+                `createdAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedAt` INTEGER NOT NULL DEFAULT 0,
+                `updatedBy` TEXT,
+                `isDeleted` INTEGER NOT NULL DEFAULT 0,
+                `deletedAt` INTEGER,
+                `deletedBy` TEXT,
+                PRIMARY KEY(`submissionId`)
+            )
+            """.trimIndent(),
+        )
+    }
+}
+
 val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_18_19,
     MIGRATION_19_20,
@@ -1628,4 +1665,5 @@ val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_40_41,
     MIGRATION_41_42,
     MIGRATION_42_43,
+    MIGRATION_43_44,
 )

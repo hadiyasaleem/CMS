@@ -2,28 +2,24 @@ package com.mbd.cmscommon.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -34,18 +30,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.mbd.cmscommon.domain.model.ExamPaperReviewStatus
+import com.mbd.cmscommon.controller.StagedPaperFile
+import com.mbd.cmscommon.controller.TeacherPaperSlot
+import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.ExamPaperSubmission
-import com.mbd.cmscommon.domain.model.ExamType
-import com.mbd.cmscommon.teacher.ResolvedAssignment
+import com.mbd.cmscommon.domain.model.datesheetLabel
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
+import com.mbd.cmscommon.ui.theme.ModAccent
 import com.mbd.cmscommon.ui.theme.ModGround
 import com.mbd.cmscommon.ui.theme.ModInk
 import com.mbd.cmscommon.ui.theme.ModMuted
+import com.mbd.cmscommon.ui.theme.ModRedTint
+import com.mbd.cmscommon.ui.theme.ModSuccess
 import com.mbd.cmscommon.ui.theme.ModSurface
 import com.mbd.cmscommon.ui.theme.ModTrack
 import com.mbd.cmscommon.ui.theme.ModWarn
@@ -55,75 +58,98 @@ import java.time.format.DateTimeFormatter
 
 private val PaperCanvas = ModGround
 private val PaperGold = ModWarn
+private val PaperGreen = ModSuccess
+private val PaperRed = ModAccent
 private val PaperDateFormat = DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a")
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ExamPaperSubmissionWorkspace(
-    assignments: List<ResolvedAssignment>,
-    selected: ResolvedAssignment?,
-    examType: ExamType,
-    submissions: List<ExamPaperSubmission>,
-    outcome: Outcome<Unit>?,
-    onSelect: (ResolvedAssignment) -> Unit,
-    onExamType: (ExamType) -> Unit,
+    slots: List<TeacherPaperSlot>,
+    sessions: List<AcademicSession>,
+    selected: TeacherPaperSlot?,
+    stagedFile: StagedPaperFile?,
+    uploadState: Outcome<Unit>?,
+    onSelectSlot: (TeacherPaperSlot?) -> Unit,
     onChooseFile: () -> Unit,
+    onClearStagedFile: () -> Unit,
+    onConfirmUpload: (fileName: String, description: String?) -> Unit,
     onOpen: (ExamPaperSubmission) -> Unit,
     onDelete: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var deleteTarget by remember { mutableStateOf<ExamPaperSubmission?>(null) }
 
-    val forThisType = submissions.filter { it.examType == examType }
-    val latest = forThisType.maxByOrNull { it.uploadedAt }
-    val typesCovered = submissions.map { it.examType }.distinct().size
+    fun sessionOf(sessionId: String): AcademicSession? = sessions.firstOrNull { it.sessionId == sessionId }
+
+    val grouped = slots.groupBy { it.datesheet.id }
+    val submittedCount = slots.count { it.isSubmitted }
 
     LazyColumn(
         modifier = modifier.fillMaxWidth().background(PaperCanvas),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { PaperHeader(selected, examType) }
-        item { AssignmentPicker(assignments, selected, onSelect) }
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                ExamType.entries.forEach { type ->
-                    CmsChip(type.name, selected = examType == type, onClick = { onExamType(type) })
-                }
-            }
-        }
-        item { PaperMetrics(submissions.size, forThisType.size, typesCovered, latest?.uploadedAt) }
-        item { UploadPaperCard(examType, outcome, onChooseFile) }
+        item { PaperHeader(slots.size, submittedCount) }
 
-        if (forThisType.isEmpty()) {
+        if (slots.isEmpty()) {
             item {
                 Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-                    Text("No papers uploaded for $examType yet.", modifier = Modifier.padding(24.dp), color = ModMuted, style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        "No published datesheet has an exam slot for a subject you teach yet.",
+                        modifier = Modifier.padding(24.dp),
+                        color = ModMuted,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
                 }
             }
         } else {
-            items(forThisType.sortedByDescending { it.uploadedAt }, key = { it.submissionId }) { submission ->
-                SubmissionCard(submission, onOpen = { onOpen(submission) }, onDelete = { deleteTarget = submission })
+            grouped.forEach { (_, group) ->
+                val sheet = group.first().datesheet
+                item {
+                    Text(
+                        datesheetLabel(sheet, sessionOf(sheet.sessionId), department = null),
+                        color = ModMuted,
+                        style = CmsTextStyles.eyebrow,
+                    )
+                }
+                item {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        group.forEach { paperSlot -> SubjectTile(paperSlot, onClick = { onSelectSlot(paperSlot) }) }
+                    }
+                }
             }
         }
 
         item { Spacer(Modifier.height(72.dp)) }
     }
 
+    selected?.let { target ->
+        SubjectPaperDialog(
+            target = target,
+            stagedFile = stagedFile,
+            uploadState = uploadState,
+            onDismiss = { onSelectSlot(null) },
+            onChooseFile = onChooseFile,
+            onClearStagedFile = onClearStagedFile,
+            onConfirmUpload = onConfirmUpload,
+            onOpen = { target.submission?.let(onOpen) },
+            onDelete = { target.submission?.let { deleteTarget = it } },
+        )
+    }
+
     deleteTarget?.let { submission ->
         ConfirmDestructiveActionDialog(
             title = "Remove paper",
             dependentSummary = "\"${submission.fileName}\" will be permanently removed.",
-            onConfirm = { onDelete(submission.submissionId); deleteTarget = null },
+            onConfirm = { onDelete(submission.submissionId); deleteTarget = null; onSelectSlot(null) },
             onDismiss = { deleteTarget = null },
         )
     }
 }
 
 @Composable
-private fun PaperHeader(selected: ResolvedAssignment?, examType: ExamType) {
+private fun PaperHeader(total: Int, submitted: Int) {
     Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Column(Modifier.padding(20.dp)) {
             Text("ASSESSMENT WORKSPACE", color = PaperGold, style = CmsTextStyles.eyebrow)
@@ -131,7 +157,7 @@ private fun PaperHeader(selected: ResolvedAssignment?, examType: ExamType) {
             Text("Exam papers", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
             Spacer(Modifier.height(4.dp))
             Text(
-                selected?.let { "${it.subjectLabel} · ${it.sessionLabel} · $examType" } ?: "Select a class",
+                if (total == 0) "No exam slots yet" else "$submitted of $total papers submitted",
                 color = CmsTheme.colors.onInkMuted,
                 style = MaterialTheme.typography.bodyMedium,
             )
@@ -140,98 +166,131 @@ private fun PaperHeader(selected: ResolvedAssignment?, examType: ExamType) {
 }
 
 @Composable
-private fun AssignmentPicker(assignments: List<ResolvedAssignment>, selected: ResolvedAssignment?, onSelect: (ResolvedAssignment) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-    Box(Modifier.fillMaxWidth()) {
-        OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) {
-            Text(
-                selected?.let { "${it.subjectLabel} (${it.courseCode})" } ?: "Select a class",
-                modifier = Modifier.weight(1f),
-            )
-            Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.heightIn(max = 240.dp)) {
-            assignments.forEach { assignment ->
-                DropdownMenuItem(
-                    text = { Text("${assignment.subjectLabel} · ${assignment.sessionLabel}") },
-                    onClick = { onSelect(assignment); expanded = false },
-                )
+private fun SubjectTile(paperSlot: TeacherPaperSlot, onClick: () -> Unit) {
+    val tone = if (paperSlot.isSubmitted) PaperGreen else PaperRed
+    val icon: ImageVector = if (paperSlot.isSubmitted) Icons.Filled.CheckCircle else Icons.Filled.Warning
+    Surface(
+        modifier = Modifier.width(180.dp).clickable(onClick = onClick),
+        shape = RoundedCornerShape(14.dp),
+        color = if (paperSlot.isSubmitted) ModSurface else ModRedTint,
+        border = BorderStroke(1.dp, tone.copy(alpha = 0.4f)),
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp).height(56.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(paperSlot.slot.subjectName, fontWeight = FontWeight.Bold, maxLines = 2, style = MaterialTheme.typography.bodyMedium)
+                Text(paperSlot.slot.courseCode, color = ModMuted, style = MaterialTheme.typography.bodySmall)
             }
+            Icon(icon, contentDescription = if (paperSlot.isSubmitted) "Submitted" else "Not submitted", tint = tone, modifier = Modifier.width(20.dp))
         }
     }
 }
 
 @Composable
-private fun PaperMetrics(total: Int, forType: Int, covered: Int, latest: java.time.Instant?) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        PaperMetric("This type", forType.toString(), Modifier.weight(1f))
-        PaperMetric("All files", total.toString(), Modifier.weight(1f))
-        PaperMetric("Types covered", covered.toString(), Modifier.weight(1f))
-        PaperMetric("Latest upload", latest?.atZone(ZoneId.systemDefault())?.format(PaperDateFormat) ?: "None", Modifier.weight(1f))
-    }
-}
+private fun SubjectPaperDialog(
+    target: TeacherPaperSlot,
+    stagedFile: StagedPaperFile?,
+    uploadState: Outcome<Unit>?,
+    onDismiss: () -> Unit,
+    onChooseFile: () -> Unit,
+    onClearStagedFile: () -> Unit,
+    onConfirmUpload: (fileName: String, description: String?) -> Unit,
+    onOpen: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    var fileName by remember(stagedFile) { mutableStateOf(stagedFile?.fileName ?: "") }
+    var description by remember(stagedFile) { mutableStateOf("") }
+    val busy = uploadState is Outcome.Loading
 
-@Composable
-private fun PaperMetric(label: String, value: String, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Column(Modifier.padding(14.dp)) {
-            Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
-        }
-    }
-}
+    AlertDialog(
+        onDismissRequest = { if (!busy) onDismiss() },
+        title = { Text(target.slot.subjectName) },
+        text = {
+            Column {
+                Text(target.slot.courseCode, color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.height(10.dp))
 
-@Composable
-private fun UploadPaperCard(examType: ExamType, outcome: Outcome<Unit>?, onChooseFile: () -> Unit) {
-    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Column(Modifier.padding(16.dp)) {
-            Text("Upload $examType paper", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-            Text("PDF or DOCX, stored securely with this class", color = ModMuted, style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.height(10.dp))
-            when (outcome) {
-                // null = idle (nothing uploaded yet): show only the picker, not a false "success".
-                null -> CmsPrimaryButton(text = "Choose file", onClick = onChooseFile)
-                is Outcome.Loading -> CmsNotice("Uploading...", tone = NoticeTone.Info, showProgress = true)
-                is Outcome.Success -> {
-                    CmsNotice("Paper uploaded successfully.", tone = NoticeTone.Success)
-                    Spacer(Modifier.height(8.dp))
-                    CmsPrimaryButton(text = "Choose file", onClick = onChooseFile)
-                }
-                is Outcome.Error -> {
-                    CmsNotice(outcome.message, tone = NoticeTone.Error)
-                    Spacer(Modifier.height(8.dp))
-                    CmsPrimaryButton(text = "Choose file", onClick = onChooseFile)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun SubmissionCard(submission: ExamPaperSubmission, onOpen: () -> Unit, onDelete: () -> Unit) {
-    Surface(shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Column(Modifier.padding(14.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text(submission.fileName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
+                val submission = target.submission
+                if (submission != null) {
+                    Text("Currently submitted", color = ModMuted, style = CmsTextStyles.eyebrow)
+                    Text(submission.fileName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
                     Text(
                         "Uploaded ${submission.uploadedAt.atZone(ZoneId.systemDefault()).format(PaperDateFormat)}",
                         color = ModMuted,
                         style = MaterialTheme.typography.bodySmall,
                     )
+                    val submissionDescription = submission.description
+                    if (!submissionDescription.isNullOrBlank()) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(submissionDescription, color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TextButton(onClick = onOpen) { Text("Open") }
+                        TextButton(onClick = onDelete) { Text("Remove", color = CmsTheme.colors.accent) }
+                    }
+                    Spacer(Modifier.height(10.dp))
+                    Text("Reuploading below replaces this file.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(6.dp))
                 }
-                StatusBadge(submission.examType.name, BadgeTone.Navy)
-                TextButton(onClick = onOpen) { Text("Open") }
-                TextButton(onClick = onDelete) { Text("Remove", color = CmsTheme.colors.accent) }
-            }
-            if (submission.reviewStatus == ExamPaperReviewStatus.REVIEWED) {
-                Spacer(Modifier.height(6.dp))
-                StatusBadge("REVIEWED", BadgeTone.Success)
-                if (!submission.teacherNotes.isNullOrBlank()) {
-                    Spacer(Modifier.height(4.dp))
-                    Text("Admin feedback: ${submission.teacherNotes}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+
+                val sizeError = stagedFile?.sizeError
+                when {
+                    stagedFile == null -> CmsPrimaryButton(text = "Choose file", onClick = onChooseFile, enabled = !busy)
+                    sizeError != null -> {
+                        CmsNotice(sizeError, tone = NoticeTone.Error)
+                        Spacer(Modifier.height(8.dp))
+                        CmsPrimaryButton(text = "Choose a different file", onClick = onChooseFile)
+                    }
+                    else -> {
+                        Text("Selected: ${stagedFile.fileName}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = fileName,
+                            onValueChange = { fileName = it },
+                            label = { Text("File name (optional)") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            enabled = !busy,
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = description,
+                            onValueChange = { description = it },
+                            label = { Text("Title or description (optional)") },
+                            modifier = Modifier.fillMaxWidth(),
+                            minLines = 2,
+                            enabled = !busy,
+                        )
+                        Spacer(Modifier.height(10.dp))
+                        when (uploadState) {
+                            is Outcome.Loading -> CmsNotice("Uploading...", tone = NoticeTone.Info, showProgress = true)
+                            is Outcome.Error -> CmsNotice(uploadState.message, tone = NoticeTone.Error)
+                            is Outcome.Success -> CmsNotice("Paper uploaded successfully.", tone = NoticeTone.Success)
+                            null -> {}
+                        }
+                    }
                 }
             }
-        }
-    }
+        },
+        confirmButton = {
+            if (stagedFile != null && stagedFile.sizeError == null) {
+                TextButton(
+                    onClick = { onConfirmUpload(fileName.trim().ifBlank { stagedFile.fileName }, description.trim().ifBlank { null }) },
+                    enabled = !busy,
+                ) { Text(if (busy) "Uploading..." else "Upload") }
+            } else {
+                TextButton(onClick = onDismiss) { Text("Close") }
+            }
+        },
+        dismissButton = {
+            if (stagedFile != null) {
+                TextButton(onClick = onClearStagedFile, enabled = !busy) { Text("Cancel") }
+            } else {
+                TextButton(onClick = onDismiss) { Text("Close") }
+            }
+        },
+    )
 }
