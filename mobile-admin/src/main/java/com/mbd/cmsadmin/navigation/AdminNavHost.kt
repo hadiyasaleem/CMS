@@ -44,7 +44,6 @@ fun AdminNavHost(navController: NavHostController, onSignedOut: () -> Unit, refr
             PeopleHubScreen(onOpen = { destination ->
                 go(
                     when (destination) {
-                        PeopleDestination.ADMINISTRATORS -> AdminLeaf.ADMINISTRATORS
                         PeopleDestination.TEACHERS -> AdminLeaf.TEACHERS
                         PeopleDestination.STUDENTS -> AdminTab.Academics.route
                         PeopleDestination.LINK_REQUESTS -> AdminLeaf.LINK_REQUESTS
@@ -65,7 +64,6 @@ fun AdminNavHost(navController: NavHostController, onSignedOut: () -> Unit, refr
                         RecordsDestination.TIMETABLE -> AdminLeaf.MASTER_TIMETABLE
                         RecordsDestination.FEES -> AdminLeaf.FEES_PICKER
                         RecordsDestination.INSIGHTS -> AdminLeaf.INSIGHTS
-                        RecordsDestination.BUILDINGS_ROOMS -> AdminLeaf.BUILDINGS_ROOMS
                     },
                 )
             })
@@ -75,6 +73,8 @@ fun AdminNavHost(navController: NavHostController, onSignedOut: () -> Unit, refr
             MoreHubScreen(onOpen = { destination ->
                 go(
                     when (destination) {
+                        MoreDestination.ADMINISTRATORS -> AdminLeaf.ADMINISTRATORS
+                        MoreDestination.BUILDINGS_ROOMS -> AdminLeaf.BUILDINGS_ROOMS
                         MoreDestination.NOTIFICATIONS -> AdminLeaf.NOTIFICATIONS
                         MoreDestination.PROFILE -> AdminLeaf.PROFILE
                     },

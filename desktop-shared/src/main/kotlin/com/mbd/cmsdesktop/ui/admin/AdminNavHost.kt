@@ -187,7 +187,6 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         examPaperSubmissionRepository = component.examPaperRepository(),
                         onOpen = { destination ->
                             when (destination) {
-                                PeopleDestination.ADMINISTRATORS -> push(AdminScreen.Administrators)
                                 PeopleDestination.TEACHERS -> push(AdminScreen.Teachers)
                                 PeopleDestination.STUDENTS -> popOrSwitchTab(AdminTab.Academics)
                                 PeopleDestination.LINK_REQUESTS -> push(AdminScreen.LinkRequests)
@@ -210,7 +209,6 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                                 RecordsDestination.TIMETABLE -> push(AdminScreen.MasterTimetable)
                                 RecordsDestination.FEES -> push(AdminScreen.FeesPicker)
                                 RecordsDestination.INSIGHTS -> push(AdminScreen.Insights)
-                                RecordsDestination.BUILDINGS_ROOMS -> push(AdminScreen.BuildingsRooms)
                             }
                         },
                     )
@@ -221,6 +219,8 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         notificationRepository = component.notificationRepository(),
                         onOpen = { destination ->
                             when (destination) {
+                                MoreDestination.ADMINISTRATORS -> push(AdminScreen.Administrators)
+                                MoreDestination.BUILDINGS_ROOMS -> push(AdminScreen.BuildingsRooms)
                                 MoreDestination.NOTIFICATIONS -> push(AdminScreen.Notifications)
                                 MoreDestination.PROFILE -> push(AdminScreen.Profile)
                             }

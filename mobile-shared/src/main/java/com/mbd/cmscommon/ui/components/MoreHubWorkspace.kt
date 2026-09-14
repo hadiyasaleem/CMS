@@ -23,6 +23,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AdminPanelSettings
+import androidx.compose.material.icons.outlined.Apartment
 import androidx.compose.material.icons.outlined.Campaign
 import androidx.compose.material.icons.outlined.ManageAccounts
 import androidx.compose.material3.Icon
@@ -60,7 +62,7 @@ private val MoreRed = ModAccent
 private val MoreNavy = ModInk
 private val MoreDateFormat = DateTimeFormatter.ofPattern("dd MMM yyyy")
 
-enum class MoreDestination { NOTIFICATIONS, PROFILE }
+enum class MoreDestination { ADMINISTRATORS, BUILDINGS_ROOMS, NOTIFICATIONS, PROFILE }
 
 private data class MoreAction(
     val destination: MoreDestination,
@@ -82,9 +84,19 @@ fun MoreHubWorkspace(
 ) {
     val actions = listOf(
         MoreAction(
+            MoreDestination.ADMINISTRATORS, "Administrators",
+            "Create and review full-access administrator accounts.",
+            Icons.Outlined.AdminPanelSettings, MoreNavy,
+        ),
+        MoreAction(
             MoreDestination.NOTIFICATIONS, "Notifications",
             "Publish notices, review delivery history, and keep urgent updates visible.",
             Icons.Outlined.Campaign, MoreNavy,
+        ),
+        MoreAction(
+            MoreDestination.BUILDINGS_ROOMS, "Buildings & Rooms",
+            "Manage campus buildings and rooms, including teacher offices.",
+            Icons.Outlined.Apartment, MoreGold,
         ),
         MoreAction(
             MoreDestination.PROFILE, "Profile & Security",

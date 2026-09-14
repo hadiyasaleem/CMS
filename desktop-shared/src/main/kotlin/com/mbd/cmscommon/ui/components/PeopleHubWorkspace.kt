@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AdminPanelSettings
 import androidx.compose.material.icons.outlined.Assignment
 import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.Groups
@@ -60,7 +59,7 @@ private val PeopleGreen = ModSuccess
 private val PeopleGold = ModWarn
 private val PeopleRed = ModAccent
 
-enum class PeopleDestination { ADMINISTRATORS, TEACHERS, STUDENTS, LINK_REQUESTS, MARK_EDIT_REQUESTS, SUBMITTED_PAPERS }
+enum class PeopleDestination { TEACHERS, STUDENTS, LINK_REQUESTS, MARK_EDIT_REQUESTS, SUBMITTED_PAPERS }
 
 private data class PeopleCard(
     val destination: PeopleDestination,
@@ -155,16 +154,6 @@ private fun PeopleMetric(value: String, label: String, modifier: Modifier = Modi
 }
 
 private fun peopleCards(snapshot: PeopleHubSnapshot): List<PeopleCard> = listOf(
-    PeopleCard(
-        PeopleDestination.ADMINISTRATORS, "Administrators",
-        "Create and review full-access administrator accounts.",
-        if (snapshot.inactiveAdministratorCount == 0) {
-            "${snapshot.activeAdministratorCount} active"
-        } else {
-            "${snapshot.activeAdministratorCount} active / ${snapshot.inactiveAdministratorCount} unavailable"
-        },
-        Icons.Outlined.AdminPanelSettings, PeopleNavy,
-    ),
     PeopleCard(
         PeopleDestination.TEACHERS, "Teachers",
         "Manage faculty profiles, lifecycle status, and permissions.",
