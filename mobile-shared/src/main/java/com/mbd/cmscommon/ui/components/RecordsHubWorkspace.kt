@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.items
@@ -137,10 +138,10 @@ private fun RecordsHeader(heroPainter: Painter) {
 
 @Composable
 private fun RecordsSummaryRow(snapshot: RecordsHubSnapshot) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        RecordsMetric(snapshot.activeSessions.toString(), "Active sessions", Modifier.weight(1f))
-        RecordsMetric(snapshot.publishedResources.toString(), "Published", Modifier.weight(1f))
-        RecordsMetric(snapshot.atRiskStudents.toString(), "At risk", Modifier.weight(1f), alert = snapshot.atRiskStudents > 0)
+    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        RecordsMetric(snapshot.activeSessions.toString(), "Active sessions", Modifier.weight(1f).fillMaxHeight())
+        RecordsMetric(snapshot.publishedResources.toString(), "Published", Modifier.weight(1f).fillMaxHeight())
+        RecordsMetric(snapshot.atRiskStudents.toString(), "At risk", Modifier.weight(1f).fillMaxHeight(), alert = snapshot.atRiskStudents > 0)
     }
 }
 
