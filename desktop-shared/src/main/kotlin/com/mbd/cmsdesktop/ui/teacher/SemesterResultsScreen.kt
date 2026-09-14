@@ -11,6 +11,7 @@ import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.SessionMarksRepository
 import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider
 import com.mbd.cmscommon.ui.components.SemesterResultsWorkspace
+import kotlinx.coroutines.flow.map
 
 /** Semester GPA / result recording leaf reachable from Exams hub. */
 @Composable
@@ -27,7 +28,8 @@ fun SemesterResultsScreen(
             marksRepository,
             sessionRepository,
             curriculumRepository,
-            assignmentsProvider.observeAssignmentsFor(teacherId),
+            assignmentsProvider.observeAssignmentsFor(teacherId)
+                .map { assignments -> assignments.map { it.sessionId to it.sessionLabel }.distinct() },
             scope,
         )
     }

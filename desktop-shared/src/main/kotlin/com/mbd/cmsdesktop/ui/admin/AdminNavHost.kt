@@ -209,6 +209,7 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                                 RecordsDestination.TIMETABLE -> push(AdminScreen.MasterTimetable)
                                 RecordsDestination.FEES -> push(AdminScreen.FeesPicker)
                                 RecordsDestination.INSIGHTS -> push(AdminScreen.Insights)
+                                RecordsDestination.SEMESTER_RESULTS -> push(AdminScreen.SemesterResults)
                             }
                         },
                     )
@@ -318,6 +319,13 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         sessionRepository = component.academicSessionRepository(),
                         departmentRepository = component.departmentRepository(),
                         viewer = InsightsViewer.ADMIN,
+                    )
+
+                    AdminScreen.SemesterResults -> SemesterResultsScreen(
+                        sessionRepository = component.academicSessionRepository(),
+                        marksRepository = component.sessionMarksRepository(),
+                        curriculumRepository = component.curriculumRepository(),
+                        departmentRepository = component.departmentRepository(),
                     )
 
                     AdminScreen.Notifications -> {

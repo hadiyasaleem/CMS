@@ -5,7 +5,6 @@ import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.SessionMarksRepository
-import com.mbd.cmscommon.teacher.ResolvedAssignment
 import com.mbd.cmscommon.util.Outcome
 import com.mbd.cmscommon.util.requireValid
 import java.util.Locale
@@ -18,19 +17,17 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 class SemesterResultsController(
     private val marksRepository: SessionMarksRepository,
     private val sessionRepository: AcademicSessionRepository,
     private val curriculumRepository: CurriculumRepository,
-    myAssignments: Flow<List<ResolvedAssignment>>,
+    sessions: Flow<List<Pair<String, String>>>,
     scope: CoroutineScope,
 ) : ScreenController(scope) {
 
-    val sessions: StateFlow<List<Pair<String, String>>> = myAssignments
-        .map { assignments -> assignments.map { it.sessionId to it.sessionLabel }.distinct() }
+    val sessions: StateFlow<List<Pair<String, String>>> = sessions
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _sessionId = MutableStateFlow<String?>(null)

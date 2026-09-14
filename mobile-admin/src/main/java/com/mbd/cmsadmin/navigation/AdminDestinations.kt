@@ -37,6 +37,7 @@ object AdminLeaf {
     const val CALENDAR = "calendar"
     const val DATESHEETS = "datesheets"
     const val INSIGHTS = "insights"
+    const val SEMESTER_RESULTS = "semester_results"
 }
 
 /** Parameterized drill-down routes: department → curriculum / sessions / fees → session detail. */

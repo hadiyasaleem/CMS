@@ -28,6 +28,7 @@ import androidx.compose.material.icons.outlined.EventAvailable
 import androidx.compose.material.icons.outlined.HowToReg
 import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.TrendingUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -63,7 +64,7 @@ private val RecordsGreen = ModSuccess
 private val RecordsGold = ModWarn
 private val RecordsRed = ModAccent
 
-enum class RecordsDestination { ATTENDANCE, CALENDAR, DATESHEETS, TIMETABLE, FEES, INSIGHTS }
+enum class RecordsDestination { ATTENDANCE, CALENDAR, DATESHEETS, TIMETABLE, FEES, INSIGHTS, SEMESTER_RESULTS }
 
 private data class RecordsCard(
     val destination: RecordsDestination,
@@ -196,6 +197,13 @@ private fun recordsCards(snapshot: RecordsHubSnapshot): List<RecordsCard> = list
         "${snapshot.atRiskStudents} student(s) flagged",
         Icons.Outlined.Assessment, if (snapshot.atRiskStudents > 0) RecordsRed else RecordsGreen, RecordsSummarySource.INSIGHTS,
         RecordsSummarySource.INSIGHTS in snapshot.unavailableSources,
+    ),
+    RecordsCard(
+        RecordsDestination.SEMESTER_RESULTS, "Semester Results",
+        "Record GPA, CGPA, class position, and supply subjects for any session.",
+        "${snapshot.activeSessions} session(s) in scope",
+        Icons.Outlined.TrendingUp, RecordsGreen, RecordsSummarySource.SESSIONS,
+        RecordsSummarySource.SESSIONS in snapshot.unavailableSources,
     ),
 )
 

@@ -1,4 +1,4 @@
-package com.mbd.cmsteacher.feature.results
+package com.mbd.cmsadmin.feature.academics
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -9,26 +9,30 @@ import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.controller.SemesterResultsController
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
+import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.SessionMarksRepository
-import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider
 import com.mbd.cmscommon.ui.components.SemesterResultsWorkspace
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 
 @HiltViewModel
 class SemesterResultsViewModel @Inject constructor(
     marksRepository: SessionMarksRepository,
     sessionRepository: AcademicSessionRepository,
     curriculumRepository: CurriculumRepository,
-    assignmentsProvider: TeacherAssignmentsProvider,
+    departmentRepository: DepartmentRepository,
 ) : ViewModel() {
     val controller = SemesterResultsController(
         marksRepository = marksRepository,
         sessionRepository = sessionRepository,
         curriculumRepository = curriculumRepository,
-        sessions = assignmentsProvider.observeMyAssignments()
-            .map { assignments -> assignments.map { it.sessionId to it.sessionLabel }.distinct() },
+        sessions = combine(sessionRepository.observeAllSessions(), departmentRepository.observeActiveDepartments()) { sessions, depts ->
+            sessions.map { session ->
+                val deptName = depts.firstOrNull { it.deptId == session.deptId }?.name ?: session.deptId
+                session.sessionId to "$deptName ${session.label}"
+            }
+        },
         scope = viewModelScope,
     )
 }
