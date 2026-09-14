@@ -6,10 +6,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -156,18 +159,30 @@ private fun AccountSummary(snapshot: MoreHubSnapshot?, loading: Boolean) {
     }
 }
 
+private data class MoreMetricItem(val value: String, val label: String, val alert: Boolean)
+
 @Composable
 private fun MoreMetrics(snapshot: MoreHubSnapshot?, loading: Boolean) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        MoreMetric(if (loading || snapshot == null) "--" else snapshot.administratorCount.toString(), "Admins", Modifier.weight(1f))
-        MoreMetric(if (loading || snapshot == null) "--" else snapshot.authoredNotifications.toString(), "Authored", Modifier.weight(1f))
-        MoreMetric(
+    val metrics = listOf(
+        MoreMetricItem(if (loading || snapshot == null) "--" else snapshot.administratorCount.toString(), "Admins", alert = false),
+        MoreMetricItem(if (loading || snapshot == null) "--" else snapshot.authoredNotifications.toString(), "Authored", alert = false),
+        MoreMetricItem(
             if (loading || snapshot == null) "--" else snapshot.urgentAuthoredNotifications.toString(),
             "Urgent",
-            Modifier.weight(1f),
             alert = (snapshot?.urgentAuthoredNotifications ?: 0) > 0,
-        )
-        MoreMetric(if (loading || snapshot == null) "--" else snapshot.unreadNotifications.toString(), "Unread", Modifier.weight(1f))
+        ),
+        MoreMetricItem(if (loading || snapshot == null) "--" else snapshot.unreadNotifications.toString(), "Unread", alert = false),
+    )
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val columns = if (maxWidth >= 900.dp) metrics.size else 2
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            metrics.chunked(columns).forEach { rowItems ->
+                Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    rowItems.forEach { metric -> MoreMetric(metric.value, metric.label, Modifier.weight(1f).fillMaxHeight(), alert = metric.alert) }
+                    repeat(columns - rowItems.size) { Spacer(Modifier.weight(1f)) }
+                }
+            }
+        }
     }
 }
 
