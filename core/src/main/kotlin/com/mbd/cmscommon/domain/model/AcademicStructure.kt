@@ -166,6 +166,7 @@ data class SessionStudent(
     val linkedEmail: String = "",
     val gpa: Double? = null,
     val cgpa: Double? = null,
+    val photoPath: String? = null,
     override val createdAt: Instant = Instant.EPOCH,
     override val createdBy: String? = null,
     override val updatedAt: Instant = Instant.EPOCH,

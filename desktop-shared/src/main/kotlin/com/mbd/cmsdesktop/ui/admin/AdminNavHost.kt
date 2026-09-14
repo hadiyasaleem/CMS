@@ -378,6 +378,7 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         sessionRepository = component.academicSessionRepository(),
                         fineRepository = component.fineRepository(),
                         sessionManager = component.sessionManager(),
+                        window = window,
                     )
 
                     is AdminScreen.SessionTimetableRoute -> SessionTimetableScreen(

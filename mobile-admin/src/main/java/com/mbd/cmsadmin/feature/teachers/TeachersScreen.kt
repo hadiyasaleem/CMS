@@ -16,7 +16,7 @@ import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.mbd.cmscommon.domain.model.TEACHER_PHOTO_COMPRESSED_TARGET_BYTES
+import com.mbd.cmscommon.domain.model.PROFILE_PHOTO_COMPRESSED_TARGET_BYTES
 import com.mbd.cmscommon.domain.model.Teacher
 import com.mbd.cmscommon.ui.components.TeacherDirectoryWorkspace
 import com.mbd.cmscommon.util.orLogCritical
@@ -119,6 +119,6 @@ private fun compressToJpeg(bitmap: ImageBitmap): ByteArray {
         androidBitmap.compress(Bitmap.CompressFormat.JPEG, quality, stream)
         bytes = stream.toByteArray()
         quality -= 15
-    } while (bytes.size > TEACHER_PHOTO_COMPRESSED_TARGET_BYTES && quality > 10)
+    } while (bytes.size > PROFILE_PHOTO_COMPRESSED_TARGET_BYTES && quality > 10)
     return bytes
 }

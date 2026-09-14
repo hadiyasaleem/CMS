@@ -2,8 +2,10 @@ package com.mbd.cmscommon.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -13,12 +15,18 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -33,6 +41,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.domain.model.AcademicSession
@@ -70,11 +79,16 @@ fun StudentProfileWorkspace(
     onDeleteFine: (Fine) -> Unit,
     onDelink: () -> Unit,
     onClearError: () -> Unit,
+    onPickPhoto: (onPicked: (ImageBitmap) -> Unit) -> Unit,
+    onSavePhoto: (ImageBitmap) -> Unit,
+    photoBusy: Boolean,
+    onLoadPhoto: suspend (String) -> ImageBitmap?,
     modifier: Modifier = Modifier,
 ) {
     var profile by remember(loadedProfile.rollNumber) { mutableStateOf(loadedProfile) }
     var showFineDialog by remember { mutableStateOf(false) }
     var pendingFineDelete by remember { mutableStateOf<Fine?>(null) }
+    var pendingCrop by remember { mutableStateOf<ImageBitmap?>(null) }
 
     val dirty = profile != loadedProfile
     val nameError = FieldValidators.nameError(profile.name, "Full name")
@@ -93,7 +107,16 @@ fun StudentProfileWorkspace(
     val totalFines = fines.sumOf { it.amount }
 
     LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { StudentProfileHero(profile, session, completion) }
+        item {
+            StudentProfileHero(
+                profile = profile,
+                session = session,
+                completion = completion,
+                photoBusy = photoBusy,
+                onLoadPhoto = onLoadPhoto,
+                onPickPhotoClick = { onPickPhoto { bitmap -> pendingCrop = bitmap } },
+            )
+        }
 
         if (!errorMessage.isNullOrBlank()) {
             item { CmsNotice(errorMessage, tone = NoticeTone.Error, onDismiss = onClearError) }
@@ -182,13 +205,43 @@ fun StudentProfileWorkspace(
             onDismiss = { pendingFineDelete = null },
         )
     }
+
+    pendingCrop?.let { source ->
+        PhotoCropDialog(
+            source = source,
+            onCancel = { pendingCrop = null },
+            onCropped = { cropped -> pendingCrop = null; onSavePhoto(cropped) },
+        )
+    }
 }
 
 @Composable
-private fun StudentProfileHero(profile: StudentProfile, session: AcademicSession?, completion: Int) {
+private fun StudentProfileHero(
+    profile: StudentProfile,
+    session: AcademicSession?,
+    completion: Int,
+    photoBusy: Boolean,
+    onLoadPhoto: suspend (String) -> ImageBitmap?,
+    onPickPhotoClick: () -> Unit,
+) {
     Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-            AvatarInitials(profile.name, size = 52)
+            Box(contentAlignment = Alignment.BottomEnd) {
+                ProfilePhotoAvatar(profile.name, profile.photoPath, size = 52, onLoadPhoto = onLoadPhoto, cacheKey = profile.updatedAt)
+                Surface(
+                    modifier = Modifier.clickable(enabled = !photoBusy, onClick = onPickPhotoClick),
+                    shape = CircleShape,
+                    color = CmsTheme.colors.accent,
+                ) {
+                    Box(Modifier.size(26.dp), contentAlignment = Alignment.Center) {
+                        if (photoBusy) {
+                            CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp, color = CmsTheme.colors.onInk)
+                        } else {
+                            Icon(Icons.Filled.PhotoCamera, contentDescription = "Change photo", tint = CmsTheme.colors.onInk, modifier = Modifier.size(16.dp))
+                        }
+                    }
+                }
+            }
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
                 Text("STUDENT RECORD", color = CmsTheme.colors.onInk.copy(alpha = 0.7f), style = CmsTextStyles.eyebrow)

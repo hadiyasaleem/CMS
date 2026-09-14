@@ -2,6 +2,7 @@ package com.mbd.cmscommon.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,7 +18,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -31,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -70,6 +78,7 @@ fun StudentRosterWorkspace(
     onDismissImportPreview: () -> Unit,
     onDismissImportResult: () -> Unit,
     onClearError: () -> Unit,
+    onLoadPhoto: suspend (String) -> ImageBitmap?,
     modifier: Modifier = Modifier,
 ) {
     var query by remember { mutableStateOf("") }
@@ -120,7 +129,7 @@ fun StudentRosterWorkspace(
             students.isEmpty() -> fullSpanItem { RosterEmptyState(hasStudents = false, isFull = false, onAdd = { showAddStudent = true }, onClear = {}) }
             visible.isEmpty() -> fullSpanItem { RosterEmptyState(hasStudents = true, isFull = false, onAdd = {}, onClear = { query = "" }) }
             else -> items(visible, key = { it.rollNumber }) { student ->
-                StudentProfileCard(student, onOpen = { onOpenStudent(student) }, onDelete = { pendingDelete = student })
+                StudentProfileCard(student, onOpen = { onOpenStudent(student) }, onDelete = { pendingDelete = student }, onLoadPhoto = onLoadPhoto)
             }
         }
 
@@ -216,16 +225,26 @@ private fun RosterMetric(label: String, value: String, modifier: Modifier = Modi
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun StudentProfileCard(student: SessionStudent, onOpen: () -> Unit, onDelete: () -> Unit) {
+private fun StudentProfileCard(student: SessionStudent, onOpen: () -> Unit, onDelete: () -> Unit, onLoadPhoto: suspend (String) -> ImageBitmap?) {
     val linked = student.linkedEmail.isNotBlank()
-    Surface(shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
+    var menuExpanded by remember { mutableStateOf(false) }
+    Surface(modifier = Modifier.clickable(onClick = onOpen), shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                AvatarInitials(student.name, size = 40)
+                ProfilePhotoAvatar(student.name, student.photoPath, size = 40, onLoadPhoto = onLoadPhoto, cacheKey = student.updatedAt)
                 Spacer(Modifier.width(10.dp))
                 Column(Modifier.weight(1f)) {
                     Text(student.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
                     Text("Roll ${student.rollNumber}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                }
+                Box {
+                    IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Filled.MoreVert, contentDescription = "More") }
+                    DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                        DropdownMenuItem(
+                            text = { Text("Remove", color = CmsTheme.colors.accent) },
+                            onClick = { menuExpanded = false; onDelete() },
+                        )
+                    }
                 }
             }
             Spacer(Modifier.height(8.dp))
@@ -237,11 +256,6 @@ private fun StudentProfileCard(student: SessionStudent, onOpen: () -> Unit, onDe
             if (!linked) {
                 Spacer(Modifier.height(4.dp))
                 Text("Student-app account not connected", color = RosterGold, style = MaterialTheme.typography.bodySmall)
-            }
-            Spacer(Modifier.height(8.dp))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = onOpen) { Text("Open profile") }
-                TextButton(onClick = onDelete) { Text("Remove", color = CmsTheme.colors.accent) }
             }
         }
     }

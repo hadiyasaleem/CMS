@@ -5,6 +5,7 @@ import com.mbd.cmscommon.data.local.entity.SemesterSubjectEntity
 import com.mbd.cmscommon.data.local.entity.SemesterTermEntity
 import com.mbd.cmscommon.data.local.entity.SessionPeriodEntity
 import com.mbd.cmscommon.data.local.entity.SessionStudentEntity
+import com.mbd.cmscommon.data.remote.dto.StudentProfileDto
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.PeriodType
 import com.mbd.cmscommon.domain.model.SemesterSubject
@@ -16,8 +17,12 @@ import com.mbd.cmscommon.domain.model.SubjectType
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 
 object AcademicStructureMapper {
+    private val profileJson = Json { ignoreUnknownKeys = true }
+
     fun sessionEntityToDomain(e: AcademicSessionEntity): AcademicSession = AcademicSession(
         sessionId = e.sessionId,
         deptId = e.deptId,
@@ -103,6 +108,7 @@ object AcademicStructureMapper {
         linkedEmail = e.linkedEmail ?: "",
         gpa = e.gpa,
         cgpa = e.cgpa,
+        photoPath = e.profileJson?.let { encoded -> runCatching { profileJson.decodeFromString<StudentProfileDto>(encoded).photoPath }.getOrNull() },
         createdAt = Instant.ofEpochMilli(e.createdAt),
         createdBy = e.createdBy,
         updatedAt = Instant.ofEpochMilli(e.updatedAt),

@@ -10,7 +10,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asSkiaBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import com.mbd.cmscommon.controller.TeachersController
-import com.mbd.cmscommon.domain.model.TEACHER_PHOTO_COMPRESSED_TARGET_BYTES
+import com.mbd.cmscommon.domain.model.PROFILE_PHOTO_COMPRESSED_TARGET_BYTES
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.RoomRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
@@ -118,6 +118,6 @@ private fun compressToJpeg(bitmap: ImageBitmap): ByteArray {
     do {
         bytes = image.encodeToData(EncodedImageFormat.JPEG, quality)?.bytes ?: ByteArray(0)
         quality -= 15
-    } while (bytes.size > TEACHER_PHOTO_COMPRESSED_TARGET_BYTES && quality > 10)
+    } while (bytes.size > PROFILE_PHOTO_COMPRESSED_TARGET_BYTES && quality > 10)
     return bytes
 }

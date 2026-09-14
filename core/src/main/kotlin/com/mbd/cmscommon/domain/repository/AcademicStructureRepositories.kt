@@ -50,6 +50,12 @@ interface AcademicSessionRepository {
      * restricts the rows a non-admin caller gets back, so this is a strict improvement for every role. */
     suspend fun syncAllSessions()
     suspend fun syncAllStudents()
+
+    /** Uploads a new profile photo, stores it at photos/students/{sessionId}/{rollNumber}.{ext}, and records the path. */
+    suspend fun uploadStudentPhoto(sessionId: String, rollNumber: String, imageBytes: ByteArray, mimeType: String)
+
+    /** Downloads a previously-uploaded student photo's bytes, or null if it no longer exists. */
+    suspend fun downloadStudentPhoto(photoPath: String): ByteArray?
 }
 
 interface CurriculumRepository {

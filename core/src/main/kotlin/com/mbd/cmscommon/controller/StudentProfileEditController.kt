@@ -37,6 +37,9 @@ class StudentProfileEditController(
     private val _fines = MutableStateFlow<List<Fine>>(emptyList())
     val fines: StateFlow<List<Fine>> = _fines.asStateFlow()
 
+    private val _photoBusy = MutableStateFlow(false)
+    val photoBusy: StateFlow<Boolean> = _photoBusy.asStateFlow()
+
     init {
         launch {
             _profile.value = sessionRepository.getStudentProfile(sessionId, rollNumber)
@@ -105,4 +108,17 @@ class StudentProfileEditController(
             _saveState.value = Outcome.Error(t.userMessageLogged("Could not save the student profile."), t)
         }
     }
+
+    fun uploadPhoto(imageBytes: ByteArray, mimeType: String) = launch {
+        try {
+            _photoBusy.value = true
+            sessionRepository.uploadStudentPhoto(sessionId, rollNumber, imageBytes, mimeType)
+            _profile.value = sessionRepository.getStudentProfile(sessionId, rollNumber)
+        } finally {
+            _photoBusy.value = false
+        }
+    }
+
+    /** For a picked photo failing to read/decode before [uploadPhoto] ever gets called. */
+    fun reportPhotoPickFailure(t: Throwable) = launch { throw t }
 }

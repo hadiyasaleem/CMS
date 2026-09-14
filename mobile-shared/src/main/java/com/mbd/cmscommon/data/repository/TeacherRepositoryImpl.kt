@@ -13,8 +13,8 @@ import com.mbd.cmscommon.data.sync.SyncCheckpointStore
 import com.mbd.cmscommon.data.sync.maxRemoteUpdatedAt
 import com.mbd.cmscommon.domain.model.Teacher
 import com.mbd.cmscommon.domain.model.TeacherStatus
-import com.mbd.cmscommon.domain.model.teacherPhotoExtension
-import com.mbd.cmscommon.domain.model.teacherPhotoUploadError
+import com.mbd.cmscommon.domain.model.profilePhotoExtension
+import com.mbd.cmscommon.domain.model.profilePhotoUploadError
 import com.mbd.cmscommon.domain.repository.TeacherRepository
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.query.Order
@@ -117,8 +117,8 @@ class TeacherRepositoryImpl @Inject constructor(
     }
 
     override suspend fun uploadPhoto(teacherId: String, imageBytes: ByteArray, mimeType: String) {
-        teacherPhotoUploadError(mimeType, imageBytes)?.let { throw IllegalArgumentException(it) }
-        val path = "teachers/$teacherId.${teacherPhotoExtension(mimeType)}"
+        profilePhotoUploadError(mimeType, imageBytes)?.let { throw IllegalArgumentException(it) }
+        val path = "teachers/$teacherId.${profilePhotoExtension(mimeType)}"
         storage.from(SupabaseTables.BUCKET_PHOTOS).upload(path, imageBytes) { upsert = true }
         postgrest.from(SupabaseTables.TEACHERS).update({ set("photo_path", path) }) {
             filter { eq("email", teacherId) }

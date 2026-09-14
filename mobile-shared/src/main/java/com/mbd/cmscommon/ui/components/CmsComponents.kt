@@ -5,6 +5,7 @@ import com.mbd.cmscommon.ui.theme.CmsTheme
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -23,15 +24,18 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import kotlin.math.min
 
@@ -125,6 +129,34 @@ fun AvatarInitials(name: String, modifier: Modifier = Modifier, size: Int = 44) 
             fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold,
             style = MaterialTheme.typography.titleMedium,
         )
+    }
+}
+
+/**
+ * Shows an uploaded photo (downloaded lazily via [onLoadPhoto]), falling back to [AvatarInitials].
+ * [cacheKey] should change whenever the underlying photo might have (e.g. the record's updatedAt)
+ * so a re-upload under the same storage path is picked up instead of showing the stale cached image
+ * indefinitely.
+ */
+@Composable
+fun ProfilePhotoAvatar(name: String, photoPath: String?, size: Int, onLoadPhoto: suspend (String) -> ImageBitmap?, modifier: Modifier = Modifier, cacheKey: Any = Unit) {
+    if (photoPath.isNullOrBlank()) {
+        AvatarInitials(name, modifier, size)
+        return
+    }
+    val bitmap by produceState<ImageBitmap?>(initialValue = null, photoPath, cacheKey) {
+        value = runCatching { onLoadPhoto(photoPath) }.getOrNull()
+    }
+    val current = bitmap
+    if (current != null) {
+        Image(
+            bitmap = current,
+            contentDescription = name,
+            modifier = modifier.size(size.dp).clip(CircleShape),
+            contentScale = ContentScale.Crop,
+        )
+    } else {
+        AvatarInitials(name, modifier, size)
     }
 }
 

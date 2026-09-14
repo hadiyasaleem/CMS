@@ -1,5 +1,6 @@
 package com.mbd.cmsadmin.feature.academics
 
+import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -9,6 +10,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.SavedStateHandle
@@ -21,9 +24,13 @@ import com.mbd.cmscommon.ui.components.StudentRosterWorkspace
 import com.mbd.cmscommon.util.ImportedStudentRow
 import com.mbd.cmscommon.util.StudentImportParser
 import com.mbd.cmscommon.util.StudentImportResult
+import com.mbd.cmscommon.util.orLogCritical
 import com.mbd.cmscommon.util.userMessageLogged
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.io.File
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 private val ROSTER_FILE_MIME_TYPES = arrayOf(
     "text/csv",
@@ -36,7 +43,7 @@ private val ROSTER_FILE_MIME_TYPES = arrayOf(
 @HiltViewModel
 class SessionStudentsViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    sessionRepository: AcademicSessionRepository,
+    private val sessionRepository: AcademicSessionRepository,
     departmentRepository: DepartmentRepository,
 ) : ViewModel() {
     private val controller = SessionStudentsController(
@@ -59,6 +66,7 @@ class SessionStudentsViewModel @Inject constructor(
     fun clearImportResult() = controller.clearImportResult()
     fun deleteStudent(studentId: String) = controller.deleteStudent(studentId)
     fun clearError() = controller.clearError()
+    suspend fun downloadPhotoBytes(photoPath: String): ByteArray? = sessionRepository.downloadStudentPhoto(photoPath)
 }
 
 @Composable
@@ -75,6 +83,7 @@ fun SessionStudentsScreen(
     var importPreview by remember { mutableStateOf<StudentImportResult?>(null) }
     var fileError by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
+    val photoCacheDir = remember(context) { File(context.cacheDir, "student_photos").apply { mkdirs() } }
     val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         if (uri == null) return@rememberLauncherForActivityResult
         try {
@@ -108,7 +117,23 @@ fun SessionStudentsScreen(
         onClearError = {
             if (fileError != null) fileError = null else viewModel.clearError()
         },
+        onLoadPhoto = { path -> loadPhotoCached(photoCacheDir, path, viewModel::downloadPhotoBytes) },
     )
 }
 
 private fun ByteArray.isZipFile(): Boolean = size >= 2 && this[0] == 0x50.toByte() && this[1] == 0x4B.toByte()
+
+private fun cacheFileFor(cacheDir: File, photoPath: String): File = File(cacheDir, photoPath.replace('/', '_'))
+
+/** Local-first photo load: serves the cached file if present, otherwise downloads once and caches it. */
+private suspend fun loadPhotoCached(cacheDir: File, photoPath: String, download: suspend (String) -> ByteArray?): ImageBitmap? {
+    val cacheFile = cacheFileFor(cacheDir, photoPath)
+    val bytes = withContext(Dispatchers.IO) {
+        if (cacheFile.exists()) {
+            cacheFile.readBytes()
+        } else {
+            download(photoPath)?.also { runCatching { cacheFile.writeBytes(it) }.orLogCritical("SessionStudentsScreen.cacheDownloadedPhoto") }
+        }
+    } ?: return null
+    return BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
+}

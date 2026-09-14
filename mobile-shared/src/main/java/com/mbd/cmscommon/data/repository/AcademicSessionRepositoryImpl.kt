@@ -22,11 +22,14 @@ import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.SessionPromotionResult
 import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.domain.model.StudentProfile
+import com.mbd.cmscommon.domain.model.profilePhotoExtension
+import com.mbd.cmscommon.domain.model.profilePhotoUploadError
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.util.FieldValidators
 import io.github.jan.supabase.functions.Functions
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.query.Order
+import io.github.jan.supabase.storage.Storage
 import io.ktor.client.call.body
 import java.time.Instant
 import javax.inject.Inject
@@ -43,6 +46,7 @@ import kotlinx.serialization.json.put
 class AcademicSessionRepositoryImpl @Inject constructor(
     private val postgrest: Postgrest,
     private val functions: Functions,
+    private val storage: Storage,
     private val sessionDao: AcademicSessionDao,
     private val studentDao: SessionStudentDao,
     private val periodDao: SessionPeriodDao,
@@ -472,6 +476,40 @@ class AcademicSessionRepositoryImpl @Inject constructor(
 
         checkpointStore.upsert(SyncCheckpoint(ownerKey, SupabaseTables.SESSION_STUDENTS, scopeKey, maxUpdatedAt, PgTime.format(Instant.now()) ?: since))
     }
+
+    override suspend fun uploadStudentPhoto(sessionId: String, rollNumber: String, imageBytes: ByteArray, mimeType: String) {
+        profilePhotoUploadError(mimeType, imageBytes)?.let { throw IllegalArgumentException(it) }
+        val path = "students/$sessionId/$rollNumber.${profilePhotoExtension(mimeType)}"
+        storage.from(SupabaseTables.BUCKET_PHOTOS).upload(path, imageBytes) { upsert = true }
+        postgrest.from(SupabaseTables.SESSION_STUDENTS).update({ set("photo_path", path) }) {
+            filter {
+                eq("session_id", sessionId)
+                eq("roll_number", rollNumber)
+            }
+        }
+        val cached = studentDao.findByRoll(sessionId, rollNumber)
+        if (cached != null) {
+            val dto = cached.profileJson?.let { encoded ->
+                runCatching { profileJson.decodeFromString<StudentProfileDto>(encoded) }.getOrNull()
+            } ?: StudentProfileDto(
+                sessionId = cached.sessionId,
+                rollNumber = cached.rollNumber,
+                name = cached.name,
+                linkedEmail = cached.linkedEmail,
+                gpa = cached.gpa,
+                cgpa = cached.cgpa,
+            )
+            studentDao.upsert(
+                cached.copy(
+                    profileJson = profileJson.encodeToString(dto.copy(photoPath = path)),
+                    updatedAt = System.currentTimeMillis(),
+                ),
+            )
+        }
+    }
+
+    override suspend fun downloadStudentPhoto(photoPath: String): ByteArray? =
+        runCatching { storage.from(SupabaseTables.BUCKET_PHOTOS).downloadAuthenticated(photoPath) }.getOrNull()
 
     private companion object {
         const val PAGE_SIZE = 500L
