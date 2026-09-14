@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -332,7 +333,7 @@ private fun ExamInsightCard(stat: ExamStat, sessionLabel: String) {
 
 @Composable
 private fun MetricPill(label: String, value: String, tone: Color, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(10.dp), color = tone.copy(alpha = 0.1f), border = BorderStroke(1.dp, tone.copy(alpha = 0.25f))) {
+    Surface(modifier = modifier.widthIn(min = 110.dp), shape = RoundedCornerShape(10.dp), color = tone.copy(alpha = 0.1f), border = BorderStroke(1.dp, tone.copy(alpha = 0.25f))) {
         Column(Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
             Text(value, color = tone, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
             Text(label.uppercase(Locale.ROOT), color = tone, style = CmsTextStyles.eyebrow)
