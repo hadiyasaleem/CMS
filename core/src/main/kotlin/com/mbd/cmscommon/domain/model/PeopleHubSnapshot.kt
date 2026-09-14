@@ -4,8 +4,6 @@ import java.time.Duration
 import java.time.Instant
 
 data class PeopleHubSnapshot(
-    val administratorCount: Int,
-    val activeAdministratorCount: Int,
     val teacherCount: Int,
     val studentCount: Int,
     val delegatedTeacherCount: Int,
@@ -16,11 +14,9 @@ data class PeopleHubSnapshot(
     val oldestPendingDays: Long?,
 ) {
     val pendingReviews: Int get() = pendingLinkRequests + pendingMarkEdits
-    val inactiveAdministratorCount: Int get() = (administratorCount - activeAdministratorCount).coerceAtLeast(0)
 }
 
 fun peopleHubSnapshot(
-    administrators: List<AdministratorAccount>,
     teachers: List<Teacher>,
     studentCount: Int,
     linkRequests: List<StudentLinkRequest>,
@@ -28,7 +24,6 @@ fun peopleHubSnapshot(
     submittedPapers: Int = 0,
     now: Instant = Instant.now(),
 ): PeopleHubSnapshot {
-    val uniqueAdministrators = administrators.distinctBy { it.id }
     val uniqueTeachers = teachers.distinctBy { it.teacherId }
     val pendingLinks = linkRequests.distinctBy { it.requestId }.filter { it.status == LinkRequestStatus.PENDING }
     val pendingEdits = markEditRequests.distinctBy { it.id }.filter { it.status == MarkEditStatus.PENDING }
@@ -42,8 +37,6 @@ fun peopleHubSnapshot(
     val repeatLinkRequests = pendingLinks.count { it.attemptCount > 1 }
 
     return PeopleHubSnapshot(
-        administratorCount = uniqueAdministrators.size,
-        activeAdministratorCount = uniqueAdministrators.count { it.status.equals("ACTIVE", ignoreCase = true) },
         teacherCount = uniqueTeachers.size,
         studentCount = studentCount.coerceAtLeast(0),
         delegatedTeacherCount = delegatedTeacherCount,

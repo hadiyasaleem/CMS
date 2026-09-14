@@ -10,7 +10,6 @@ import androidx.lifecycle.viewModelScope
 import com.mbd.cmsadmin.R
 import com.mbd.cmscommon.controller.PeopleHubController
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
-import com.mbd.cmscommon.domain.repository.AdministratorRepository
 import com.mbd.cmscommon.domain.repository.ExamPaperSubmissionRepository
 import com.mbd.cmscommon.domain.repository.MarkEditRequestRepository
 import com.mbd.cmscommon.domain.repository.StudentLinkRequestRepository
@@ -22,7 +21,6 @@ import javax.inject.Inject
 
 @HiltViewModel
 class PeopleHubViewModel @Inject constructor(
-    administratorRepository: AdministratorRepository,
     teacherRepository: TeacherRepository,
     sessionRepository: AcademicSessionRepository,
     linkRequestRepository: StudentLinkRequestRepository,
@@ -30,7 +28,6 @@ class PeopleHubViewModel @Inject constructor(
     examPaperSubmissionRepository: ExamPaperSubmissionRepository,
 ) : ViewModel() {
     private val controller = PeopleHubController(
-        administratorRepository,
         teacherRepository,
         sessionRepository,
         linkRequestRepository,

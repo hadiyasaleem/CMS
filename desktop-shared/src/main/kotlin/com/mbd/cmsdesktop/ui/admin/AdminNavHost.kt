@@ -179,7 +179,6 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                     )
 
                     AdminScreen.PeopleHub -> PeopleHubScreen(
-                        administratorRepository = component.administratorRepository(),
                         teacherRepository = component.teacherRepository(),
                         sessionRepository = component.academicSessionRepository(),
                         linkRequestRepository = component.studentLinkRequestRepository(),

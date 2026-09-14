@@ -1,13 +1,11 @@
 package com.mbd.cmscommon.controller
 
-import com.mbd.cmscommon.domain.model.AdministratorAccount
 import com.mbd.cmscommon.domain.model.MarkEditRequest
 import com.mbd.cmscommon.domain.model.PeopleHubSnapshot
 import com.mbd.cmscommon.domain.model.StudentLinkRequest
 import com.mbd.cmscommon.domain.model.Teacher
 import com.mbd.cmscommon.domain.model.peopleHubSnapshot
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
-import com.mbd.cmscommon.domain.repository.AdministratorRepository
 import com.mbd.cmscommon.domain.repository.ExamPaperSubmissionRepository
 import com.mbd.cmscommon.domain.repository.MarkEditRequestRepository
 import com.mbd.cmscommon.domain.repository.StudentLinkRequestRepository
@@ -21,7 +19,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.supervisorScope
 
 class PeopleHubController(
-    private val administratorRepository: AdministratorRepository,
     private val teacherRepository: TeacherRepository,
     private val sessionRepository: AcademicSessionRepository,
     private val linkRequestRepository: StudentLinkRequestRepository,
@@ -40,7 +37,6 @@ class PeopleHubController(
     val loadError: StateFlow<String?> = _loadError.asStateFlow()
 
     private var loadVersion = 0
-    private var cachedAdministrators: List<AdministratorAccount> = emptyList()
     private var cachedTeachers: List<Teacher> = emptyList()
     private var cachedStudentCount: Int = 0
     private var cachedLinks: List<StudentLinkRequest> = emptyList()
@@ -58,12 +54,6 @@ class PeopleHubController(
             _loading.value = true
             _loadError.value = null
             supervisorScope {
-                val administratorsDeferred = async {
-                    runCatching {
-                        if (fetchRemote) administratorRepository.sync()
-                        administratorRepository.observeAdministrators().first()
-                    }
-                }
                 val teachersDeferred = async {
                     runCatching {
                         if (fetchRemote) teacherRepository.sync()
@@ -99,7 +89,6 @@ class PeopleHubController(
                     }
                 }
 
-                val administratorsResult = administratorsDeferred.await()
                 val teachersResult = teachersDeferred.await()
                 val studentsResult = studentsDeferred.await()
                 val linksResult = linksDeferred.await()
@@ -107,7 +96,6 @@ class PeopleHubController(
                 val submittedPapersResult = submittedPapersDeferred.await()
 
                 if (version == loadVersion) {
-                    administratorsResult.getOrNull()?.let { cachedAdministrators = it }
                     teachersResult.getOrNull()?.let { cachedTeachers = it }
                     studentsResult.getOrNull()?.let { cachedStudentCount = it }
                     linksResult.getOrNull()?.let { cachedLinks = it }
@@ -115,14 +103,13 @@ class PeopleHubController(
                     submittedPapersResult.getOrNull()?.let { cachedSubmittedPapers = it }
 
                     _snapshot.value = peopleHubSnapshot(
-                        cachedAdministrators,
                         cachedTeachers,
                         cachedStudentCount,
                         cachedLinks,
                         cachedEdits,
                         cachedSubmittedPapers,
                     )
-                    _loadError.value = listOf(administratorsResult, teachersResult, studentsResult, linksResult, editsResult, submittedPapersResult)
+                    _loadError.value = listOf(teachersResult, studentsResult, linksResult, editsResult, submittedPapersResult)
                         .firstNotNullOfOrNull { it.exceptionOrNull() }
                         ?.userMessageLogged("Some people summaries could not be loaded.")
                     _loading.value = false
