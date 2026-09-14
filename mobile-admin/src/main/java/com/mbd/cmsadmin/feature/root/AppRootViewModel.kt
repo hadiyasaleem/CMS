@@ -6,6 +6,7 @@ import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.sync.AdminDataBootstrapper
 import com.mbd.cmscommon.data.sync.StartupBootstrapTracker
 import com.mbd.cmscommon.domain.model.UserRole
+import com.mbd.cmscommon.domain.model.asAdminOrDelegate
 import com.mbd.cmscommon.domain.repository.UserRepository
 import com.mbd.cmscommon.util.orLogCritical
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -33,7 +34,7 @@ class AppRootViewModel @Inject constructor(
     private val startupRole = MutableStateFlow<UserRole?>(null)
 
     val role: StateFlow<UserRole?> = startupRole.combine(userRepository.observeCurrentUserRole()) { startup, observed ->
-        observed ?: startup
+        (observed ?: startup).asAdminOrDelegate()
     }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -65,7 +66,7 @@ class AppRootViewModel @Inject constructor(
                 return@launch
             }
 
-            val cachedRole = runCatching { userRepository.getCachedRole(accountKey) }.orLogCritical("AppRootViewModel.getCachedRole") as? UserRole.Admin
+            val cachedRole = runCatching { userRepository.getCachedRole(accountKey) }.orLogCritical("AppRootViewModel.getCachedRole").asAdminOrDelegate()
             startupRole.value = cachedRole
             if (cachedRole != null) {
                 ensureAdminData(accountKey)
@@ -73,7 +74,7 @@ class AppRootViewModel @Inject constructor(
             }
 
             // Each step isolated so one failure never skips the reference-data pull.
-            val resolved = runCatching { userRepository.resolveRole(accountKey) }.orLogCritical("AppRootViewModel.resolveRole") as? UserRole.Admin
+            val resolved = runCatching { userRepository.resolveRole(accountKey) }.orLogCritical("AppRootViewModel.resolveRole").asAdminOrDelegate()
             val effectiveRole = resolved ?: cachedRole
             if (effectiveRole != null) {
                 ensureAdminData(accountKey)
@@ -85,7 +86,7 @@ class AppRootViewModel @Inject constructor(
 
         viewModelScope.launch {
             userRepository.observeCurrentUserRole().distinctUntilChanged().collectLatest { resolved ->
-                if (resolved is UserRole.Admin) ensureAdminData(resolved.uid)
+                resolved.asAdminOrDelegate()?.let { ensureAdminData(it.uid) }
             }
         }
     }

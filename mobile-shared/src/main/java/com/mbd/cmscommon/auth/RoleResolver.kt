@@ -27,8 +27,8 @@ class RoleResolver @Inject constructor(
             "TEACHER" -> {
                 if (teacherId != null) {
                     val teacherEntity = teacherDao.getById(teacherId)
-                    val permissions = teacherEntity?.let { TeacherMapper.entityToDomain(it).permissions } ?: TeacherPermissions()
-                    UserRole.Teacher(uid, teacherId, permissions)
+                    val teacher = teacherEntity?.let { TeacherMapper.entityToDomain(it) }
+                    UserRole.Teacher(uid, teacherId, teacher?.permissions ?: TeacherPermissions(), isAdmin = teacher?.isAdmin ?: false)
                 } else {
                     null
                 }

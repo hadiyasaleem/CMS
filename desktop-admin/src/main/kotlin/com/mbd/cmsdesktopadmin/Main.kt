@@ -19,6 +19,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import com.mbd.cmscommon.domain.model.UserRole
+import com.mbd.cmscommon.domain.model.asAdminOrDelegate
 import com.mbd.cmscommon.ui.theme.CmsApp
 import com.mbd.cmscommon.ui.theme.CmsTheme
 import com.mbd.cmscommon.util.CmsCrashHandlerInstaller
@@ -74,7 +75,7 @@ fun main() = application {
     }
     LaunchedEffect(component) {
         val accountKey = withTimeoutOrNull(10_000) { component.sessionManager().awaitInitialization() }
-        val cachedRole = accountKey?.let { key -> component.userRepository().getCachedRole(key) as? UserRole.Admin }
+        val cachedRole = accountKey?.let { key -> component.userRepository().getCachedRole(key).asAdminOrDelegate() }
         role = cachedRole
         authChecked = cachedRole != null
         if (cachedRole != null) requestBootstrap(cachedRole.uid)
@@ -83,7 +84,7 @@ fun main() = application {
             roleRefreshInProgress = cachedRole == null
             launch {
                 try {
-                    val refreshedRole = runCatching { component.userRepository().resolveRole(accountKey) }.getOrNull() as? UserRole.Admin
+                    val refreshedRole = runCatching { component.userRepository().resolveRole(accountKey) }.getOrNull().asAdminOrDelegate()
                     role = refreshedRole ?: cachedRole
                     if ((refreshedRole ?: cachedRole) != null && cachedRole == null && !bootstrapInProgress) {
                         requestBootstrap(accountKey)
@@ -146,11 +147,12 @@ fun main() = application {
                             emailLabel = "Email Address",
                             emailPlaceholder = "admin@ggcmbd.edu.pk",
                             footerText = "Admin accounts are created by another administrator. Self-registration isn't available.",
-                            isAccepted = { it is UserRole.Admin },
+                            isAccepted = { it.asAdminOrDelegate() != null },
                             wrongRoleMessage = "This account is not an Admin account",
                             onResolved = { resolved ->
-                                role = resolved as UserRole.Admin
-                                requestBootstrap(resolved.uid)
+                                val adminRole = checkNotNull(resolved.asAdminOrDelegate())
+                                role = adminRole
+                                requestBootstrap(adminRole.uid)
                             },
                         )
                     } else {

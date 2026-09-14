@@ -40,7 +40,7 @@ class DesktopRoleResolver @Inject constructor(
                 } else {
                     TeacherPermissions()
                 }
-                UserRole.Teacher(uid, teacherEmail, permissions)
+                UserRole.Teacher(uid, teacherEmail, permissions, isAdmin = teacher?.isAdmin ?: false)
             }
             "ADMIN" -> UserRole.Admin(uid)
             else -> null

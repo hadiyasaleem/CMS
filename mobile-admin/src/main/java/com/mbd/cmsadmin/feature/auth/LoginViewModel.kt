@@ -2,6 +2,7 @@ package com.mbd.cmsadmin.feature.auth
 
 import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.domain.model.UserRole
+import com.mbd.cmscommon.domain.model.asAdminOrDelegate
 import com.mbd.cmscommon.domain.repository.UserRepository
 import com.mbd.cmscommon.ui.auth.RoleLoginViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -15,7 +16,7 @@ class LoginViewModel @Inject constructor(
 
     override val wrongRoleMessage = "This account is not an Admin account"
 
-    override fun isAccepted(role: UserRole) = role is UserRole.Admin
+    override fun isAccepted(role: UserRole) = role.asAdminOrDelegate() != null
 
     // First-run bootstrap: the single designated admin has no user record yet, and the
     // backend rules forbid self-promotion for anyone else. The one whitelisted admin email
