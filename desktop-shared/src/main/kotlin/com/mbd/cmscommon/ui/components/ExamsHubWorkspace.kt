@@ -6,10 +6,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -140,13 +143,26 @@ private fun ExamHeader(heroPainter: Painter) {
     }
 }
 
+private data class ExamMetricItem(val value: String, val label: String, val alert: Boolean)
+
 @Composable
 private fun ExamMetrics(snapshot: ExamsHubSnapshot, loading: Boolean) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        ExamMetric(if (loading) "--" else snapshot.assignedClasses.toString(), "Classes", Modifier.weight(1f), alert = false)
-        ExamMetric(if (loading) "--" else "${snapshot.paperCoveragePercent}%", "Paper coverage", Modifier.weight(1f), alert = snapshot.paperCoveragePercent < 100)
-        ExamMetric(if (loading) "--" else snapshot.publishedDatesheets.toString(), "Datesheets", Modifier.weight(1f), alert = false)
-        ExamMetric(if (loading) "--" else snapshot.upcomingInvigilationSlots.toString(), "Duties", Modifier.weight(1f), alert = snapshot.upcomingInvigilationSlots > 0)
+    val metrics = listOf(
+        ExamMetricItem(if (loading) "--" else snapshot.assignedClasses.toString(), "Classes", alert = false),
+        ExamMetricItem(if (loading) "--" else "${snapshot.paperCoveragePercent}%", "Paper coverage", alert = snapshot.paperCoveragePercent < 100),
+        ExamMetricItem(if (loading) "--" else snapshot.publishedDatesheets.toString(), "Datesheets", alert = false),
+        ExamMetricItem(if (loading) "--" else snapshot.upcomingInvigilationSlots.toString(), "Duties", alert = snapshot.upcomingInvigilationSlots > 0),
+    )
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val columns = if (maxWidth >= 900.dp) metrics.size else 2
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            metrics.chunked(columns).forEach { rowItems ->
+                Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    rowItems.forEach { metric -> ExamMetric(metric.value, metric.label, Modifier.weight(1f).fillMaxHeight(), alert = metric.alert) }
+                    repeat(columns - rowItems.size) { Spacer(Modifier.weight(1f)) }
+                }
+            }
+        }
     }
 }
 
