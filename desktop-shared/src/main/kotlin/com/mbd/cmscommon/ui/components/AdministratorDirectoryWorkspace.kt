@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -163,9 +164,7 @@ fun AdministratorDirectoryWorkspace(
 
                 item {
                     Spacer(Modifier.height(16.dp))
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        summaries.forEach { summary -> AdministratorSummaryCard(summary, Modifier.weight(1f)) }
-                    }
+                    AdministratorSummaryGrid(summaries)
                 }
 
                 item {
@@ -262,6 +261,21 @@ private fun AdministratorCreatedBanner(email: String, onDismiss: () -> Unit, mod
                 Text(email, color = ModMuted, style = MaterialTheme.typography.bodyMedium)
             }
             IconButton(onClick = onDismiss) { Icon(Icons.Filled.Close, contentDescription = "Dismiss") }
+        }
+    }
+}
+
+@Composable
+private fun AdministratorSummaryGrid(summaries: List<AdministratorSummary>, modifier: Modifier = Modifier) {
+    BoxWithConstraints(modifier.fillMaxWidth()) {
+        val columns = if (maxWidth >= 900.dp) summaries.size else 2
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            summaries.chunked(columns).forEach { rowItems ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    rowItems.forEach { summary -> AdministratorSummaryCard(summary, Modifier.weight(1f)) }
+                    repeat(columns - rowItems.size) { Spacer(Modifier.weight(1f)) }
+                }
+            }
         }
     }
 }
