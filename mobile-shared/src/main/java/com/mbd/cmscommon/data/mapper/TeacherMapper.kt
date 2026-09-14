@@ -12,9 +12,7 @@ object TeacherMapper {
     fun dtoToDomain(dto: TeacherDto): Teacher {
         val permissions = TeacherPermissions(
             canApproveLinkRequests = dto.canApproveLinkRequests,
-            canEditTimetable = dto.canEditTimetable,
             canSendNotifications = dto.canSendNotifications,
-            canManageDatesheets = dto.canManageDatesheets,
         )
         val status = runCatching { TeacherStatus.valueOf(dto.status ?: "") }.getOrDefault(TeacherStatus.ACTIVE)
         return Teacher(
@@ -57,9 +55,7 @@ object TeacherMapper {
         isHod = domain.isHod,
         photoPath = domain.photoPath,
         canApproveLinkRequests = domain.permissions.canApproveLinkRequests,
-        canEditTimetable = domain.permissions.canEditTimetable,
         canSendNotifications = domain.permissions.canSendNotifications,
-        canManageDatesheets = domain.permissions.canManageDatesheets,
         status = domain.status.name,
         isActive = domain.isActive,
         createdBy = domain.createdBy,
@@ -82,9 +78,7 @@ object TeacherMapper {
         isHod = domain.isHod,
         photoPath = domain.photoPath,
         canApproveLinkRequests = domain.permissions.canApproveLinkRequests,
-        canEditTimetable = domain.permissions.canEditTimetable,
         canSendNotifications = domain.permissions.canSendNotifications,
-        canManageDatesheets = domain.permissions.canManageDatesheets,
         status = domain.status.name,
         isActive = domain.isActive,
         createdAt = domain.createdAt.toEpochMilli(),
@@ -96,9 +90,7 @@ object TeacherMapper {
     fun entityToDomain(entity: TeacherEntity): Teacher {
         val permissions = TeacherPermissions(
             canApproveLinkRequests = entity.canApproveLinkRequests,
-            canEditTimetable = entity.canEditTimetable,
             canSendNotifications = entity.canSendNotifications,
-            canManageDatesheets = entity.canManageDatesheets,
         )
         val status = runCatching { TeacherStatus.valueOf(entity.status) }.getOrDefault(TeacherStatus.ACTIVE)
         return Teacher(

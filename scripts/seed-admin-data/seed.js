@@ -155,7 +155,6 @@ async function main() {
     designation: "Lecturer",
     permissions: {
       canApproveLinkRequests: false,
-      canEditTimetable: false,
       canSendNotifications: false,
     },
     isActive: true,

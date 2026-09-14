@@ -165,9 +165,7 @@ fun TeacherProfileWorkspace(
         item {
             ProfileSectionCard("Permissions", "Capabilities assigned by an administrator") {
                 PermissionLine("Approve student link requests", permissions?.canApproveLinkRequests == true)
-                PermissionLine("Edit class timetables", permissions?.canEditTimetable == true)
                 PermissionLine("Send notifications", permissions?.canSendNotifications == true)
-                PermissionLine("Manage datesheets", permissions?.canManageDatesheets == true)
             }
         }
         item {

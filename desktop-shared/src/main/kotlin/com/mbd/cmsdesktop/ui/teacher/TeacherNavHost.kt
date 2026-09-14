@@ -264,9 +264,9 @@ fun TeacherNavHost(role: UserRole.Teacher, component: DesktopAppComponent, windo
                         teacherRepository = component.teacherRepository(),
                         buildingRepository = component.buildingRepository(),
                         roomRepository = component.roomRepository(),
+                        // Datesheet management is admin-app-only now -- teachers always view-only.
                         viewer = DatesheetViewerContext(
                             role = DatesheetViewerRole.TEACHER,
-                            canManage = role.permissions.canManageDatesheets,
                             identityKey = teacherId,
                         ),
                         createdBy = component.sessionManager().accountKey.orEmpty(),

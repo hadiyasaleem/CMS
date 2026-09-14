@@ -78,8 +78,6 @@ fun teacherPermissionCount(teacher: Teacher): Int {
     val permissions = teacher.permissions
     return listOf(
         permissions.canApproveLinkRequests,
-        permissions.canEditTimetable,
         permissions.canSendNotifications,
-        permissions.canManageDatesheets,
     ).count { it }
 }

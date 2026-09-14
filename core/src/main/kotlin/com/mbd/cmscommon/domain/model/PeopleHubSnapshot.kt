@@ -32,7 +32,7 @@ fun peopleHubSnapshot(
 
     val delegatedTeacherCount = uniqueTeachers.count {
         val p = it.permissions
-        p.canApproveLinkRequests || p.canEditTimetable || p.canSendNotifications || p.canManageDatesheets
+        p.canApproveLinkRequests || p.canSendNotifications
     }
     val repeatLinkRequests = pendingLinks.count { it.attemptCount > 1 }
 

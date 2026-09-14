@@ -3,8 +3,7 @@
 // the GoTrue account so existing sessions stop working.
 //
 // POST { email, status?: "ACTIVE" | "DISABLED" | "BANNED" | "DELETE",
-//        permissions?: { canApproveLinkRequests?, canEditTimetable?,
-//                        canSendNotifications?, canManageDatesheets? } }
+//        permissions?: { canApproveLinkRequests?, canSendNotifications? } }
 import { handle, httpError, ok, requireAdmin, serviceClient } from "../_shared/auth.ts";
 
 Deno.serve(handle(async (req) => {
@@ -23,9 +22,7 @@ Deno.serve(handle(async (req) => {
 
   if (permissions) {
     if (permissions.canApproveLinkRequests !== undefined) update.can_approve_link_requests = permissions.canApproveLinkRequests;
-    if (permissions.canEditTimetable !== undefined) update.can_edit_timetable = permissions.canEditTimetable;
     if (permissions.canSendNotifications !== undefined) update.can_send_notifications = permissions.canSendNotifications;
-    if (permissions.canManageDatesheets !== undefined) update.can_manage_datesheets = permissions.canManageDatesheets;
   }
 
   if (status === "DELETE") {

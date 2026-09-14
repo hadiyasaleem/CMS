@@ -701,9 +701,7 @@ private fun ResetPasswordDialog(
 private fun PermissionEditor(permissions: TeacherPermissions, onChange: (TeacherPermissions) -> Unit) {
     Column {
         PermissionRow("Approve link requests", permissions.canApproveLinkRequests) { onChange(permissions.copy(canApproveLinkRequests = it)) }
-        PermissionRow("Edit timetable", permissions.canEditTimetable) { onChange(permissions.copy(canEditTimetable = it)) }
         PermissionRow("Send notifications", permissions.canSendNotifications) { onChange(permissions.copy(canSendNotifications = it)) }
-        PermissionRow("Manage datesheets", permissions.canManageDatesheets) { onChange(permissions.copy(canManageDatesheets = it)) }
     }
 }
 

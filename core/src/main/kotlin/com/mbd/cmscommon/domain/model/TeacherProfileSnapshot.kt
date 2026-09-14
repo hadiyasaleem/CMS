@@ -29,9 +29,7 @@ fun teacherProfileSnapshot(profile: Teacher?, assignments: List<ResolvedAssignme
     val permissions = profile?.permissions
     val grantedPermissionCount = listOf(
         permissions?.canApproveLinkRequests == true,
-        permissions?.canEditTimetable == true,
         permissions?.canSendNotifications == true,
-        permissions?.canManageDatesheets == true,
     ).count { it }
 
     return TeacherProfileSnapshot(completeness, distinctAssignments.size, sessionCount, subjectCount, grantedPermissionCount)

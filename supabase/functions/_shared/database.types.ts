@@ -485,23 +485,19 @@ export type Database = {
           course_code: string
           created_at: string
           created_by: string | null
+          datesheet_slot_id: string | null
           deleted_at: string | null
           deleted_by: string | null
-          exam_type: Database["public"]["Enums"]["exam_type"]
+          description: string | null
           file_name: string
           file_size_bytes: number | null
           id: string
           is_deleted: boolean
-          key_storage_path: string | null
           mime_type: string | null
-          review_status: Database["public"]["Enums"]["review_status"]
-          reviewed_at: string | null
-          reviewed_by: string | null
           semester: number
           session_id: string
           storage_path: string
           teacher_email: string
-          teacher_notes: string | null
           updated_at: string
           updated_by: string | null
           uploaded_at: string
@@ -510,23 +506,19 @@ export type Database = {
           course_code: string
           created_at?: string
           created_by?: string | null
+          datesheet_slot_id?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
-          exam_type: Database["public"]["Enums"]["exam_type"]
+          description?: string | null
           file_name: string
           file_size_bytes?: number | null
           id?: string
           is_deleted?: boolean
-          key_storage_path?: string | null
           mime_type?: string | null
-          review_status?: Database["public"]["Enums"]["review_status"]
-          reviewed_at?: string | null
-          reviewed_by?: string | null
           semester: number
           session_id: string
           storage_path: string
           teacher_email: string
-          teacher_notes?: string | null
           updated_at?: string
           updated_by?: string | null
           uploaded_at?: string
@@ -535,28 +527,31 @@ export type Database = {
           course_code?: string
           created_at?: string
           created_by?: string | null
+          datesheet_slot_id?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
-          exam_type?: Database["public"]["Enums"]["exam_type"]
+          description?: string | null
           file_name?: string
           file_size_bytes?: number | null
           id?: string
           is_deleted?: boolean
-          key_storage_path?: string | null
           mime_type?: string | null
-          review_status?: Database["public"]["Enums"]["review_status"]
-          reviewed_at?: string | null
-          reviewed_by?: string | null
           semester?: number
           session_id?: string
           storage_path?: string
           teacher_email?: string
-          teacher_notes?: string | null
           updated_at?: string
           updated_by?: string | null
           uploaded_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "exam_paper_submissions_datesheet_slot_id_fkey"
+            columns: ["datesheet_slot_id"]
+            isOneToOne: false
+            referencedRelation: "datesheet_slots"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "exam_paper_submissions_session_id_fkey"
             columns: ["session_id"]
@@ -1664,8 +1659,6 @@ export type Database = {
         Row: {
           auth_uid: string | null
           can_approve_link_requests: boolean
-          can_edit_timetable: boolean
-          can_manage_datesheets: boolean
           can_send_notifications: boolean
           created_at: string
           created_by: string | null
@@ -1692,8 +1685,6 @@ export type Database = {
         Insert: {
           auth_uid?: string | null
           can_approve_link_requests?: boolean
-          can_edit_timetable?: boolean
-          can_manage_datesheets?: boolean
           can_send_notifications?: boolean
           created_at?: string
           created_by?: string | null
@@ -1720,8 +1711,6 @@ export type Database = {
         Update: {
           auth_uid?: string | null
           can_approve_link_requests?: boolean
-          can_edit_timetable?: boolean
-          can_manage_datesheets?: boolean
           can_send_notifications?: boolean
           created_at?: string
           created_by?: string | null
@@ -1853,7 +1842,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_link_request: {
+        Args: { p_request_id: string; p_reviewed_by: string }
+        Returns: undefined
+      }
       audit_actor: { Args: never; Returns: string }
+      available_roll_numbers: {
+        Args: { p_session: string }
+        Returns: {
+          roll_number: string
+        }[]
+      }
       bootstrap_admin_email: { Args: never; Returns: string }
       current_email: { Args: never; Returns: string }
       is_active_teacher: { Args: never; Returns: boolean }

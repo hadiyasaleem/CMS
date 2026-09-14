@@ -27,6 +27,8 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 @Serializable
 private data class RollMatchRow(
@@ -152,55 +154,18 @@ class StudentLinkRequestRepositoryImpl @Inject constructor(
         val sessionId = request.sessionIdClaimed?.trim() ?: ""
         require(sessionId.isNotBlank()) { "Link request $requestId has no session" }
 
-        val match = sessionStudentDao.findByRoll(sessionId, roll)
-            ?: error("No student $roll in session $sessionId — add that student to the roster first.")
-        val previousEmail = match.linkedEmail?.takeIf { it.isNotBlank() }
-
-        if (previousEmail != null && previousEmail != requester) {
-            postgrest.from(SupabaseTables.PROFILES).update({
-                set("linked_session_id", null as String?)
-                set("linked_roll", null as String?)
-            }) {
-                filter { eq("email", previousEmail) }
-            }
-            // The previous account's own request for this roll is still marked APPROVED, which
-            // would otherwise leave its LinkRequestScreen stuck showing "approved, refreshing your
-            // account" forever -- downgrade it so that account sees it was relinked and can reapply.
-            postgrest.from(SupabaseTables.STUDENT_LINK_REQUESTS).update({
-                set("status", "REJECTED")
-                set("rejection_reason", "This roll number was relinked to a different account.")
-                set("reviewed_by", reviewedByUid)
-                set("reviewed_at", Instant.now().toString())
-            }) {
-                filter {
-                    eq("requested_by_email", previousEmail)
-                    eq("status", "APPROVED")
-                }
-            }
-        }
-
-        postgrest.from(SupabaseTables.SESSION_STUDENTS).update({ set("linked_email", requester) }) {
-            filter {
-                eq("session_id", sessionId)
-                eq("roll_number", roll)
-            }
-        }
-
-        postgrest.from(SupabaseTables.PROFILES).update({
-            set("linked_session_id", sessionId)
-            set("linked_roll", roll)
-        }) {
-            filter { eq("email", requester) }
-        }
-
-        postgrest.from(SupabaseTables.STUDENT_LINK_REQUESTS).update({
-            set("status", "APPROVED")
-            set("session_id", sessionId)
-            set("reviewed_by", reviewedByUid)
-            set("reviewed_at", Instant.now().toString())
-        }) {
-            filter { eq("request_id", requestId) }
-        }
+        // Delegated to a security-definer RPC: session_students and profiles are otherwise
+        // admin-only tables, so a permitted-but-non-admin teacher's direct writes to them were
+        // silently no-op'ing under RLS while the request itself still flipped to APPROVED. The RPC
+        // performs the previous-holder unlink, roster link, profile link, and status update
+        // atomically, with its own PENDING guard against double-approval.
+        postgrest.rpc(
+            SupabaseTables.RPC_APPROVE_LINK_REQUEST,
+            buildJsonObject {
+                put("p_request_id", requestId)
+                put("p_reviewed_by", reviewedByUid)
+            },
+        )
 
         requestDao.getById(requestId)?.let { existing ->
             requestDao.upsert(existing.copy(status = "APPROVED", reviewedBy = reviewedByUid))

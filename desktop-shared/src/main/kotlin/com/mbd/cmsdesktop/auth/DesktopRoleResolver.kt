@@ -34,7 +34,6 @@ class DesktopRoleResolver @Inject constructor(
                 val permissions = if (teacher != null) {
                     TeacherPermissions(
                         canApproveLinkRequests = teacher.canApproveLinkRequests,
-                        canEditTimetable = teacher.canEditTimetable,
                         canSendNotifications = teacher.canSendNotifications,
                     )
                 } else {

@@ -75,8 +75,10 @@ class DatesheetsViewModel @Inject constructor(
         }
     }
 
+    // Datesheet management is admin-app-only now -- a teacher (even one with other delegated
+    // permissions) always gets a view-only DatesheetViewerContext.
     private fun buildViewerContext(role: UserRole?): DatesheetViewerContext = when (role) {
-        is UserRole.Teacher -> DatesheetViewerContext(DatesheetViewerRole.TEACHER, canManage = role.permissions.canManageDatesheets, identityKey = role.teacherId)
+        is UserRole.Teacher -> DatesheetViewerContext(DatesheetViewerRole.TEACHER, identityKey = role.teacherId)
         is UserRole.Admin -> DatesheetViewerContext(DatesheetViewerRole.ADMIN, canManage = true)
         else -> DatesheetViewerContext(DatesheetViewerRole.TEACHER)
     }

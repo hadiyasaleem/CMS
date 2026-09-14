@@ -10,9 +10,7 @@ enum class TeacherStatus {
 
 data class TeacherPermissions(
     val canApproveLinkRequests: Boolean = false,
-    val canEditTimetable: Boolean = false,
     val canSendNotifications: Boolean = false,
-    val canManageDatesheets: Boolean = false,
 )
 
 data class Teacher(
