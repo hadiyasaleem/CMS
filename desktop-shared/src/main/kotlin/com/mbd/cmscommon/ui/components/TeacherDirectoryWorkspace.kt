@@ -8,7 +8,6 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
@@ -356,34 +355,6 @@ private fun TeacherAvatar(name: String, photoPath: String?, size: Int, onLoadPho
     }
 }
 
-/**
- * Like [TeacherAvatar], but sized entirely by [modifier] (e.g. `fillMaxWidth().aspectRatio(1f)`)
- * instead of a fixed dp size -- for the card header, where the avatar should grow to fill the
- * card's width as a perfect circle rather than sit at a small fixed size next to empty space.
- */
-@Composable
-private fun TeacherCardAvatar(name: String, photoPath: String?, onLoadPhoto: suspend (String) -> ImageBitmap?, modifier: Modifier = Modifier, cacheKey: Any = Unit) {
-    val initials = name.trim().split(" ").filter { it.isNotEmpty() }.take(2).joinToString("") { it.first().uppercase() }.ifEmpty { "?" }
-
-    if (photoPath.isNullOrBlank()) {
-        Box(modifier.clip(CircleShape).background(CmsTheme.colors.accent), contentAlignment = Alignment.Center) {
-            Text(initials, color = CmsTheme.colors.onInk, fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.headlineSmall)
-        }
-        return
-    }
-    val bitmap by produceState<ImageBitmap?>(initialValue = null, photoPath, cacheKey) {
-        value = runCatching { onLoadPhoto(photoPath) }.getOrNull()
-    }
-    val current = bitmap
-    if (current != null) {
-        Image(bitmap = current, contentDescription = name, modifier = modifier.clip(CircleShape), contentScale = ContentScale.Crop)
-    } else {
-        Box(modifier.clip(CircleShape).background(CmsTheme.colors.accent), contentAlignment = Alignment.Center) {
-            Text(initials, color = CmsTheme.colors.onInk, fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.headlineSmall)
-        }
-    }
-}
-
 @Composable
 private fun TeacherMetric(label: String, value: String, modifier: Modifier = Modifier, alert: Boolean = false) {
     Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
@@ -412,23 +383,27 @@ private fun TeacherCard(
 
     Surface(modifier = Modifier.clickable(onClick = onEdit), shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
-            TeacherCardAvatar(
-                name = teacher.name,
-                photoPath = teacher.photoPath,
-                onLoadPhoto = onLoadPhoto,
-                cacheKey = teacher.updatedAt,
-                modifier = Modifier.fillMaxWidth().aspectRatio(1f),
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(teacher.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            Spacer(Modifier.height(2.dp))
-            Text(
-                department?.name ?: "Department not assigned",
-                color = ModMuted,
-                style = MaterialTheme.typography.bodySmall,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TeacherAvatar(
+                    name = teacher.name,
+                    photoPath = teacher.photoPath,
+                    size = 48,
+                    onLoadPhoto = onLoadPhoto,
+                    cacheKey = teacher.updatedAt,
+                )
+                Spacer(Modifier.size(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(teacher.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        department?.name ?: "Department not assigned",
+                        color = ModMuted,
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
             Spacer(Modifier.height(8.dp))
             TeacherContactLine(teacher)
             Spacer(Modifier.height(8.dp))
