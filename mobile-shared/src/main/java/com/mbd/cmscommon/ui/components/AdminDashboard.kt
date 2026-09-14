@@ -10,9 +10,12 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -47,7 +50,6 @@ import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
 import com.mbd.cmscommon.ui.theme.ModInk
 import com.mbd.cmscommon.ui.theme.ModMuted
-import com.mbd.cmscommon.ui.theme.ModFaint
 import com.mbd.cmscommon.ui.theme.ModTrack
 import com.mbd.cmscommon.ui.theme.ModGround
 import com.mbd.cmscommon.ui.theme.ModSurface
@@ -251,7 +253,7 @@ private fun <T> DashboardGrid(items: List<T>, columns: Int, itemContent: @Compos
     val rows = items.chunked(columns)
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         rows.forEach { rowItems ->
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 rowItems.forEach { item -> itemContent(item, Modifier.weight(1f)) }
                 repeat(columns - rowItems.size) { Spacer(Modifier.weight(1f)) }
             }
@@ -342,27 +344,25 @@ private fun DashboardOperationCard(
 @Composable
 private fun DashboardActionCard(action: DashboardActionUi, modifier: Modifier = Modifier) {
     Surface(
-        modifier = modifier.height(112.dp).clickable(onClick = action.onClick),
+        modifier = modifier.fillMaxHeight().clickable(onClick = action.onClick),
         shape = RoundedCornerShape(18.dp),
         color = ModSurface,
         border = BorderStroke(1.dp, ModTrack),
     ) {
-        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.padding(16.dp).heightIn(min = 140.dp)) {
             Box(Modifier.size(42.dp).background(ModSurfaceAlt, RoundedCornerShape(13.dp)), contentAlignment = Alignment.Center) {
                 Icon(action.icon, contentDescription = null, tint = ModInk, modifier = Modifier.size(21.dp))
             }
-            Spacer(Modifier.size(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(action.label, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                Text(
-                    action.description,
-                    color = ModMuted,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = ModFaint, modifier = Modifier.size(17.dp))
+            Spacer(Modifier.height(12.dp))
+            Text(action.label, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                action.description,
+                color = ModMuted,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.bodySmall,
+            )
         }
     }
 }
