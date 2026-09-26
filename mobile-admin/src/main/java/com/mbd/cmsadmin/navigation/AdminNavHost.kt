@@ -46,7 +46,7 @@ fun AdminNavHost(navController: NavHostController, onSignedOut: () -> Unit, refr
                 go(
                     when (destination) {
                         PeopleDestination.TEACHERS -> AdminLeaf.TEACHERS
-                        PeopleDestination.STUDENTS -> AdminTab.Academics.route
+                        PeopleDestination.STUDENTS -> AdminLeaf.STUDENT_DIRECTORY
                         PeopleDestination.LINK_REQUESTS -> AdminLeaf.LINK_REQUESTS
                         PeopleDestination.MARK_EDIT_REQUESTS -> AdminLeaf.MARK_EDIT_REQUESTS
                         PeopleDestination.SUBMITTED_PAPERS -> AdminLeaf.SUBMITTED_PAPERS
@@ -139,6 +139,15 @@ fun AdminNavHost(navController: NavHostController, onSignedOut: () -> Unit, refr
             SessionStudentsScreen(onOpenStudent = { sid, roll -> go(AdminRoutes.studentProfile(sid, roll)) })
         }
         composable(AdminRoutes.STUDENT_PROFILE) { StudentProfileScreen() }
+        composable(AdminLeaf.STUDENT_DIRECTORY) {
+            com.mbd.cmsadmin.feature.students.StudentDirectoryScreen(onOpenStudent = { sid, roll -> go(AdminRoutes.studentRecord(sid, roll)) })
+        }
+        composable(AdminRoutes.STUDENT_RECORD) {
+            com.mbd.cmsadmin.feature.students.StudentRecordScreen(
+                onBack = { navController.popBackStack() },
+                onEditProfile = { sid, roll -> go(AdminRoutes.studentProfile(sid, roll)) },
+            )
+        }
         composable(AdminRoutes.SESSION_TIMETABLE) { SessionTimetableScreen() }
     }
 }

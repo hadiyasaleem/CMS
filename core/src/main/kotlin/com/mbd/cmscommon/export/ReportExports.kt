@@ -271,3 +271,70 @@ fun studentRosterExport(session: AcademicSession?, students: List<SessionStudent
         sections = listOf(ExportSection("Students", header, rows)),
     )
 }
+
+fun studentDirectoryExport(rows: List<com.mbd.cmscommon.controller.StudentDirectoryRow>, filtered: Boolean): ExportDocument {
+    val header = listOf(
+        "Roll", "Name", "Department", "Session", "Shift", "Semester", "Status", "University roll", "Registration no",
+        "Father name", "Gender", "Phone", "Student account", "GPA", "CGPA",
+    )
+    val body = rows.map { r ->
+        val p = r.profile
+        listOf(
+            p.rollNumber, p.name, r.departmentName ?: r.session?.deptId?.uppercase(Locale.ROOT).orEmpty(), r.session?.label.orEmpty(),
+            r.session?.shift?.name?.let(::titleCase).orEmpty(), r.session?.currentSemester?.toString().orEmpty(), titleCase(p.enrollmentStatus),
+            p.universityRollNo.orEmpty(), p.registrationNo.orEmpty(), p.fatherName.orEmpty(), p.gender.orEmpty(), p.phone.orEmpty(),
+            p.linkedEmail.ifBlank { "Not linked" }, num(p.gpa), num(p.cgpa),
+        )
+    }
+    return ExportDocument(
+        fileBase = "students_${LocalDate.now()}",
+        title = listOf("Student Directory", "${rows.size} students${if (filtered) " (filtered)" else ""} · ${LocalDate.now()}"),
+        sections = listOf(ExportSection("Students", header, body)),
+    )
+}
+
+fun studentRecordExport(record: com.mbd.cmscommon.controller.StudentRecord): ExportDocument {
+    val p = record.profile
+    fun field(label: String, value: String?) = listOf(label, value?.takeIf { it.isNotBlank() } ?: "-")
+    val profile = listOf(
+        field("Name", p.name), field("Roll number", p.rollNumber), field("University roll", p.universityRollNo),
+        field("Registration no", p.registrationNo), field("Department", record.department?.name ?: record.session?.deptId?.uppercase(Locale.ROOT)),
+        field("Session", sessionTitle(record.session)), field("Enrollment status", titleCase(p.enrollmentStatus)),
+        field("Class representative", listOfNotNull("CR".takeIf { p.isCr }, "GR".takeIf { p.isGr }).joinToString(", ").ifBlank { "No" }),
+        field("Father name", p.fatherName), field("Guardian", p.guardianName), field("CNIC / B-Form", p.cnicBform),
+        field("Date of birth", p.dob), field("Gender", p.gender), field("Blood group", p.bloodGroup), field("Religion", p.religion),
+        field("Domicile", p.domicile), field("Phone", p.phone), field("Guardian phone", p.guardianPhone), field("Personal email", p.personalEmail),
+        field("Current address", p.currentAddress), field("Permanent address", p.permanentAddress), field("Admission date", p.admissionDate),
+        field("Emergency contact", listOfNotNull(p.emergencyContactName, p.emergencyContactRelation?.let { "($it)" }, p.emergencyContactPhone).joinToString(" ")),
+        field("Special needs", p.specialNeeds), field("Student account", p.linkedEmail.ifBlank { "Not linked" }),
+        field("GPA", num(record.snapshot.validGpa)), field("CGPA", num(record.snapshot.validCgpa)),
+        field("Profile completion", "${record.snapshot.completionPercent}%"),
+    )
+    val attendance = record.attendance.sortedBy { it.courseCode }.map { t ->
+        listOf(t.courseCode, record.subjectNames[t.courseCode].orEmpty(), t.total.toString(), t.present.toString(), t.absent.toString(), t.leave.toString(), pct(t.present, t.total))
+    }
+    val marks = record.marks.sortedWith(compareBy({ it.courseCode }, { it.examType })).map { m ->
+        listOf(m.courseCode, record.subjectNames[m.courseCode].orEmpty(), titleCase(m.examType.name), if (m.wasAbsent) "Absent" else m.score.toString(), m.maxMarks.toString(), m.remarks.orEmpty())
+    }
+    val results = record.results.map { r ->
+        listOf(r.semester.toString(), r.termLabel.orEmpty(), num(r.gpa), num(r.cgpa), titleCase(r.resultStatus), r.classPosition?.toString().orEmpty(), r.supplyCourses.joinToString(", "))
+    }
+    val fees = buildList {
+        record.feeStructure?.let { s ->
+            s.heads.forEach { add(listOf("Fee", it.label, num(it.amount, 0), "")) }
+            add(listOf("Fee", "Total (${titleCase(s.cadence.name)})", num(s.heads.sumOf { it.amount }, 0), s.dueDate?.let { "Due $it" }.orEmpty()))
+        }
+        record.snapshot.validFines.forEach { add(listOf("Fine", it.category, num(it.amount, 0), it.reason)) }
+    }
+    return ExportDocument(
+        fileBase = "student_${p.rollNumber}",
+        title = listOf("Student Record", "${p.name} · ${p.rollNumber}", sessionTitle(record.session), "Generated ${LocalDate.now()}"),
+        sections = listOf(
+            ExportSection("Profile", listOf("Field", "Value"), profile),
+            ExportSection("Attendance", listOf("Course", "Subject", "Classes", "Present", "Absent", "Leave", "%"), attendance),
+            ExportSection("Marks", listOf("Course", "Subject", "Exam", "Score", "Out of", "Remarks"), marks),
+            ExportSection("Results", listOf("Semester", "Term", "GPA", "CGPA", "Result", "Position", "Supply courses"), results),
+            ExportSection("Fees and fines", listOf("Type", "Item", "Amount (PKR)", "Note"), fees),
+        ),
+    )
+}

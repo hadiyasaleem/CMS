@@ -38,6 +38,7 @@ object AdminLeaf {
     const val DATESHEETS = "datesheets"
     const val INSIGHTS = "insights"
     const val SEMESTER_RESULTS = "semester_results"
+    const val STUDENT_DIRECTORY = "student_directory"
 }
 
 /** Parameterized drill-down routes: department → curriculum / sessions / fees → session detail. */
@@ -49,6 +50,7 @@ object AdminRoutes {
     const val STUDENT_PROFILE = "session/{sessionId}/student/{roll}"
     const val SESSION_TIMETABLE = "session/{sessionId}/timetable"
     const val SESSION_FEES = "session/{sessionId}/fees"
+    const val STUDENT_RECORD = "student_record/{sessionId}/{roll}"
 
     fun deptDetail(deptId: String) = "dept/$deptId"
     fun semesterSubjects(sessionId: String, semester: Int) = "session/$sessionId/semester/$semester"
@@ -57,4 +59,5 @@ object AdminRoutes {
     fun studentProfile(sessionId: String, roll: String) = "session/$sessionId/student/$roll"
     fun sessionTimetable(sessionId: String) = "session/$sessionId/timetable"
     fun sessionFees(sessionId: String) = "session/$sessionId/fees"
+    fun studentRecord(sessionId: String, roll: String) = "student_record/$sessionId/$roll"
 }

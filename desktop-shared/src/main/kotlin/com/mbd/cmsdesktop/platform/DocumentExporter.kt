@@ -71,7 +71,7 @@ object DocumentExporter {
         return safe.substring(0, end) + ".."
     }
 
-    private fun writePdf(doc: ExportDocument, target: File) {
+    internal fun writePdf(doc: ExportDocument, target: File) {
         val usable = PAGE_W - 2 * MARGIN
         PDDocument().use { pdf ->
             var stream: PDPageContentStream? = null

@@ -288,10 +288,16 @@ class AcademicSessionRepositoryImpl @Inject constructor(
         cached?.let { studentDao.upsert(it.copy(linkedEmail = "")) }
     }
 
-    override suspend fun getStudentProfile(sessionId: String, rollNumber: String): StudentProfile? {
-        val cached = studentDao.findByRoll(sessionId, rollNumber) ?: return null
+    override suspend fun getStudentProfile(sessionId: String, rollNumber: String): StudentProfile? =
+        studentDao.findByRoll(sessionId, rollNumber)?.toStudentProfile()
+
+    override fun observeAllStudentProfiles(): Flow<List<StudentProfile>> =
+        studentDao.observeAllActive().map { rows -> rows.map { it.toStudentProfile() } }
+
+    private fun SessionStudentEntity.toStudentProfile(): StudentProfile {
+        val cached = this
         val dto = cached.profileJson?.let { encoded ->
-            runCatching { profileJson.decodeFromString<StudentProfileDto>(encoded) }.getOrNull()
+            runCatching { this@AcademicSessionRepositoryImpl.profileJson.decodeFromString<StudentProfileDto>(encoded) }.getOrNull()
         } ?: StudentProfileDto(
             sessionId = cached.sessionId,
             rollNumber = cached.rollNumber,

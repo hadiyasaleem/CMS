@@ -128,6 +128,9 @@ interface SessionStudentDao {
     @Query("SELECT * FROM session_students WHERE isDeleted = 0")
     suspend fun getAllActive(): List<SessionStudentEntity>
 
+    @Query("SELECT * FROM session_students WHERE isDeleted = 0")
+    fun observeAllActive(): Flow<List<SessionStudentEntity>>
+
     @Query("SELECT * FROM session_students WHERE sessionId = :sessionId AND rollNumber = :rollNumber LIMIT 1")
     suspend fun findByRoll(sessionId: String, rollNumber: String): SessionStudentEntity?
 

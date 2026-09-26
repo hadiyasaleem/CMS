@@ -30,6 +30,8 @@ sealed interface AdminScreen {
     data class SessionDetail(val sessionId: String) : AdminScreen
     data class SessionStudents(val sessionId: String) : AdminScreen
     data class StudentProfile(val sessionId: String, val roll: String) : AdminScreen
+    data object StudentDirectory : AdminScreen
+    data class StudentRecord(val sessionId: String, val roll: String) : AdminScreen
     data class SessionTimetableRoute(val sessionId: String) : AdminScreen
     data class SemesterSubjectsRoute(val sessionId: String, val semester: Int) : AdminScreen
     data class SessionFeesRoute(val sessionId: String) : AdminScreen

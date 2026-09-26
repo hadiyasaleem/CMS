@@ -187,7 +187,7 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         onOpen = { destination ->
                             when (destination) {
                                 PeopleDestination.TEACHERS -> push(AdminScreen.Teachers)
-                                PeopleDestination.STUDENTS -> popOrSwitchTab(AdminTab.Academics)
+                                PeopleDestination.STUDENTS -> push(AdminScreen.StudentDirectory)
                                 PeopleDestination.LINK_REQUESTS -> push(AdminScreen.LinkRequests)
                                 PeopleDestination.MARK_EDIT_REQUESTS -> push(AdminScreen.MarkEditRequests)
                                 PeopleDestination.SUBMITTED_PAPERS -> push(AdminScreen.SubmittedPapers)
@@ -378,6 +378,26 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         departmentRepository = component.departmentRepository(),
                         window = window,
                         onOpenStudent = { sessionId, roll -> push(AdminScreen.StudentProfile(sessionId, roll)) },
+                    )
+
+                    AdminScreen.StudentDirectory -> StudentDirectoryScreen(
+                        sessionRepository = component.academicSessionRepository(),
+                        departmentRepository = component.departmentRepository(),
+                        onOpenStudent = { sessionId, roll -> push(AdminScreen.StudentRecord(sessionId, roll)) },
+                    )
+
+                    is AdminScreen.StudentRecord -> StudentRecordScreen(
+                        sessionId = current.sessionId,
+                        rollNumber = current.roll,
+                        sessionRepository = component.academicSessionRepository(),
+                        departmentRepository = component.departmentRepository(),
+                        curriculumRepository = component.curriculumRepository(),
+                        attendanceRepository = component.sessionAttendanceRepository(),
+                        marksRepository = component.sessionMarksRepository(),
+                        feeRepository = component.sessionFeeRepository(),
+                        fineRepository = component.fineRepository(),
+                        onBack = { backStack.removeAt(backStack.lastIndex) },
+                        onEditProfile = { push(AdminScreen.StudentProfile(current.sessionId, current.roll)) },
                     )
 
                     is AdminScreen.StudentProfile -> StudentProfileScreen(
