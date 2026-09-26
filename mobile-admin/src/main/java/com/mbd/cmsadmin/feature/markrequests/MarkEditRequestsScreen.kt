@@ -10,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.controller.MarkEditRequestsController
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
+import com.mbd.cmscommon.domain.repository.AttendanceEditRequestRepository
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.MarkEditRequestRepository
@@ -21,6 +22,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MarkEditRequestsViewModel @Inject constructor(
     repository: MarkEditRequestRepository,
+    attendanceRepository: AttendanceEditRequestRepository,
     sessionRepository: AcademicSessionRepository,
     curriculumRepository: CurriculumRepository,
     departmentRepository: DepartmentRepository,
@@ -29,6 +31,7 @@ class MarkEditRequestsViewModel @Inject constructor(
 ) : ViewModel() {
     val controller = MarkEditRequestsController(
         repository = repository,
+        attendanceRepository = attendanceRepository,
         sessionRepository = sessionRepository,
         curriculumRepository = curriculumRepository,
         departmentRepository = departmentRepository,
@@ -45,6 +48,7 @@ fun MarkEditRequestsScreen(
 ) {
     val controller = viewModel.controller
     val requests by controller.requests.collectAsState()
+    val attendanceRequests by controller.attendanceRequests.collectAsState()
     val details by controller.details.collectAsState()
     val sessions by controller.sessions.collectAsState()
     val departments by controller.departments.collectAsState()
@@ -72,6 +76,9 @@ fun MarkEditRequestsScreen(
         errorMessage = error,
         onApprove = controller::approve,
         onReject = controller::reject,
+        attendanceRequests = attendanceRequests,
+        onApproveAttendance = controller::approveAttendance,
+        onRejectAttendance = controller::rejectAttendance,
         onConsumeNotice = controller::consumeNotice,
         onClearError = controller::clearError,
         onRefresh = controller::refresh,

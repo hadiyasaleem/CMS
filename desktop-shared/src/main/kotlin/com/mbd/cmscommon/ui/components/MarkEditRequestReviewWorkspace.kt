@@ -32,7 +32,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.controller.MarkEditRequestDetails
+import com.mbd.cmscommon.controller.MarkEditRequestsController
 import com.mbd.cmscommon.domain.model.AcademicSession
+import com.mbd.cmscommon.domain.model.AttendanceEditRequest
+import com.mbd.cmscommon.domain.model.AttendanceStatus
+import com.mbd.cmscommon.domain.model.attendanceEditReviewIssues
 import com.mbd.cmscommon.domain.model.Department
 import com.mbd.cmscommon.domain.model.MarkEditRequest
 import com.mbd.cmscommon.domain.model.Teacher
@@ -66,6 +70,11 @@ enum class MarkRequestFilter(val label: String) {
     BLOCKED("Approval blocked"),
 }
 
+enum class EditRequestTab(val label: String) {
+    MARKS("Marks"),
+    ATTENDANCE("Attendance"),
+}
+
 enum class MarkRequestSort(val label: String) {
     OLDEST("Oldest"),
     NEWEST("Newest"),
@@ -86,6 +95,9 @@ fun MarkEditRequestReviewWorkspace(
     errorMessage: String?,
     onApprove: (MarkEditRequest) -> Unit,
     onReject: (MarkEditRequest) -> Unit,
+    attendanceRequests: List<AttendanceEditRequest>,
+    onApproveAttendance: (AttendanceEditRequest) -> Unit,
+    onRejectAttendance: (AttendanceEditRequest) -> Unit,
     onRefresh: () -> Unit,
     onConsumeNotice: () -> Unit,
     onClearError: () -> Unit,
@@ -96,6 +108,9 @@ fun MarkEditRequestReviewWorkspace(
     var sort by remember { mutableStateOf(MarkRequestSort.NEWEST) }
     var approvalTarget by remember { mutableStateOf<MarkEditRequest?>(null) }
     var rejectionTarget by remember { mutableStateOf<MarkEditRequest?>(null) }
+    var tab by remember { mutableStateOf(EditRequestTab.MARKS) }
+    var attendanceApproval by remember { mutableStateOf<AttendanceEditRequest?>(null) }
+    var attendanceRejection by remember { mutableStateOf<AttendanceEditRequest?>(null) }
 
     fun sessionLabel(sessionId: String): String {
         val session = sessions.firstOrNull { it.sessionId == sessionId }
@@ -133,7 +148,7 @@ fun MarkEditRequestReviewWorkspace(
     val listState = rememberLazyListState()
     WithVerticalScrollbar(listState) {
     LazyColumn(modifier.fillMaxWidth(), state = listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { MarkRequestHero(requests.size) }
+        item { MarkRequestHero(requests.size + attendanceRequests.size) }
 
         if (!errorMessage.isNullOrBlank()) {
             item { CmsNotice(errorMessage, tone = NoticeTone.Error, onDismiss = onClearError) }
@@ -142,6 +157,38 @@ fun MarkEditRequestReviewWorkspace(
             item { CmsNotice(notice, tone = NoticeTone.Success, onDismiss = onConsumeNotice) }
         }
 
+        item {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                EditRequestTab.entries.forEach { option ->
+                    val count = if (option == EditRequestTab.MARKS) requests.size else attendanceRequests.size
+                    CmsChip("${option.label} ($count)", selected = tab == option, onClick = { tab = option })
+                }
+            }
+        }
+
+        if (tab == EditRequestTab.ATTENDANCE) {
+            rowErrors[MarkEditRequestsController.ATTENDANCE_LOAD_KEY]?.let { message ->
+                item { CmsNotice(message, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRefresh) }
+            }
+            when {
+                loading -> items(3) { SkeletonRow() }
+                attendanceRequests.isEmpty() -> item { MarkRequestEmpty(filtered = false, onClearFilters = {}, attendance = true) }
+                else -> items(attendanceRequests.sortedByDescending { it.requestedAt }, key = { it.id }) { request ->
+                    AttendanceRequestCard(
+                        request = request,
+                        studentName = details[request.id]?.studentName?.takeIf { it.isNotBlank() } ?: "Student name unavailable",
+                        subjectName = details[request.id]?.subjectName?.takeIf { it.isNotBlank() } ?: request.courseCode,
+                        sessionLabel = sessionLabel(request.sessionId),
+                        busy = busyRequestId == request.id,
+                        rowError = rowErrors[request.id],
+                        now = Instant.now(),
+                        onApprove = { attendanceApproval = request },
+                        onReject = { attendanceRejection = request },
+                    )
+                }
+            }
+            item { Spacer(Modifier.height(72.dp)) }
+        } else {
         item { MarkSummaryCard(requests) }
 
         item {
@@ -196,7 +243,28 @@ fun MarkEditRequestReviewWorkspace(
         }
 
         item { Spacer(Modifier.height(72.dp)) }
+        }
     }
+    }
+
+    attendanceApproval?.let { request ->
+        AlertDialog(
+            onDismissRequest = { attendanceApproval = null },
+            title = { Text("Attendance change review", style = MaterialTheme.typography.headlineSmall) },
+            text = { Text("Set roll ${request.rollNumber} to ${attendanceLabel(request.requestedStatus, request.requestedIsLate)} on ${request.date.format(MarkDateFormat)}?") },
+            confirmButton = { TextButton(onClick = { onApproveAttendance(request); attendanceApproval = null }) { Text("Approve") } },
+            dismissButton = { TextButton(onClick = { attendanceApproval = null }) { Text("Cancel") } },
+        )
+    }
+
+    attendanceRejection?.let { request ->
+        AlertDialog(
+            onDismissRequest = { attendanceRejection = null },
+            title = { Text("Reject request", style = MaterialTheme.typography.headlineSmall) },
+            text = { Text("Reject the requested attendance change for roll ${request.rollNumber}?") },
+            confirmButton = { TextButton(onClick = { onRejectAttendance(request); attendanceRejection = null }) { Text("Reject") } },
+            dismissButton = { TextButton(onClick = { attendanceRejection = null }) { Text("Cancel") } },
+        )
     }
 
     approvalTarget?.let { request ->
@@ -226,7 +294,7 @@ private fun MarkRequestHero(count: Int) {
         Column(Modifier.padding(20.dp)) {
             Text("ASSESSMENT CONTROL", color = MarkAmber, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
-            Text("Mark edit request", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+            Text("Edit requests", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
             Spacer(Modifier.height(4.dp))
             Text("$count in the review queue", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
         }
@@ -322,13 +390,17 @@ private fun MarkScoreValue(label: String, score: String, tint: Color) {
 }
 
 @Composable
-private fun MarkRequestEmpty(filtered: Boolean, onClearFilters: () -> Unit) {
+private fun MarkRequestEmpty(filtered: Boolean, onClearFilters: () -> Unit, attendance: Boolean = false) {
     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(if (filtered) "No matching requests" else "Review queue clear", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(4.dp))
             Text(
-                if (filtered) "Try a different search or filter." else "There are no pending score changes. New teacher requests will appear here.",
+                when {
+                    filtered -> "Try a different search or filter."
+                    attendance -> "There are no pending attendance changes. New teacher requests will appear here."
+                    else -> "There are no pending score changes. New teacher requests will appear here."
+                },
                 color = ModMuted,
                 style = MaterialTheme.typography.bodySmall,
             )
@@ -338,6 +410,64 @@ private fun MarkRequestEmpty(filtered: Boolean, onClearFilters: () -> Unit) {
             }
         }
     }
+}
+
+@Composable
+private fun AttendanceRequestCard(
+    request: AttendanceEditRequest,
+    studentName: String,
+    subjectName: String,
+    sessionLabel: String,
+    busy: Boolean,
+    rowError: String?,
+    now: Instant,
+    onApprove: () -> Unit,
+    onReject: () -> Unit,
+) {
+    val issues = attendanceEditReviewIssues(request)
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, if (issues.isNotEmpty()) MarkRed.copy(alpha = 0.3f) else ModTrack)) {
+        Column(Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(studentName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                    Text("Roll ${request.rollNumber} · $subjectName · ${request.date.format(MarkDateFormat)}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                    Text(sessionLabel, color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                }
+                if (issues.isNotEmpty()) StatusBadge("BLOCKED", BadgeTone.Error)
+            }
+            Spacer(Modifier.height(10.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                MarkScoreValue("CURRENT", request.currentStatus?.let { attendanceLabel(it, request.currentIsLate == true) } ?: "Not marked", MarkBlue)
+                MarkScoreValue("REQUESTED", attendanceLabel(request.requestedStatus, request.requestedIsLate), attendanceTint(request.requestedStatus))
+            }
+            Spacer(Modifier.height(8.dp))
+            Text("Requested ${relativeRequestAge(request.requestedAt, now)} by ${request.requestedBy ?: "unknown teacher"}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+            Spacer(Modifier.height(6.dp))
+            Text("TEACHER'S REASON", color = ModMuted, style = CmsTextStyles.eyebrow)
+            Text(request.reason?.takeIf { it.isNotBlank() } ?: "No reason was supplied. Confirm the change before approval.", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
+            issues.forEach { issue ->
+                Text("· $issue", color = MarkRed, style = MaterialTheme.typography.bodySmall)
+            }
+            if (!rowError.isNullOrBlank()) {
+                Spacer(Modifier.height(6.dp))
+                Text(rowError, color = MarkRed, style = MaterialTheme.typography.bodySmall)
+            }
+            Spacer(Modifier.height(10.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onApprove, enabled = issues.isEmpty() && !busy) { Text(if (busy) "Working..." else "Approve") }
+                TextButton(onClick = onReject, enabled = !busy) { Text("Reject", color = CmsTheme.colors.accent) }
+            }
+        }
+    }
+}
+
+private fun attendanceLabel(status: AttendanceStatus, late: Boolean): String =
+    status.name.lowercase().replaceFirstChar { it.uppercase() } + if (late) " (late)" else ""
+
+private fun attendanceTint(status: AttendanceStatus): Color = when (status) {
+    AttendanceStatus.PRESENT -> MarkGreen
+    AttendanceStatus.ABSENT -> MarkRed
+    AttendanceStatus.LEAVE -> MarkAmber
 }
 
 private fun relativeRequestAge(requestedAt: Instant, now: Instant): String {

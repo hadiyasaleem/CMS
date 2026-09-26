@@ -3,6 +3,8 @@ package com.mbd.cmscommon.controller
 import com.mbd.cmscommon.util.requireValid
 
 import com.mbd.cmscommon.domain.model.AcademicSession
+import com.mbd.cmscommon.domain.model.AttendanceEditRequest
+import com.mbd.cmscommon.domain.model.attendanceEditReviewIssues
 import com.mbd.cmscommon.domain.model.Department
 import com.mbd.cmscommon.domain.model.MarkEditRequest
 import com.mbd.cmscommon.domain.model.Teacher
@@ -10,6 +12,7 @@ import com.mbd.cmscommon.domain.model.markEditQueueSnapshot
 import com.mbd.cmscommon.domain.model.markEditReviewKey
 import com.mbd.cmscommon.domain.model.markEditReviewQuality
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
+import com.mbd.cmscommon.domain.repository.AttendanceEditRequestRepository
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.MarkEditRequestRepository
@@ -28,6 +31,7 @@ import kotlinx.coroutines.flow.stateIn
 
 class MarkEditRequestsController(
     private val repository: MarkEditRequestRepository,
+    private val attendanceRepository: AttendanceEditRequestRepository,
     private val sessionRepository: AcademicSessionRepository,
     private val curriculumRepository: CurriculumRepository,
     departmentRepository: DepartmentRepository,
@@ -47,6 +51,9 @@ class MarkEditRequestsController(
 
     val teachers: StateFlow<List<Teacher>> =
         teacherRepository.observeActiveTeachers().stateIn(scope, SharingStarted.Eagerly, emptyList())
+
+    private val _attendanceRequests = MutableStateFlow<List<AttendanceEditRequest>>(emptyList())
+    val attendanceRequests: StateFlow<List<AttendanceEditRequest>> = _attendanceRequests.asStateFlow()
 
     private val _details = MutableStateFlow<Map<String, MarkEditRequestDetails>>(emptyMap())
     val details: StateFlow<Map<String, MarkEditRequestDetails>> = _details.asStateFlow()
@@ -73,7 +80,11 @@ class MarkEditRequestsController(
             if (fetchRemote) repository.sync()
             val requests = markEditQueueSnapshot(repository.getPendingRequests()).requests
             _requests.value = requests
-            _details.value = loadDetails(requests)
+            val attendance = runCatching { attendanceRepository.getPendingRequests() }
+                .onFailure { _rowErrors.value = _rowErrors.value + (ATTENDANCE_LOAD_KEY to it.userMessageLogged("Could not load attendance edit requests.")) }
+                .getOrDefault(emptyList())
+            _attendanceRequests.value = attendance
+            _details.value = loadDetails(requests) + loadAttendanceDetails(attendance)
         } finally {
             _loading.value = false
         }
@@ -121,6 +132,45 @@ class MarkEditRequestsController(
         }
     }
 
+    fun approveAttendance(request: AttendanceEditRequest) = launch {
+        try {
+            _busyRequestId.value = request.id
+            _notice.value = null
+            requireValid(reviewedBy.isNotBlank()) { "Your signed-in account could not be identified." }
+            val issues = attendanceEditReviewIssues(request)
+            requireValid(issues.isEmpty()) { issues.joinToString(" ") }
+            requireValid(_attendanceRequests.value.any { it.id == request.id }) { "This request is no longer pending. Refresh the queue." }
+
+            attendanceRepository.approveRequest(request.id, reviewedBy)
+            val notice = "${displayStudent(request.id, request.rollNumber)} is now marked ${request.requestedStatus.name.lowercase()} on ${request.date} for ${request.courseCode}."
+            removeResolvedAttendance(request)
+            _notice.value = notice
+        } catch (t: Throwable) {
+            _rowErrors.value = _rowErrors.value + (request.id to t.userMessageLogged("Could not approve this attendance change."))
+        } finally {
+            _busyRequestId.value = null
+        }
+    }
+
+    fun rejectAttendance(request: AttendanceEditRequest) = launch {
+        try {
+            _busyRequestId.value = request.id
+            _notice.value = null
+            requireValid(reviewedBy.isNotBlank()) { "Your signed-in account could not be identified." }
+            requireValid(request.id.isNotBlank()) { "This request has no database ID and cannot be rejected safely." }
+            requireValid(_attendanceRequests.value.any { it.id == request.id }) { "This request is no longer pending. Refresh the queue." }
+
+            attendanceRepository.rejectRequest(request.id, reviewedBy)
+            val notice = "The attendance change for ${displayStudent(request.id, request.rollNumber)} was rejected."
+            removeResolvedAttendance(request)
+            _notice.value = notice
+        } catch (t: Throwable) {
+            _rowErrors.value = _rowErrors.value + (request.id to t.userMessageLogged("Could not reject this attendance change."))
+        } finally {
+            _busyRequestId.value = null
+        }
+    }
+
     fun consumeNotice() {
         _notice.value = null
     }
@@ -129,16 +179,31 @@ class MarkEditRequestsController(
         queue.map { request -> async { detailsFor(request) } }.awaitAll().toMap()
     }
 
-    private suspend fun detailsFor(request: MarkEditRequest): Pair<String, MarkEditRequestDetails> {
+    private suspend fun loadAttendanceDetails(queue: List<AttendanceEditRequest>): Map<String, MarkEditRequestDetails> = coroutineScope {
+        queue.map { request ->
+            async { request.id to lookupDetails(request.sessionId, request.semester, request.courseCode, request.rollNumber) }
+        }.awaitAll().toMap()
+    }
+
+    private suspend fun detailsFor(request: MarkEditRequest): Pair<String, MarkEditRequestDetails> =
+        request.id to lookupDetails(request.sessionId, request.semester, request.courseCode, request.rollNumber)
+
+    private suspend fun lookupDetails(sessionId: String, semester: Int, courseCode: String, rollNumber: String): MarkEditRequestDetails {
         val studentName = runCatching {
-            sessionRepository.observeStudents(request.sessionId).first()
-                .firstOrNull { it.rollNumber.equals(request.rollNumber, ignoreCase = true) }?.name
+            sessionRepository.observeStudents(sessionId).first()
+                .firstOrNull { it.rollNumber.equals(rollNumber, ignoreCase = true) }?.name
         }.orLogCritical("MarkEditRequestsController.detailsFor.studentName")
         val subjectName = runCatching {
-            curriculumRepository.observeSemesterSubjects(request.sessionId, request.semester).first()
-                .firstOrNull { it.courseCode.equals(request.courseCode, ignoreCase = true) }?.name
+            curriculumRepository.observeSemesterSubjects(sessionId, semester).first()
+                .firstOrNull { it.courseCode.equals(courseCode, ignoreCase = true) }?.name
         }.orLogCritical("MarkEditRequestsController.detailsFor.subjectName")
-        return request.id to MarkEditRequestDetails(studentName, subjectName)
+        return MarkEditRequestDetails(studentName, subjectName)
+    }
+
+    private fun removeResolvedAttendance(request: AttendanceEditRequest) {
+        _attendanceRequests.value = _attendanceRequests.value.filterNot { it.id == request.id }
+        _details.value = _details.value - request.id
+        _rowErrors.value = _rowErrors.value - request.id
     }
 
     private fun removeResolvedRequest(request: MarkEditRequest) {
@@ -148,6 +213,12 @@ class MarkEditRequestsController(
         _rowErrors.value = _rowErrors.value - request.id - requestKey
     }
 
-    private fun displayStudent(request: MarkEditRequest): String =
-        _details.value[request.id]?.studentName?.takeIf { it.isNotBlank() } ?: "Roll ${request.rollNumber}"
+    private fun displayStudent(request: MarkEditRequest): String = displayStudent(request.id, request.rollNumber)
+
+    private fun displayStudent(id: String, rollNumber: String): String =
+        _details.value[id]?.studentName?.takeIf { it.isNotBlank() } ?: "Roll $rollNumber"
+
+    companion object {
+        const val ATTENDANCE_LOAD_KEY = "attendance-load"
+    }
 }

@@ -7,6 +7,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import com.mbd.cmscommon.controller.MarkEditRequestsController
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
+import com.mbd.cmscommon.domain.repository.AttendanceEditRequestRepository
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.MarkEditRequestRepository
@@ -16,6 +17,7 @@ import com.mbd.cmscommon.ui.components.MarkEditRequestReviewWorkspace
 @Composable
 fun MarkEditRequestsScreen(
     repository: MarkEditRequestRepository,
+    attendanceRepository: AttendanceEditRequestRepository,
     sessionRepository: AcademicSessionRepository,
     curriculumRepository: CurriculumRepository,
     departmentRepository: DepartmentRepository,
@@ -23,10 +25,11 @@ fun MarkEditRequestsScreen(
     reviewedBy: String?,
 ) {
     val scope = rememberCoroutineScope()
-    val controller = remember(repository, sessionRepository, curriculumRepository, departmentRepository, teacherRepository, reviewedBy) {
-        MarkEditRequestsController(repository, sessionRepository, curriculumRepository, departmentRepository, teacherRepository, reviewedBy.orEmpty(), scope)
+    val controller = remember(repository, attendanceRepository, sessionRepository, curriculumRepository, departmentRepository, teacherRepository, reviewedBy) {
+        MarkEditRequestsController(repository, attendanceRepository, sessionRepository, curriculumRepository, departmentRepository, teacherRepository, reviewedBy.orEmpty(), scope)
     }
     val requests by controller.requests.collectAsState()
+    val attendanceRequests by controller.attendanceRequests.collectAsState()
     val details by controller.details.collectAsState()
     val sessions by controller.sessions.collectAsState()
     val departments by controller.departments.collectAsState()
@@ -50,6 +53,9 @@ fun MarkEditRequestsScreen(
         errorMessage = errorMessage,
         onApprove = controller::approve,
         onReject = controller::reject,
+        attendanceRequests = attendanceRequests,
+        onApproveAttendance = controller::approveAttendance,
+        onRejectAttendance = controller::rejectAttendance,
         onRefresh = controller::refresh,
         onConsumeNotice = controller::consumeNotice,
         onClearError = controller::clearError,

@@ -140,6 +140,105 @@ export type Database = {
         }
         Relationships: []
       }
+      attendance_edit_requests: {
+        Row: {
+          course_code: string
+          created_at: string
+          created_by: string | null
+          current_is_late: boolean | null
+          current_status:
+            | Database["public"]["Enums"]["attendance_status"]
+            | null
+          date: string
+          deleted_at: string | null
+          deleted_by: string | null
+          id: string
+          is_deleted: boolean
+          reason: string | null
+          requested_at: string
+          requested_by: string
+          requested_is_late: boolean
+          requested_status: Database["public"]["Enums"]["attendance_status"]
+          reviewed_at: string | null
+          reviewed_by: string | null
+          roll_number: string
+          semester: number
+          session_id: string
+          status: Database["public"]["Enums"]["mark_edit_status"]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          course_code: string
+          created_at?: string
+          created_by?: string | null
+          current_is_late?: boolean | null
+          current_status?:
+            | Database["public"]["Enums"]["attendance_status"]
+            | null
+          date: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          id?: string
+          is_deleted?: boolean
+          reason?: string | null
+          requested_at?: string
+          requested_by?: string
+          requested_is_late?: boolean
+          requested_status: Database["public"]["Enums"]["attendance_status"]
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          roll_number: string
+          semester: number
+          session_id: string
+          status?: Database["public"]["Enums"]["mark_edit_status"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          course_code?: string
+          created_at?: string
+          created_by?: string | null
+          current_is_late?: boolean | null
+          current_status?:
+            | Database["public"]["Enums"]["attendance_status"]
+            | null
+          date?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          id?: string
+          is_deleted?: boolean
+          reason?: string | null
+          requested_at?: string
+          requested_by?: string
+          requested_is_late?: boolean
+          requested_status?: Database["public"]["Enums"]["attendance_status"]
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          roll_number?: string
+          semester?: number
+          session_id?: string
+          status?: Database["public"]["Enums"]["mark_edit_status"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_edit_requests_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "academic_sessions"
+            referencedColumns: ["session_id"]
+          },
+          {
+            foreignKeyName: "attendance_edit_requests_session_id_roll_number_fkey"
+            columns: ["session_id", "roll_number"]
+            isOneToOne: false
+            referencedRelation: "session_students"
+            referencedColumns: ["session_id", "roll_number"]
+          },
+        ]
+      }
       buildings: {
         Row: {
           building_id: string
@@ -1842,6 +1941,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_attendance_edit_request: {
+        Args: { p_request_id: string; p_reviewed_by: string }
+        Returns: undefined
+      }
       approve_link_request: {
         Args: { p_request_id: string; p_reviewed_by: string }
         Returns: undefined

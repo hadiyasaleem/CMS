@@ -14,6 +14,7 @@ import com.mbd.cmscommon.domain.repository.ExamPaperSubmissionRepository
 import com.mbd.cmscommon.domain.repository.FineRepository
 import com.mbd.cmscommon.domain.repository.InsightsRepository
 import com.mbd.cmscommon.domain.repository.MarkEditRequestRepository
+import com.mbd.cmscommon.domain.repository.AttendanceEditRequestRepository
 import com.mbd.cmscommon.domain.repository.NotificationRepository
 import com.mbd.cmscommon.domain.repository.RoomRepository
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
@@ -55,6 +56,7 @@ interface DesktopAppComponent {
     fun buildingRepository(): BuildingRepository
     fun roomRepository(): RoomRepository
     fun markEditRequestRepository(): MarkEditRequestRepository
+    fun attendanceEditRequestRepository(): AttendanceEditRequestRepository
     fun calendarRepository(): CalendarRepository
     fun academicSessionRepository(): AcademicSessionRepository
     fun curriculumRepository(): CurriculumRepository

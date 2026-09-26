@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import com.mbd.cmscommon.ui.datesheets.DatesheetsScreen
 import com.mbd.cmscommon.ui.events.EventsScreen
 import com.mbd.cmsteacher.feature.attendance.AttendanceHistoryScreen
+import com.mbd.cmsteacher.feature.attendance.StudentAttendanceSummaryScreen
 import com.mbd.cmsteacher.feature.attendance.MarkAttendanceScreen
 import com.mbd.cmsteacher.feature.exams.ExamPaperSubmissionScreen
 import com.mbd.cmsteacher.feature.exams.ExamsHubScreen
@@ -53,6 +54,11 @@ fun TeacherNavHost(navController: NavHostController, onSignedOut: () -> Unit, re
         composable(TeacherDestination.Datesheets.route) { DatesheetsScreen(viewModel = hiltViewModel()) }
         composable(TeacherDestination.Insights.route) { InsightsScreen(refreshVersion = refreshVersion) }
         composable(TeacherDestination.Profile.route) { ProfileScreen(onSignedOut = onSignedOut) }
-        composable(TeacherDestination.AttendanceHistory.route) { AttendanceHistoryScreen() }
+        composable(TeacherDestination.AttendanceHistory.route) {
+            AttendanceHistoryScreen(onOpenStudent = { sessionId, courseCode, roll -> go(TeacherDestination.attendanceStudent(sessionId, courseCode, roll)) })
+        }
+        composable(TeacherDestination.AttendanceStudent.route) {
+            StudentAttendanceSummaryScreen(onBack = { navController.popBackStack() })
+        }
     }
 }

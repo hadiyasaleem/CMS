@@ -250,6 +250,7 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
 
                     AdminScreen.MarkEditRequests -> MarkEditRequestsScreen(
                         repository = component.markEditRequestRepository(),
+                        attendanceRepository = component.attendanceEditRequestRepository(),
                         sessionRepository = component.academicSessionRepository(),
                         curriculumRepository = component.curriculumRepository(),
                         departmentRepository = component.departmentRepository(),

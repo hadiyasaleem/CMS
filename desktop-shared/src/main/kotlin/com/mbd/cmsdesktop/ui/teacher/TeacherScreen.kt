@@ -1,5 +1,7 @@
 package com.mbd.cmsdesktop.ui.teacher
 
+import java.time.YearMonth
+
 /**
  * Navigation-state for the teacher desktop shell. [TeacherNavHost] keeps the current value in a
  * `mutableStateOf<TeacherScreen>` and swaps on it; [TeacherTab] entries point at the root screen
@@ -8,7 +10,8 @@ package com.mbd.cmsdesktop.ui.teacher
 sealed interface TeacherScreen {
     data object Home : TeacherScreen
     data object Attendance : TeacherScreen
-    data class AttendanceHistory(val sessionId: String, val courseCode: String) : TeacherScreen
+    data class AttendanceHistory(val sessionId: String, val courseCode: String, val month: YearMonth? = null) : TeacherScreen
+    data class AttendanceStudentSummary(val sessionId: String, val courseCode: String, val rollNumber: String, val returnMonth: YearMonth) : TeacherScreen
     data object ExamsHub : TeacherScreen
     data object Marks : TeacherScreen
     data object ExamPaper : TeacherScreen

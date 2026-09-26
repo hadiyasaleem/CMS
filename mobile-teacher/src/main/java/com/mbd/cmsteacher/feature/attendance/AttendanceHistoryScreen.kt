@@ -8,9 +8,15 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.mbd.cmscommon.ui.components.AttendanceHistoryWorkspace
 
 @Composable
-fun AttendanceHistoryScreen(viewModel: AttendanceHistoryViewModel = hiltViewModel()) {
+fun AttendanceHistoryScreen(
+    onOpenStudent: (sessionId: String, courseCode: String, rollNumber: String) -> Unit,
+    viewModel: AttendanceHistoryViewModel = hiltViewModel(),
+) {
     val context = LocalContext.current
+    val month by viewModel.month.collectAsState()
     val monthLabel by viewModel.monthLabel.collectAsState()
+    val pendingCells by viewModel.pendingCells.collectAsState()
+    val requestState by viewModel.requestState.collectAsState()
     val loading by viewModel.loading.collectAsState()
     val roster by viewModel.roster.collectAsState()
     val marks by viewModel.marks.collectAsState()
@@ -18,10 +24,16 @@ fun AttendanceHistoryScreen(viewModel: AttendanceHistoryViewModel = hiltViewMode
 
     AttendanceHistoryWorkspace(
         courseCode = viewModel.courseCode,
+        month = month,
         monthLabel = monthLabel,
         loading = loading,
         roster = roster,
         marks = marks,
+        pendingCells = pendingCells,
+        requestState = requestState,
+        onOpenStudent = { roll -> onOpenStudent(viewModel.sessionId, viewModel.courseCode, roll) },
+        onSubmitEditRequest = viewModel::submitEditRequest,
+        onRequestStateConsumed = viewModel::consumeRequestState,
         onPreviousMonth = viewModel::previousMonth,
         onNextMonth = viewModel::nextMonth,
         onExportCsv = { viewModel.exportCsv(context) },

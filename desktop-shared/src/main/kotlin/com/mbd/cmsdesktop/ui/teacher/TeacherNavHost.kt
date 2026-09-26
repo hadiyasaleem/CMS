@@ -159,9 +159,24 @@ fun TeacherNavHost(role: UserRole.Teacher, component: DesktopAppComponent, windo
                 is TeacherScreen.AttendanceHistory -> AttendanceHistoryScreen(
                     sessionId = currentScreen.sessionId,
                     courseCode = currentScreen.courseCode,
+                    initialMonth = currentScreen.month,
                     sessionRepository = component.academicSessionRepository(),
                     attendanceRepository = component.sessionAttendanceRepository(),
+                    editRequestRepository = component.attendanceEditRequestRepository(),
                     window = window,
+                    onOpenStudent = { roll, month ->
+                        screen = TeacherScreen.AttendanceStudentSummary(currentScreen.sessionId, currentScreen.courseCode, roll, month)
+                    },
+                )
+
+                is TeacherScreen.AttendanceStudentSummary -> StudentAttendanceSummaryScreen(
+                    sessionId = currentScreen.sessionId,
+                    courseCode = currentScreen.courseCode,
+                    rollNumber = currentScreen.rollNumber,
+                    sessionRepository = component.academicSessionRepository(),
+                    curriculumRepository = component.curriculumRepository(),
+                    attendanceRepository = component.sessionAttendanceRepository(),
+                    onBack = { screen = TeacherScreen.AttendanceHistory(currentScreen.sessionId, currentScreen.courseCode, currentScreen.returnMonth) },
                 )
 
                 TeacherScreen.ExamsHub -> ExamsHubScreen(

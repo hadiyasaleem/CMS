@@ -17,6 +17,7 @@ sealed class TeacherDestination(
     data object Home : TeacherDestination("home", "Home", "Home", Icons.Filled.Home)
     data object Attendance : TeacherDestination("attendance", "Mark Attendance", "Attend", Icons.Filled.FactCheck)
     data object AttendanceHistory : TeacherDestination("attendance_history/{sessionId}/{courseCode}", "Attendance History")
+    data object AttendanceStudent : TeacherDestination("attendance_student/{sessionId}/{courseCode}/{rollNumber}", "Student Attendance")
     data object ExamsHub : TeacherDestination("exams_hub", "Exams", "Exams", Icons.Filled.MenuBook)
     data object Marks : TeacherDestination("marks", "Marks Entry")
     data object SemesterResults : TeacherDestination("semester_results", "Semester Results")
@@ -35,5 +36,8 @@ sealed class TeacherDestination(
         val bottomNavItems = listOf(Home, Attendance, ExamsHub, Schedule, MenuHub)
 
         fun attendanceHistory(sessionId: String, courseCode: String) = "attendance_history/$sessionId/$courseCode"
+
+        fun attendanceStudent(sessionId: String, courseCode: String, rollNumber: String) =
+            "attendance_student/$sessionId/$courseCode/$rollNumber"
     }
 }
