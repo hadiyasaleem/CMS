@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -99,7 +100,9 @@ fun CalendarWorkspace(
     val summary = calendarSummary(relevant, today)
 
     Box(modifier.fillMaxSize()) {
-    LazyColumn(
+    val listState = rememberLazyListState()
+    WithVerticalScrollbar(listState) {
+    LazyColumn( state = listState,
         modifier = Modifier.fillMaxWidth().background(CalendarCanvas),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -133,6 +136,7 @@ fun CalendarWorkspace(
         }
 
         item { Spacer(Modifier.height(72.dp)) }
+    }
     }
         if (canEdit) {
             CmsFab(
@@ -338,7 +342,9 @@ private fun DayDetailDialog(
         onDismissRequest = onDismiss,
         title = { Text(date.format(dayFormat)) },
         text = {
-            Column(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            val scrollState = rememberScrollState()
+            WithVerticalScrollbar(scrollState, Modifier.heightIn(max = 420.dp)) {
+            Column(Modifier.fillMaxWidth().verticalScroll(scrollState), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 if (events.isEmpty()) {
                     Text("No events on this day.", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
                 } else {
@@ -350,6 +356,7 @@ private fun DayDetailDialog(
                     Spacer(Modifier.height(4.dp))
                     TextButton(onClick = onAddEvent) { Text("+ Add event") }
                 }
+            }
             }
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } },

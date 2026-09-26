@@ -1,6 +1,7 @@
 package com.mbd.cmscommon.ui.components
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -137,13 +139,14 @@ fun AdminDashboardContent(
     BoxWithConstraints(modifier.fillMaxSize().background(ModGround)) {
         val wide = maxWidth >= 900.dp
         val contentPadding = if (wide) 32.dp else 16.dp
+        val scrollState = rememberScrollState()
 
         Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
                 .widthIn(max = 1180.dp)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .padding(horizontal = contentPadding, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(if (wide) 24.dp else 18.dp),
         ) {
@@ -184,6 +187,11 @@ fun AdminDashboardContent(
 
             Spacer(Modifier.height(72.dp))
         }
+
+        VerticalScrollbar(
+            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+            adapter = rememberScrollbarAdapter(scrollState),
+        )
     }
 }
 

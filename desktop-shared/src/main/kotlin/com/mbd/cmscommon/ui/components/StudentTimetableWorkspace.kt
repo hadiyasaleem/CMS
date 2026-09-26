@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -78,7 +79,9 @@ fun StudentTimetableWorkspace(
 ) {
     var detailItem by remember { mutableStateOf<StudentScheduledPeriod?>(null) }
 
-    LazyColumn(
+    val listState = rememberLazyListState()
+    WithVerticalScrollbar(listState) {
+    LazyColumn( state = listState,
         modifier = modifier.fillMaxWidth().background(TimetableCanvas),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -129,6 +132,7 @@ fun StudentTimetableWorkspace(
         }
 
         item { Spacer(Modifier.height(72.dp)) }
+    }
     }
 
     detailItem?.let { item ->

@@ -1,5 +1,7 @@
 package com.mbd.cmsdesktop.ui.shared
 
+import com.mbd.cmscommon.ui.components.WithVerticalScrollbar
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -53,7 +55,9 @@ fun HubScreen(
     avatarName: String? = null,
     onAvatarClick: (() -> Unit)? = null,
 ) {
-    LazyColumn(
+    val listState = rememberLazyListState()
+    WithVerticalScrollbar(listState) {
+    LazyColumn( state = listState,
         modifier = modifier.fillMaxWidth().background(HubCanvas),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -73,6 +77,7 @@ fun HubScreen(
         }
         items(items, key = { it.label }) { item -> HubTile(item, HubTileColors[items.indexOf(item) % HubTileColors.size]) }
         item { Spacer(Modifier.size(72.dp)) }
+    }
     }
 }
 

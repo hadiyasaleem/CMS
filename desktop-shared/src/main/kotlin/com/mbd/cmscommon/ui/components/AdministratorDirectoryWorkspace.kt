@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Login
@@ -147,7 +148,9 @@ fun AdministratorDirectoryWorkspace(
         floatingActionButton = { CmsFab(onClick = { showCreateDialog = true }, contentDescription = "Add administrator") },
     ) { padding ->
         RefreshBox(isRefreshing = loading, onRefresh = onRefresh, modifier = Modifier.padding(padding)) {
-            LazyColumn(Modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp)) {
+            val listState = rememberLazyListState()
+            WithVerticalScrollbar(listState) {
+            LazyColumn(Modifier.fillMaxWidth(), state = listState, contentPadding = PaddingValues(16.dp)) {
                 item { AdministratorHero(directory.accounts.size) }
 
                 if (!createdEmail.isNullOrBlank()) {
@@ -202,6 +205,7 @@ fun AdministratorDirectoryWorkspace(
                 }
 
                 item { Spacer(Modifier.height(88.dp)) }
+            }
             }
         }
     }

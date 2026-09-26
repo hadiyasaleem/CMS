@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
@@ -143,7 +144,9 @@ fun LinkRequestReviewWorkspace(
     }
     val relinks = requests.count { verifications[linkRequestVerificationKey(it)]?.state == RosterVerificationState.RELINK }
 
-    LazyColumn(
+    val listState = rememberLazyListState()
+    WithVerticalScrollbar(listState) {
+    LazyColumn( state = listState,
         modifier = modifier.fillMaxWidth(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -221,6 +224,7 @@ fun LinkRequestReviewWorkspace(
         }
 
         item { Spacer(Modifier.height(72.dp)) }
+    }
     }
 
     approvalTarget?.let { request ->

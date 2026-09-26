@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -129,7 +130,9 @@ fun MarkEditRequestReviewWorkspace(
         MarkRequestSort.LARGEST_CHANGE -> filtered.sortedByDescending { kotlin.math.abs(it.requestedScore - (it.currentScore ?: 0)) }
     }
 
-    LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    val listState = rememberLazyListState()
+    WithVerticalScrollbar(listState) {
+    LazyColumn(modifier.fillMaxWidth(), state = listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { MarkRequestHero(requests.size) }
 
         if (!errorMessage.isNullOrBlank()) {
@@ -193,6 +196,7 @@ fun MarkEditRequestReviewWorkspace(
         }
 
         item { Spacer(Modifier.height(72.dp)) }
+    }
     }
 
     approvalTarget?.let { request ->

@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import com.mbd.cmscommon.ui.theme.CmsTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -41,7 +42,9 @@ fun StudentImportPreviewDialog(
                 if (result.rows.isEmpty()) {
                     Text("No valid rows were found in this file.", style = MaterialTheme.typography.bodyMedium)
                 } else {
-                    LazyColumn(Modifier.height(220.dp)) {
+                    val listState = rememberLazyListState()
+                    WithVerticalScrollbar(listState) {
+                    LazyColumn(Modifier.height(220.dp), state = listState) {
                         items(result.rows, key = { it.rowNumber }) { row: ImportedStudentRow ->
                             Text(
                                 "${row.rollNumber} — ${row.name}",
@@ -49,6 +52,7 @@ fun StudentImportPreviewDialog(
                                 style = MaterialTheme.typography.bodyMedium,
                             )
                         }
+                    }
                     }
                     if (wouldOverflow) {
                         Spacer(Modifier.height(10.dp))

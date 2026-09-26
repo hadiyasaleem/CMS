@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -65,7 +66,9 @@ fun SubmittedPapersWorkspace(
 ) {
     val totalCount = grouped.values.sumOf { it.size }
 
-    LazyColumn(
+    val listState = rememberLazyListState()
+    WithVerticalScrollbar(listState) {
+    LazyColumn( state = listState,
         modifier = modifier.fillMaxWidth().background(PapersCanvas),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -116,6 +119,7 @@ fun SubmittedPapersWorkspace(
         }
 
         item { Spacer(Modifier.height(72.dp)) }
+    }
     }
 }
 

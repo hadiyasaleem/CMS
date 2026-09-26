@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -97,7 +98,9 @@ fun MarksEntryWorkspace(
 
     val average = roster.mapNotNull { scores[it.rollNumber]?.toIntOrNull() }.takeIf { it.isNotEmpty() }?.average()
 
-    LazyColumn(
+    val listState = rememberLazyListState()
+    WithVerticalScrollbar(listState) {
+    LazyColumn( state = listState,
         modifier = modifier.fillMaxWidth().background(MarksCanvas),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -140,6 +143,7 @@ fun MarksEntryWorkspace(
         item { SaveMarksCard(examType, validScores, invalid, saveOutcome, onSave) }
         item { MarksNotice(requestOutcome, onClearRequestState) }
         item { Spacer(Modifier.height(72.dp)) }
+    }
     }
 
     editTarget?.let { student ->

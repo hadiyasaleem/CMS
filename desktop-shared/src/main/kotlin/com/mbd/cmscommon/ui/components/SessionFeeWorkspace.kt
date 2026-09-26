@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -110,7 +111,9 @@ fun SessionFeeWorkspace(
         else -> null
     }
 
-    LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    val listState = rememberLazyListState()
+    WithVerticalScrollbar(listState) {
+    LazyColumn(modifier.fillMaxWidth(), state = listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { FeeHero(session) }
 
         if (!errorMessage.isNullOrBlank()) {
@@ -165,6 +168,7 @@ fun SessionFeeWorkspace(
         }
 
         item { Spacer(Modifier.height(72.dp)) }
+    }
     }
 
     if (addingHead || editingIndex >= 0) {

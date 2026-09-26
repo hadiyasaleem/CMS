@@ -58,7 +58,9 @@ data class StudentAuthActions(
 fun StudentAuthWorkspace(state: StudentAuthUiState, actions: StudentAuthActions, modifier: Modifier = Modifier) {
     var showPassword by remember { mutableStateOf(false) }
 
-    Column(modifier.fillMaxSize().background(CmsTheme.colors.faint).verticalScroll(rememberScrollState())) {
+    val scrollState = rememberScrollState()
+    WithVerticalScrollbar(scrollState, modifier.fillMaxSize().background(CmsTheme.colors.faint)) {
+    Column(Modifier.fillMaxSize().verticalScroll(scrollState)) {
         NavyBrandPanel(
             collegeName = "Student Portal",
             description = "Attendance, marks, timetable and fee records in one secure student portal.",
@@ -152,5 +154,6 @@ fun StudentAuthWorkspace(state: StudentAuthUiState, actions: StudentAuthActions,
                 modifier = Modifier.fillMaxWidth(),
             )
         }
+    }
     }
 }

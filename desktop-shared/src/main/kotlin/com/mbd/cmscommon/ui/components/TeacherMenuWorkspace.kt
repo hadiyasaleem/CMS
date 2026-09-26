@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -104,7 +105,9 @@ fun TeacherMenuWorkspace(
         ),
     )
 
-    LazyColumn(
+    val listState = rememberLazyListState()
+    WithVerticalScrollbar(listState) {
+    LazyColumn( state = listState,
         modifier = modifier.fillMaxWidth().background(MenuCanvas),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -112,6 +115,7 @@ fun TeacherMenuWorkspace(
         item { TeacherMenuHeader(heroPainter, snapshot, onSignOut = { confirmSignOut = true }) }
         items(items) { item -> TeacherMenuCard(item) }
         item { Spacer(Modifier.height(72.dp)) }
+    }
     }
 
     if (confirmSignOut) {

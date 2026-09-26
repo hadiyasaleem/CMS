@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -79,7 +80,9 @@ fun NotificationControllerWorkspace(controller: NotificationsController, modifie
     val urgentCount = inbox.count { it.priority == NotificationPriority.URGENT }
 
     Box(modifier.fillMaxSize()) {
-    LazyColumn(
+    val listState = rememberLazyListState()
+    WithVerticalScrollbar(listState) {
+    LazyColumn( state = listState,
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -126,6 +129,7 @@ fun NotificationControllerWorkspace(controller: NotificationsController, modifie
         }
 
         item { Spacer(Modifier.height(72.dp)) }
+    }
     }
         if (canPublish) {
             CmsFab(

@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -75,7 +76,9 @@ fun AdministratorProfileWorkspace(
         ProfileMetric("Recent", directory?.recentlyActiveCount?.toString() ?: "--", "Signed in within 30 days"),
     )
 
-    LazyColumn(modifier.fillMaxWidth().background(ProfileCanvas), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    val listState = rememberLazyListState()
+    WithVerticalScrollbar(listState) {
+    LazyColumn(modifier.fillMaxWidth().background(ProfileCanvas), state = listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { ProfileHero(account?.email ?: accountKey, "Administrator", if (active) "ACTIVE" else "INACTIVE", if (active) BadgeTone.Success else BadgeTone.Neutral, "Verified administrator account") }
         if (!errorMessage.isNullOrBlank()) item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         if (!actionMessage.isNullOrBlank()) item { CmsNotice(actionMessage, tone = NoticeTone.Success) }
@@ -95,6 +98,7 @@ fun AdministratorProfileWorkspace(
             }
         }
         item { Spacer(Modifier.height(72.dp)) }
+    }
     }
 
     if (confirmReset) {
@@ -141,7 +145,9 @@ fun TeacherProfileWorkspace(
         ProfileMetric("Sessions", assignments.map { it.sessionId }.distinct().size.toString(), "Active cohorts"),
     )
 
-    LazyColumn(modifier.fillMaxWidth().background(ProfileCanvas), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    val listState = rememberLazyListState()
+    WithVerticalScrollbar(listState) {
+    LazyColumn(modifier.fillMaxWidth().background(ProfileCanvas), state = listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { ProfileHero(profile?.name ?: accountKey, "Teacher", (profile?.status?.name ?: "ACTIVE"), BadgeTone.Success, "Faculty member") }
         if (!errorMessage.isNullOrBlank()) item { CmsNotice(errorMessage, tone = NoticeTone.Error) }
         if (!actionMessage.isNullOrBlank()) item { CmsNotice(actionMessage, tone = NoticeTone.Success) }
@@ -183,6 +189,7 @@ fun TeacherProfileWorkspace(
             }
         }
         item { Spacer(Modifier.height(72.dp)) }
+    }
     }
 
     if (confirmReset) {
@@ -236,7 +243,9 @@ fun StudentOwnProfileWorkspace(
         ProfileMetric("CGPA", cgpa?.let { "%.2f".format(it) } ?: "--", "Cumulative standing"),
     )
 
-    LazyColumn(modifier.fillMaxWidth().background(ProfileCanvas), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    val listState = rememberLazyListState()
+    WithVerticalScrollbar(listState) {
+    LazyColumn(modifier.fillMaxWidth().background(ProfileCanvas), state = listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { ProfileHero(studentName, "Student", "ENROLLED", BadgeTone.Success, "Class roll $rollNumber") }
         if (!errorMessage.isNullOrBlank()) item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         if (!actionMessage.isNullOrBlank()) item { CmsNotice(actionMessage, tone = NoticeTone.Success) }
@@ -289,6 +298,7 @@ fun StudentOwnProfileWorkspace(
             }
         }
         item { Spacer(Modifier.height(72.dp)) }
+    }
     }
 
     if (confirmReset) {

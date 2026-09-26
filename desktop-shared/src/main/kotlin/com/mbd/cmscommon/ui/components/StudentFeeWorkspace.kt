@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -57,7 +58,9 @@ fun StudentFeeWorkspace(
     onDownloadPdf: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LazyColumn(
+    val listState = rememberLazyListState()
+    WithVerticalScrollbar(listState) {
+    LazyColumn( state = listState,
         modifier = modifier.fillMaxWidth().background(FeeCanvas),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -88,6 +91,7 @@ fun StudentFeeWorkspace(
         }
 
         item { Spacer(Modifier.height(72.dp)) }
+    }
     }
 }
 

@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -96,7 +97,9 @@ fun MarkAttendanceWorkspace(
     val locked = alreadyMarked
     val summary = attendanceRegisterSummary(roster, statuses, lateRolls, termPercents)
 
-    LazyColumn(
+    val listState = rememberLazyListState()
+    WithVerticalScrollbar(listState) {
+    LazyColumn( state = listState,
         modifier = modifier.fillMaxWidth().background(RegisterCanvas),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -143,6 +146,7 @@ fun MarkAttendanceWorkspace(
         }
         item { SubmitNotice(outcome) }
         item { Spacer(Modifier.height(72.dp)) }
+    }
     }
 
     noteRoll?.let { roll ->

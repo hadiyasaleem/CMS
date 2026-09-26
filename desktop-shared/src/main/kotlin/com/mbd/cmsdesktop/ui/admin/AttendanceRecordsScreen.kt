@@ -1,6 +1,8 @@
 package com.mbd.cmsdesktop.ui.admin
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.HorizontalScrollbar
+import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -16,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -605,7 +608,10 @@ private fun DayGrid(
     val leaveC = CmsTheme.colors.warn
     val mutedC = CmsTheme.colors.muted
 
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).horizontalScroll(rememberScrollState())) {
+    val vScroll = rememberScrollState()
+    val hScroll = rememberScrollState()
+    Box(Modifier.fillMaxSize()) {
+    Column(Modifier.fillMaxSize().verticalScroll(vScroll).horizontalScroll(hScroll)) {
         Row(Modifier.height(56.dp).background(CmsTheme.colors.ink)) {
             Head("ROLL", ROLL_W)
             Head("NAME", NAME_W)
@@ -648,6 +654,15 @@ private fun DayGrid(
             }
             HorizontalDivider(color = CmsTheme.colors.rule.copy(alpha = 0.25f))
         }
+    }
+        VerticalScrollbar(
+            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+            adapter = rememberScrollbarAdapter(vScroll),
+        )
+        HorizontalScrollbar(
+            modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth(),
+            adapter = rememberScrollbarAdapter(hScroll),
+        )
     }
 }
 

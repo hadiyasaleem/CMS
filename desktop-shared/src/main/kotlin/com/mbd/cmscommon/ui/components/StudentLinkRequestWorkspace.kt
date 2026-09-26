@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -75,7 +76,9 @@ data class StudentLinkRequestActions(
 
 @Composable
 fun StudentLinkRequestWorkspace(state: StudentLinkRequestUiState, actions: StudentLinkRequestActions, modifier: Modifier = Modifier) {
-    LazyColumn(
+    val listState = rememberLazyListState()
+    WithVerticalScrollbar(listState) {
+    LazyColumn( state = listState,
         modifier = modifier.fillMaxSize().background(LinkCanvas),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -100,6 +103,7 @@ fun StudentLinkRequestWorkspace(state: StudentLinkRequestUiState, actions: Stude
         }
 
         item { Spacer(Modifier.height(72.dp)) }
+    }
     }
 }
 

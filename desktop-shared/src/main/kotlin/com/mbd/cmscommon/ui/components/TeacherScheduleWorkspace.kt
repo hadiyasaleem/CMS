@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -82,7 +83,9 @@ fun TeacherScheduleWorkspace(
     val periodByDayAndSlot = teachingPeriods.associateBy { it.day to it.timeRange }
     val timeSlots = teachingPeriods.map { it.timeRange }.distinct().sortedBy { it.substringBefore('–') }
 
-    LazyColumn(
+    val listState = rememberLazyListState()
+    WithVerticalScrollbar(listState) {
+    LazyColumn( state = listState,
         modifier = modifier.fillMaxWidth().background(ScheduleCanvas),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -127,6 +130,7 @@ fun TeacherScheduleWorkspace(
         }
 
         item { Spacer(Modifier.height(72.dp)) }
+    }
     }
 
     detailPeriod?.let { period ->

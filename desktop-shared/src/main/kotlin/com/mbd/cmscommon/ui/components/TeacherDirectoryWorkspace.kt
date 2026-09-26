@@ -512,7 +512,9 @@ private fun TeacherActionDialog(
         onDismissRequest = onDismiss,
         title = { Text(title, style = MaterialTheme.typography.headlineSmall) },
         text = {
-            Column(Modifier.heightIn(max = 460.dp).verticalScroll(rememberScrollState())) {
+            val scrollState = rememberScrollState()
+            WithVerticalScrollbar(scrollState, Modifier.heightIn(max = 460.dp)) {
+            Column(Modifier.fillMaxWidth().verticalScroll(scrollState)) {
                 if (existing == null) {
                     Text("Create the sign-in account and complete the initial faculty profile in one step.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(10.dp))
@@ -621,6 +623,7 @@ private fun TeacherActionDialog(
                 Text("ACCOUNT ACCESS", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
                 PermissionRow("Admin access (grants full admin rights)", isAdmin) { isAdmin = it }
+            }
             }
         },
         confirmButton = {

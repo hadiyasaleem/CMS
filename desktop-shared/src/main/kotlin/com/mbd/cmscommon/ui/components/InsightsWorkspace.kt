@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -123,7 +124,9 @@ fun InsightsWorkspace(
         .filter { query.isBlank() || it.courseCode.contains(query, ignoreCase = true) }
         .sortedBy { it.courseCode }
 
-    LazyColumn(
+    val listState = rememberLazyListState()
+    WithVerticalScrollbar(listState) {
+    LazyColumn( state = listState,
         modifier = modifier.fillMaxWidth().background(InsightsCanvas),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -194,6 +197,7 @@ fun InsightsWorkspace(
         }
 
         item { Spacer(Modifier.height(72.dp)) }
+    }
     }
 }
 

@@ -1,5 +1,7 @@
 package com.mbd.cmsdesktop.ui.student
 
+import com.mbd.cmscommon.ui.components.WithVerticalScrollbar
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -57,7 +59,9 @@ fun StudentHomeScreen(
     val session by controller.session.collectAsState()
     val ui by controller.ui.collectAsState()
 
-    LazyColumn(contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    val listState = rememberLazyListState()
+    WithVerticalScrollbar(listState) {
+    LazyColumn( state = listState,contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item { SectionHeader("Home", "GGC-MBD", "Roll $rollNumber") }
         item {
             CmsCard(Modifier.fillMaxWidth()) {
@@ -83,6 +87,7 @@ fun StudentHomeScreen(
                 }
             }
         }
+    }
     }
 }
 
@@ -117,9 +122,12 @@ fun StudentAttendanceScreen(
     }
     val rows by controller.rows.collectAsState()
 
-    LazyColumn(contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    val listState = rememberLazyListState()
+    WithVerticalScrollbar(listState) {
+    LazyColumn( state = listState,contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         item { SectionHeader("Attendance", "GGC-MBD", "Roll $rollNumber") }
         items(rows) { row -> SubjectAttendanceCard(row) }
+    }
     }
 }
 

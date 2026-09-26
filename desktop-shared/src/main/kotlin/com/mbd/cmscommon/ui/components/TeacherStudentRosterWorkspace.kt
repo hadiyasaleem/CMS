@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -102,7 +103,9 @@ fun TeacherStudentRosterWorkspace(
         TeacherRosterSort.ATTENDANCE -> filtered.sortedBy { tallies[it.rollNumber]?.percentage ?: 100f }
     }
 
-    LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    val listState = rememberLazyListState()
+    WithVerticalScrollbar(listState) {
+    LazyColumn(modifier.fillMaxWidth(), state = listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { TeacherRosterHero(selected, students.size) }
         item { AssignmentPicker(assignments, selected, onSelectAssignment) }
 
@@ -149,6 +152,7 @@ fun TeacherStudentRosterWorkspace(
         }
 
         item { Spacer(Modifier.height(72.dp)) }
+    }
     }
 }
 

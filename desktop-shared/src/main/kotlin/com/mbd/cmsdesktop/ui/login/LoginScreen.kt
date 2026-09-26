@@ -33,6 +33,7 @@ import com.mbd.cmscommon.domain.repository.UserRepository
 import com.mbd.cmscommon.ui.components.CmsPrimaryButton
 import com.mbd.cmscommon.ui.components.CmsTextField
 import com.mbd.cmscommon.ui.components.NavyBrandPanel
+import com.mbd.cmscommon.ui.components.WithVerticalScrollbar
 import com.mbd.cmscommon.ui.theme.CmsTheme
 import com.mbd.cmsdesktop.auth.DesktopRoleResolver
 
@@ -61,7 +62,9 @@ fun LoginScreen(
     val controller = remember { LoginController(sessionManager, roleResolver, userRepository, scope) }
     var showPassword by remember { mutableStateOf(false) }
 
-    Column(Modifier.fillMaxSize().background(CmsTheme.colors.faint).verticalScroll(rememberScrollState())) {
+    val scrollState = rememberScrollState()
+    WithVerticalScrollbar(scrollState, Modifier.fillMaxSize().background(CmsTheme.colors.faint)) {
+    Column(Modifier.fillMaxSize().verticalScroll(scrollState)) {
         NavyBrandPanel(collegeName = screenTitle, description = brandDescription, systemLabel = systemLabel)
         Column(Modifier.fillMaxWidth().padding(24.dp)) {
             Text(portalEyebrow, color = CmsTheme.colors.accent, style = MaterialTheme.typography.labelLarge)
@@ -124,5 +127,6 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
         }
+    }
     }
 }

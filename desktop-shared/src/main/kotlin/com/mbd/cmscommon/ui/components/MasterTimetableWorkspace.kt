@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -78,7 +79,9 @@ fun MasterTimetableWorkspace(
     val periodByDayAndSlot = periods.associateBy { it.day to it.timeRange }
     val timeSlots = periods.map { it.timeRange }.distinct().sortedBy { it.substringBefore('–') }
 
-    LazyColumn(
+    val listState = rememberLazyListState()
+    WithVerticalScrollbar(listState) {
+    LazyColumn( state = listState,
         modifier = modifier.fillMaxWidth().background(MasterCanvas),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -145,6 +148,7 @@ fun MasterTimetableWorkspace(
         }
 
         item { Spacer(Modifier.height(72.dp)) }
+    }
     }
 
     detailPeriod?.let { period ->

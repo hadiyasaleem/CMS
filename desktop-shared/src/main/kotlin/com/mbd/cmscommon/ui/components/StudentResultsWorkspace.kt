@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -52,7 +53,9 @@ fun StudentResultsWorkspace(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LazyColumn(
+    val listState = rememberLazyListState()
+    WithVerticalScrollbar(listState) {
+    LazyColumn( state = listState,
         modifier = modifier.fillMaxWidth().background(ResultsCanvas),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -86,6 +89,7 @@ fun StudentResultsWorkspace(
         }
 
         item { Spacer(Modifier.height(72.dp)) }
+    }
     }
 }
 

@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -90,7 +91,9 @@ fun SessionTimetableWorkspace(
     val timeSlots = periods.map { it.timeRange }.distinct().sortedBy { it.substringBefore('–') }
 
     Box(modifier.fillMaxSize()) {
-        LazyColumn(Modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        val listState = rememberLazyListState()
+        WithVerticalScrollbar(listState) {
+        LazyColumn(Modifier.fillMaxWidth(), state = listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             item { TimetableHero(session) }
 
             item { TimetableSummaryCard(periods.size, roomsConfigured, teacherIds.size, conflictIds.size) }
@@ -130,6 +133,7 @@ fun SessionTimetableWorkspace(
             }
 
             item { Spacer(Modifier.height(72.dp)) }
+        }
         }
         CmsFab(
             onClick = { addingPeriodDay = DayOfWeek.MONDAY },
@@ -349,7 +353,9 @@ private fun PeriodEditorDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (existing == null) "Timetable period" else "Edit period", style = MaterialTheme.typography.headlineSmall) },
         text = {
-            Column(Modifier.heightIn(max = 460.dp).verticalScroll(rememberScrollState())) {
+            val scrollState = rememberScrollState()
+            WithVerticalScrollbar(scrollState, Modifier.heightIn(max = 460.dp)) {
+            Column(Modifier.fillMaxWidth().verticalScroll(scrollState)) {
                 Text("DAYS", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
                 Row(
@@ -441,6 +447,7 @@ private fun PeriodEditorDialog(
                     Spacer(Modifier.height(8.dp))
                     Text("Time conflict: enter a valid start and end time.", color = TimetableRed, style = MaterialTheme.typography.bodySmall)
                 }
+            }
             }
         },
         confirmButton = {

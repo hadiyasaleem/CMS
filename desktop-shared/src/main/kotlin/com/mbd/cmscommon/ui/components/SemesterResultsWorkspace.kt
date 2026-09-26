@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -88,7 +89,9 @@ fun SemesterResultsWorkspace(
     val averageGpa = results.values.map { it.gpa }.takeIf { it.isNotEmpty() }?.average()
     val classLabel = sessions.firstOrNull { it.first == sessionId }?.second ?: "Select a class"
 
-    LazyColumn(
+    val listState = rememberLazyListState()
+    WithVerticalScrollbar(listState) {
+    LazyColumn( state = listState,
         modifier = modifier.fillMaxWidth().background(ResultCanvas),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -129,6 +132,7 @@ fun SemesterResultsWorkspace(
         }
 
         item { Spacer(Modifier.height(72.dp)) }
+    }
     }
 
     editing?.let { student ->

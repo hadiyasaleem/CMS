@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -99,7 +100,9 @@ fun SessionOperationsWorkspace(
         SessionAction("Fee structure", "Fee heads and payment instructions for this intake", if (fee != null) "Rs ${fee.totalAmount}" else "Fee structure not configured", Icons.Outlined.Payments, onOpenFees),
     )
 
-    LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    val listState = rememberLazyListState()
+    WithVerticalScrollbar(listState) {
+    LazyColumn(modifier.fillMaxWidth(), state = listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { SessionIdentityCard(session, onEdit = { showEditDetails = true }) }
 
         if (!errorMessage.isNullOrBlank()) {
@@ -147,6 +150,7 @@ fun SessionOperationsWorkspace(
         item { DangerZoneCard(students.size, onDelete = { confirmDelete = true }) }
 
         item { Spacer(Modifier.height(72.dp)) }
+    }
     }
 
     if (showEditDetails && session != null) {

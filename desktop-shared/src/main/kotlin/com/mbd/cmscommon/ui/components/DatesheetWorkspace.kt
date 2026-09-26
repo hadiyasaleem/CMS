@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -128,7 +129,9 @@ fun DatesheetWorkspace(
     val sessionsById = remember(sessions) { sessions.associateBy { it.sessionId } }
 
     Box(modifier.fillMaxWidth()) {
-        LazyColumn(
+        val listState = rememberLazyListState()
+        WithVerticalScrollbar(listState) {
+        LazyColumn( state = listState,
             modifier = Modifier.fillMaxWidth().background(DatesheetCanvas),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -200,6 +203,7 @@ fun DatesheetWorkspace(
             }
             item { Spacer(Modifier.height(72.dp)) }
         }
+        }
     }
 
     if (openDatesheetId != null && detail != null) {
@@ -229,7 +233,9 @@ fun StudentDatesheetWorkspace(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LazyColumn(
+    val listState = rememberLazyListState()
+    WithVerticalScrollbar(listState) {
+    LazyColumn( state = listState,
         modifier = modifier.fillMaxWidth().background(DatesheetCanvas),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -258,6 +264,7 @@ fun StudentDatesheetWorkspace(
             }
         }
         item { Spacer(Modifier.height(72.dp)) }
+    }
     }
 }
 
@@ -682,7 +689,9 @@ private fun DatesheetDetailDialog(
         onDismissRequest = onDismiss,
         title = { Text(datesheetLabel(sheet, detail.session, detail.department)) },
         text = {
-            Column(Modifier.heightIn(max = 520.dp).verticalScroll(rememberScrollState())) {
+            val scrollState = rememberScrollState()
+            WithVerticalScrollbar(scrollState, Modifier.heightIn(max = 520.dp)) {
+            Column(Modifier.fillMaxWidth().verticalScroll(scrollState)) {
                 StatusBadge(if (sheet.published) "PUBLISHED" else "DRAFT", if (sheet.published) BadgeTone.Success else BadgeTone.Neutral)
                 Spacer(Modifier.height(10.dp))
                 if (viewer.canManage) {
@@ -724,6 +733,7 @@ private fun DatesheetDetailDialog(
                         TextButton(onClick = { confirmDelete = true }, enabled = !busy) { Text("Delete", color = DatesheetRed) }
                     }
                 }
+            }
             }
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } },
@@ -822,7 +832,9 @@ private fun CreateDatesheetDialog(
         onDismissRequest = onDismiss,
         title = { Text("New Mid Term datesheet") },
         text = {
-            Column(Modifier.verticalScroll(rememberScrollState())) {
+            val scrollState = rememberScrollState()
+            WithVerticalScrollbar(scrollState) {
+            Column(Modifier.verticalScroll(scrollState)) {
                 Text("${session.label} · ${session.shift.name} · Semester $semester", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.height(10.dp))
                 Text("Papers will be prefilled for every subject in this semester's curriculum.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
@@ -848,6 +860,7 @@ private fun CreateDatesheetDialog(
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 2,
                 )
+            }
             }
         },
         confirmButton = {
@@ -908,7 +921,9 @@ private fun PaperEditorDialog(
         onDismissRequest = onDismiss,
         title = { Text(slot.subjectName) },
         text = {
-            Column(Modifier.heightIn(max = 460.dp).verticalScroll(rememberScrollState())) {
+            val scrollState = rememberScrollState()
+            WithVerticalScrollbar(scrollState, Modifier.heightIn(max = 460.dp)) {
+            Column(Modifier.fillMaxWidth().verticalScroll(scrollState)) {
                 Text(slot.courseCode, color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 displayedError?.let { message ->
                     Spacer(Modifier.height(10.dp))
@@ -961,6 +976,7 @@ private fun PaperEditorDialog(
                     optional = true,
                     emptyLabel = "Not assigned",
                 )
+            }
             }
         },
         confirmButton = {
