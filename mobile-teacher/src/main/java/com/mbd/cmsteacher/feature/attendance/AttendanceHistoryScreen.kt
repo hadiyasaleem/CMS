@@ -36,8 +36,7 @@ fun AttendanceHistoryScreen(
         onRequestStateConsumed = viewModel::consumeRequestState,
         onPreviousMonth = viewModel::previousMonth,
         onNextMonth = viewModel::nextMonth,
-        onExportCsv = { viewModel.exportCsv(context) },
-        onExportPdf = { viewModel.exportPdf(context) },
+        onExport = { format -> viewModel.export(context, format) },
         errorMessage = errorMessage,
         onClearError = viewModel::clearError,
     )

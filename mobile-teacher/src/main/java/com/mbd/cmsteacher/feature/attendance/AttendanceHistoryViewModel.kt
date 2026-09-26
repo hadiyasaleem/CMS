@@ -12,6 +12,9 @@ import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.AttendanceEditRequestRepository
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
+import com.mbd.cmscommon.export.ExportFormat
+import com.mbd.cmscommon.export.attendanceRegisterExport
+import com.mbd.cmscommon.util.DocumentExporter
 import com.mbd.cmscommon.util.Outcome
 import com.mbd.cmscommon.util.userMessageLogged
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -149,36 +152,14 @@ class AttendanceHistoryViewModel @Inject constructor(
         viewModelScope.launch { loadMonth() }
     }
 
-    private fun exportMeta(): ExportMeta {
-        val academicSession = session.value
-        return ExportMeta(
-            teacherName = sessionManager.accountKey.orEmpty(),
-            subjectName = courseCode,
-            sessionLabel = academicSession?.label.orEmpty(),
-            deptId = academicSession?.deptId.orEmpty(),
-            shift = academicSession?.shift?.name.orEmpty(),
-            semester = academicSession?.currentSemester ?: 0,
-        )
-    }
-
-    fun exportCsv(context: Context) {
+    fun export(context: Context, format: ExportFormat) {
         viewModelScope.launch {
             // File IO / share-intent failures (ActivityNotFoundException, IOException) must not crash the app.
             runCatching {
-                val meta = exportMeta()
-                val from = _month.value
-                val days = (0 until from.lengthOfMonth()).map { from.plusDays(it.toLong()) }
-                AttendanceExporter.exportCsv(context, meta, courseCode, monthLabel.value, days, roster.value, marks.value)
-            }.onFailure { _error.value = it.userMessageLogged("AttendanceHistoryViewModel.exportCsv", "Could not export the attendance CSV.") }
-        }
-    }
-
-    fun exportPdf(context: Context) {
-        viewModelScope.launch {
-            runCatching {
-                val meta = exportMeta()
-                AttendanceExporter.exportPdf(context, meta, courseCode, monthLabel.value, roster.value, marks.value)
-            }.onFailure { _error.value = it.userMessageLogged("AttendanceHistoryViewModel.exportPdf", "Could not export the attendance PDF.") }
+                val academicSession = sessionRepository.observeSession(sessionId).first()
+                val doc = attendanceRegisterExport(courseCode, academicSession, YearMonth.from(_month.value), roster.value, marks.value)
+                DocumentExporter.export(context, doc, format)
+            }.onFailure { _error.value = it.userMessageLogged("AttendanceHistoryViewModel.export", "Could not export the attendance register.") }
         }
     }
 

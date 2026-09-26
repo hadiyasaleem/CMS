@@ -1,5 +1,9 @@
 package com.mbd.cmsadmin.feature.records
 
+import androidx.compose.runtime.rememberCoroutineScope
+import com.mbd.cmscommon.export.toExportDocument
+import com.mbd.cmscommon.ui.components.ExportMenuButton
+import com.mbd.cmscommon.util.DocumentExporter
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -228,7 +232,7 @@ fun AttendanceRecordsScreen(viewModel: AttendanceRecordsViewModel = hiltViewMode
     var mode by remember { mutableStateOf(ReportMode.SEMESTER) }
     var month by remember { mutableStateOf<YearMonth?>(null) }
     var course by remember { mutableStateOf<String?>(null) }
-    var showExport by remember { mutableStateOf(false) }
+    val exportScope = rememberCoroutineScope()
     var cellDetail by remember { mutableStateOf<Pair<String, DailyAttendanceMark>?>(null) }
     var actionError by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
@@ -302,7 +306,14 @@ fun AttendanceRecordsScreen(viewModel: AttendanceRecordsViewModel = hiltViewMode
                         maxLines = 1,
                         modifier = Modifier.weight(1f),
                     )
-                    if (ready) TextButton(onClick = { showExport = true }) { Text("Export") }
+                    if (ready && payload != null) {
+                        ExportMenuButton(onExport = { format ->
+                            exportScope.launch {
+                                runCatching { DocumentExporter.export(context, payload.toExportDocument(), format) }
+                                    .onFailure { actionError = it.userMessage("Could not export the attendance report.") }
+                            }
+                        })
+                    }
                     IconButton(onClick = { expanded = !expanded }) {
                         Icon(
                             if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.Edit,
@@ -356,28 +367,6 @@ fun AttendanceRecordsScreen(viewModel: AttendanceRecordsViewModel = hiltViewMode
                 }
             }
         }
-    }
-
-    if (showExport && payload != null) {
-        AlertDialog(
-            onDismissRequest = { showExport = false },
-            title = { Text("Export ${mode.label}", style = MaterialTheme.typography.titleLarge) },
-            text = { Text("Choose a format.", style = MaterialTheme.typography.bodyMedium) },
-            confirmButton = {
-                TextButton(onClick = {
-                    runCatching { RecordsExporter.exportCsv(context, payload.fileBase, payload.title, payload.header, payload.rows) }
-                        .onFailure { actionError = it.userMessage("Could not export the attendance report.") }
-                    showExport = false
-                }) { Text("Excel (CSV)") }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    runCatching { RecordsExporter.exportPdf(context, payload.fileBase, payload.title, payload.header, payload.rows) }
-                        .onFailure { actionError = it.userMessage("Could not export the attendance report.") }
-                    showExport = false
-                }) { Text("PDF") }
-            },
-        )
     }
 
     cellDetail?.let { (name, mark) ->

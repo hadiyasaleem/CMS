@@ -15,7 +15,7 @@ import org.apache.pdfbox.pdmodel.font.Standard14Fonts
 /** Renders a 3-copy (student/college/clerk) fee challan as a portrait PDF, using pdfbox. Mirrors
  * [com.mbd.cmscommon.util.FeeChallanPdfGenerator]'s layout (the mobile equivalent, using Android's
  * own PdfDocument API instead) -- not literally shared code since the drawing APIs differ, matching
- * how RecordsExporter already exists once per platform for the same reason. */
+ * how DocumentExporter already exists once per platform for the same reason. */
 object FeeChallanPdfGenerator {
     private const val PAGE_W = 595f
     private const val PAGE_H = 842f

@@ -9,6 +9,8 @@ import com.mbd.cmscommon.domain.model.termMonths
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
+import com.mbd.cmscommon.export.ExportDocument
+import com.mbd.cmscommon.export.termSummaryExport
 import java.time.LocalDate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,6 +47,10 @@ class StudentAttendanceSummaryController(
 
     init {
         refresh()
+    }
+
+    fun exportDocument(): ExportDocument? = _summary.value?.let {
+        termSummaryExport(courseCode, rollNumber, _student.value, _session.value, _term.value, it)
     }
 
     fun refresh() = launch {

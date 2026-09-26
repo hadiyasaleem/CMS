@@ -22,8 +22,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -48,6 +46,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mbd.cmscommon.domain.model.AttendanceHistorySummary
+import com.mbd.cmscommon.export.ExportFormat
 import com.mbd.cmscommon.domain.model.AttendanceStatus
 import com.mbd.cmscommon.domain.model.DailyAttendanceMark
 import com.mbd.cmscommon.domain.model.SessionStudent
@@ -112,8 +111,7 @@ fun AttendanceHistoryWorkspace(
     onOpenStudent: (rollNumber: String) -> Unit,
     onSubmitEditRequest: (rollNumber: String, date: LocalDate, current: DailyAttendanceMark?, status: AttendanceStatus, late: Boolean, reason: String) -> Unit,
     onRequestStateConsumed: () -> Unit,
-    onExportCsv: () -> Unit,
-    onExportPdf: () -> Unit,
+    onExport: (ExportFormat) -> Unit,
     errorMessage: String?,
     onClearError: () -> Unit,
     modifier: Modifier = Modifier,
@@ -153,7 +151,7 @@ fun AttendanceHistoryWorkspace(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
-            HistoryHeader(courseCode, monthLabel, onPreviousMonth, onNextMonth, roster.isNotEmpty(), onExportCsv = onExportCsv, onExportPdf = onExportPdf)
+            HistoryHeader(courseCode, monthLabel, onPreviousMonth, onNextMonth, roster.isNotEmpty(), onExport)
         }
         if (sentNotice) {
             item {
@@ -211,11 +209,8 @@ private fun HistoryHeader(
     onPrevious: () -> Unit,
     onNext: () -> Unit,
     canExport: Boolean,
-    onExportCsv: () -> Unit,
-    onExportPdf: () -> Unit,
+    onExport: (ExportFormat) -> Unit,
 ) {
-    var showExport by remember { mutableStateOf(false) }
-
     Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Column(Modifier.padding(20.dp)) {
             Text("ATTENDANCE REGISTER", color = HistoryGold, style = CmsTextStyles.eyebrow)
@@ -226,13 +221,7 @@ private fun HistoryHeader(
                 TextButton(onClick = onPrevious) { Text("‹ Prev", color = CmsTheme.colors.onInk) }
                 Text(month, modifier = Modifier.weight(1f), color = CmsTheme.colors.onInk, style = MaterialTheme.typography.titleMedium)
                 TextButton(onClick = onNext) { Text("Next ›", color = CmsTheme.colors.onInk) }
-                Box {
-                    TextButton(onClick = { showExport = true }, enabled = canExport) { Text("Export", color = HistoryGold) }
-                    DropdownMenu(expanded = showExport, onDismissRequest = { showExport = false }) {
-                        DropdownMenuItem(text = { Text("Export as CSV") }, onClick = { showExport = false; onExportCsv() })
-                        DropdownMenuItem(text = { Text("Export as PDF") }, onClick = { showExport = false; onExportPdf() })
-                    }
-                }
+                ExportMenuButton(onExport = onExport, enabled = canExport, tint = HistoryGold)
             }
         }
     }

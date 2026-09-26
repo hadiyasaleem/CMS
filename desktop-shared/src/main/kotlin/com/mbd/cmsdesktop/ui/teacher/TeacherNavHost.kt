@@ -176,6 +176,7 @@ fun TeacherNavHost(role: UserRole.Teacher, component: DesktopAppComponent, windo
                     sessionRepository = component.academicSessionRepository(),
                     curriculumRepository = component.curriculumRepository(),
                     attendanceRepository = component.sessionAttendanceRepository(),
+                    window = window,
                     onBack = { screen = TeacherScreen.AttendanceHistory(currentScreen.sessionId, currentScreen.courseCode, currentScreen.returnMonth) },
                 )
 

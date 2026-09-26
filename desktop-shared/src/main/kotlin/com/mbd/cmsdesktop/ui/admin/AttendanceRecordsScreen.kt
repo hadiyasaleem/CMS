@@ -1,5 +1,8 @@
 package com.mbd.cmsdesktop.ui.admin
 
+import com.mbd.cmscommon.export.toExportDocument
+import com.mbd.cmscommon.ui.components.ExportMenuButton
+import com.mbd.cmsdesktop.platform.DocumentExporter
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.HorizontalScrollbar
 import androidx.compose.foundation.VerticalScrollbar
@@ -96,7 +99,7 @@ private val TOT_W = 38.dp
  * semester and (for the full monthly view) a subject + month, and render either the semester
  * summary report cards, the monthly summary cards, or a day-by-day attendance register grid
  * with per-cell detail. CSV/PDF export uses the shared [buildAttendanceExportPayload] domain
- * helper plus [RecordsExporter].
+ * helper plus [DocumentExporter].
  */
 @Composable
 fun AttendanceRecordsScreen(
@@ -129,7 +132,6 @@ fun AttendanceRecordsScreen(
     var course by remember { mutableStateOf<String?>(null) }
     var cellDetail by remember { mutableStateOf<Pair<String, DailyAttendanceMark>?>(null) }
     var actionError by remember { mutableStateOf<String?>(null) }
-    var showExport by remember { mutableStateOf(false) }
 
 
     LaunchedEffect(departmentRepository) {
@@ -251,32 +253,6 @@ fun AttendanceRecordsScreen(
         course,
     ).joinToString("  ·  ")
 
-    fun exportPayload() = payload
-
-    fun exportCsv() {
-        val p = exportPayload() ?: return
-        val target = AwtDesktopPlatformServices.chooseSaveFile(window, "Export attendance report", RecordsExporter.sanitize(p.fileBase) + ".csv") ?: return
-        scope.launch {
-            try {
-                RecordsExporter.exportCsv(target, p.title, p.header, p.rows)
-            } catch (t: Throwable) {
-                actionError = t.userMessage("Could not export the attendance report.")
-            }
-        }
-    }
-
-    fun exportPdf() {
-        val p = exportPayload() ?: return
-        val target = AwtDesktopPlatformServices.chooseSaveFile(window, "Export attendance report", RecordsExporter.sanitize(p.fileBase) + ".pdf") ?: return
-        scope.launch {
-            try {
-                RecordsExporter.exportPdf(target, p.title, p.header, p.rows)
-            } catch (t: Throwable) {
-                actionError = t.userMessage("Could not export the attendance report.")
-            }
-        }
-    }
-
     Column(Modifier.fillMaxWidth()) {
         SectionHeader("Attendance Records", "Reporting", "Department → session → semester → shift")
 
@@ -295,8 +271,11 @@ fun AttendanceRecordsScreen(
                         style = if (!expanded && ready) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium,
                         maxLines = 1,
                     )
-                    if (ready) {
-                        TextButton(onClick = { showExport = true }) { Text("Export") }
+                    if (ready && payload != null) {
+                        ExportMenuButton(onExport = { format ->
+                            runCatching { DocumentExporter.export(window, payload.toExportDocument(), format) }
+                                .onFailure { actionError = it.userMessage("Could not export the attendance report.") }
+                        })
                     }
                     IconButton(onClick = { expanded = !expanded }) {
                         Icon(
@@ -414,26 +393,6 @@ fun AttendanceRecordsScreen(
                     }
                 }
         }
-    }
-
-    if (showExport && payload != null) {
-        AlertDialog(
-            onDismissRequest = { showExport = false },
-            title = { Text("Export ${mode.label}", style = MaterialTheme.typography.titleLarge) },
-            text = { Text("Choose a format.", style = MaterialTheme.typography.bodyMedium) },
-            confirmButton = {
-                TextButton(onClick = {
-                    exportCsv()
-                    showExport = false
-                }) { Text("Excel (CSV)") }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    exportPdf()
-                    showExport = false
-                }) { Text("PDF") }
-            },
-        )
     }
 
     cellDetail?.let { (name, mark) ->

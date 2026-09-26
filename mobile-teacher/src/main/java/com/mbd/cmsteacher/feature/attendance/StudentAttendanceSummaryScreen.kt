@@ -3,6 +3,8 @@ package com.mbd.cmsteacher.feature.attendance
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -12,6 +14,8 @@ import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
 import com.mbd.cmscommon.ui.components.StudentAttendanceSummaryWorkspace
+import com.mbd.cmscommon.util.DocumentExporter
+import kotlinx.coroutines.launch
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -39,6 +43,8 @@ fun StudentAttendanceSummaryScreen(
     viewModel: StudentAttendanceSummaryViewModel = hiltViewModel(),
 ) {
     val controller = viewModel.controller
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val student by controller.student.collectAsState()
     val session by controller.session.collectAsState()
     val term by controller.term.collectAsState()
@@ -58,5 +64,13 @@ fun StudentAttendanceSummaryScreen(
         onBack = onBack,
         onRetry = controller::refresh,
         onClearError = controller::clearError,
+        onExport = { format ->
+            controller.exportDocument()?.let { doc ->
+                scope.launch {
+                    runCatching { DocumentExporter.export(context, doc, format) }
+                        .onFailure { controller.reportFailure(it, "Could not export the attendance summary.") }
+                }
+            }
+        },
     )
 }

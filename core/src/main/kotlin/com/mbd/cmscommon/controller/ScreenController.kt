@@ -44,4 +44,9 @@ abstract class ScreenController(protected val scope: CoroutineScope) {
     fun clearError() {
         _error.value = null
     }
+
+    /** For failures that happen outside [launch], e.g. a platform export step run by the screen. */
+    fun reportFailure(t: Throwable, fallback: String) {
+        _error.value = t.userMessageLogged(fallback)
+    }
 }

@@ -9,7 +9,9 @@ import com.mbd.cmscommon.controller.StudentAttendanceSummaryController
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
+import androidx.compose.ui.awt.ComposeWindow
 import com.mbd.cmscommon.ui.components.StudentAttendanceSummaryWorkspace
+import com.mbd.cmsdesktop.platform.DocumentExporter
 
 @Composable
 fun StudentAttendanceSummaryScreen(
@@ -19,6 +21,7 @@ fun StudentAttendanceSummaryScreen(
     sessionRepository: AcademicSessionRepository,
     curriculumRepository: CurriculumRepository,
     attendanceRepository: SessionAttendanceRepository,
+    window: ComposeWindow,
     onBack: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -44,5 +47,11 @@ fun StudentAttendanceSummaryScreen(
         onBack = onBack,
         onRetry = controller::refresh,
         onClearError = controller::clearError,
+        onExport = { format ->
+            controller.exportDocument()?.let { doc ->
+                runCatching { DocumentExporter.export(window, doc, format) }
+                    .onFailure { controller.reportFailure(it, "Could not export the attendance summary.") }
+            }
+        },
     )
 }
