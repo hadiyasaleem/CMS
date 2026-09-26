@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.controller.feeSummaryLine
 import com.mbd.cmscommon.controller.promotionConfirmText
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.ShiftMode
@@ -93,6 +94,7 @@ fun SessionOperationsWorkspace(
     onConsumeNotice: () -> Unit,
     modifier: Modifier = Modifier,
     shiftCounts: Map<Session, Int> = studentCountsByShift(students),
+    fees: List<SessionFeeStructure> = listOfNotNull(fee),
 ) {
     var showEditDetails by remember { mutableStateOf(false) }
     var showPromoteConfirm by remember { mutableStateOf(false) }
@@ -104,7 +106,7 @@ fun SessionOperationsWorkspace(
     val actions = listOf(
         SessionAction("Students", "Roster, profiles, imports, and account links", shiftEnrolmentLine(session, students.size, shiftCounts), Icons.Outlined.School, onOpenStudents),
         SessionAction("Timetable", "Weekly periods, subjects, rooms, and teachers", "${periods.size} period(s) configured", Icons.Outlined.CalendarMonth, onOpenTimetable),
-        SessionAction("Fee structure", "Fee heads and payment instructions for this intake", if (fee != null) "Rs ${fee.totalAmount}" else "Fee structure not configured", Icons.Outlined.Payments, onOpenFees),
+        SessionAction("Fee structure", "Fee heads and payment instructions for this intake", feeSummaryLine(session, fees), Icons.Outlined.Payments, onOpenFees),
     )
 
     val listState = rememberLazyListState()

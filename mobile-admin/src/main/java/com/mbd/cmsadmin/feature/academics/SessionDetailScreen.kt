@@ -48,6 +48,7 @@ class SessionDetailViewModel @Inject constructor(
     val subjectCounts = controller.subjectCounts
     val periods = controller.periods
     val fee = controller.fee
+    val fees = controller.fees
     val feeLoading = controller.feeLoading
     val currentSemesterTerm = controller.currentSemesterTerm
     val canPromote = controller.canPromote
@@ -79,6 +80,7 @@ fun SessionDetailScreen(
     val subjectCounts by viewModel.subjectCounts.collectAsState()
     val periods by viewModel.periods.collectAsState()
     val fee by viewModel.fee.collectAsState()
+    val fees by viewModel.fees.collectAsState()
     val feeLoading by viewModel.feeLoading.collectAsState()
     val currentSemesterTerm by viewModel.currentSemesterTerm.collectAsState()
     val canPromote by viewModel.canPromote.collectAsState()
@@ -108,5 +110,6 @@ fun SessionDetailScreen(
         onClearError = viewModel::clearError,
         onConsumeNotice = viewModel::consumeNotice,
         shiftCounts = shiftCounts,
+        fees = fees,
     )
 }

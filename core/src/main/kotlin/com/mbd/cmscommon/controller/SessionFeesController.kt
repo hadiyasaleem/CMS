@@ -1,5 +1,7 @@
 package com.mbd.cmscommon.controller
 
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.Department
@@ -30,8 +32,7 @@ class SessionFeesController(
     departmentRepository: DepartmentRepository,
     private val updatedBy: String,
     scope: CoroutineScope,
-    // TODO(Task 6): Morning/Evening tabs choose this; until then the editor works on the Morning structure.
-    val shift: Session = Session.MORNING,
+    initialShift: Session? = null,
 ) : ScreenController(scope) {
 
     val session: StateFlow<AcademicSession?> =
@@ -42,8 +43,28 @@ class SessionFeesController(
         .flatMapLatest { s -> if (s == null) flowOf(null) else flowOf(departmentRepository.getDepartment(s.deptId)) }
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), null)
 
-    private val _structure = MutableStateFlow<SessionFeeStructure?>(null)
-    val structure: StateFlow<SessionFeeStructure?> = _structure.asStateFlow()
+    private val _pickedShift = MutableStateFlow(initialShift)
+
+    /** The Morning/Evening tab being edited (only shifts the session runs; no combined view). */
+    val shift: StateFlow<Session> = combine(session, _pickedShift) { s, picked -> feeTabShift(s, picked) }
+        .stateIn(scope, SharingStarted.Eagerly, initialShift ?: Session.MORNING)
+
+    val shifts: StateFlow<List<Session>> = session.map { feeTabs(it) }
+        .stateIn(scope, SharingStarted.Eagerly, feeTabs(null))
+
+    /** Every shift's structure; each shift has its own plan, heads and amounts. */
+    private val _structures = MutableStateFlow<Map<Session, SessionFeeStructure>>(emptyMap())
+    val structures: StateFlow<List<SessionFeeStructure>> = _structures.map { it.values.sortedBy { fee -> fee.shift } }
+        .stateIn(scope, SharingStarted.Eagerly, emptyList())
+
+    /** The selected shift's structure, or null when that shift has none yet. */
+    val structure: StateFlow<SessionFeeStructure?> = combine(_structures, shift) { all, current -> all[current] }
+        .stateIn(scope, SharingStarted.Eagerly, null)
+
+    fun selectShift(picked: Session) {
+        _pickedShift.value = picked
+        _saved.value = false
+    }
 
     private val _saved = MutableStateFlow(false)
     val saved: StateFlow<Boolean> = _saved.asStateFlow()
@@ -64,8 +85,8 @@ class SessionFeesController(
         val loadVersion = structureVersion
         launch {
             try {
-                val loaded = repo.getSessionFee(sessionId, shift)
-                if (loadVersion == structureVersion) _structure.value = loaded
+                val loaded = repo.getSessionFees(sessionId).associateBy { it.shift }
+                if (loadVersion == structureVersion) _structures.value = loaded
             } finally {
                 _loading.value = false
             }
@@ -93,9 +114,10 @@ class SessionFeesController(
             requireValid(lateFineNote.trim().length <= 300) { "Late fine note must not exceed 300 characters." }
             requireValid(paymentNote.trim().length <= 1000) { "Payment instructions must not exceed 1,000 characters." }
 
+            val editing = feeTabShift(session.value, _pickedShift.value)
             val updated = SessionFeeStructure(
                 sessionId = sessionId,
-                shift = shift,
+                shift = editing,
                 cadence = cadence,
                 heads = normalizedHeads,
                 academicYear = year.takeIf { it.isNotBlank() },
@@ -105,7 +127,7 @@ class SessionFeesController(
             )
             repo.saveSessionFee(updated, updatedBy)
             structureVersion++
-            _structure.value = updated
+            _structures.value = _structures.value + (editing to updated)
             _saved.value = true
         } finally {
             _saving.value = false

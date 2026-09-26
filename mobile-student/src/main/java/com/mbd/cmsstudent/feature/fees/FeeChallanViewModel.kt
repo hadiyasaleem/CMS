@@ -54,7 +54,7 @@ class FeeChallanViewModel @Inject constructor(
                 _refreshTrigger.map {
                     // Fees are per shift: use the structure of the student's own shift.
                     val profile = runCatching { academicSessionRepository.getStudentProfile(context.sessionId, context.rollNumber) }.getOrNull()
-                    val shift = profile?.shift ?: context.session?.shifts?.firstOrNull() ?: Session.MORNING
+                    val shift = context.shift ?: profile?.shift ?: context.session?.shifts?.firstOrNull() ?: Session.MORNING
                     val structureResult = runCatching { feeRepository.getSessionFee(context.sessionId, shift) }
                     val structure = structureResult.orLogCritical("FeeChallanViewModel.getSessionFee")
                     _error.value = if (structureResult.isFailure) "Could not load fee details. Pull to refresh to try again." else null
@@ -65,7 +65,7 @@ class FeeChallanViewModel @Inject constructor(
                         rollNumber = context.rollNumber,
                         fatherName = profile?.fatherName?.takeIf { it.isNotBlank() } ?: profile?.guardianName,
                         sessionLabel = context.session?.label ?: context.sessionId,
-                        shift = shift.name,
+                        shift = shift.label,
                         deptCode = department?.code,
                         challanNumber = feeChallanNumber(context.sessionId, context.rollNumber, structure?.cadence?.name ?: "FEE"),
                         issueDate = LocalDate.now().toString(),

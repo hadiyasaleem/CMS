@@ -39,6 +39,7 @@ fun SessionDetailScreen(
     val subjectCounts by controller.subjectCounts.collectAsState()
     val periods by controller.periods.collectAsState()
     val fee by controller.fee.collectAsState()
+    val fees by controller.fees.collectAsState()
     val feeLoading by controller.feeLoading.collectAsState()
     val currentSemesterTerm by controller.currentSemesterTerm.collectAsState()
     val canPromote by controller.canPromote.collectAsState()
@@ -70,5 +71,6 @@ fun SessionDetailScreen(
         onClearError = controller::clearError,
         onConsumeNotice = controller::consumeNotice,
         shiftCounts = shiftCounts,
+        fees = fees,
     )
 }

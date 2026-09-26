@@ -34,7 +34,7 @@ fun sampleFeeChallanHeader(
         rollNumber = "${department?.code ?: "XX"}-00-00",
         fatherName = "Sample Father Name",
         sessionLabel = session?.label ?: "----–----",
-        shift = shift.name,
+        shift = shift.label,
         deptCode = department?.code,
         challanNumber = "SAMPLE-" + feeChallanNumber(sessionId, "00-00", session?.currentSemester?.toString() ?: "1"),
         issueDate = LocalDate.now().toString(),

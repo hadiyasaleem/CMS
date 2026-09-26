@@ -42,6 +42,10 @@ class SessionFeesViewModel @Inject constructor(
 
     val sessionId = controller.sessionId
     val structure = controller.structure
+    val structures = controller.structures
+    val shift = controller.shift
+    val shifts = controller.shifts
+    fun selectShift(picked: com.mbd.cmscommon.domain.model.Session) = controller.selectShift(picked)
     val session = controller.session
     val department = controller.department
     val loading = controller.loading
@@ -66,6 +70,9 @@ class SessionFeesViewModel @Inject constructor(
 fun SessionFeesScreen(viewModel: SessionFeesViewModel = hiltViewModel()) {
     val context = LocalContext.current
     val structure by viewModel.structure.collectAsState()
+    val structures by viewModel.structures.collectAsState()
+    val shift by viewModel.shift.collectAsState()
+    val shifts by viewModel.shifts.collectAsState()
     val session by viewModel.session.collectAsState()
     val department by viewModel.department.collectAsState()
     val loading by viewModel.loading.collectAsState()
@@ -93,5 +100,9 @@ fun SessionFeesScreen(viewModel: SessionFeesViewModel = hiltViewModel()) {
             file.writeBytes(bytes)
             FileOpener.open(context, file, "application/pdf")
         },
+        shift = shift,
+        shifts = shifts,
+        onSelectShift = viewModel::selectShift,
+        allStructures = structures,
     )
 }

@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.controller.recommendedFeeCadence
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.export.ExportDocument
 import com.mbd.cmscommon.export.ExportFormat
@@ -78,17 +79,21 @@ fun SessionFeeWorkspace(
     onDownloadSamplePdf: (FeeChallanHeader, SessionFeeStructure) -> Unit,
     onExport: ((ExportDocument, ExportFormat) -> Unit)? = null,
     modifier: Modifier = Modifier,
-    // TODO(Task 6): Morning/Evening tabs pick the shift being edited.
+    /** The Morning/Evening tab being edited; each shift has its own independent plan. */
     shift: Session = structure?.shift ?: Session.MORNING,
+    shifts: List<Session> = listOf(shift),
+    onSelectShift: (Session) -> Unit = {},
+    allStructures: List<SessionFeeStructure> = listOfNotNull(structure),
 ) {
-    var initialized by remember { mutableStateOf(false) }
+    // Form state belongs to one shift's structure: switching tabs starts from that shift's saved values.
+    var initialized by remember(shift) { mutableStateOf(false) }
     var showSampleChallan by remember { mutableStateOf(false) }
-    var cadence by remember { mutableStateOf(FeeType.ANNUAL) }
-    var heads by remember { mutableStateOf(listOf<FeeHead>()) }
-    var academicYear by remember { mutableStateOf("") }
-    var dueDate by remember { mutableStateOf("") }
-    var lateFineNote by remember { mutableStateOf("") }
-    var paymentNote by remember { mutableStateOf("") }
+    var cadence by remember(shift) { mutableStateOf(recommendedFeeCadence(shift)) }
+    var heads by remember(shift) { mutableStateOf(listOf<FeeHead>()) }
+    var academicYear by remember(shift) { mutableStateOf("") }
+    var dueDate by remember(shift) { mutableStateOf("") }
+    var lateFineNote by remember(shift) { mutableStateOf("") }
+    var paymentNote by remember(shift) { mutableStateOf("") }
     var addingHead by remember { mutableStateOf(false) }
     var editingIndex by remember { mutableStateOf(-1) }
     var pendingRemoveIndex by remember { mutableStateOf(-1) }
@@ -119,8 +124,23 @@ fun SessionFeeWorkspace(
 
     LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { FeeHero(session) }
-        if (onExport != null && structure != null) {
-            item { ExportBar(onExport, build = { sessionFeesExport(session, department?.name, structure) }) }
+        item {
+            Column {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    shifts.forEach { option ->
+                        CmsChip("${option.label} shift", selected = option == shift, onClick = { onSelectShift(option) })
+                    }
+                }
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    if (shifts.size > 1) "Each shift has its own plan, fee heads and amounts." else "This session runs ${shift.label} only.",
+                    color = ModMuted,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        }
+        if (onExport != null && allStructures.isNotEmpty()) {
+            item { ExportBar(onExport, build = { sessionFeesExport(session, department?.name, allStructures) }) }
         }
 
         if (!errorMessage.isNullOrBlank()) {

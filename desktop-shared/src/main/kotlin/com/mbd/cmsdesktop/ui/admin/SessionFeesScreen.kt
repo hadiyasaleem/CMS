@@ -29,6 +29,9 @@ fun SessionFeesScreen(
         SessionFeesController(sessionId, feeRepository, sessionRepository, departmentRepository, updatedBy.orEmpty(), scope)
     }
     val structure by controller.structure.collectAsState()
+    val structures by controller.structures.collectAsState()
+    val shift by controller.shift.collectAsState()
+    val shifts by controller.shifts.collectAsState()
     val session by controller.session.collectAsState()
     val department by controller.department.collectAsState()
     val loading by controller.loading.collectAsState()
@@ -57,5 +60,9 @@ fun SessionFeesScreen(
                 AwtDesktopPlatformServices.open(target)
             }
         },
+        shift = shift,
+        shifts = shifts,
+        onSelectShift = controller::selectShift,
+        allStructures = structures,
     )
 }

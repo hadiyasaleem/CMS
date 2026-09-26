@@ -53,6 +53,8 @@ class SessionDetailController(
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _fees = MutableStateFlow<List<SessionFeeStructure>>(emptyList())
+    /** Each shift's fee structure (Morning and Evening are configured independently). */
+    val fees: StateFlow<List<SessionFeeStructure>> = _fees.asStateFlow()
 
     val subjectCounts: StateFlow<Map<Int, Int>> = curriculumRepository.observeSessionSubjects(sessionId)
         .map { subjects -> subjects.groupingBy { it.semester }.eachCount() }
@@ -87,7 +89,6 @@ class SessionDetailController(
             try {
                 val fees = feeRepository.getSessionFees(sessionId)
                 _fees.value = fees
-                // TODO(Task 6): show each shift's structure; for now the first configured one.
                 _fee.value = fees.firstOrNull()
             } finally {
                 _feeLoading.value = false

@@ -53,7 +53,7 @@ class StudentFeeChallanController(
                     rollNumber = rollNumber,
                     fatherName = profile?.fatherName?.takeIf { it.isNotBlank() } ?: profile?.guardianName,
                     sessionLabel = resolvedSession?.label ?: sessionId,
-                    shift = shift.name,
+                    shift = shift.label,
                     deptCode = department?.code,
                     challanNumber = feeChallanNumber(sessionId, rollNumber, _fee.value?.cadence?.name ?: "FEE"),
                     issueDate = LocalDate.now().toString(),

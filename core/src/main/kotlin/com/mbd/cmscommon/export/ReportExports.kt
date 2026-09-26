@@ -219,19 +219,27 @@ fun myStudentsExport(
     )
 }
 
-fun sessionFeesExport(session: AcademicSession?, departmentName: String?, structure: SessionFeeStructure): ExportDocument {
-    val heads = structure.heads.map { listOf(it.label, num(it.amount, 0)) } + listOf(listOf("Total", num(structure.heads.sumOf { it.amount }, 0)))
-    val details = listOfNotNull(
-        listOf("Cadence", titleCase(structure.cadence.name)),
-        structure.academicYear?.let { listOf("Academic year", it) },
-        structure.dueDate?.let { listOf("Due date", it) },
-        structure.lateFineNote?.let { listOf("Late fine", it) },
-        structure.paymentNote?.let { listOf("Payment", it) },
-    )
+/** One pair of sections (heads, details) per shift -- each shift has its own plan. */
+fun sessionFeesExport(session: AcademicSession?, departmentName: String?, structures: List<SessionFeeStructure>): ExportDocument {
+    val ordered = structures.sortedBy { it.shift }
+    val multiShift = ordered.size > 1 || (session?.shifts?.size ?: 1) > 1
+    val sections = ordered.flatMap { structure ->
+        val prefix = if (multiShift) "${structure.shift.label} " else ""
+        val heads = structure.heads.map { listOf(it.label, num(it.amount, 0)) } + listOf(listOf("Total", num(structure.heads.sumOf { it.amount }, 0)))
+        val details = listOfNotNull(
+            listOf("Shift", structure.shift.label),
+            listOf("Cadence", titleCase(structure.cadence.name)),
+            structure.academicYear?.let { listOf("Academic year", it) },
+            structure.dueDate?.let { listOf("Due date", it) },
+            structure.lateFineNote?.let { listOf("Late fine", it) },
+            structure.paymentNote?.let { listOf("Payment", it) },
+        )
+        listOf(ExportSection("${prefix}fee heads".replaceFirstChar { it.uppercase() }, listOf("Head", "Amount (PKR)"), heads), ExportSection("${prefix}details".replaceFirstChar { it.uppercase() }, listOf("Field", "Value"), details))
+    }
     return ExportDocument(
-        fileBase = "fees_${structure.sessionId}",
+        fileBase = "fees_${session?.sessionId ?: ordered.firstOrNull()?.sessionId ?: "session"}",
         title = listOfNotNull("Session Fee Structure", departmentName, sessionTitle(session).ifBlank { null }),
-        sections = listOf(ExportSection("Fee heads", listOf("Head", "Amount (PKR)"), heads), ExportSection("Details", listOf("Field", "Value"), details)),
+        sections = sections,
     )
 }
 
