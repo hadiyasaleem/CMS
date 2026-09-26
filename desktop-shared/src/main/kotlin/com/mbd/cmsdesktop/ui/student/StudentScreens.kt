@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.ui.student
 
+import com.mbd.cmscommon.util.clockDisplay
 import com.mbd.cmscommon.ui.components.WithVerticalScrollbar
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.layout.Arrangement
@@ -168,7 +169,7 @@ fun LegacyStudentTimetableScreen(
 @Composable
 private fun PeriodRow(period: SessionPeriod) {
     Row(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
-        Text(period.startTime, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+        Text(clockDisplay(period.startTime), modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
         Text(period.courseCode, style = MaterialTheme.typography.bodyMedium)
     }
 }

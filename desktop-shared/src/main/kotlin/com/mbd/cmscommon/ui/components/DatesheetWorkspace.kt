@@ -1,5 +1,7 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.util.clockDisplay
+import com.mbd.cmscommon.util.isTimeRangeInvalid
 import com.mbd.cmscommon.export.ExportDocument
 import com.mbd.cmscommon.export.ExportFormat
 import com.mbd.cmscommon.export.datesheetExport
@@ -840,7 +842,7 @@ private fun CreateDatesheetDialog(
 
     val startTimeValid = startTime.isBlank() || runCatching { LocalTime.parse(startTime) }.isSuccess
     val endTimeValid = endTime.isBlank() || runCatching { LocalTime.parse(endTime) }.isSuccess
-    val timesConsistent = startTime.isBlank() == endTime.isBlank()
+    val timesConsistent = startTime.isBlank() == endTime.isBlank() && !isTimeRangeInvalid(startTime, endTime)
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -855,7 +857,7 @@ private fun CreateDatesheetDialog(
                 Spacer(Modifier.height(10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     CmsTimeField(value = startTime, onValueChange = { startTime = it }, label = "Default start", modifier = Modifier.weight(1f))
-                    CmsTimeField(value = endTime, onValueChange = { endTime = it }, label = "Default end", modifier = Modifier.weight(1f))
+                    CmsTimeField(value = endTime, onValueChange = { endTime = it }, label = "Default end", minTime = startTime, modifier = Modifier.weight(1f))
                 }
                 Spacer(Modifier.height(10.dp))
                 CmsEntityPicker(
@@ -929,7 +931,7 @@ private fun PaperEditorDialog(
 
     val startTimeValid = startTime.isBlank() || runCatching { LocalTime.parse(startTime) }.isSuccess
     val endTimeValid = endTime.isBlank() || runCatching { LocalTime.parse(endTime) }.isSuccess
-    val timesConsistent = !overrideTime || startTime.isBlank() == endTime.isBlank()
+    val timesConsistent = !overrideTime || (startTime.isBlank() == endTime.isBlank() && !isTimeRangeInvalid(startTime, endTime))
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -954,10 +956,10 @@ private fun PaperEditorDialog(
                     Spacer(Modifier.height(6.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         CmsTimeField(value = startTime, onValueChange = { startTime = it }, label = "Start", modifier = Modifier.weight(1f))
-                        CmsTimeField(value = endTime, onValueChange = { endTime = it }, label = "End", modifier = Modifier.weight(1f))
+                        CmsTimeField(value = endTime, onValueChange = { endTime = it }, label = "End", minTime = startTime, modifier = Modifier.weight(1f))
                     }
                 } else if (sheet.defaultStartTime != null && sheet.defaultEndTime != null) {
-                    Text("Uses the datesheet default: ${sheet.defaultStartTime}–${sheet.defaultEndTime}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                    Text("Uses the datesheet default: ${clockDisplay(sheet.defaultStartTime)}–${clockDisplay(sheet.defaultEndTime)}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
                 Spacer(Modifier.height(10.dp))
                 CmsBuildingRoomPicker(
@@ -1024,7 +1026,7 @@ private fun formatExamDate(date: String?): String =
 private fun paperTimeLabel(slot: DatesheetSlot, sheet: Datesheet): String {
     val start = slot.resolvedStartTime(sheet)
     val end = slot.resolvedEndTime(sheet)
-    return if (start != null && end != null) "$start–$end" else "Time not set"
+    return if (start != null && end != null) "${clockDisplay(start)}–${clockDisplay(end)}" else "Time not set"
 }
 
 /**

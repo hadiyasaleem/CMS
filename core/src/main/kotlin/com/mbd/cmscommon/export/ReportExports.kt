@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.export
 
+import com.mbd.cmscommon.util.clockDisplay
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.AtRiskStudent
 import com.mbd.cmscommon.domain.model.AttendanceExportPayload
@@ -183,7 +184,7 @@ fun timetableExport(session: AcademicSession?, periods: List<SessionPeriod>): Ex
     val header = listOf("Day", "Start", "End", "Course", "Subject", "Type", "Teacher", "Room", "Effective")
     val rows = periods.sortedWith(compareBy({ dayOrder.indexOf(it.day) }, { it.startTime })).map { p ->
         listOf(
-            titleCase(p.day.name), p.startTime, p.endTime, p.courseCode, p.subjectName, titleCase(p.periodType.name), p.teacherName,
+            titleCase(p.day.name), clockDisplay(p.startTime), clockDisplay(p.endTime), p.courseCode, p.subjectName, titleCase(p.periodType.name), p.teacherName,
             listOfNotNull(p.building, p.roomNo).joinToString(" "),
             listOfNotNull(p.effectiveFrom?.toString(), p.effectiveTo?.toString()).joinToString(" to "),
         )
@@ -199,7 +200,7 @@ fun datesheetExport(sheetLabel: String, sheet: Datesheet, slots: List<DatesheetS
     val header = listOf("Date", "Start", "End", "Course", "Subject", "Venue", "Invigilator")
     val rows = slots.sortedWith(compareBy({ it.examDate ?: "9999" }, { it.startTime ?: "" })).map { s ->
         listOf(
-            s.examDate ?: "Not scheduled", s.startTime ?: sheet.defaultStartTime.orEmpty(), s.endTime ?: sheet.defaultEndTime.orEmpty(),
+            s.examDate ?: "Not scheduled", clockDisplay(s.startTime ?: sheet.defaultStartTime), clockDisplay(s.endTime ?: sheet.defaultEndTime),
             s.courseCode, s.subjectName, listOfNotNull(s.building, s.roomNo).joinToString(" "), s.invigilatorEmail.orEmpty(),
         )
     }

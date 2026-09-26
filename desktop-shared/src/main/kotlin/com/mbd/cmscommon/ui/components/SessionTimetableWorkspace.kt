@@ -1,5 +1,7 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.util.clockDisplay
+import com.mbd.cmscommon.util.isDateRangeReversed
 import com.mbd.cmscommon.export.ExportDocument
 import com.mbd.cmscommon.export.ExportFormat
 import com.mbd.cmscommon.export.timetableExport
@@ -196,7 +198,7 @@ fun SessionTimetableWorkspace(
     pendingRemove?.let { period ->
         ConfirmDestructiveActionDialog(
             title = "Remove period",
-            dependentSummary = "Removes ${period.subjectName.ifBlank { period.periodType.name }} at ${period.startTime} on ${period.day}.",
+            dependentSummary = "Removes ${period.subjectName.ifBlank { period.periodType.name }} at ${clockDisplay(period.startTime)} on ${period.day}.",
             onConfirm = { onRemovePeriod(period); pendingRemove = null },
             onDismiss = { pendingRemove = null },
         )
@@ -389,7 +391,7 @@ private fun PeriodEditorDialog(
                 Spacer(Modifier.height(10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     CmsTimeField(value = start, onValueChange = { start = it }, label = "Start", modifier = Modifier.weight(1f))
-                    CmsTimeField(value = end, onValueChange = { end = it }, label = "End", modifier = Modifier.weight(1f))
+                    CmsTimeField(value = end, onValueChange = { end = it }, label = "End", minTime = start, modifier = Modifier.weight(1f))
                 }
                 Spacer(Modifier.height(10.dp))
                 Text("PERIOD TYPE", color = ModMuted, style = CmsTextStyles.eyebrow)
@@ -449,7 +451,7 @@ private fun PeriodEditorDialog(
                 Spacer(Modifier.height(6.dp))
                 CmsDateField(value = effectiveFrom, onValueChange = { effectiveFrom = it }, label = "Effective from", optional = true)
                 Spacer(Modifier.height(10.dp))
-                CmsDateField(value = effectiveTo, onValueChange = { effectiveTo = it }, label = "Effective to", optional = true)
+                CmsDateField(value = effectiveTo, onValueChange = { effectiveTo = it }, label = "Effective to", optional = true, minDate = effectiveFrom.ifBlank { null })
                 if (!timeValid) {
                     Spacer(Modifier.height(8.dp))
                     Text("Time conflict: enter a valid start and end time.", color = TimetableRed, style = MaterialTheme.typography.bodySmall)
@@ -468,7 +470,7 @@ private fun PeriodEditorDialog(
                         runCatching { LocalDate.parse(effectiveTo.trim()) }.getOrNull(),
                     )
                 },
-                enabled = selectedDays.isNotEmpty() && timeValid && (!needsSubject || subjectCode.isNotBlank()),
+                enabled = selectedDays.isNotEmpty() && timeValid && !isDateRangeReversed(effectiveFrom, effectiveTo) && (!needsSubject || subjectCode.isNotBlank()),
             ) { Text(if (existing == null) "Add period" else "Save") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },

@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.util.clockDisplay
 import com.mbd.cmscommon.util.orThrowValidation
 import com.mbd.cmscommon.util.requireValid
 
@@ -104,7 +105,9 @@ class SessionTimetableController(
         validateTimetablePeriod(period, replaces, periods.value).orThrowValidation()
 
         timetableRepository.savePeriod(period)
-        if (replaces != null && (replaces.day != period.day || replaces.startTime != period.startTime)) {
+        // Compare as HH:mm: a stored "09:00:00" and a re-picked "09:00" are the same slot, and treating
+        // them as a move would delete the row savePeriod just upserted.
+        if (replaces != null && (replaces.day != period.day || clockDisplay(replaces.startTime) != clockDisplay(period.startTime))) {
             timetableRepository.removePeriod(replaces)
         }
     }

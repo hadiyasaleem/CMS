@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.util.clockDisplay
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -364,7 +365,7 @@ private fun DayDetailEventRow(event: CalendarEvent, canDelete: Boolean, onDelete
                 Text(event.title, modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
                 StatusBadge(event.eventType.uppercase(Locale.ROOT), eventTypeTone(event.eventType))
             }
-            val time = listOfNotNull(event.startTime, event.endTime.takeIf { !it.isNullOrBlank() }).joinToString(" - ").ifBlank { null }
+            val time = listOfNotNull(event.startTime, event.endTime.takeIf { !it.isNullOrBlank() }).joinToString(" - ") { clockDisplay(it) }.ifBlank { null }
             if (time != null) {
                 Spacer(Modifier.height(2.dp))
                 Text(time, color = ModMuted, style = MaterialTheme.typography.bodySmall)
@@ -465,11 +466,11 @@ private fun CreateCalendarEventDialog(
                 Spacer(Modifier.height(10.dp))
                 CmsDateField(value = startDate, onValueChange = { startDate = it }, label = "Start date")
                 Spacer(Modifier.height(10.dp))
-                CmsDateField(value = endDate, onValueChange = { endDate = it }, label = "End date", optional = true)
+                CmsDateField(value = endDate, onValueChange = { endDate = it }, label = "End date", optional = true, minDate = startDate.ifBlank { null })
                 Spacer(Modifier.height(10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     CmsTimeField(value = startTime, onValueChange = { startTime = it }, label = "Start time", modifier = Modifier.weight(1f))
-                    CmsTimeField(value = endTime, onValueChange = { endTime = it }, label = "End time", modifier = Modifier.weight(1f))
+                    CmsTimeField(value = endTime, onValueChange = { endTime = it }, label = "End time", minTime = startTime.takeIf { endDate.isBlank() || endDate == startDate }, modifier = Modifier.weight(1f))
                 }
                 Spacer(Modifier.height(10.dp))
                 OutlinedTextField(value = venue, onValueChange = { venue = it }, label = { Text("Venue (optional)") }, modifier = Modifier.fillMaxWidth(), singleLine = true)

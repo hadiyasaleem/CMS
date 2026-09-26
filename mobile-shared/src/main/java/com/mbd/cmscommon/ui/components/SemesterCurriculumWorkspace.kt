@@ -344,7 +344,7 @@ private fun TermDatesEditorDialog(
                 Spacer(Modifier.height(10.dp))
                 CmsDateField(value = start, onValueChange = { start = it }, label = "Start date", optional = true)
                 Spacer(Modifier.height(10.dp))
-                CmsDateField(value = end, onValueChange = { end = it }, label = "End date", optional = true)
+                CmsDateField(value = end, onValueChange = { end = it }, label = "End date", optional = true, minDate = start.ifBlank { null })
                 if (error != null) {
                     Spacer(Modifier.height(8.dp))
                     Text(error ?: "", color = CurriculumRed, style = MaterialTheme.typography.bodySmall)

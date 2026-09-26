@@ -22,6 +22,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
@@ -41,6 +42,9 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneOffset
+import com.mbd.cmscommon.util.clockDisplay
+import com.mbd.cmscommon.util.parseClock
+import com.mbd.cmscommon.util.parseIsoDate
 
 data class CmsEntityOption(
     val id: String,
@@ -58,8 +62,12 @@ fun CmsDateField(
     optional: Boolean = false,
     isError: Boolean = false,
     supportingText: String? = null,
+    minDate: String? = null,
 ) {
     var showPicker by remember { mutableStateOf(false) }
+    val min = parseIsoDate(minDate)
+    val beforeMin = min != null && parseIsoDate(value)?.isBefore(min) == true
+    val helper = if (beforeMin) "Must be on or after $min" else supportingText
 
     Box(modifier.fillMaxWidth()) {
         OutlinedTextField(
@@ -70,8 +78,8 @@ fun CmsDateField(
             label = { Text(label) },
             placeholder = { Text(if (optional) "Optional" else "Select date") },
             trailingIcon = { Icon(Icons.Outlined.CalendarMonth, contentDescription = "Choose $label") },
-            supportingText = supportingText?.let { { Text(it) } },
-            isError = isError,
+            supportingText = helper?.let { { Text(it) } },
+            isError = isError || beforeMin,
             singleLine = true,
             shape = RectangleShape,
         )
@@ -81,8 +89,16 @@ fun CmsDateField(
     }
 
     if (showPicker) {
-        val initialMillis = toDatePickerMillis(value)
-        val state = rememberDatePickerState(initialSelectedDateMillis = initialMillis)
+        val minMillis = min?.atStartOfDay(ZoneOffset.UTC)?.toInstant()?.toEpochMilli()
+        val initialMillis = toDatePickerMillis(value)?.takeIf { minMillis == null || it >= minMillis }
+        val state = rememberDatePickerState(
+            initialSelectedDateMillis = initialMillis,
+            initialDisplayedMonthMillis = initialMillis ?: minMillis,
+            selectableDates = object : SelectableDates {
+                override fun isSelectableDate(utcTimeMillis: Long): Boolean = minMillis == null || utcTimeMillis >= minMillis
+                override fun isSelectableYear(year: Int): Boolean = min == null || year >= min.year
+            },
+        )
         DatePickerDialog(
             onDismissRequest = { showPicker = false },
             confirmButton = {
@@ -108,7 +124,10 @@ fun CmsDateField(
     }
 }
 
-/** A time field backed by Material3's clock-face [TimePicker] (12-hour, AM/PM), storing "HH:MM" (24h). */
+/**
+ * A time field backed by Material3's clock-face [TimePicker] (12-hour, AM/PM), storing "HH:MM" (24h).
+ * With [minTime] set (the paired "from" time), only times strictly after it can be picked.
+ */
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun CmsTimeField(
@@ -117,19 +136,23 @@ fun CmsTimeField(
     label: String,
     modifier: Modifier = Modifier,
     isError: Boolean = false,
+    minTime: String? = null,
 ) {
     var showPicker by remember { mutableStateOf(false) }
+    val min = parseClock(minTime)
+    val notAfterMin = min != null && parseClock(value)?.isAfter(min) == false
 
     Box(modifier.fillMaxWidth()) {
         OutlinedTextField(
-            value = value,
+            value = clockDisplay(value),
             onValueChange = {},
             modifier = Modifier.fillMaxWidth(),
             readOnly = true,
             label = { Text(label) },
             placeholder = { Text("Select time") },
             trailingIcon = { Icon(Icons.Outlined.AccessTime, contentDescription = "Choose $label") },
-            isError = isError,
+            supportingText = if (notAfterMin) { { Text("Must be after ${clockDisplay(minTime)}") } } else null,
+            isError = isError || notAfterMin,
             singleLine = true,
             shape = RectangleShape,
         )
@@ -137,17 +160,27 @@ fun CmsTimeField(
     }
 
     if (showPicker) {
-        val initial = runCatching { LocalTime.parse(value.trim()) }.getOrNull() ?: LocalTime.of(8, 0)
+        val initial = parseClock(value) ?: min?.plusMinutes(30) ?: LocalTime.of(8, 0)
         val state = rememberTimePickerState(initialHour = initial.hour, initialMinute = initial.minute, is24Hour = false)
+        val picked = LocalTime.of(state.hour, state.minute)
+        val tooEarly = min != null && !picked.isAfter(min)
         AlertDialog(
             onDismissRequest = { showPicker = false },
             title = { Text(label) },
-            text = { TimePicker(state = state) },
+            text = {
+                Column {
+                    TimePicker(state = state)
+                    if (tooEarly) Text("Pick a time after ${clockDisplay(minTime)}.", color = MaterialTheme.colorScheme.error)
+                }
+            },
             confirmButton = {
-                TextButton(onClick = {
-                    onValueChange("%02d:%02d".format(state.hour, state.minute))
-                    showPicker = false
-                }) { Text("Select") }
+                TextButton(
+                    onClick = {
+                        onValueChange("%02d:%02d".format(state.hour, state.minute))
+                        showPicker = false
+                    },
+                    enabled = !tooEarly,
+                ) { Text("Select") }
             },
             dismissButton = { TextButton(onClick = { showPicker = false }) { Text("Cancel") } },
         )

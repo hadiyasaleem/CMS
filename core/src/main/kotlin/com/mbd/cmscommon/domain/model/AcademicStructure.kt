@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.domain.model
 
+import com.mbd.cmscommon.util.clockDisplay
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
@@ -119,7 +120,7 @@ data class SessionPeriod(
     override val updatedAt: Instant = Instant.EPOCH,
     override val updatedBy: String? = null,
 ) : BaseEntity() {
-    val timeRange: String get() = "${formatClockDisplay(startTime)}–${formatClockDisplay(endTime)}"
+    val timeRange: String get() = "${clockDisplay(startTime)}–${clockDisplay(endTime)}"
 
     companion object {
         fun buildId(sessionId: String, day: DayOfWeek, startTime: String): String =
@@ -127,9 +128,6 @@ data class SessionPeriod(
     }
 }
 
-/** Postgres `time` columns round-trip as "HH:mm:ss"; drop the seconds for display everywhere. */
-private fun formatClockDisplay(value: String): String =
-    Regex("^(\\d{2}:\\d{2}):\\d{2}$").find(value.trim())?.groupValues?.get(1) ?: value
 
 data class SemesterSubject(
     val sessionId: String,
