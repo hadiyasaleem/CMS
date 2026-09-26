@@ -48,6 +48,11 @@ import com.mbd.cmscommon.domain.model.AttendanceStatus
 import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.domain.model.attendanceRegisterSummary
 import com.mbd.cmscommon.teacher.ResolvedAssignment
+import com.mbd.cmscommon.teacher.AssignmentFilter
+import com.mbd.cmscommon.teacher.distinctDepts
+import com.mbd.cmscommon.teacher.distinctSessions
+import com.mbd.cmscommon.teacher.distinctShifts
+import com.mbd.cmscommon.teacher.filtered
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
 import com.mbd.cmscommon.ui.theme.ModAccent
@@ -184,22 +189,50 @@ private fun RegisterHeader(heroPainter: Painter) {
 @Composable
 private fun AssignmentPicker(assignments: List<ResolvedAssignment>, selected: ResolvedAssignment?, onSelect: (ResolvedAssignment) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
+    var filter by remember { mutableStateOf(AssignmentFilter()) }
+    val visible = remember(assignments, filter) { assignments.filtered(filter) }
     Column {
         Text("MY CLASSES", color = ModMuted, style = CmsTextStyles.eyebrow)
         Spacer(Modifier.height(6.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            FilterDropdown("Department", filter.dept, assignments.distinctDepts(), { filter = filter.copy(dept = it) }, Modifier.weight(1f))
+            FilterDropdown("Session", filter.session, assignments.distinctSessions(), { filter = filter.copy(session = it) }, Modifier.weight(1f))
+            FilterDropdown("Shift", filter.shift, assignments.distinctShifts(), { filter = filter.copy(shift = it) }, Modifier.weight(1f))
+        }
+        Spacer(Modifier.height(8.dp))
         Box(Modifier.fillMaxWidth()) {
             OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) {
                 Text(selected?.let { "${it.subjectLabel} (${it.courseCode})" } ?: "Select a class", modifier = Modifier.weight(1f))
                 Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
             }
             DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.heightIn(max = 240.dp)) {
-                assignments.forEach { assignment ->
+                if (visible.isEmpty()) DropdownMenuItem(text = { Text("No classes match these filters") }, onClick = { expanded = false }, enabled = false)
+                visible.forEach { assignment ->
                     DropdownMenuItem(
                         text = { Text("${assignment.subjectLabel} · ${assignment.sessionLabel}") },
                         onClick = { onSelect(assignment); expanded = false },
                     )
                 }
             }
+        }
+    }
+}
+
+/** One optional filter: "All" (null) or one of [options]. */
+@Composable
+private fun FilterDropdown(label: String, value: String?, options: List<String>, onChange: (String?) -> Unit, modifier: Modifier = Modifier) {
+    var open by remember { mutableStateOf(false) }
+    Box(modifier) {
+        OutlinedButton(onClick = { open = true }, modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)) {
+            Column(Modifier.weight(1f)) {
+                Text(label, color = ModMuted, style = MaterialTheme.typography.labelSmall)
+                Text(value ?: "All", maxLines = 1, style = MaterialTheme.typography.bodyMedium)
+            }
+            Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }, modifier = Modifier.heightIn(max = 240.dp)) {
+            DropdownMenuItem(text = { Text("All") }, onClick = { onChange(null); open = false })
+            options.forEach { option -> DropdownMenuItem(text = { Text(option) }, onClick = { onChange(option); open = false }) }
         }
     }
 }

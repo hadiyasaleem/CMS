@@ -45,6 +45,9 @@ class TeacherAssignmentsProvider @Inject constructor(
                         sessionLabel = sessionLabel,
                         courseCode = courseCode,
                         subjectLabel = "$courseCode — ${group.first().subjectName}",
+                        deptName = department?.code ?: session?.deptId?.uppercase(Locale.ROOT) ?: "",
+                        sessionName = session?.label ?: "",
+                        shift = if (session == null) "" else if (session.shift == Session.EVENING) "Evening" else "Morning",
                     )
                 }
                 .sortedWith(compareBy({ it.sessionLabel }, { it.courseCode }))
