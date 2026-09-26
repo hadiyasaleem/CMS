@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import androidx.compose.material3.Checkbox
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -125,10 +126,6 @@ fun MarkAttendanceWorkspace(
                 locked = locked,
                 date = date,
                 onDate = onDate,
-                topic = lectureTopic,
-                topics = topics,
-                onToggleTopic = onToggleTopic,
-                onTopic = onLectureTopic,
                 onHistory = { selected?.let { onHistory(it.sessionId, it.courseCode) } },
             )
         }
@@ -151,6 +148,7 @@ fun MarkAttendanceWorkspace(
             }
         }
 
+        item { TopicsPicker(topics, lectureTopic, locked, onToggleTopic, onLectureTopic) }
         item {
             SubmitCard(
                 unmarked = summary.unmarked,
@@ -287,7 +285,7 @@ private fun SummaryPill(text: String, color: Color) {
 }
 
 @Composable
-private fun RegisterTools(selected: ResolvedAssignment?, locked: Boolean, date: LocalDate, onDate: (LocalDate) -> Unit, topic: String, topics: List<String>, onToggleTopic: (String) -> Unit, onTopic: (String) -> Unit, onHistory: () -> Unit) {
+private fun RegisterTools(selected: ResolvedAssignment?, locked: Boolean, date: LocalDate, onDate: (LocalDate) -> Unit, onHistory: () -> Unit) {
     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             CmsDateField(
@@ -298,26 +296,62 @@ private fun RegisterTools(selected: ResolvedAssignment?, locked: Boolean, date: 
                 supportingText = if (locked) "Already marked on this date - use Attendance History to request changes." else "Pick a past date to view or mark it.",
             )
             Spacer(Modifier.height(8.dp))
-            if (topics.isNotEmpty()) {
-                Text("TOPICS TAUGHT", color = ModMuted, style = CmsTextStyles.eyebrow)
-                Spacer(Modifier.height(6.dp))
-                val chosen = taughtTopics(topic).map { it.lowercase() }.toSet()
-                @OptIn(ExperimentalLayoutApi::class)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    topics.forEach { t -> CmsChip(t, selected = t.lowercase() in chosen, onClick = { if (!locked) onToggleTopic(t) }) }
-                }
-                Spacer(Modifier.height(8.dp))
-            }
-            OutlinedTextField(
-                value = topic,
-                onValueChange = onTopic,
-                label = { Text(if (topics.isEmpty()) "Topics taught (optional, comma separated)" else "Other topics (comma separated)") },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !locked,
-                singleLine = true,
-            )
-            Spacer(Modifier.height(8.dp))
             TextButton(onClick = onHistory, enabled = selected != null) { Text("View Attendance History") }
+        }
+    }
+}
+
+/**
+ * Multi-select dropdown of the subject's outline topics (admin-entered, comma separated). Falls back to a plain
+ * comma-separated text field when the subject has no outline topics.
+ */
+@Composable
+private fun TopicsPicker(topics: List<String>, taught: String, locked: Boolean, onToggle: (String) -> Unit, onText: (String) -> Unit) {
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
+        Column(Modifier.padding(16.dp)) {
+            Text("TOPICS TAUGHT", color = ModMuted, style = CmsTextStyles.eyebrow)
+            Spacer(Modifier.height(6.dp))
+            if (topics.isEmpty()) {
+                OutlinedTextField(
+                    value = taught,
+                    onValueChange = onText,
+                    label = { Text("Topics taught (optional, comma separated)") },
+                    supportingText = { Text("Ask the admin to add topics to this subject's outline to pick them from a list.") },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !locked,
+                )
+            } else {
+                var open by remember { mutableStateOf(false) }
+                val chosen = taughtTopics(taught)
+                val chosenKeys = chosen.map { it.lowercase() }.toSet()
+                Box(Modifier.fillMaxWidth()) {
+                    OutlinedButton(onClick = { open = true }, enabled = !locked || chosen.isNotEmpty(), modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            if (chosen.isEmpty()) "Select topics (optional)" else chosen.joinToString(", "),
+                            modifier = Modifier.weight(1f),
+                            maxLines = 3,
+                        )
+                        Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
+                    }
+                    DropdownMenu(expanded = open, onDismissRequest = { open = false }, modifier = Modifier.heightIn(max = 320.dp)) {
+                        topics.forEach { t ->
+                            DropdownMenuItem(
+                                text = { Text(t) },
+                                leadingIcon = { Checkbox(checked = t.lowercase() in chosenKeys, onCheckedChange = null) },
+                                onClick = { if (!locked) onToggle(t) },
+                            )
+                        }
+                        // Anything recorded earlier that is no longer in the outline stays visible and removable.
+                        chosen.filter { c -> topics.none { it.equals(c, ignoreCase = true) } }.forEach { t ->
+                            DropdownMenuItem(
+                                text = { Text(t) },
+                                leadingIcon = { Checkbox(checked = true, onCheckedChange = null) },
+                                onClick = { if (!locked) onToggle(t) },
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }
