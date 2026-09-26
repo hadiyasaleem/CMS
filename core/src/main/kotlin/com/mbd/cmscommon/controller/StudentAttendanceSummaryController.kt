@@ -12,6 +12,7 @@ import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
 import com.mbd.cmscommon.export.ExportDocument
 import com.mbd.cmscommon.export.termSummaryExport
 import java.time.LocalDate
+import java.time.YearMonth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -64,14 +65,12 @@ class StudentAttendanceSummaryController(
             _term.value = term
 
             val now = today()
-            // Without term dates, look back a year and keep only months that have marks.
-            val from = term?.startDate ?: now.minusYears(1).withDayOfMonth(1)
-            val to = listOfNotNull(term?.endDate, now).min()
-            val marks = if (to < from) emptyList() else {
-                attendanceRepository.marksBetween(sessionId, courseCode, from, to)
-                    .filter { it.rollNumber.equals(rollNumber, ignoreCase = true) }
-            }
-            _summary.value = studentTermAttendance(marks, termMonths(term?.startDate, term?.endDate, now, marks))
+            // Read every mark this student has for the subject, not just those inside the term dates:
+            // marks taken outside a (mis)configured term must still show up rather than read as zero.
+            val marks = attendanceRepository.marksBetween(sessionId, courseCode, now.minusYears(2), now.plusYears(1))
+                .filter { it.rollNumber.equals(rollNumber, ignoreCase = true) }
+            val months = (termMonths(term?.startDate, term?.endDate, now, marks) + marks.map { YearMonth.from(it.date) }).distinct().sorted()
+            _summary.value = studentTermAttendance(marks, months)
         } finally {
             _loading.value = false
         }
