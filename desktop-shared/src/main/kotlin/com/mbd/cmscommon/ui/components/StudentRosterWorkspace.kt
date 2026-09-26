@@ -1,5 +1,15 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.domain.model.Session
+import com.mbd.cmscommon.controller.addStudentError
+import com.mbd.cmscommon.controller.defaultShiftForNewStudent
+import com.mbd.cmscommon.controller.rollBlockHint
+import com.mbd.cmscommon.controller.rosterTabLabel
+import com.mbd.cmscommon.controller.rosterTabs
+import com.mbd.cmscommon.controller.studentsForTab
+import com.mbd.cmscommon.controller.suggestedRollNumber
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import com.mbd.cmscommon.export.ExportDocument
 import com.mbd.cmscommon.export.ExportFormat
 import com.mbd.cmscommon.export.studentRosterExport
@@ -74,7 +84,7 @@ fun StudentRosterWorkspace(
     importResult: BulkImportSummary?,
     errorMessage: String?,
     onOpenStudent: (SessionStudent) -> Unit,
-    onAddStudent: (String, String) -> Unit,
+    onAddStudent: (String, String, Session) -> Unit,
     onDeleteStudent: (SessionStudent) -> Unit,
     onPickImportFile: () -> Unit,
     onConfirmImport: (List<ImportedStudentRow>) -> Unit,
@@ -86,6 +96,7 @@ fun StudentRosterWorkspace(
     modifier: Modifier = Modifier,
 ) {
     var query by remember { mutableStateOf("") }
+    var tab by remember { mutableStateOf<Session?>(null) }
     var showAddStudent by remember { mutableStateOf(false) }
     var pendingDelete by remember { mutableStateOf<SessionStudent?>(null) }
 
@@ -98,7 +109,12 @@ fun StudentRosterWorkspace(
     val withGpa = students.count { it.cgpa != null }
     val avgCgpa = students.mapNotNull { it.cgpa }.takeIf { it.isNotEmpty() }?.average()
 
-    val visible = students.filter { query.isBlank() || it.name.contains(query, ignoreCase = true) || it.rollNumber.contains(query, ignoreCase = true) }
+    // All | Morning | Evening -- a single-shift session shows All plus its own shift.
+    val tabs = rosterTabs(session)
+    val activeTab = tab?.takeIf { it in tabs }
+    val showShift = (session?.shifts?.size ?: 0) > 1
+    val visible = studentsForTab(students, activeTab)
+        .filter { query.isBlank() || it.name.contains(query, ignoreCase = true) || it.rollNumber.contains(query, ignoreCase = true) }
         .sortedBy { it.rollNumber }
 
     Box(modifier.fillMaxSize()) {
@@ -117,10 +133,16 @@ fun StudentRosterWorkspace(
             fullSpanItem { CmsNotice(errorMessage, tone = NoticeTone.Error, onDismiss = onClearError) }
         }
         if (onExport != null) {
-            fullSpanItem { ExportBar(onExport, build = { studentRosterExport(session, visible) }, enabled = visible.isNotEmpty()) }
+            fullSpanItem { ExportBar(onExport, build = { studentRosterExport(session, visible, activeTab) }, enabled = visible.isNotEmpty()) }
         }
 
         fullSpanItem { RosterSummaryCard(students.size, avgCgpa, withGpa, (maxStudents - students.size).coerceAtLeast(0)) }
+
+        fullSpanItem {
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                tabs.forEach { option -> CmsChip(rosterTabLabel(option, students), selected = activeTab == option, onClick = { tab = option }) }
+            }
+        }
 
         fullSpanItem {
             OutlinedTextField(
@@ -134,9 +156,9 @@ fun StudentRosterWorkspace(
 
         when {
             students.isEmpty() -> fullSpanItem { RosterEmptyState(hasStudents = false, isFull = false, onAdd = { showAddStudent = true }, onClear = {}) }
-            visible.isEmpty() -> fullSpanItem { RosterEmptyState(hasStudents = true, isFull = false, onAdd = {}, onClear = { query = "" }) }
+            visible.isEmpty() -> fullSpanItem { RosterEmptyState(hasStudents = true, isFull = false, onAdd = {}, onClear = { query = ""; tab = null }) }
             else -> items(visible, key = { it.rollNumber }) { student ->
-                StudentProfileCard(student, onOpen = { onOpenStudent(student) }, onDelete = { pendingDelete = student }, onLoadPhoto = onLoadPhoto)
+                StudentProfileCard(student, showShift, onOpen = { onOpenStudent(student) }, onDelete = { pendingDelete = student }, onLoadPhoto = onLoadPhoto)
             }
         }
 
@@ -153,11 +175,14 @@ fun StudentRosterWorkspace(
 
     if (showAddStudent) {
         AddRosterStudentDialog(
-            existingRolls = students.map { it.rollNumber.uppercase() }.toSet(),
-            isFull = isFull,
+            session = session,
+            students = students,
+            departmentCode = departmentCode,
             rollPrefix = rollPrefix,
+            initialShift = defaultShiftForNewStudent(session, activeTab),
+            isFull = isFull,
             onDismiss = { showAddStudent = false },
-            onConfirm = { roll, name -> onAddStudent(roll, name); showAddStudent = false },
+            onConfirm = { roll, name, shift -> onAddStudent(roll, name, shift); showAddStudent = false },
         )
     }
 
@@ -232,7 +257,7 @@ private fun RosterMetric(label: String, value: String, modifier: Modifier = Modi
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun StudentProfileCard(student: SessionStudent, onOpen: () -> Unit, onDelete: () -> Unit, onLoadPhoto: suspend (String) -> ImageBitmap?) {
+private fun StudentProfileCard(student: SessionStudent, showShift: Boolean, onOpen: () -> Unit, onDelete: () -> Unit, onLoadPhoto: suspend (String) -> ImageBitmap?) {
     val linked = student.linkedEmail.isNotBlank()
     var menuExpanded by remember { mutableStateOf(false) }
     Surface(modifier = Modifier.clickable(onClick = onOpen), shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
@@ -256,6 +281,7 @@ private fun StudentProfileCard(student: SessionStudent, onOpen: () -> Unit, onDe
             }
             Spacer(Modifier.height(8.dp))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (showShift) StatusBadge(student.shift.label.uppercase(), if (student.shift == Session.EVENING) BadgeTone.Gold else BadgeTone.Navy)
                 StatusBadge(if (linked) "LINKED" else "NOT LINKED", if (linked) BadgeTone.Success else BadgeTone.Neutral)
                 StatusBadge("GPA ${student.gpa?.let { "%.2f".format(it) } ?: "--"}", BadgeTone.Neutral)
                 StatusBadge("CGPA ${student.cgpa?.let { "%.2f".format(it) } ?: "--"}", BadgeTone.Neutral)
@@ -290,17 +316,35 @@ private fun RosterEmptyState(hasStudents: Boolean, isFull: Boolean, onAdd: () ->
 }
 
 @Composable
-private fun AddRosterStudentDialog(existingRolls: Set<String>, isFull: Boolean, rollPrefix: String?, onDismiss: () -> Unit, onConfirm: (String, String) -> Unit) {
-    var roll by remember { mutableStateOf("") }
-    var serial by remember { mutableStateOf("") }
+private fun AddRosterStudentDialog(
+    session: AcademicSession?,
+    students: List<SessionStudent>,
+    departmentCode: String?,
+    rollPrefix: String?,
+    initialShift: Session,
+    isFull: Boolean,
+    onDismiss: () -> Unit,
+    onConfirm: (String, String, Session) -> Unit,
+) {
+    var shift by remember { mutableStateOf(initialShift) }
+    fun suggestion(forShift: Session) = suggestedRollNumber(session, departmentCode, forShift, students)
+    var roll by remember { mutableStateOf(suggestion(initialShift).orEmpty()) }
+    var serial by remember { mutableStateOf(rollPrefix?.let { suggestion(initialShift)?.removePrefix(it) }.orEmpty()) }
     var name by remember { mutableStateOf("") }
     val effectiveRoll = if (rollPrefix != null) "$rollPrefix$serial" else roll
-    val duplicate = effectiveRoll.trim().uppercase() in existingRolls
     val blank = if (rollPrefix != null) serial.isBlank() else roll.isBlank()
+    val shifts = session?.shifts ?: listOf(shift)
     val error = when {
         isFull -> "Roster is full"
-        !blank && duplicate -> "This roll number is already enrolled."
-        else -> null
+        blank -> null
+        else -> addStudentError(session, shift, effectiveRoll, students)
+    }
+
+    fun pickShift(picked: Session) {
+        shift = picked
+        // Each shift has its own roll-number block, so re-suggest the next free number in it.
+        val next = suggestion(picked)
+        if (rollPrefix != null) serial = next?.removePrefix(rollPrefix).orEmpty() else roll = next.orEmpty()
     }
 
     AlertDialog(
@@ -308,6 +352,20 @@ private fun AddRosterStudentDialog(existingRolls: Set<String>, isFull: Boolean, 
         title = { Text("Add student", style = MaterialTheme.typography.headlineSmall) },
         text = {
             Column {
+                Text("Shift *", style = MaterialTheme.typography.labelLarge, color = ModMuted)
+                Spacer(Modifier.height(6.dp))
+                if (shifts.size > 1) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        shifts.forEach { option -> CmsChip(option.label, selected = shift == option, onClick = { pickShift(option) }) }
+                    }
+                } else {
+                    Text("${shift.label} (this session runs ${shift.label} only)", style = MaterialTheme.typography.bodyMedium)
+                }
+                rollBlockHint(session)?.let { hint ->
+                    Spacer(Modifier.height(4.dp))
+                    Text(hint, color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                }
+                Spacer(Modifier.height(10.dp))
                 Text("Class roll number *", style = MaterialTheme.typography.labelLarge, color = ModMuted)
                 Spacer(Modifier.height(6.dp))
                 if (rollPrefix != null) {
@@ -325,7 +383,7 @@ private fun AddRosterStudentDialog(existingRolls: Set<String>, isFull: Boolean, 
                         )
                     }
                     Spacer(Modifier.height(6.dp))
-                    Text("The department and intake year are filled in automatically — just enter this student's number.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                    Text("The next free number for this shift is filled in; change it if needed.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 } else {
                     OutlinedTextField(value = roll, onValueChange = { roll = it }, placeholder = { Text("IT-21-09") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 }
@@ -338,7 +396,7 @@ private fun AddRosterStudentDialog(existingRolls: Set<String>, isFull: Boolean, 
             }
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(effectiveRoll.trim(), name.trim()) }, enabled = !blank && name.isNotBlank() && error == null) { Text("Add") }
+            TextButton(onClick = { onConfirm(effectiveRoll.trim(), name.trim(), shift) }, enabled = !blank && name.isNotBlank() && error == null) { Text("Add") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     )

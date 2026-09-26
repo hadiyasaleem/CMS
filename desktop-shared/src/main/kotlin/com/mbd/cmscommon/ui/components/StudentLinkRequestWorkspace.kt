@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.domain.repository.AvailableRollNumber
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -58,7 +59,7 @@ data class StudentLinkRequestUiState(
     val sessions: List<AcademicSession> = emptyList(),
     /** Unclaimed roll numbers for the selected session -- null while loading/unselected, empty once
      * loaded if the session has none left. Backs the roll-number dropdown in [LinkRequestForm]. */
-    val availableRollNumbers: List<String>? = null,
+    val availableRollNumbers: List<AvailableRollNumber>? = null,
     val latestRequest: StudentLinkRequest? = null,
     val submitState: Outcome<Unit> = Outcome.Success(Unit),
     val refreshing: Boolean = false,
@@ -192,7 +193,6 @@ private fun LinkRequestForm(
     onSubmit: (String, String, String, String, String, String, String, String) -> Unit,
 ) {
     var deptId by remember { mutableStateOf<String?>(null) }
-    var shift by remember { mutableStateOf<Session?>(null) }
     var sessionId by remember { mutableStateOf<String?>(null) }
     var rollNumber by remember { mutableStateOf<String?>(null) }
     var name by remember { mutableStateOf("") }
@@ -202,18 +202,13 @@ private fun LinkRequestForm(
     var registrationNo by remember { mutableStateOf("") }
     var message by remember { mutableStateOf("") }
 
-    val sessionsForDept = state.sessions.filter { deptId == null || it.deptId == deptId }
-    val shiftsForDept = sessionsForDept.flatMap { it.shifts }.distinct().sorted()
-    val sessionsForDeptAndShift = sessionsForDept.filter { it.runs(shift ?: return@filter true) }
+    // One session per intake serves both shifts, so it is listed once; the roll number carries the shift.
+    val sessionsForDept = state.sessions.filter { deptId == null || it.deptId == deptId }.sortedByDescending { it.startYear }
     val busy = state.submitState is Outcome.Loading
     val valid = sessionId != null && !rollNumber.isNullOrBlank() && name.isNotBlank() && cnic.isNotBlank()
 
     fun selectDept(id: String?) {
-        deptId = id; shift = null; sessionId = null; rollNumber = null
-        onSessionSelected(null)
-    }
-    fun selectShift(picked: Session?) {
-        shift = picked; sessionId = null; rollNumber = null
+        deptId = id; sessionId = null; rollNumber = null
         onSessionSelected(null)
     }
     fun selectSession(id: String?) {
@@ -235,23 +230,14 @@ private fun LinkRequestForm(
                     onSelected = ::selectDept,
                 )
                 Spacer(Modifier.height(10.dp))
-                if (deptId == null || shiftsForDept.isEmpty()) {
+                if (deptId == null || sessionsForDept.isEmpty()) {
                     Text("Select a department first.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 } else {
-                    CmsEntityPicker(
-                        label = "Shift",
-                        selectedId = shift?.name,
-                        options = shiftsForDept.map { CmsEntityOption(it.name, it.name) },
-                        onSelected = { picked -> selectShift(picked?.let { Session.valueOf(it) }) },
-                    )
-                    Spacer(Modifier.height(10.dp))
-                    if (shift == null || sessionsForDeptAndShift.isEmpty()) {
-                        Text("Select a shift first.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
-                    } else {
+                    run {
                         CmsEntityPicker(
                             label = "Academic session",
                             selectedId = sessionId,
-                            options = sessionsForDeptAndShift.map { CmsEntityOption(it.sessionId, it.label) },
+                            options = sessionsForDept.map { CmsEntityOption(it.sessionId, it.label, it.shiftMode.label) },
                             onSelected = ::selectSession,
                         )
                         Spacer(Modifier.height(10.dp))
@@ -262,7 +248,7 @@ private fun LinkRequestForm(
                             else -> CmsEntityPicker(
                                 label = "Class roll number",
                                 selectedId = rollNumber,
-                                options = state.availableRollNumbers.map { CmsEntityOption(it, it) },
+                                options = state.availableRollNumbers.map { CmsEntityOption(it.rollNumber, "${it.rollNumber} · ${it.shift.label}") },
                                 onSelected = { rollNumber = it },
                             )
                         }

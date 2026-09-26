@@ -1,5 +1,6 @@
 package com.mbd.cmsstudent.feature.common
 
+import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.UserRole
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
@@ -23,6 +24,8 @@ data class StudentContext(
     val rollNumber: String,
     val name: String,
     val session: AcademicSession?,
+    /** The student's own shift (from their roster row); drives their timetable, fees and targeted events. */
+    val shift: Session? = null,
     val gpa: Double? = null,
     val cgpa: Double? = null,
 )
@@ -53,6 +56,7 @@ class CurrentStudentProvider @Inject constructor(
                             rollNumber = rollNumber,
                             name = matched?.name ?: rollNumber,
                             session = session,
+                            shift = matched?.shift,
                             gpa = matched?.gpa,
                             cgpa = matched?.cgpa,
                         )

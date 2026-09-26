@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.controller
 
+import kotlinx.coroutines.flow.first
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.Fine
@@ -102,6 +103,11 @@ class StudentProfileEditController(
                 specialNeeds = edited.specialNeeds?.trim(),
             )
             validateStudentProfile(normalized).orThrowValidation()
+            profileShiftError(session.value, normalized).orThrowValidation()
+            if (normalized.isCr || normalized.isGr) {
+                val classmates = sessionRepository.observeAllStudentProfiles().first().filter { it.sessionId == sessionId }
+                classRoleConflict(normalized, classmates).orThrowValidation()
+            }
             sessionRepository.saveStudentProfile(normalized)
             _saveState.value = Outcome.Success(Unit)
             _profile.value = normalized

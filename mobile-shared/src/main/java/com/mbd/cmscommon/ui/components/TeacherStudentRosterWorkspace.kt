@@ -224,7 +224,7 @@ private fun TeacherStudentCard(student: SessionStudent, tally: AttendanceTally?)
                 Spacer(Modifier.width(10.dp))
                 Column(Modifier.weight(1f)) {
                     Text(student.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
-                    Text("Roll ${student.rollNumber}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                    Text("Roll ${student.rollNumber} · ${student.shift.label}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
                 if (student.linkedEmail.isBlank()) StatusBadge("NOT LINKED", BadgeTone.Neutral)
             }

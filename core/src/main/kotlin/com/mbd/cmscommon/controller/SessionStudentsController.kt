@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.domain.model.rollBlockError
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.shiftForRoll
 import com.mbd.cmscommon.domain.model.AcademicSession
@@ -60,7 +61,8 @@ class SessionStudentsController(
     private suspend fun resolveDepartmentCode(currentSession: AcademicSession?): String? =
         currentSession?.deptId?.let { departmentRepo.getDepartment(it)?.code }
 
-    fun addStudent(rollNumber: String, name: String, gpa: Double?, cgpa: Double?) = launch {
+    /** Adds a student to exactly one [shift]; the roll number must sit in that shift's block. */
+    fun addStudent(rollNumber: String, name: String, shift: Session, gpa: Double? = null, cgpa: Double? = null) = launch {
         try {
             val normalizedRoll = FieldValidators.normalizeRollNumber(rollNumber)
             val normalizedName = name.trim()
@@ -70,12 +72,8 @@ class SessionStudentsController(
             FieldValidators.nameError(normalizedName, "Student name").orThrowValidation()
             requireValid(gpa == null || gpa in 0.0..4.0) { "GPA must be between 0 and 4." }
             requireValid(cgpa == null || cgpa in 0.0..4.0) { "CGPA must be between 0 and 4." }
-            requireValid(students.value.none { it.rollNumber.equals(normalizedRoll, ignoreCase = true) }) {
-                "Roll number $normalizedRoll is already enrolled in this session."
-            }
+            addStudentError(currentSession, shift, normalizedRoll, students.value).orThrowValidation()
 
-            // TODO(Task 5): the add form will ask for the shift; until then it follows the roll-number block.
-            val shift = currentSession?.let { shiftForRoll(it, normalizedRoll) } ?: Session.MORNING
             repo.addStudent(sessionId, normalizedRoll, normalizedName, shift, gpa, cgpa)
         } catch (t: Throwable) {
             throw IllegalStateException(t.userMessageLogged("Could not add the student."), t)
@@ -102,8 +100,9 @@ class SessionStudentsController(
                     !knownRolls.add(normalizedRoll) -> failures += "Row ${row.rowNumber}: Roll number $normalizedRoll is already enrolled."
                     else -> {
                         try {
-                            // TODO(Task 5): imports will carry a shift column; until then it follows the roll block.
-                            val shift = currentSession?.let { shiftForRoll(it, normalizedRoll) } ?: Session.MORNING
+                            // A "Shift" column wins; otherwise the roll number's block decides.
+                            val shift = row.shift ?: currentSession?.let { shiftForRoll(it, normalizedRoll) } ?: Session.MORNING
+                            currentSession?.let { rollBlockError(it, shift, normalizedRoll) }?.let { throw IllegalArgumentException(it) }
                             repo.addStudent(sessionId, normalizedRoll, normalizedName, shift, null, null)
                             succeeded++
                         } catch (t: Throwable) {

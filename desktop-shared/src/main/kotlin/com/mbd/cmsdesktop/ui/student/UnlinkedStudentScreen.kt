@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.ui.student
 
+import com.mbd.cmscommon.domain.repository.AvailableRollNumber
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -39,7 +40,7 @@ fun StudentLinkRequestScreen(component: DesktopAppComponent, onLinked: (UserRole
     var refreshing by remember { mutableStateOf(false) }
     var refreshError by remember { mutableStateOf<String?>(null) }
     var selectedSessionId by remember { mutableStateOf<String?>(null) }
-    var availableRollNumbers by remember { mutableStateOf<List<String>?>(null) }
+    var availableRollNumbers by remember { mutableStateOf<List<AvailableRollNumber>?>(null) }
 
     LaunchedEffect(selectedSessionId) {
         val sessionId = selectedSessionId
@@ -47,7 +48,7 @@ fun StudentLinkRequestScreen(component: DesktopAppComponent, onLinked: (UserRole
             availableRollNumbers = null
         } else {
             availableRollNumbers = null
-            availableRollNumbers = runCatching { component.academicSessionRepository().getAvailableRollNumbers(sessionId).map { it.rollNumber } }.getOrDefault(emptyList()) // TODO(Task 5): show each roll's shift
+            availableRollNumbers = runCatching { component.academicSessionRepository().getAvailableRollNumbers(sessionId) }.getOrDefault(emptyList())
         }
     }
 

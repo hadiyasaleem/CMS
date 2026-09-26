@@ -36,7 +36,7 @@ fun rollBlock(mode: ShiftMode, maxStudents: Int, shift: Session): IntRange {
  * can. Same checks and wording as the database, plus "this session has no such shift".
  */
 fun rollBlockError(mode: ShiftMode, maxStudents: Int, shift: Session, roll: String): String? {
-    if (!mode.allows(shift)) return "This session does not run a ${shift.label} shift."
+    if (!mode.allows(shift)) return "This session does not run the ${shift.label} shift."
     val serial = rollSerial(roll) ?: return "Roll number $roll must end with a serial number, e.g. IT-22-09."
     val cap = morningCapacity(mode, maxStudents)
     return when (shift) {

@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.export
 
+import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.util.clockDisplay
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.AtRiskStudent
@@ -202,11 +203,11 @@ fun myStudentsExport(
     roster: List<SessionStudent>,
     tallies: Map<String, AttendanceTally>,
 ): ExportDocument {
-    val header = listOf("Roll", "Name", "Student account", "Present", "Absent", "Leave", "Attendance %")
+    val header = listOf("Roll", "Name", "Shift", "Student account", "Present", "Absent", "Leave", "Attendance %")
     val rows = roster.sortedBy { it.rollNumber }.map { s ->
         val t = tallies[s.rollNumber]
         listOf(
-            s.rollNumber, s.name, s.linkedEmail.ifBlank { "Not linked" },
+            s.rollNumber, s.name, s.shift.label, s.linkedEmail.ifBlank { "Not linked" },
             (t?.present ?: 0).toString(), (t?.absent ?: 0).toString(), (t?.leave ?: 0).toString(),
             t?.let { pct(it.present, it.total) } ?: "-",
         )
@@ -316,14 +317,19 @@ fun teacherDirectoryExport(
     return ExportDocument("teachers_${LocalDate.now()}", listOf("Teacher Directory", "${teachers.size} teachers · ${LocalDate.now()}"), listOf(ExportSection("Teachers", header, rows)))
 }
 
-fun studentRosterExport(session: AcademicSession?, students: List<SessionStudent>): ExportDocument {
-    val header = listOf("Roll", "Name", "Student account", "GPA", "CGPA")
+fun studentRosterExport(session: AcademicSession?, students: List<SessionStudent>, shift: Session? = null): ExportDocument {
+    val header = listOf("Roll", "Name", "Shift", "Student account", "GPA", "CGPA")
     val rows = students.sortedBy { it.rollNumber }.map { s ->
-        listOf(s.rollNumber, s.name, s.linkedEmail.ifBlank { "Not linked" }, num(s.gpa), num(s.cgpa))
+        listOf(s.rollNumber, s.name, s.shift.label, s.linkedEmail.ifBlank { "Not linked" }, num(s.gpa), num(s.cgpa))
     }
     return ExportDocument(
-        fileBase = "roster_${session?.sessionId ?: "session"}",
-        title = listOfNotNull("Student Roster", sessionTitle(session).ifBlank { null }, "${students.size} students"),
+        fileBase = "roster_${session?.sessionId ?: "session"}" + (shift?.let { "_${it.name.lowercase(Locale.ROOT)}" } ?: ""),
+        title = listOfNotNull(
+            "Student Roster",
+            sessionTitle(session).ifBlank { null },
+            shift?.let { "${it.label} shift" },
+            "${students.size} students",
+        ),
         sections = listOf(ExportSection("Students", header, rows)),
     )
 }
@@ -355,7 +361,7 @@ fun studentRecordExport(record: com.mbd.cmscommon.controller.StudentRecord): Exp
     val profile = listOf(
         field("Name", p.name), field("Roll number", p.rollNumber), field("University roll", p.universityRollNo),
         field("Registration no", p.registrationNo), field("Department", record.department?.name ?: record.session?.deptId?.uppercase(Locale.ROOT)),
-        field("Session", sessionTitle(record.session)), field("Enrollment status", titleCase(p.enrollmentStatus)),
+        field("Session", sessionTitle(record.session)), field("Shift", p.shift.label), field("Enrollment status", titleCase(p.enrollmentStatus)),
         field("Class representative", listOfNotNull("CR".takeIf { p.isCr }, "GR".takeIf { p.isGr }).joinToString(", ").ifBlank { "No" }),
         field("Father name", p.fatherName), field("Guardian", p.guardianName), field("CNIC / B-Form", p.cnicBform),
         field("Date of birth", p.dob), field("Gender", p.gender), field("Blood group", p.bloodGroup), field("Religion", p.religion),

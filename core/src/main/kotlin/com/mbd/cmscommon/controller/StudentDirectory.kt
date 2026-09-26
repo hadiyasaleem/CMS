@@ -143,7 +143,15 @@ class StudentDirectoryController(
         it.copy(deptId = deptId, sessionId = if (keepSession) it.sessionId else null, page = 0)
     }
 
-    fun setSession(sessionId: String?) = _query.update { it.copy(sessionId = sessionId, page = 0) }
+    fun setSession(sessionId: String?) = _query.update {
+        val session = sessions.value.firstOrNull { s -> s.sessionId == sessionId }
+        it.copy(
+            sessionId = sessionId,
+            deptId = session?.deptId ?: it.deptId,
+            shift = it.shift?.takeIf { shift -> session == null || session.runs(shift) },
+            page = 0,
+        )
+    }
     fun setShift(shift: Session?) = _query.update { it.copy(shift = shift, page = 0) }
     fun setEnrollmentStatus(status: String?) = _query.update { it.copy(enrollmentStatus = status, page = 0) }
     fun setAccount(account: StudentAccountFilter) = _query.update { it.copy(account = account, page = 0) }

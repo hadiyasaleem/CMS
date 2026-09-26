@@ -1,5 +1,6 @@
 package com.mbd.cmsadmin.feature.academics
 
+import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.util.rememberDocumentExport
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -62,7 +63,7 @@ class SessionStudentsViewModel @Inject constructor(
     val importResult = controller.importResult
     val importing = controller.importing
 
-    fun addStudent(rollNumber: String, name: String) = controller.addStudent(rollNumber, name, null, null)
+    fun addStudent(rollNumber: String, name: String, shift: Session) = controller.addStudent(rollNumber, name, shift)
     fun importStudents(rows: List<ImportedStudentRow>) = controller.importStudents(rows)
     fun clearImportResult() = controller.clearImportResult()
     fun deleteStudent(studentId: String) = controller.deleteStudent(studentId)

@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.domain.model.ShiftScope
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -120,7 +121,7 @@ fun StudentDirectoryWorkspace(
                         listOf(null to "All sessions") + sessionOptions.map { s -> s.sessionId to "${deptNames[s.deptId] ?: s.deptId.uppercase(Locale.ROOT)} ${s.label} ${s.shiftMode.label}" },
                         onSession,
                     )
-                    FilterDropdown("Shift", query.shift, listOf(null to "Both shifts") + Session.entries.map { it to pretty(it.name) }, onShift)
+                    FilterDropdown("Shift", query.shift, listOf(null to "Both shifts") + ShiftScope.shiftOptions(ShiftScope(sessionId = query.sessionId), sessions).map { it to it.label }, onShift)
                     FilterDropdown("Status", query.enrollmentStatus, listOf(null to "Any status") + enrollmentStatuses.map { it to pretty(it) }, onEnrollmentStatus)
                     FilterDropdown("Account", query.account, StudentAccountFilter.entries.map { it to it.label }, { it?.let(onAccount) })
                 }

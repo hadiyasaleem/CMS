@@ -63,7 +63,7 @@ class ShiftRulesTest {
         // so the numbering survives a later switch to BOTH.
         val eveningOnly = session(ShiftMode.EVENING, 50)
         assertNull(rollBlockError(eveningOnly, Session.EVENING, "IT-22-51"))
-        assertEquals("This session does not run a Morning shift.", rollBlockError(eveningOnly, Session.MORNING, "IT-22-01"))
+        assertEquals("This session does not run the Morning shift.", rollBlockError(eveningOnly, Session.MORNING, "IT-22-01"))
     }
 
     @Test

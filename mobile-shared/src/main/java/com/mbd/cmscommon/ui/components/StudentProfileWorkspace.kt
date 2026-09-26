@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.controller.rollBlockHint
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -172,6 +173,7 @@ fun StudentProfileWorkspace(
         item {
             AcademicAndRolesCard(
                 profile = profile,
+                session = session,
                 onToggleCr = { profile = profile.copy(isCr = !profile.isCr) },
                 onToggleGr = { profile = profile.copy(isGr = !profile.isGr) },
                 onDelink = onDelink,
@@ -309,7 +311,7 @@ private fun ProfileChipPicker(label: String, options: List<String>, selected: St
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun AcademicAndRolesCard(profile: StudentProfile, onToggleCr: () -> Unit, onToggleGr: () -> Unit, onDelink: () -> Unit) {
+private fun AcademicAndRolesCard(profile: StudentProfile, session: AcademicSession?, onToggleCr: () -> Unit, onToggleGr: () -> Unit, onDelink: () -> Unit) {
     var confirmDelink by remember { mutableStateOf(false) }
 
     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
@@ -321,6 +323,12 @@ private fun AcademicAndRolesCard(profile: StudentProfile, onToggleCr: () -> Unit
                 AcademicMetric("GPA", profile.gpa?.let { "%.2f".format(it) } ?: "--")
                 AcademicMetric("CGPA", profile.cgpa?.let { "%.2f".format(it) } ?: "--")
                 AcademicMetric("Account", if (profile.linkedEmail.isNotBlank()) "Linked" else "Not linked")
+                AcademicMetric("Shift", profile.shift.label)
+            }
+            // The roll number's serial decides the shift, so it isn't edited here.
+            rollBlockHint(session)?.let { hint ->
+                Spacer(Modifier.height(4.dp))
+                Text("Shift follows the roll number. $hint", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             }
             if (profile.linkedEmail.isNotBlank()) {
                 Spacer(Modifier.height(6.dp))
@@ -332,11 +340,11 @@ private fun AcademicAndRolesCard(profile: StudentProfile, onToggleCr: () -> Unit
             Spacer(Modifier.height(10.dp))
             Text("CLASS REPRESENTATIVE ROLES", color = ModMuted, style = CmsTextStyles.eyebrow)
             Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("Class Rep (CR)", modifier = Modifier.weight(1f))
+                Text("Class Rep (CR) · ${profile.shift.label}", modifier = Modifier.weight(1f))
                 Switch(checked = profile.isCr, onCheckedChange = { onToggleCr() })
             }
             Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("Girls' Rep (GR)", modifier = Modifier.weight(1f))
+                Text("Girls' Rep (GR) · ${profile.shift.label}", modifier = Modifier.weight(1f))
                 Switch(checked = profile.isGr, onCheckedChange = { onToggleGr() })
             }
         }

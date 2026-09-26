@@ -59,7 +59,7 @@ fun SessionStudentsScreen(
         importResult = importResult,
         errorMessage = fileError ?: controllerError,
         onOpenStudent = { onOpenStudent(sessionId, it.rollNumber) },
-        onAddStudent = { roll, name -> controller.addStudent(roll, name, null, null) },
+        onAddStudent = { roll, name, shift -> controller.addStudent(roll, name, shift) },
         onDeleteStudent = { controller.deleteStudent(it.id) },
         onPickImportFile = {
             val file = AwtDesktopPlatformServices.pickFile(window, "Choose a CSV or Excel roster file")

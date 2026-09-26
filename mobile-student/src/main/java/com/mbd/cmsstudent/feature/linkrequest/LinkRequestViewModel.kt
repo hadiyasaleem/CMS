@@ -1,5 +1,6 @@
 package com.mbd.cmsstudent.feature.linkrequest
 
+import com.mbd.cmscommon.domain.repository.AvailableRollNumber
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.auth.SessionManager
@@ -44,13 +45,13 @@ class LinkRequestViewModel @Inject constructor(
     private val _submitState = MutableStateFlow<Outcome<Unit>>(Outcome.Success(Unit))
     private val _selectedSessionId = MutableStateFlow<String?>(null)
 
-    private val availableRollNumbers: Flow<List<String>?> = _selectedSessionId.flatMapLatest { sessionId ->
+    private val availableRollNumbers: Flow<List<AvailableRollNumber>?> = _selectedSessionId.flatMapLatest { sessionId ->
         if (sessionId == null) {
             flowOf(null)
         } else {
             flow {
                 emit(null)
-                emit(runCatching { sessionRepository.getAvailableRollNumbers(sessionId).map { it.rollNumber } }.getOrDefault(emptyList())) // TODO(Task 5): show each roll's shift
+                emit(runCatching { sessionRepository.getAvailableRollNumbers(sessionId) }.getOrDefault(emptyList()))
             }
         }
     }

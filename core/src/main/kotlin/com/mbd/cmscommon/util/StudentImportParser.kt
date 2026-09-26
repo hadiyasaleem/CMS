@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.util
 
+import com.mbd.cmscommon.domain.model.Session
 import java.io.ByteArrayInputStream
 import java.util.Locale
 import java.util.zip.ZipInputStream
@@ -26,6 +27,8 @@ object StudentImportParser {
         val rollCol = header.indexOfFirst { it.contains("roll") }
         val nameCol = header.indexOfFirst { it.contains("name") }
         val hasHeader = rollCol >= 0 && nameCol >= 0
+        // Optional: which shift each student joins. Without it the roll number's block decides.
+        val shiftCol = if (hasHeader) header.indexOfFirst { it.contains("shift") } else -1
         val actualRollCol = if (hasHeader) rollCol else 0
         val actualNameCol = if (hasHeader) nameCol else 1
         val dataStart = if (hasHeader) 1 else 0
@@ -41,17 +44,31 @@ object StudentImportParser {
             val displayRow = i + 1
             val roll = line.getOrNull(actualRollCol)?.trim() ?: ""
             val name = line.getOrNull(actualNameCol)?.trim() ?: ""
+            val shiftText = if (shiftCol >= 0) line.getOrNull(shiftCol)?.trim().orEmpty() else ""
+            val shift = parseShiftCell(shiftText)
 
             if (roll.isBlank() || name.isBlank()) {
                 errors += "Row $displayRow: missing roll number or name — skipped."
+            } else if (shiftText.isNotBlank() && shift == null) {
+                errors += "Row $displayRow: shift '$shiftText' must be Morning or Evening — skipped."
             } else if (!seenRolls.add(roll.lowercase(Locale.ROOT))) {
                 errors += "Row $displayRow: duplicate roll '$roll' in file — skipped."
             } else {
-                rows += ImportedStudentRow(displayRow, roll, name)
+                rows += ImportedStudentRow(displayRow, roll, name, shift)
             }
         }
 
         return StudentImportResult(rows, errors)
+    }
+
+    /** "Morning", "M", "morning shift", "Evening", "E" ... -> the shift; anything else -> null. */
+    internal fun parseShiftCell(raw: String): Session? {
+        val value = raw.trim().lowercase(Locale.ROOT)
+        return when {
+            value == "m" || value.startsWith("morning") -> Session.MORNING
+            value == "e" || value.startsWith("evening") -> Session.EVENING
+            else -> null
+        }
     }
 
     private fun parseCsvTable(text: String): List<List<String>> =

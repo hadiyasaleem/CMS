@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.domain.model.shiftForRoll
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.horizontalScroll
@@ -106,10 +107,12 @@ fun LinkRequestReviewWorkspace(
         return
     }
 
-    fun sessionLabel(sessionId: String?): String {
-        val session = sessions.firstOrNull { it.sessionId == sessionId }
+    // The claimed roll number's serial decides the shift (Morning block first, Evening above it).
+    fun sessionLabel(request: StudentLinkRequest): String {
+        val session = sessions.firstOrNull { it.sessionId == request.sessionIdClaimed }
         val dept = departments.firstOrNull { it.deptId == session?.deptId }?.name
-        return if (session != null) "${dept ?: session.deptId} ${session.label} ${session.shiftMode.label}" else "No session selected"
+        val shift = session?.let { shiftForRoll(it, request.rollNumberClaimed)?.label ?: it.shiftMode.label }
+        return if (session != null) "${dept ?: session.deptId} ${session.label} · $shift" else "No session selected"
     }
 
     val filtered = requests.filter { request ->
@@ -211,7 +214,7 @@ fun LinkRequestReviewWorkspace(
                 val key = linkRequestVerificationKey(request)
                 LinkRequestCard(
                     request = request,
-                    sessionLabel = sessionLabel(request.sessionIdClaimed),
+                    sessionLabel = sessionLabel(request),
                     verification = verifications[key],
                     busy = busyRequestId == key,
                     rowError = rowErrors[key],
