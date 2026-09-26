@@ -80,3 +80,22 @@ fun shiftModeChangeError(
     }
     return null
 }
+
+/**
+ * Curriculum is per session, not per shift: subjects (with their outline topics), term dates and the
+ * current semester are shared by both shifts. Returns the note the curriculum screen shows for a two-shift
+ * session, or null for a single-shift one.
+ */
+fun sharedCurriculumNote(session: AcademicSession?): String? =
+    if (session?.shiftMode == ShiftMode.BOTH) "Shared by the Morning and Evening shifts: subjects, topics and term dates are entered once." else null
+
+/** Confirmation text for promoting (or graduating) a session; one promotion moves every shift it runs. */
+fun promotionConfirmText(session: AcademicSession?): String {
+    val semester = session?.currentSemester ?: 1
+    val who = if (session?.shiftMode == ShiftMode.BOTH) "both the Morning and Evening shifts" else "the whole class"
+    return if (semester >= AcademicSession.TOTAL_SEMESTERS) {
+        "This marks $who as graduated and archives the session. This cannot be undone."
+    } else {
+        "This promotes $who from semester $semester to ${semester + 1} and removes that semester's exam papers."
+    }
+}

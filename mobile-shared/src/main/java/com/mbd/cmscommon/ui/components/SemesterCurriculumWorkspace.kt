@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.controller.sharedCurriculumNote
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -166,10 +167,15 @@ private fun CurriculumHero(session: AcademicSession?, semester: Int, subjectCoun
             Text("Session curriculum", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
             Spacer(Modifier.height(4.dp))
             Text(
-                "${session?.label ?: "Session"} · Semester $semester · $subjectCount subject(s) · $totalCredits credits",
+                listOfNotNull(session?.label ?: "Session", session?.shiftMode?.label, "Semester $semester", "$subjectCount subject(s)", "$totalCredits credits")
+                    .joinToString(" · "),
                 color = CmsTheme.colors.onInkMuted,
                 style = MaterialTheme.typography.bodyMedium,
             )
+            sharedCurriculumNote(session)?.let { note ->
+                Spacer(Modifier.height(4.dp))
+                Text(note, color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
+            }
         }
     }
 }

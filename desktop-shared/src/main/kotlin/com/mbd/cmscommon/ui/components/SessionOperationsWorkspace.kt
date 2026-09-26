@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.controller.promotionConfirmText
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.ShiftMode
 import com.mbd.cmscommon.controller.capacityError
@@ -177,13 +178,7 @@ fun SessionOperationsWorkspace(
             onDismissRequest = { showPromoteConfirm = false },
             title = { Text(if (graduating) "Graduate this class" else "Promote to semester ${currentSemester + 1}", style = MaterialTheme.typography.headlineSmall) },
             text = {
-                Text(
-                    if (graduating) {
-                        "This marks the whole class as graduated and archives the session. This cannot be undone."
-                    } else {
-                        "This promotes the whole class from semester $currentSemester to ${currentSemester + 1} and removes that semester's exam papers."
-                    },
-                )
+                Text(promotionConfirmText(session))
             },
             confirmButton = { TextButton(onClick = { onPromoteSession(); showPromoteConfirm = false }) { Text(if (graduating) "Graduate" else "Promote") } },
             dismissButton = { TextButton(onClick = { showPromoteConfirm = false }) { Text("Cancel") } },
