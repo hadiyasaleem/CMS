@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.ui.admin
 
+import com.mbd.cmsdesktop.platform.rememberDocumentExport
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -36,6 +37,8 @@ fun SessionFeesScreen(
     val errorMessage by controller.error.collectAsState()
 
     SessionFeeWorkspace(
+
+        onExport = rememberDocumentExport(),
         sessionId = sessionId,
         session = session,
         department = department,

@@ -1,5 +1,6 @@
 package com.mbd.cmsadmin.feature.academics
 
+import com.mbd.cmscommon.util.rememberDocumentExport
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -85,6 +86,8 @@ fun SessionTimetableScreen(viewModel: SessionTimetableViewModel = hiltViewModel(
     val errorMessage by viewModel.error.collectAsState()
 
     SessionTimetableWorkspace(
+
+        onExport = rememberDocumentExport(),
         session = session,
         periods = periods,
         subjects = subjects,

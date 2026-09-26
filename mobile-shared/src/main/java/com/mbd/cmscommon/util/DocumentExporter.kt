@@ -5,6 +5,13 @@ import android.content.Intent
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
 import com.mbd.cmscommon.export.ExportDocument
 import com.mbd.cmscommon.export.ExportFormat
@@ -12,8 +19,10 @@ import com.mbd.cmscommon.export.ExportSection
 import com.mbd.cmscommon.export.XlsxWriter
 import com.mbd.cmscommon.export.pdfColumnWeights
 import com.mbd.cmscommon.export.safeFileBase
+import com.mbd.cmscommon.ui.components.CmsErrorDialog
 import java.io.File
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /** Writes an [ExportDocument] to the app cache and hands it to the system share sheet. */
@@ -117,5 +126,25 @@ object DocumentExporter {
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         context.startActivity(Intent.createChooser(intent, "Export report").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
+}
+
+/**
+ * Screen-level export hook: returns a callback that writes and shares a document, and shows its own
+ * error dialog if that fails.
+ */
+@Composable
+fun rememberDocumentExport(): (ExportDocument, ExportFormat) -> Unit {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var error by remember { mutableStateOf<String?>(null) }
+    error?.let { CmsErrorDialog(message = it, onDismiss = { error = null }) }
+    return remember(context, scope) {
+        { doc, format ->
+            scope.launch {
+                runCatching { DocumentExporter.export(context, doc, format) }
+                    .onFailure { error = it.userMessageLogged("DocumentExporter", "Could not export this report.") }
+            }
+        }
     }
 }

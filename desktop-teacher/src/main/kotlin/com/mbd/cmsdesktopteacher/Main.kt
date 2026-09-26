@@ -1,5 +1,7 @@
 package com.mbd.cmsdesktopteacher
 
+import androidx.compose.runtime.CompositionLocalProvider
+import com.mbd.cmsdesktop.platform.LocalAppWindow
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -89,6 +91,7 @@ fun main() = application {
         state = windowState,
         icon = painterResource("icon.png"),
     ) {
+        CompositionLocalProvider(LocalAppWindow provides window) {
         CmsTheme(app = CmsApp.TEACHER) {
             val currentRole = role
             if (!authChecked || !minDurationElapsed || roleRefreshInProgress) {
@@ -112,6 +115,7 @@ fun main() = application {
             } else {
                 TeacherNavHost(currentRole, component, window, ::signOut)
             }
+        }
         }
     }
 }

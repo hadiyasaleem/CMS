@@ -259,3 +259,15 @@ fun teacherDirectoryExport(
     }
     return ExportDocument("teachers_${LocalDate.now()}", listOf("Teacher Directory", "${teachers.size} teachers · ${LocalDate.now()}"), listOf(ExportSection("Teachers", header, rows)))
 }
+
+fun studentRosterExport(session: AcademicSession?, students: List<SessionStudent>): ExportDocument {
+    val header = listOf("Roll", "Name", "Student account", "GPA", "CGPA")
+    val rows = students.sortedBy { it.rollNumber }.map { s ->
+        listOf(s.rollNumber, s.name, s.linkedEmail.ifBlank { "Not linked" }, num(s.gpa), num(s.cgpa))
+    }
+    return ExportDocument(
+        fileBase = "roster_${session?.sessionId ?: "session"}",
+        title = listOfNotNull("Student Roster", sessionTitle(session).ifBlank { null }, "${students.size} students"),
+        sections = listOf(ExportSection("Students", header, rows)),
+    )
+}

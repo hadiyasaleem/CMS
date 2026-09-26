@@ -1,5 +1,6 @@
 package com.mbd.cmsadmin.feature.insights
 
+import com.mbd.cmscommon.util.rememberDocumentExport
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -47,6 +48,8 @@ fun InsightsScreen(refreshVersion: Int = 0, viewModel: InsightsViewModel = hiltV
     }
 
     InsightsWorkspace(
+
+        onExport = rememberDocumentExport(),
         overviews = overviews.orEmpty(),
         atRisk = atRisk.orEmpty(),
         examStats = examStats.orEmpty(),

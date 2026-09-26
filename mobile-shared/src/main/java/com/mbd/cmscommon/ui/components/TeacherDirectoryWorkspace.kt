@@ -1,5 +1,8 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.export.ExportDocument
+import com.mbd.cmscommon.export.ExportFormat
+import com.mbd.cmscommon.export.teacherDirectoryExport
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -116,6 +119,7 @@ fun TeacherDirectoryWorkspace(
     onLoadPhoto: suspend (String) -> ImageBitmap?,
     onConsumeNotice: () -> Unit,
     onClearError: () -> Unit,
+    onExport: ((ExportDocument, ExportFormat) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     var query by remember { mutableStateOf("") }
@@ -154,6 +158,10 @@ fun TeacherDirectoryWorkspace(
 
     Box(modifier.fillMaxSize()) {
         CardGrid(Modifier.fillMaxWidth()) {
+            if (onExport != null) {
+                fullSpanItem { ExportBar(onExport, build = { teacherDirectoryExport(visible, departments, assignments) }, enabled = visible.isNotEmpty()) }
+            }
+
             fullSpanItem { TeacherSummaryCard(teachers.size, teachers.count { it.status == TeacherStatus.ACTIVE }, assignments.values.sumOf { it.size }, teachers.count { completeness(it) < 100 }) }
 
             fullSpanItem {

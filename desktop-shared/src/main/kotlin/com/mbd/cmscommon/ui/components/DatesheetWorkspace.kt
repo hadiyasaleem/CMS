@@ -1,5 +1,8 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.export.ExportDocument
+import com.mbd.cmscommon.export.ExportFormat
+import com.mbd.cmscommon.export.datesheetExport
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -122,6 +125,7 @@ fun DatesheetWorkspace(
     onSyncMissingSubjects: () -> Unit,
     onRemovePaper: (String) -> Unit,
     onUpdatePaper: (DatesheetSlot) -> Unit,
+    onExport: ((ExportDocument, ExportFormat) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     var viewMode by remember { mutableStateOf(DatesheetViewMode.FILTERED) }
@@ -218,6 +222,7 @@ fun DatesheetWorkspace(
             onSyncMissingSubjects = onSyncMissingSubjects,
             onRemovePaper = onRemovePaper,
             onUpdatePaper = onUpdatePaper,
+            onExport = onExport,
         )
     }
 }
@@ -680,6 +685,7 @@ private fun DatesheetDetailDialog(
     onSyncMissingSubjects: () -> Unit,
     onRemovePaper: (String) -> Unit,
     onUpdatePaper: (DatesheetSlot) -> Unit,
+    onExport: ((ExportDocument, ExportFormat) -> Unit)?,
 ) {
     var editingSlot by remember { mutableStateOf<DatesheetSlot?>(null) }
     var confirmDelete by remember { mutableStateOf(false) }
@@ -692,7 +698,15 @@ private fun DatesheetDetailDialog(
             val scrollState = rememberScrollState()
             WithVerticalScrollbar(scrollState, Modifier.heightIn(max = 520.dp)) {
             Column(Modifier.fillMaxWidth().verticalScroll(scrollState)) {
-                StatusBadge(if (sheet.published) "PUBLISHED" else "DRAFT", if (sheet.published) BadgeTone.Success else BadgeTone.Neutral)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    StatusBadge(if (sheet.published) "PUBLISHED" else "DRAFT", if (sheet.published) BadgeTone.Success else BadgeTone.Neutral)
+                    Spacer(Modifier.weight(1f))
+                    if (onExport != null) {
+                        ExportMenuButton(onExport = { format ->
+                            onExport(datesheetExport(datesheetLabel(sheet, detail.session, detail.department), sheet, detail.slots), format)
+                        })
+                    }
+                }
                 Spacer(Modifier.height(10.dp))
                 if (viewer.canManage) {
                     detail.quality?.issues?.takeIf { it.isNotEmpty() }?.let { issues ->

@@ -1,5 +1,8 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.export.ExportDocument
+import com.mbd.cmscommon.export.ExportFormat
+import com.mbd.cmscommon.export.sessionFeesExport
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -73,6 +76,7 @@ fun SessionFeeWorkspace(
     onConsumeSaved: () -> Unit,
     onClearError: () -> Unit,
     onDownloadSamplePdf: (FeeChallanHeader, SessionFeeStructure) -> Unit,
+    onExport: ((ExportDocument, ExportFormat) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     var initialized by remember { mutableStateOf(false) }
@@ -115,6 +119,9 @@ fun SessionFeeWorkspace(
     WithVerticalScrollbar(listState) {
     LazyColumn(modifier.fillMaxWidth(), state = listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { FeeHero(session) }
+        if (onExport != null && structure != null) {
+            item { ExportBar(onExport, build = { sessionFeesExport(session, department?.name, structure) }) }
+        }
 
         if (!errorMessage.isNullOrBlank()) {
             item { CmsNotice(errorMessage, tone = NoticeTone.Error, onDismiss = onClearError) }

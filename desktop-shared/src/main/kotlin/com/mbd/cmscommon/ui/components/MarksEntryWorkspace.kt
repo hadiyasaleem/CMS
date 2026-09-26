@@ -1,5 +1,8 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.export.ExportDocument
+import com.mbd.cmscommon.export.ExportFormat
+import com.mbd.cmscommon.export.marksSheetExport
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -82,6 +85,7 @@ fun MarksEntryWorkspace(
     onSave: () -> Unit,
     onClearRequestState: () -> Unit,
     onRequestEdit: (String, Int, String) -> Unit,
+    onExport: ((ExportDocument, ExportFormat) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     var editTarget by remember { mutableStateOf<SessionStudent?>(null) }
@@ -106,6 +110,9 @@ fun MarksEntryWorkspace(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item { MarksHeader(selected, examType, average) }
+        if (onExport != null && selected != null) {
+            item { ExportBar(onExport, build = { marksSheetExport(selected, examType, roster, scores, absentRolls) }, enabled = roster.isNotEmpty()) }
+        }
         item { AssignmentPicker(assignments, selected, onSelect) }
         item {
             Row(

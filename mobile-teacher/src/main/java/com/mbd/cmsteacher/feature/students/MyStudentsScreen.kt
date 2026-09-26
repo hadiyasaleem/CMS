@@ -1,5 +1,6 @@
 package com.mbd.cmsteacher.feature.students
 
+import com.mbd.cmscommon.util.rememberDocumentExport
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -14,6 +15,8 @@ fun MyStudentsScreen(viewModel: MyStudentsViewModel = hiltViewModel()) {
     val tallies by viewModel.tallies.collectAsState()
 
     TeacherStudentRosterWorkspace(
+
+        onExport = rememberDocumentExport(),
         assignments = assignments,
         selected = selected,
         students = students,

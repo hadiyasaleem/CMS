@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.ui.admin
 
+import com.mbd.cmsdesktop.platform.rememberDocumentExport
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -50,6 +51,8 @@ fun TeachersScreen(
     val photoCacheDir = remember { File(System.getProperty("java.io.tmpdir"), "cms_teacher_photos").apply { mkdirs() } }
 
     TeacherDirectoryWorkspace(
+
+        onExport = rememberDocumentExport(),
         teachers = teachers,
         departments = departments,
         rooms = rooms,

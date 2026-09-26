@@ -1,5 +1,6 @@
 package com.mbd.cmsadmin.feature.academics
 
+import com.mbd.cmscommon.util.rememberDocumentExport
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -73,6 +74,8 @@ fun SessionFeesScreen(viewModel: SessionFeesViewModel = hiltViewModel()) {
     val errorMessage by viewModel.error.collectAsState()
 
     SessionFeeWorkspace(
+
+        onExport = rememberDocumentExport(),
         sessionId = viewModel.sessionId,
         session = session,
         department = department,

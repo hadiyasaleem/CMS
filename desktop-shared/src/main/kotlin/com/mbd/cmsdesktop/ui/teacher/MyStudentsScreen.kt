@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.ui.teacher
 
+import com.mbd.cmsdesktop.platform.rememberDocumentExport
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -44,6 +45,8 @@ fun MyStudentsScreen(
     }
 
     TeacherStudentRosterWorkspace(
+
+        onExport = rememberDocumentExport(),
         assignments = assignments,
         selected = selected,
         students = roster,

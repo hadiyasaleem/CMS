@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.ui.shared
 
+import com.mbd.cmsdesktop.platform.rememberDocumentExport
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -47,6 +48,8 @@ fun InsightsScreen(
     LaunchedEffect(departmentRepository) { departmentRepository.observeActiveDepartments().collect { departments = it } }
 
     InsightsWorkspace(
+
+        onExport = rememberDocumentExport(),
         overviews = overviews.orEmpty(),
         atRisk = atRisk.orEmpty(),
         examStats = examStats.orEmpty(),

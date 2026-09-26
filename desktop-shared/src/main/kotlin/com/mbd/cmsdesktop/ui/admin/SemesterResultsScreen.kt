@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.ui.admin
 
+import com.mbd.cmsdesktop.platform.rememberDocumentExport
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -47,6 +48,8 @@ fun SemesterResultsScreen(
     val saveState by controller.saveState.collectAsState()
 
     SemesterResultsWorkspace(
+
+        onExport = rememberDocumentExport(),
         sessions = sessions,
         sessionId = sessionId,
         semester = semester,

@@ -1,5 +1,6 @@
 package com.mbd.cmsteacher.feature.marks
 
+import com.mbd.cmscommon.util.rememberDocumentExport
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -22,6 +23,8 @@ fun MarksEntryScreen(viewModel: MarksEntryViewModel = hiltViewModel()) {
     val requestState by controller.requestState.collectAsState()
 
     MarksEntryWorkspace(
+
+        onExport = rememberDocumentExport(),
         assignments = assignments,
         selected = selected,
         examType = examType,

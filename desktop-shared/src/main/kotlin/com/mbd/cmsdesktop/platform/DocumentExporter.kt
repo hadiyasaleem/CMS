@@ -1,5 +1,11 @@
 package com.mbd.cmsdesktop.platform
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.awt.ComposeWindow
 import com.mbd.cmscommon.export.ExportDocument
 import com.mbd.cmscommon.export.ExportFormat
@@ -7,6 +13,8 @@ import com.mbd.cmscommon.export.ExportSection
 import com.mbd.cmscommon.export.XlsxWriter
 import com.mbd.cmscommon.export.pdfColumnWeights
 import com.mbd.cmscommon.export.safeFileBase
+import com.mbd.cmscommon.ui.components.CmsErrorDialog
+import com.mbd.cmscommon.util.userMessageLogged
 import java.io.File
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.PDPage
@@ -136,6 +144,22 @@ object DocumentExporter {
             doc.sections.forEach { drawSection(it, showName = doc.sections.size > 1) }
             stream?.close()
             pdf.save(target)
+        }
+    }
+}
+
+/** The app's main window, provided at each desktop app root so any screen can parent a save dialog. */
+val LocalAppWindow = staticCompositionLocalOf<ComposeWindow> { error("LocalAppWindow not provided") }
+
+/** Screen-level export hook: save dialog + write + open, with its own error dialog on failure. */
+@Composable
+fun rememberDocumentExport(window: ComposeWindow = LocalAppWindow.current): (ExportDocument, ExportFormat) -> Unit {
+    var error by remember { mutableStateOf<String?>(null) }
+    error?.let { CmsErrorDialog(message = it, onDismiss = { error = null }) }
+    return remember(window) {
+        { doc, format ->
+            runCatching { DocumentExporter.export(window, doc, format) }
+                .onFailure { error = it.userMessageLogged("DocumentExporter", "Could not export this report.") }
         }
     }
 }

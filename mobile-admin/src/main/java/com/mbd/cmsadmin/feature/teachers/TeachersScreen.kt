@@ -1,5 +1,6 @@
 package com.mbd.cmsadmin.feature.teachers
 
+import com.mbd.cmscommon.util.rememberDocumentExport
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -60,6 +61,8 @@ fun TeachersScreen(viewModel: TeachersViewModel = hiltViewModel()) {
     }
 
     TeacherDirectoryWorkspace(
+
+        onExport = rememberDocumentExport(),
         teachers = teachers,
         departments = departments,
         rooms = rooms,

@@ -1,5 +1,8 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.export.ExportDocument
+import com.mbd.cmscommon.export.ExportFormat
+import com.mbd.cmscommon.export.semesterResultsExport
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -77,6 +80,7 @@ fun SemesterResultsWorkspace(
     onRetry: () -> Unit,
     onClearSave: () -> Unit,
     onRecord: (String, Double, Double, String, String, Int?, String, List<String>) -> Unit,
+    onExport: ((ExportDocument, ExportFormat) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     var editing by remember { mutableStateOf<SessionStudent?>(null) }
@@ -97,6 +101,15 @@ fun SemesterResultsWorkspace(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item { ResultsHeader(classLabel, semester, averageGpa) }
+        if (onExport != null && sessionId != null) {
+            item {
+                ExportBar(
+                    onExport,
+                    build = { semesterResultsExport(sessions.firstOrNull { it.first == sessionId }?.second ?: sessionId, semester, roster, results) },
+                    enabled = roster.isNotEmpty(),
+                )
+            }
+        }
 
         if (loadOutcome is Outcome.Error) {
             item { CmsNotice(loadOutcome.message, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }

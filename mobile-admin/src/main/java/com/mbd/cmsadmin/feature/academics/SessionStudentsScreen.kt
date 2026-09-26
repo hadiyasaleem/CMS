@@ -1,5 +1,6 @@
 package com.mbd.cmsadmin.feature.academics
 
+import com.mbd.cmscommon.util.rememberDocumentExport
 import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -100,6 +101,8 @@ fun SessionStudentsScreen(
     }
 
     StudentRosterWorkspace(
+
+        onExport = rememberDocumentExport(),
         session = session,
         departmentCode = departmentCode,
         students = students,

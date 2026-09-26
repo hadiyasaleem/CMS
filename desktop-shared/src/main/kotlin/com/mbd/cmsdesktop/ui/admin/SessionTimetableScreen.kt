@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.ui.admin
 
+import com.mbd.cmsdesktop.platform.rememberDocumentExport
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -38,6 +39,8 @@ fun SessionTimetableScreen(
     val errorMessage by controller.error.collectAsState()
 
     SessionTimetableWorkspace(
+
+        onExport = rememberDocumentExport(),
         session = session,
         periods = periods,
         subjects = subjects,

@@ -1,5 +1,8 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.export.ExportDocument
+import com.mbd.cmscommon.export.ExportFormat
+import com.mbd.cmscommon.export.timetableExport
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -76,6 +79,7 @@ fun SessionTimetableWorkspace(
     onSavePeriod: (DayOfWeek, String, String, SemesterSubject?, Teacher?, PeriodType, String, String, String, LocalDate?, LocalDate?, SessionPeriod?) -> Unit,
     onRemovePeriod: (SessionPeriod) -> Unit,
     onClearError: () -> Unit,
+    onExport: ((ExportDocument, ExportFormat) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     var editorState by remember { mutableStateOf<SessionPeriod?>(null) }
@@ -92,6 +96,9 @@ fun SessionTimetableWorkspace(
     Box(modifier.fillMaxSize()) {
         LazyColumn(Modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             item { TimetableHero(session) }
+            if (onExport != null) {
+                item { ExportBar(onExport, build = { timetableExport(session, periods) }, enabled = periods.isNotEmpty()) }
+            }
 
             item { TimetableSummaryCard(periods.size, roomsConfigured, teacherIds.size, conflictIds.size) }
 

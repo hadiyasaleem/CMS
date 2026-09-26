@@ -1,5 +1,8 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.export.ExportDocument
+import com.mbd.cmscommon.export.ExportFormat
+import com.mbd.cmscommon.export.myStudentsExport
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -75,6 +78,7 @@ fun TeacherStudentRosterWorkspace(
     students: List<SessionStudent>,
     tallies: Map<String, AttendanceTally>,
     onSelectAssignment: (ResolvedAssignment) -> Unit,
+    onExport: ((ExportDocument, ExportFormat) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     var query by remember { mutableStateOf("") }
@@ -104,6 +108,9 @@ fun TeacherStudentRosterWorkspace(
 
     LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { TeacherRosterHero(selected, students.size) }
+        if (onExport != null && selected != null) {
+            item { ExportBar(onExport, build = { myStudentsExport(selected, students, tallies) }, enabled = students.isNotEmpty()) }
+        }
         item { AssignmentPicker(assignments, selected, onSelectAssignment) }
 
         if (selected != null) {

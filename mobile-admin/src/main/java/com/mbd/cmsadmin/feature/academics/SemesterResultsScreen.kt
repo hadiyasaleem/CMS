@@ -1,5 +1,6 @@
 package com.mbd.cmsadmin.feature.academics
 
+import com.mbd.cmscommon.util.rememberDocumentExport
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -50,6 +51,8 @@ fun SemesterResultsScreen(viewModel: SemesterResultsViewModel = hiltViewModel())
     val loadState by controller.loadState.collectAsState()
 
     SemesterResultsWorkspace(
+
+        onExport = rememberDocumentExport(),
         sessions = sessions,
         sessionId = sessionId,
         semester = semester,

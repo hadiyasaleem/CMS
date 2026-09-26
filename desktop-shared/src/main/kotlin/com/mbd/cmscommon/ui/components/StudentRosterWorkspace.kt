@@ -1,5 +1,8 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.export.ExportDocument
+import com.mbd.cmscommon.export.ExportFormat
+import com.mbd.cmscommon.export.studentRosterExport
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -79,6 +82,7 @@ fun StudentRosterWorkspace(
     onDismissImportResult: () -> Unit,
     onClearError: () -> Unit,
     onLoadPhoto: suspend (String) -> ImageBitmap?,
+    onExport: ((ExportDocument, ExportFormat) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     var query by remember { mutableStateOf("") }
@@ -111,6 +115,9 @@ fun StudentRosterWorkspace(
 
         if (!errorMessage.isNullOrBlank()) {
             fullSpanItem { CmsNotice(errorMessage, tone = NoticeTone.Error, onDismiss = onClearError) }
+        }
+        if (onExport != null) {
+            fullSpanItem { ExportBar(onExport, build = { studentRosterExport(session, visible) }, enabled = visible.isNotEmpty()) }
         }
 
         fullSpanItem { RosterSummaryCard(students.size, avgCgpa, withGpa, (maxStudents - students.size).coerceAtLeast(0)) }

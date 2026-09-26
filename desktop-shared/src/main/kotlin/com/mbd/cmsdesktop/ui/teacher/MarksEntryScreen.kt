@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.ui.teacher
 
+import com.mbd.cmsdesktop.platform.rememberDocumentExport
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -38,6 +39,8 @@ fun MarksEntryScreen(
     val requestState by controller.requestState.collectAsState()
 
     MarksEntryWorkspace(
+
+        onExport = rememberDocumentExport(),
         assignments = assignments,
         selected = selected,
         examType = examType,

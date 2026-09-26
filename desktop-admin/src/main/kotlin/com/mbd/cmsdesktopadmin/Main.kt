@@ -1,5 +1,7 @@
 package com.mbd.cmsdesktopadmin
 
+import androidx.compose.runtime.CompositionLocalProvider
+import com.mbd.cmsdesktop.platform.LocalAppWindow
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -119,6 +121,7 @@ fun main() = application {
         state = windowState,
         icon = painterResource("icon.png"),
     ) {
+        CompositionLocalProvider(LocalAppWindow provides window) {
         CmsTheme(app = CmsApp.ADMIN) {
             Box(
                 modifier = Modifier.fillMaxSize().background(CmsTheme.colors.ink),
@@ -160,6 +163,7 @@ fun main() = application {
                     }
                 }
             }
+        }
         }
     }
 }

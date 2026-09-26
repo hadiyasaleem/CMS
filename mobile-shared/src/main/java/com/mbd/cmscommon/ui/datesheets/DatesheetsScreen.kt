@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.datesheets
 
+import com.mbd.cmscommon.util.rememberDocumentExport
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -36,6 +37,8 @@ fun DatesheetsScreen(
     val detailError = editorController?.error?.collectAsState()?.value
 
     DatesheetWorkspace(
+
+        onExport = rememberDocumentExport(),
         viewer = viewer,
         departments = departments,
         sessions = sessions,

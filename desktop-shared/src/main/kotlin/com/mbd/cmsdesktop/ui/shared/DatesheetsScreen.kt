@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.ui.shared
 
+import com.mbd.cmsdesktop.platform.rememberDocumentExport
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -74,6 +75,8 @@ fun DatesheetsScreen(
     val detailError = editorController?.error?.collectAsState()?.value
 
     DatesheetWorkspace(
+
+        onExport = rememberDocumentExport(),
         viewer = viewer,
         departments = departments,
         sessions = sessions,

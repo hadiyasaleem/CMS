@@ -1,5 +1,8 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.export.ExportDocument
+import com.mbd.cmscommon.export.ExportFormat
+import com.mbd.cmscommon.export.insightsExport
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -84,6 +87,7 @@ fun InsightsWorkspace(
     loading: Boolean,
     errorMessage: String?,
     onRetry: () -> Unit,
+    onExport: ((ExportDocument, ExportFormat) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     var tab by remember { mutableStateOf(InsightsTab.SESSIONS) }
@@ -129,6 +133,15 @@ fun InsightsWorkspace(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item { InsightsHeader(viewer) }
+        if (onExport != null) {
+            item {
+                ExportBar(
+                    onExport,
+                    build = { insightsExport(filteredOverviews, filteredRisk, filteredExams, ::sessionLabel) },
+                    enabled = !loading,
+                )
+            }
+        }
 
         if (!errorMessage.isNullOrBlank()) {
             item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
