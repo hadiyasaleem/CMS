@@ -32,6 +32,39 @@ class MarkAttendanceController(
     private val _selected = MutableStateFlow<ResolvedAssignment?>(null)
     val selected: StateFlow<ResolvedAssignment?> = _selected.asStateFlow()
 
+    private val _date = MutableStateFlow(LocalDate.now())
+    val date: StateFlow<LocalDate> = _date.asStateFlow()
+
+    private var loadToken = 0
+
+    /** Switches the register to [newDate] (never in the future): shows what was marked, or a blank register to mark. */
+    fun setDate(newDate: LocalDate) {
+        val day = minOf(newDate, LocalDate.now())
+        if (day == _date.value) return
+        _date.value = day
+        _selected.value?.let { loadDay(it) }
+    }
+
+    private fun loadDay(assignment: ResolvedAssignment) {
+        val token = ++loadToken
+        val day = _date.value
+        _statuses.value = emptyMap()
+        _late.value = emptySet()
+        _remarks.value = emptyMap()
+        _lectureTopic.value = ""
+        _alreadyMarked.value = false
+        _submitState.value = null
+        launch {
+            val marks = runCatching { attendanceRepository.marksBetween(assignment.sessionId, assignment.courseCode, day, day) }.getOrDefault(emptyList())
+            if (marks.isEmpty() || token != loadToken) return@launch // stale: another date/class was picked meanwhile
+            _statuses.value = marks.associate { it.rollNumber to it.status }
+            _late.value = marks.filter { it.isLate }.map { it.rollNumber }.toSet()
+            _remarks.value = marks.mapNotNull { m -> m.remark?.takeIf { it.isNotBlank() }?.let { m.rollNumber to it } }.toMap()
+            _lectureTopic.value = marks.firstNotNullOfOrNull { it.lectureTopic?.takeIf { t -> t.isNotBlank() } }.orEmpty()
+            _alreadyMarked.value = true
+        }
+    }
+
     private val _alreadyMarked = MutableStateFlow(false)
     val alreadyMarked: StateFlow<Boolean> = _alreadyMarked.asStateFlow()
 
@@ -69,16 +102,7 @@ class MarkAttendanceController(
 
     fun select(assignment: ResolvedAssignment) {
         _selected.value = assignment
-        _statuses.value = emptyMap()
-        _late.value = emptySet()
-        _remarks.value = emptyMap()
-        _lectureTopic.value = ""
-        _alreadyMarked.value = false
-        launch {
-            _alreadyMarked.value = runCatching {
-                attendanceRepository.isMarkedOn(assignment.sessionId, assignment.courseCode, LocalDate.now())
-            }.getOrDefault(false)
-        }
+        loadDay(assignment)
     }
 
     fun setStatus(rollNumber: String, status: AttendanceStatus) {
@@ -140,7 +164,7 @@ class MarkAttendanceController(
             attendanceRepository.markAttendance(
                 sessionId = assignment.sessionId,
                 courseCode = assignment.courseCode,
-                date = LocalDate.now(),
+                date = _date.value,
                 teacherEmail = teacherId,
                 entries = records,
                 lectureTopic = _lectureTopic.value.trim().takeIf { it.isNotBlank() },

@@ -96,6 +96,8 @@ fun MarkAttendanceWorkspace(
     onHistory: (String, String) -> Unit,
     onSubmit: () -> Unit,
     modifier: Modifier = Modifier,
+    date: LocalDate = LocalDate.now(),
+    onDate: (LocalDate) -> Unit = {},
 ) {
     var noteRoll by remember { mutableStateOf<String?>(null) }
     val locked = alreadyMarked
@@ -113,6 +115,8 @@ fun MarkAttendanceWorkspace(
             RegisterTools(
                 selected = selected,
                 locked = locked,
+                date = date,
+                onDate = onDate,
                 topic = lectureTopic,
                 onTopic = onLectureTopic,
                 onHistory = { selected?.let { onHistory(it.sessionId, it.courseCode) } },
@@ -272,9 +276,17 @@ private fun SummaryPill(text: String, color: Color) {
 }
 
 @Composable
-private fun RegisterTools(selected: ResolvedAssignment?, locked: Boolean, topic: String, onTopic: (String) -> Unit, onHistory: () -> Unit) {
+private fun RegisterTools(selected: ResolvedAssignment?, locked: Boolean, date: LocalDate, onDate: (LocalDate) -> Unit, topic: String, onTopic: (String) -> Unit, onHistory: () -> Unit) {
     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
+            CmsDateField(
+                value = date.toString(),
+                onValueChange = { raw -> runCatching { LocalDate.parse(raw) }.getOrNull()?.let(onDate) },
+                label = "Attendance date",
+                maxDate = LocalDate.now().toString(),
+                supportingText = if (locked) "Already marked on this date - use Attendance History to request changes." else "Pick a past date to view or mark it.",
+            )
+            Spacer(Modifier.height(8.dp))
             OutlinedTextField(
                 value = topic,
                 onValueChange = onTopic,

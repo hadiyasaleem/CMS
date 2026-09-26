@@ -38,6 +38,7 @@ fun MarkAttendanceScreen(
     val allMarked by controller.allMarked.collectAsState()
     val lectureTopic by controller.lectureTopic.collectAsState()
     val submitState by controller.submitState.collectAsState()
+    val date by controller.date.collectAsState()
 
     MarkAttendanceWorkspace(
         heroPainter = painterResource("teacher-attendance-hero.jpg"),
@@ -59,5 +60,7 @@ fun MarkAttendanceScreen(
         onLectureTopic = controller::setLectureTopic,
         onHistory = onOpenHistory,
         onSubmit = controller::submit,
+        date = date,
+        onDate = controller::setDate,
     )
 }

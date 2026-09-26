@@ -63,11 +63,14 @@ fun CmsDateField(
     isError: Boolean = false,
     supportingText: String? = null,
     minDate: String? = null,
+    maxDate: String? = null,
 ) {
     var showPicker by remember { mutableStateOf(false) }
     val min = parseIsoDate(minDate)
     val beforeMin = min != null && parseIsoDate(value)?.isBefore(min) == true
-    val helper = if (beforeMin) "Must be on or after $min" else supportingText
+    val max = parseIsoDate(maxDate)
+    val afterMax = max != null && parseIsoDate(value)?.isAfter(max) == true
+    val helper = if (beforeMin) "Must be on or after $min" else if (afterMax) "Must be on or before $max" else supportingText
 
     Box(modifier.fillMaxWidth()) {
         OutlinedTextField(
@@ -79,7 +82,7 @@ fun CmsDateField(
             placeholder = { Text(if (optional) "Optional" else "Select date") },
             trailingIcon = { Icon(Icons.Outlined.CalendarMonth, contentDescription = "Choose $label") },
             supportingText = helper?.let { { Text(it) } },
-            isError = isError || beforeMin,
+            isError = isError || beforeMin || afterMax,
             singleLine = true,
             shape = RectangleShape,
         )
@@ -90,13 +93,14 @@ fun CmsDateField(
 
     if (showPicker) {
         val minMillis = min?.atStartOfDay(ZoneOffset.UTC)?.toInstant()?.toEpochMilli()
-        val initialMillis = toDatePickerMillis(value)?.takeIf { minMillis == null || it >= minMillis }
+        val maxMillis = max?.atStartOfDay(ZoneOffset.UTC)?.toInstant()?.toEpochMilli()
+        val initialMillis = toDatePickerMillis(value)?.takeIf { (minMillis == null || it >= minMillis) && (maxMillis == null || it <= maxMillis) }
         val state = rememberDatePickerState(
             initialSelectedDateMillis = initialMillis,
             initialDisplayedMonthMillis = initialMillis ?: minMillis,
             selectableDates = object : SelectableDates {
-                override fun isSelectableDate(utcTimeMillis: Long): Boolean = minMillis == null || utcTimeMillis >= minMillis
-                override fun isSelectableYear(year: Int): Boolean = min == null || year >= min.year
+                override fun isSelectableDate(utcTimeMillis: Long): Boolean = (minMillis == null || utcTimeMillis >= minMillis) && (maxMillis == null || utcTimeMillis <= maxMillis)
+                override fun isSelectableYear(year: Int): Boolean = (min == null || year >= min.year) && (max == null || year <= max.year)
             },
         )
         DatePickerDialog(
