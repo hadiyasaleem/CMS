@@ -1,0 +1,73 @@
+package com.mbd.cmscommon.ui.components
+
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.mbd.cmscommon.domain.model.AcademicSession
+import com.mbd.cmscommon.domain.model.Session
+import com.mbd.cmscommon.domain.model.ShiftScope
+import com.mbd.cmscommon.ui.theme.CmsTextStyles
+import com.mbd.cmscommon.ui.theme.ModMuted
+import java.util.Locale
+
+/**
+ * The shared Department -> Session -> Shift filter. Every level is optional ("All ..."), only the chosen levels
+ * apply, session choices follow the chosen department, and shift choices follow the chosen session (a
+ * single-shift session offers only its shift). [departments] are (id, name) pairs; [sessions] are the sessions
+ * the screen can show.
+ */
+@Composable
+fun ShiftScopeSelector(
+    scope: ShiftScope,
+    departments: List<Pair<String, String>>,
+    sessions: List<AcademicSession>,
+    onScopeChange: (ShiftScope) -> Unit,
+    modifier: Modifier = Modifier,
+    label: String? = "SHOW",
+) {
+    val deptOptions = departments.map { (id, name) -> CmsEntityOption(id, name) }
+    val sessionChoices = ShiftScope.sessionOptions(scope, sessions)
+        .sortedWith(compareByDescending<AcademicSession> { it.startYear }.thenBy { it.deptId })
+    val sessionOptions = sessionChoices.map { session ->
+        // Without a department, name it so "2022–2026" of IT and CS can be told apart.
+        val prefix = if (scope.deptId == null) "${session.deptId.uppercase(Locale.ROOT)} " else ""
+        CmsEntityOption(session.sessionId, prefix + session.label)
+    }
+    val shiftOptions = ShiftScope.shiftOptions(scope, sessions).map { CmsEntityOption(it.name, it.label) }
+
+    Column(modifier.fillMaxWidth()) {
+        if (label != null) {
+            Text(label, color = ModMuted, style = CmsTextStyles.eyebrow)
+            Spacer(Modifier.height(6.dp))
+        }
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            DropdownChip(
+                selectedLabel = deptOptions.firstOrNull { it.id == scope.deptId }?.label ?: scope.deptId,
+                emptyLabel = "All departments",
+                options = deptOptions,
+                onSelected = { onScopeChange(scope.withDept(it, sessions)) },
+            )
+            DropdownChip(
+                selectedLabel = sessionOptions.firstOrNull { it.id == scope.sessionId }?.label ?: scope.sessionId,
+                emptyLabel = "All sessions",
+                options = sessionOptions,
+                onSelected = { id -> onScopeChange(scope.withSession(sessions.firstOrNull { it.sessionId == id })) },
+            )
+            DropdownChip(
+                selectedLabel = scope.shift?.label,
+                emptyLabel = "All shifts",
+                options = shiftOptions,
+                onSelected = { name -> onScopeChange(scope.withShift(Session.entries.firstOrNull { it.name == name })) },
+            )
+        }
+    }
+}

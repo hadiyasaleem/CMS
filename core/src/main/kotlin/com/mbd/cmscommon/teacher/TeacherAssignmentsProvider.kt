@@ -62,6 +62,8 @@ fun resolveAssignments(
                 sessionName = session?.label ?: "",
                 shift = shift.label,
                 classShift = shift,
+                deptId = session?.deptId ?: "",
+                session = session,
             )
         }
         .sortedWith(compareBy({ it.sessionLabel }, { it.courseCode }))

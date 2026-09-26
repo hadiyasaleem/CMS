@@ -21,6 +21,8 @@ import com.mbd.cmscommon.ui.components.DashboardActionUi
 @Composable
 fun DashboardScreen(onOpen: (String) -> Unit, viewModel: DashboardViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsState()
+    val filterScope by viewModel.filterScope.collectAsState()
+    val filterOptions by viewModel.filterOptions.collectAsState()
     val actions = listOf(
         DashboardActionUi("Departments", "Programs, sessions and curricula", Icons.Outlined.School) {
             onOpen(AdminTab.Academics.route)
@@ -49,5 +51,8 @@ fun DashboardScreen(onOpen: (String) -> Unit, viewModel: DashboardViewModel = hi
         onOpenMasterTimetable = { onOpen(AdminLeaf.MASTER_TIMETABLE) },
         onOpenLinkRequests = { onOpen(AdminLeaf.LINK_REQUESTS) },
         onOpenNotifications = { onOpen(AdminLeaf.NOTIFICATIONS) },
+        filterScope = filterScope,
+        filterOptions = filterOptions,
+        onFilterScope = viewModel::setFilterScope,
     )
 }

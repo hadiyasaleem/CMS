@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.ui.admin
 
+import com.mbd.cmscommon.controller.ScopeFilterOptions
 import com.mbd.cmscommon.controller.shiftClassOptions
 import com.mbd.cmsdesktop.platform.rememberDocumentExport
 import androidx.compose.runtime.Composable
@@ -38,9 +39,15 @@ fun SemesterResultsScreen(
                 }
             },
             scope,
+            combine(departmentRepository.observeActiveDepartments(), sessionRepository.observeAllSessions()) { depts, sessions ->
+                ScopeFilterOptions.of(depts, sessions)
+            },
         )
     }
     val sessions by controller.sessions.collectAsState()
+    val visibleClasses by controller.visibleSessions.collectAsState()
+    val filterScope by controller.filterScope.collectAsState()
+    val filterOptions by controller.filterOptions.collectAsState()
     val sessionId by controller.sessionId.collectAsState()
     val semester by controller.semester.collectAsState()
     val roster by controller.roster.collectAsState()
@@ -53,6 +60,10 @@ fun SemesterResultsScreen(
 
         onExport = rememberDocumentExport(),
         sessions = sessions,
+        classOptions = visibleClasses,
+        filterScope = filterScope,
+        filterOptions = filterOptions,
+        onFilterScope = controller::setFilterScope,
         sessionId = sessionId,
         semester = semester,
         roster = roster,

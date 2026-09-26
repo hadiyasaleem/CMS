@@ -1,5 +1,8 @@
 package com.mbd.cmsteacher.feature.results
 
+import com.mbd.cmscommon.controller.ScopeFilterOptions
+import com.mbd.cmscommon.controller.scopeDepartments
+import com.mbd.cmscommon.controller.scopeSessions
 import com.mbd.cmscommon.util.rememberDocumentExport
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -31,6 +34,7 @@ class SemesterResultsViewModel @Inject constructor(
         sessions = assignmentsProvider.observeMyAssignments()
             .map { assignments -> assignments.map { it.classKey to it.sessionLabel }.distinct() },
         scope = viewModelScope,
+        filterOptions = assignmentsProvider.observeMyAssignments().map { ScopeFilterOptions(it.scopeDepartments(), it.scopeSessions()) },
     )
 }
 
@@ -38,6 +42,9 @@ class SemesterResultsViewModel @Inject constructor(
 fun SemesterResultsScreen(viewModel: SemesterResultsViewModel = hiltViewModel()) {
     val controller = viewModel.controller
     val sessions by controller.sessions.collectAsState()
+    val visibleClasses by controller.visibleSessions.collectAsState()
+    val filterScope by controller.filterScope.collectAsState()
+    val filterOptions by controller.filterOptions.collectAsState()
     val sessionId by controller.sessionId.collectAsState()
     val semester by controller.semester.collectAsState()
     val roster by controller.roster.collectAsState()
@@ -50,6 +57,10 @@ fun SemesterResultsScreen(viewModel: SemesterResultsViewModel = hiltViewModel())
 
         onExport = rememberDocumentExport(),
         sessions = sessions,
+        classOptions = visibleClasses,
+        filterScope = filterScope,
+        filterOptions = filterOptions,
+        onFilterScope = controller::setFilterScope,
         sessionId = sessionId,
         semester = semester,
         roster = roster,

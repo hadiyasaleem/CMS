@@ -48,6 +48,7 @@ fun StudentDirectoryScreen(
         onDepartment = controller::setDepartment,
         onSession = controller::setSession,
         onShift = controller::setShift,
+        onScope = controller::setScope,
         onEnrollmentStatus = controller::setEnrollmentStatus,
         onAccount = controller::setAccount,
         onSort = controller::setSort,

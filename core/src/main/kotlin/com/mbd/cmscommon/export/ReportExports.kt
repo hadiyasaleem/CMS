@@ -173,7 +173,7 @@ fun marksSheetExport(
         })
     }
     return ExportDocument(
-        fileBase = "marks_${assignment.courseCode}_${examType.name}",
+        fileBase = listOfNotNull("marks", assignment.courseCode, assignment.classShift?.name?.lowercase(Locale.ROOT), examType.name).joinToString("_"),
         title = listOf("Marks Sheet", "${assignment.courseCode} · ${assignment.subjectLabel}", "${assignment.sessionLabel} · ${titleCase(examType.name)} (out of ${examType.maxMarks})"),
         sections = listOf(ExportSection("Marks", header, rows)),
     )
@@ -282,9 +282,11 @@ fun insightsExport(
     atRisk: List<AtRiskStudent>,
     examStats: List<ExamStat>,
     sessionLabel: (String) -> String,
+    /** The active Department -> Session -> Shift filter, e.g. "Information Technology · 2022–2026 · Evening shift". */
+    scopeTitle: String? = null,
 ): ExportDocument = ExportDocument(
     fileBase = "insights_${LocalDate.now()}",
-    title = listOf("Insights", "Generated ${LocalDate.now()}"),
+    title = listOfNotNull("Insights", scopeTitle, "Generated ${LocalDate.now()}"),
     sections = listOf(
         ExportSection(
             "Sessions",
@@ -344,7 +346,7 @@ fun studentRosterExport(session: AcademicSession?, students: List<SessionStudent
     )
 }
 
-fun studentDirectoryExport(rows: List<com.mbd.cmscommon.controller.StudentDirectoryRow>, filtered: Boolean): ExportDocument {
+fun studentDirectoryExport(rows: List<com.mbd.cmscommon.controller.StudentDirectoryRow>, filtered: Boolean, scopeTitle: String? = null): ExportDocument {
     val header = listOf(
         "Roll", "Name", "Department", "Session", "Shift", "Semester", "Status", "University roll", "Registration no",
         "Father name", "Gender", "Phone", "Student account", "GPA", "CGPA",
@@ -360,7 +362,7 @@ fun studentDirectoryExport(rows: List<com.mbd.cmscommon.controller.StudentDirect
     }
     return ExportDocument(
         fileBase = "students_${LocalDate.now()}",
-        title = listOf("Student Directory", "${rows.size} students${if (filtered) " (filtered)" else ""} · ${LocalDate.now()}"),
+        title = listOfNotNull("Student Directory", scopeTitle, "${rows.size} students${if (filtered) " (filtered)" else ""} · ${LocalDate.now()}"),
         sections = listOf(ExportSection("Students", header, body)),
     )
 }

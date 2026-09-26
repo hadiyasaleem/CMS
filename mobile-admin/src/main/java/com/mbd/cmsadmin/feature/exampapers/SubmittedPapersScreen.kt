@@ -40,6 +40,7 @@ fun SubmittedPapersScreen(viewModel: SubmittedPapersViewModel = hiltViewModel())
     val grouped by controller.grouped.collectAsState()
     val teachers by controller.teachers.collectAsState()
     val departments by controller.departments.collectAsState()
+    val sessions by controller.sessions.collectAsState()
     val filters by controller.filters.collectAsState()
     val loading by controller.loading.collectAsState()
     val notice by controller.notice.collectAsState()
@@ -52,9 +53,9 @@ fun SubmittedPapersScreen(viewModel: SubmittedPapersViewModel = hiltViewModel())
         loading = loading,
         notice = notice,
         onSetTeacherFilter = controller::setTeacherFilter,
-        onSetDeptFilter = controller::setDeptFilter,
+        sessions = sessions,
+        onSetScope = controller::setScope,
         onSetSemesterFilter = controller::setSemesterFilter,
-        onSetShiftFilter = controller::setShiftFilter,
         onClearFilters = controller::clearFilters,
         onDownload = { submission ->
             controller.downloadAndOpen(submission, context.cacheDir) { file ->

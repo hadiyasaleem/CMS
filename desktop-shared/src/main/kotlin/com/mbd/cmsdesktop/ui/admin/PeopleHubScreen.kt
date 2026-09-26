@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.ui.admin
 
+import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -22,15 +23,18 @@ fun PeopleHubScreen(
     linkRequestRepository: StudentLinkRequestRepository,
     markEditRequestRepository: MarkEditRequestRepository,
     examPaperSubmissionRepository: ExamPaperSubmissionRepository,
+    departmentRepository: DepartmentRepository? = null,
     onOpen: (PeopleDestination) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val controller = remember(teacherRepository, sessionRepository, linkRequestRepository, markEditRequestRepository, examPaperSubmissionRepository) {
-        PeopleHubController(teacherRepository, sessionRepository, linkRequestRepository, markEditRequestRepository, examPaperSubmissionRepository, scope)
+        PeopleHubController(teacherRepository, sessionRepository, linkRequestRepository, markEditRequestRepository, examPaperSubmissionRepository, scope, departmentRepository)
     }
     val snapshot by controller.snapshot.collectAsState()
     val loading by controller.loading.collectAsState()
     val errorMessage by controller.loadError.collectAsState()
+    val filterScope by controller.filterScope.collectAsState()
+    val filterOptions by controller.filterOptions.collectAsState()
 
     PeopleHubWorkspace(
         heroPainter = painterResource("admin-people-hero.jpg"),
@@ -38,6 +42,9 @@ fun PeopleHubScreen(
         loading = loading,
         errorMessage = errorMessage,
         onRetry = controller::refresh,
+        filterScope = filterScope,
+        filterOptions = filterOptions,
+        onFilterScope = controller::setFilterScope,
         onOpen = onOpen,
     )
 }

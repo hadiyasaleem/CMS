@@ -1,5 +1,9 @@
 package com.mbd.cmsadmin.feature.records
 
+import com.mbd.cmscommon.controller.departmentScopeOptions
+import com.mbd.cmscommon.controller.studentsForTab
+import com.mbd.cmscommon.domain.model.ShiftScope
+import com.mbd.cmscommon.ui.components.ShiftScopeSelector
 import androidx.compose.runtime.rememberCoroutineScope
 import com.mbd.cmscommon.export.toExportDocument
 import com.mbd.cmscommon.ui.components.ExportMenuButton
@@ -162,7 +166,7 @@ class AttendanceRecordsViewModel @Inject constructor(
         _fullLoading.value = false
     }
 
-    fun load(sessionId: String, semester: Int, shift: Session) {
+    fun load(sessionId: String, semester: Int, shift: Session?) {
         val version = ++reportLoadVersion
         viewModelScope.launch {
             _loading.value = true
@@ -175,7 +179,7 @@ class AttendanceRecordsViewModel @Inject constructor(
                 val term = curriculumRepository.getSemesterTerm(sessionId, semester)
                 val subjects = curriculumRepository.observeSemesterSubjects(sessionId, semester).first()
                 if (version == reportLoadVersion) {
-                    val shiftRoster = roster.filter { it.shift == shift }
+                    val shiftRoster = studentsForTab(roster, shift)
                     val shiftRolls = shiftRoster.map { it.rollNumber }.toSet()
                     _roster.value = shiftRoster
                     _raw.value = raw.filter { it.rollNumber in shiftRolls }
@@ -227,10 +231,7 @@ fun AttendanceRecordsScreen(viewModel: AttendanceRecordsViewModel = hiltViewMode
     val full by viewModel.full.collectAsState()
     val fullLoading by viewModel.fullLoading.collectAsState()
 
-    var deptId by remember { mutableStateOf<String?>(null) }
-    var year by remember { mutableStateOf<Int?>(null) }
     var semester by remember { mutableStateOf<Int?>(null) }
-    var shift by remember { mutableStateOf<Session?>(null) }
     var mode by remember { mutableStateOf(ReportMode.SEMESTER) }
     var month by remember { mutableStateOf<YearMonth?>(null) }
     var course by remember { mutableStateOf<String?>(null) }
@@ -239,14 +240,17 @@ fun AttendanceRecordsScreen(viewModel: AttendanceRecordsViewModel = hiltViewMode
     var actionError by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
 
-    val years = sessions.filter { it.deptId == deptId }.map { it.startYear }.distinct().sortedDescending()
-    val shifts = sessions.filter { it.deptId == deptId && it.startYear == year }.flatMap { it.shifts }.distinct().sorted()
-    // One session serves both shifts; the chosen shift narrows its roster (TODO(Task 8): shared scope filter).
-    val sessionId = if (deptId != null && year != null && shift != null) AcademicSession.buildId(deptId!!, year!!) else null
+    // Department -> Session -> Shift via the shared selector; no shift means both shifts of the session.
+    var reportScope by remember { mutableStateOf(ShiftScope.ALL) }
+    val selectedSession = sessions.firstOrNull { it.sessionId == reportScope.sessionId }
+    val deptId = reportScope.deptId
+    val year = selectedSession?.startYear
+    val shift = reportScope.shift
+    val sessionId = selectedSession?.sessionId
 
     LaunchedEffect(sessionId, semester, shift) {
         val sid = sessionId; val sem = semester; val sh = shift
-        if (sid != null && sem != null && sh != null) viewModel.load(sid, sem, sh) else viewModel.clear()
+        if (sid != null && sem != null) viewModel.load(sid, sem, sh) else viewModel.clear()
     }
 
     // Months allowed: bounded by the semester's class dates when set, else derived from the data.
@@ -285,13 +289,13 @@ fun AttendanceRecordsScreen(viewModel: AttendanceRecordsViewModel = hiltViewMode
         deptName.takeIf { it.isNotBlank() },
         year?.let { "$it–${it + 4}" },
         semester?.let { "Sem $it" },
-        shift?.name,
+        if (sessionId != null) shift?.label ?: "Both shifts" else null,
         mode.label,
         course,
     ).joinToString("  ·  ")
 
     Column(modifier = Modifier.fillMaxSize()) {
-        SectionHeader(eyebrow = "Reporting", title = "Attendance Records", subtitle = "Department → session → semester → shift")
+        SectionHeader(eyebrow = "Reporting", title = "Attendance Records", subtitle = "Department → session → shift → semester")
 
         // ── Filter header: breadcrumb (collapsed) / Export / expand-collapse toggle ──
         Surface(
@@ -325,10 +329,17 @@ fun AttendanceRecordsScreen(viewModel: AttendanceRecordsViewModel = hiltViewMode
                     }
                 }
                 if (expanded) {
-                    PickRow("DEPARTMENT", departments.map { it.deptId to it.name }, deptId) { deptId = it; year = null; semester = null; shift = null; course = null; viewModel.clearFull() }
-                    if (deptId != null) PickRow("SESSION (INTAKE)", years.map { it to "$it–${it + 4}" }, year) { year = it; semester = null; shift = null; course = null; viewModel.clearFull() }
-                    if (year != null) PickRow("SEMESTER", (1..8).map { it to "Sem $it" }, semester) { semester = it; shift = null; course = null; viewModel.clearFull() }
-                    if (semester != null) PickRow("SHIFT", shifts.map { it to it.name }, shift) { shift = it; course = null; viewModel.clearFull() }
+                    ShiftScopeSelector(
+                        scope = reportScope,
+                        departments = departmentScopeOptions(departments),
+                        sessions = sessions,
+                        onScopeChange = { picked ->
+                            if (picked.sessionId != reportScope.sessionId) semester = null
+                            reportScope = picked; course = null; viewModel.clearFull()
+                        },
+                        modifier = Modifier.padding(top = 6.dp),
+                    )
+                    if (sessionId != null) PickRow("SEMESTER", (1..8).map { it to "Sem $it" }, semester) { semester = it; course = null; viewModel.clearFull() }
                     if (sessionId != null && semester != null) {
                         Text("REPORT", style = CmsTextStyles.eyebrow, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 10.dp, bottom = 6.dp))
                         ModeSegmented(mode) { selectedMode -> viewModel.clearFull(); mode = selectedMode }
@@ -344,10 +355,10 @@ fun AttendanceRecordsScreen(viewModel: AttendanceRecordsViewModel = hiltViewMode
         if (ready) AttendanceSummaryStrip(reportMarks(mode, raw, month, full), roster)
 
         when {
-            sessionId == null || semester == null -> EmptyState("Pick a department, session, semester and shift.")
+            sessionId == null || semester == null -> EmptyState("Pick a department, session and semester. Choose a shift to narrow to one shift.")
             reportLoading -> EmptyState("Loading attendance report…")
             error != null -> ErrorBanner(error!!, onRetry = {
-                viewModel.load(sessionId, semester!!, shift!!)
+                viewModel.load(sessionId, semester!!, shift)
                 if (mode == ReportMode.FULL && course != null && month != null) viewModel.loadFull(sessionId, course!!, month!!)
             })
             mode == ReportMode.SEMESTER -> {

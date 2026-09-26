@@ -1,5 +1,7 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.controller.ScopeFilterOptions
+import com.mbd.cmscommon.domain.model.ShiftScope
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -84,6 +86,10 @@ fun RecordsHubWorkspace(
     loading: Boolean,
     errorMessage: String?,
     onRetry: () -> Unit,
+    /** The Department -> Session -> Shift filter for the counts; hidden when [filterOptions] is null. */
+    filterScope: ShiftScope = ShiftScope.ALL,
+    filterOptions: ScopeFilterOptions? = null,
+    onFilterScope: (ShiftScope) -> Unit = {},
     onOpen: (RecordsDestination) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -97,6 +103,9 @@ fun RecordsHubWorkspace(
             fullSpanItem { RecordsHeader(heroPainter) }
             if (!errorMessage.isNullOrBlank()) {
                 fullSpanItem { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
+            }
+            if (filterOptions != null) {
+                fullSpanItem { ShiftScopeSelector(filterScope, filterOptions.departments, filterOptions.sessions, onFilterScope) }
             }
             if (snapshot != null) {
                 fullSpanItem { RecordsSummaryRow(snapshot) }

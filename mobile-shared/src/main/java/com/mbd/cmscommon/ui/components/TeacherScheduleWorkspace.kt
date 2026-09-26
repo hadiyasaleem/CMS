@@ -1,5 +1,8 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.controller.inScope
+import com.mbd.cmscommon.controller.ownScopeOptions
+import com.mbd.cmscommon.domain.model.ShiftScope
 import com.mbd.cmscommon.controller.periodSessionLabel
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -69,7 +72,10 @@ fun TeacherScheduleWorkspace(
     onClearError: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val teachingPeriods = periods.filter { it.periodType != PeriodType.BREAK && it.courseCode.isNotBlank() }
+    // Department -> Session -> Shift filter over the sessions this teacher teaches.
+    var filterScope by remember { mutableStateOf(ShiftScope.ALL) }
+    val filterOptions = ownScopeOptions(periods.map { it.sessionId }.toSet(), sessions)
+    val teachingPeriods = periods.filter { it.periodType != PeriodType.BREAK && it.courseCode.isNotBlank() }.inScope(filterScope, sessions)
     val classDays = teachingPeriods.map { it.day }.distinct().size
     val totalMinutes = teachingPeriods.sumOf { period ->
         val start = scheduleTime(period.startTime)
@@ -90,6 +96,9 @@ fun TeacherScheduleWorkspace(
     ) {
         item { ScheduleHeader(heroPainter, teachingPeriods.size) }
 
+        if (filterOptions.sessions.size > 1 || filterOptions.sessions.any { it.shifts.size > 1 }) {
+            item { ShiftScopeSelector(filterScope, filterOptions.departments, filterOptions.sessions, { filterScope = it }) }
+        }
         item { ScheduleMetrics(teachingPeriods.size, classDays, totalMinutes, rooms, busiest) }
 
         if (teachingPeriods.isEmpty()) {

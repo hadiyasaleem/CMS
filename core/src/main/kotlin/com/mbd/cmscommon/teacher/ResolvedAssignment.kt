@@ -1,6 +1,7 @@
 package com.mbd.cmscommon.teacher
 
 import com.mbd.cmscommon.controller.shiftClassKey
+import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.Session
 
 data class ResolvedAssignment(
@@ -14,25 +15,10 @@ data class ResolvedAssignment(
     val shift: String = "",
     /** The shift this class is taught in; its roster is that shift's students only. Null when unknown. */
     val classShift: Session? = null,
+    /** The class's department id and session, for the Department -> Session -> Shift filter. */
+    val deptId: String = "",
+    val session: AcademicSession? = null,
 ) {
     /** "IT_2022@EVENING": identifies this class for pickers and navigation. */
     val classKey: String get() = shiftClassKey(sessionId, classShift)
 }
-
-/** Optional class filters: a null field means "any", and only the chosen fields narrow the list. */
-data class AssignmentFilter(
-    val dept: String? = null,
-    val session: String? = null,
-    val shift: String? = null,
-) {
-    val isEmpty: Boolean get() = dept == null && session == null && shift == null
-    fun matches(a: ResolvedAssignment): Boolean =
-        (dept == null || a.deptName == dept) && (session == null || a.sessionName == session) && (shift == null || a.shift == shift)
-}
-
-fun List<ResolvedAssignment>.filtered(filter: AssignmentFilter): List<ResolvedAssignment> =
-    if (filter.isEmpty) this else filter { filter.matches(it) }
-
-fun List<ResolvedAssignment>.distinctDepts(): List<String> = map { it.deptName }.filter { it.isNotBlank() }.distinct().sorted()
-fun List<ResolvedAssignment>.distinctSessions(): List<String> = map { it.sessionName }.filter { it.isNotBlank() }.distinct().sorted()
-fun List<ResolvedAssignment>.distinctShifts(): List<String> = map { it.shift }.filter { it.isNotBlank() }.distinct().sorted()

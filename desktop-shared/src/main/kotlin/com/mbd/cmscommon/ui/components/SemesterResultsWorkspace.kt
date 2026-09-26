@@ -1,5 +1,7 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.controller.ScopeFilterOptions
+import com.mbd.cmscommon.domain.model.ShiftScope
 import com.mbd.cmscommon.export.ExportDocument
 import com.mbd.cmscommon.export.ExportFormat
 import com.mbd.cmscommon.export.semesterResultsExport
@@ -82,6 +84,12 @@ fun SemesterResultsWorkspace(
     onRecord: (String, Double, Double, String, String, Int?, String, List<String>) -> Unit,
     onExport: ((ExportDocument, ExportFormat) -> Unit)? = null,
     modifier: Modifier = Modifier,
+    /** The Department -> Session -> Shift filter over the classes; hidden when [filterOptions] is null. */
+    filterScope: ShiftScope = ShiftScope.ALL,
+    filterOptions: ScopeFilterOptions? = null,
+    onFilterScope: (ShiftScope) -> Unit = {},
+    /** The classes the picker lists (inside the filter); defaults to every class in [sessions]. */
+    classOptions: List<Pair<String, String>> = sessions,
 ) {
     var editing by remember { mutableStateOf<SessionStudent?>(null) }
 
@@ -121,7 +129,10 @@ fun SemesterResultsWorkspace(
             item { CmsNotice("Result saved.", tone = NoticeTone.Success, onDismiss = onClearSave) }
         }
 
-        item { SessionPicker(sessions, sessionId, onSelectSession) }
+        if (filterOptions != null) {
+            item { ShiftScopeSelector(filterScope, filterOptions.departments, filterOptions.sessions, onFilterScope, label = "CLASSES") }
+        }
+        item { SessionPicker(classOptions, sessionId, onSelectSession, selectedLabel = sessions.firstOrNull { it.first == sessionId }?.second) }
         item {
             Row(
                 modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
@@ -177,14 +188,15 @@ private fun ResultsHeader(classLabel: String, semester: Int, averageGpa: Double?
 }
 
 @Composable
-private fun SessionPicker(sessions: List<Pair<String, String>>, selected: String?, onSelect: (String) -> Unit) {
+private fun SessionPicker(sessions: List<Pair<String, String>>, selected: String?, onSelect: (String) -> Unit, selectedLabel: String? = null) {
     var expanded by remember { mutableStateOf(false) }
     Box(Modifier.fillMaxWidth()) {
         OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) {
-            Text(sessions.firstOrNull { it.first == selected }?.second ?: "Select a class", modifier = Modifier.weight(1f))
+            Text(selectedLabel ?: sessions.firstOrNull { it.first == selected }?.second ?: "Select a class", modifier = Modifier.weight(1f))
             Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.heightIn(max = 240.dp)) {
+            if (sessions.isEmpty()) DropdownMenuItem(text = { Text("No classes match these filters") }, onClick = { expanded = false }, enabled = false)
             sessions.forEach { (id, label) ->
                 DropdownMenuItem(text = { Text(label) }, onClick = { onSelect(id); expanded = false })
             }

@@ -1,5 +1,9 @@
 package com.mbd.cmsdesktop.ui.admin
 
+import com.mbd.cmscommon.controller.departmentScopeOptions
+import com.mbd.cmscommon.controller.studentsForTab
+import com.mbd.cmscommon.domain.model.ShiftScope
+import com.mbd.cmscommon.ui.components.ShiftScopeSelector
 import com.mbd.cmscommon.export.toExportDocument
 import com.mbd.cmscommon.ui.components.ExportMenuButton
 import com.mbd.cmsdesktop.platform.DocumentExporter
@@ -123,10 +127,7 @@ fun AttendanceRecordsScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var retryVersion by remember { mutableStateOf(0) }
 
-    var deptId by remember { mutableStateOf<String?>(null) }
-    var year by remember { mutableStateOf<Int?>(null) }
     var semester by remember { mutableStateOf<Int?>(null) }
-    var shift by remember { mutableStateOf<Session?>(null) }
     var mode by remember { mutableStateOf(ReportMode.SEMESTER) }
     var month by remember { mutableStateOf<YearMonth?>(null) }
     var course by remember { mutableStateOf<String?>(null) }
@@ -141,14 +142,13 @@ fun AttendanceRecordsScreen(
         sessionRepository.observeAllSessions().collect { sessions = it }
     }
 
-    val years = sessions.filter { it.deptId == deptId }.map { it.startYear }.distinct().sortedDescending()
-    val shifts = sessions.filter { it.deptId == deptId && it.startYear == year }.flatMap { it.shifts }.distinct().sorted()
-    // One session serves both shifts; the chosen shift narrows its roster (TODO(Task 8): shared scope filter).
-    val sessionId = if (deptId != null && year != null && shift != null) {
-        AcademicSession.buildId(deptId!!, year!!)
-    } else {
-        null
-    }
+    // Department -> Session -> Shift via the shared selector; no shift means both shifts of the session.
+    var reportScope by remember { mutableStateOf(ShiftScope.ALL) }
+    val selectedSession = sessions.firstOrNull { it.sessionId == reportScope.sessionId }
+    val deptId = reportScope.deptId
+    val year = selectedSession?.startYear
+    val shift = reportScope.shift
+    val sessionId = selectedSession?.sessionId
 
     // Reads the cached roster, attendance, term, and curriculum whenever the selected scope changes.
     LaunchedEffect(sessionId, semester, shift, retryVersion) {
@@ -171,7 +171,7 @@ fun AttendanceRecordsScreen(
             val loadedRaw = attendanceRepository.semesterMarks(sid, sem)
             val loadedTerm = curriculumRepository.getSemesterTerm(sid, sem)
             val loadedSubjects = curriculumRepository.observeSemesterSubjects(sid, sem).firstOrNull().orEmpty()
-            val shiftRoster = loadedRoster.filter { it.shift == shift }
+            val shiftRoster = studentsForTab(loadedRoster, shift)
             val shiftRolls = shiftRoster.map { it.rollNumber }.toSet()
             roster = shiftRoster
             raw = loadedRaw.filter { it.rollNumber in shiftRolls }
@@ -251,13 +251,13 @@ fun AttendanceRecordsScreen(
         deptName.takeIf { it.isNotBlank() },
         year?.let { "$it–${it + 4}" },
         semester?.let { "Sem $it" },
-        shift?.name,
+        if (sessionId != null) shift?.label ?: "Both shifts" else null,
         mode.label,
         course,
     ).joinToString("  ·  ")
 
     Column(Modifier.fillMaxWidth()) {
-        SectionHeader("Attendance Records", "Reporting", "Department → session → semester → shift")
+        SectionHeader("Attendance Records", "Reporting", "Department → session → shift → semester")
 
         Surface(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
@@ -289,37 +289,22 @@ fun AttendanceRecordsScreen(
                 }
 
                 if (expanded) {
-                    PickRow("DEPARTMENT", departments.map { it.deptId to it.name }, deptId) {
-                        deptId = it
-                        year = null
-                        semester = null
-                        shift = null
-                        course = null
-                        full = emptyMap()
-                        fullLoading = false
-                    }
-                    if (deptId != null) {
-                        PickRow("SESSION (INTAKE)", years.map { it to "$it–${it + 4}" }, year) {
-                            year = it
-                            semester = null
-                            shift = null
+                    ShiftScopeSelector(
+                        scope = reportScope,
+                        departments = departmentScopeOptions(departments),
+                        sessions = sessions,
+                        onScopeChange = { picked ->
+                            if (picked.sessionId != reportScope.sessionId) semester = null
+                            reportScope = picked
                             course = null
                             full = emptyMap()
                             fullLoading = false
-                        }
-                    }
-                    if (year != null) {
+                        },
+                        modifier = Modifier.padding(top = 6.dp),
+                    )
+                    if (sessionId != null) {
                         PickRow("SEMESTER", (1..8).map { it to "Sem $it" }, semester) {
                             semester = it
-                            shift = null
-                            course = null
-                            full = emptyMap()
-                            fullLoading = false
-                        }
-                    }
-                    if (semester != null) {
-                        PickRow("SHIFT", shifts.map { it to it.name }, shift) {
-                            shift = it
                             course = null
                             full = emptyMap()
                             fullLoading = false
@@ -356,7 +341,7 @@ fun AttendanceRecordsScreen(
 
         when {
             sessionId == null || semester == null ->
-                EmptyState("Pick a department, session, semester and shift.")
+                EmptyState("Pick a department, session and semester. Choose a shift to narrow to one shift.")
 
             reportLoading ->
                 EmptyState("Loading attendance report…")

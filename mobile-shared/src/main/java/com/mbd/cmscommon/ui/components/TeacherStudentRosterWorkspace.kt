@@ -111,7 +111,7 @@ fun TeacherStudentRosterWorkspace(
         if (onExport != null && selected != null) {
             item { ExportBar(onExport, build = { myStudentsExport(selected, students, tallies) }, enabled = students.isNotEmpty()) }
         }
-        item { AssignmentPicker(assignments, selected, onSelectAssignment) }
+        item { TeacherClassPicker(assignments, selected, onSelectAssignment) }
 
         if (selected != null) {
             item { TeacherRosterSummaryCard(students.size, avgCgpa, linked) }
@@ -176,24 +176,6 @@ private fun TeacherRosterHero(selected: ResolvedAssignment?, count: Int) {
     }
 }
 
-@Composable
-private fun AssignmentPicker(assignments: List<ResolvedAssignment>, selected: ResolvedAssignment?, onSelect: (ResolvedAssignment) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-    Box(Modifier.fillMaxWidth()) {
-        OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) {
-            Text(selected?.let { "${it.subjectLabel} · ${it.sessionLabel}" } ?: "Select a class", modifier = Modifier.weight(1f))
-            Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.heightIn(max = 240.dp)) {
-            assignments.forEach { assignment ->
-                DropdownMenuItem(
-                    text = { Text("${assignment.subjectLabel} · ${assignment.sessionLabel}") },
-                    onClick = { onSelect(assignment); expanded = false },
-                )
-            }
-        }
-    }
-}
 
 @Composable
 private fun TeacherRosterSummaryCard(count: Int, avgCgpa: Double?, linked: Int) {

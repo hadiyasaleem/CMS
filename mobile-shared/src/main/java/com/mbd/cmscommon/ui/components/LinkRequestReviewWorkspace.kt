@@ -1,5 +1,8 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.controller.inScope
+import com.mbd.cmscommon.domain.model.ShiftScope
+import com.mbd.cmscommon.controller.departmentScopeOptions
 import com.mbd.cmscommon.domain.model.shiftForRoll
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.horizontalScroll
@@ -94,6 +97,9 @@ fun LinkRequestReviewWorkspace(
     onClearError: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // Department -> Session -> Shift filter over the claimed session and roll number.
+    var filterScope by remember { mutableStateOf(ShiftScope.ALL) }
+    val requests = requests.inScope(filterScope, sessions)
     var query by remember { mutableStateOf("") }
     var filter by remember { mutableStateOf(LinkRequestFilter.ALL) }
     var sort by remember { mutableStateOf(LinkRequestSort.NEWEST) }
@@ -152,6 +158,7 @@ fun LinkRequestReviewWorkspace(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item { LinkRequestHero(requests.size) }
+        item { ShiftScopeSelector(filterScope, departmentScopeOptions(departments), sessions, { filterScope = it }) }
 
         if (!errorMessage.isNullOrBlank()) {
             item { CmsNotice(errorMessage, tone = NoticeTone.Error, onDismiss = onClearError) }

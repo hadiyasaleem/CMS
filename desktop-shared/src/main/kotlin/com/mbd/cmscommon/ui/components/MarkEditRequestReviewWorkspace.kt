@@ -1,5 +1,8 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.controller.inScope
+import com.mbd.cmscommon.domain.model.ShiftScope
+import com.mbd.cmscommon.controller.departmentScopeOptions
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.horizontalScroll
@@ -103,6 +106,10 @@ fun MarkEditRequestReviewWorkspace(
     onClearError: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // Department -> Session -> Shift filter: a request's shift comes from its student's roll number.
+    var filterScope by remember { mutableStateOf(ShiftScope.ALL) }
+    val requests = requests.inScope(filterScope, sessions)
+    val attendanceRequests = attendanceRequests.inScope(filterScope, sessions)
     var query by remember { mutableStateOf("") }
     var filter by remember { mutableStateOf(MarkRequestFilter.ALL) }
     var sort by remember { mutableStateOf(MarkRequestSort.NEWEST) }
@@ -149,6 +156,7 @@ fun MarkEditRequestReviewWorkspace(
     WithVerticalScrollbar(listState) {
     LazyColumn(modifier.fillMaxWidth(), state = listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { MarkRequestHero(requests.size + attendanceRequests.size) }
+        item { ShiftScopeSelector(filterScope, departmentScopeOptions(departments), sessions, { filterScope = it }) }
 
         if (!errorMessage.isNullOrBlank()) {
             item { CmsNotice(errorMessage, tone = NoticeTone.Error, onDismiss = onClearError) }

@@ -28,6 +28,7 @@ fun SubmittedPapersScreen(
     val grouped by controller.grouped.collectAsState()
     val teachers by controller.teachers.collectAsState()
     val departments by controller.departments.collectAsState()
+    val sessions by controller.sessions.collectAsState()
     val filters by controller.filters.collectAsState()
     val loading by controller.loading.collectAsState()
     val notice by controller.notice.collectAsState()
@@ -40,9 +41,9 @@ fun SubmittedPapersScreen(
         loading = loading,
         notice = notice,
         onSetTeacherFilter = controller::setTeacherFilter,
-        onSetDeptFilter = controller::setDeptFilter,
+        sessions = sessions,
+        onSetScope = controller::setScope,
         onSetSemesterFilter = controller::setSemesterFilter,
-        onSetShiftFilter = controller::setShiftFilter,
         onClearFilters = controller::clearFilters,
         onDownload = { submission ->
             controller.downloadAndOpen(submission, File(System.getProperty("java.io.tmpdir"))) { downloaded ->

@@ -1,5 +1,7 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.controller.ScopeFilterOptions
+import com.mbd.cmscommon.domain.model.ShiftScope
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
@@ -86,6 +88,10 @@ fun AdminDashboardContent(
     onOpenNotifications: () -> Unit,
     modifier: Modifier = Modifier,
     errorMessage: String? = null,
+    /** The Department -> Session -> Shift filter for the counters; hidden when [filterOptions] is null. */
+    filterScope: ShiftScope = ShiftScope.ALL,
+    filterOptions: ScopeFilterOptions? = null,
+    onFilterScope: (ShiftScope) -> Unit = {},
 ) {
     val studentsPerTeacher = if (state.teachers > 0) (state.students.toDouble() / state.teachers).roundToInt() else 0
     val studentsPerSession = if (state.activeSessions > 0) (state.students.toDouble() / state.activeSessions).roundToInt() else 0
@@ -160,6 +166,9 @@ fun AdminDashboardContent(
             }
 
             DashboardSectionHeading("College snapshot", "Live cached figures, updated whenever Admin data refreshes")
+            if (filterOptions != null) {
+                ShiftScopeSelector(filterScope, filterOptions.departments, filterOptions.sessions, onFilterScope)
+            }
             DashboardGrid(metrics, if (wide) 5 else 2) { metric, itemModifier -> DashboardMetricCard(metric, itemModifier) }
 
             DashboardSectionHeading("Needs attention", "The next useful actions, not another status list")

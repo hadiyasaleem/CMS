@@ -1,5 +1,9 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.controller.cascadeScope
+import com.mbd.cmscommon.controller.toCascade
+import com.mbd.cmscommon.controller.departmentScopeOptions
+import com.mbd.cmscommon.domain.model.ShiftScope
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -76,6 +80,14 @@ fun MasterTimetableWorkspace(
     var detailPeriod by remember { mutableStateOf<SessionPeriod?>(null) }
     var dismissedError by remember { mutableStateOf<String?>(null) }
     val department = departments.firstOrNull { it.deptId == selectedDeptId }
+    // The shared Department -> Session -> Shift selector drives the department / intake-year / shift cascade.
+    // Picking a session opens its first shift (there is no combined grid); a chosen shift then replaces it.
+    val applyScope: (ShiftScope) -> Unit = { picked ->
+        val cascade = picked.toCascade(sessions)
+        onSelectDepartment(cascade.deptId)
+        onSelectStartYear(cascade.startYear)
+        cascade.shift?.let(onSelectShift)
+    }
     val periodByDayAndSlot = periods.associateBy { it.day to it.timeRange }
     val timeSlots = periods.map { it.timeRange }.distinct().sortedBy { it.substringBefore('–') }
 
@@ -89,16 +101,11 @@ fun MasterTimetableWorkspace(
         item { MasterHeader() }
 
         item {
-            MasterFilters(
-                departments = departments,
-                sessionsInDepartment = sessionsInDepartment,
-                shiftsForSelection = shiftsForSelection,
-                selectedDeptId = selectedDeptId,
-                selectedStartYear = selectedStartYear,
-                selectedShift = selectedShift,
-                onSelectDepartment = onSelectDepartment,
-                onSelectStartYear = onSelectStartYear,
-                onSelectShift = onSelectShift,
+            ShiftScopeSelector(
+                scope = cascadeScope(selectedDeptId, selectedStartYear, selectedShift, sessions),
+                departments = departmentScopeOptions(departments),
+                sessions = sessions,
+                onScopeChange = applyScope,
             )
         }
 
@@ -178,52 +185,6 @@ private fun MasterHeader() {
     }
 }
 
-@Composable
-private fun MasterFilters(
-    departments: List<Department>,
-    sessionsInDepartment: List<AcademicSession>,
-    shiftsForSelection: List<Session>,
-    selectedDeptId: String?,
-    selectedStartYear: Int?,
-    selectedShift: Session?,
-    onSelectDepartment: (String?) -> Unit,
-    onSelectStartYear: (Int?) -> Unit,
-    onSelectShift: (Session?) -> Unit,
-) {
-    val departmentOptions = departments.sortedBy { it.name }.map { CmsEntityOption(it.deptId, "${it.code} · ${it.name}") }
-    val sessionOptions = sessionsInDepartment.map { it.startYear }.distinct().sorted().map { CmsEntityOption(it.toString(), "$it–${it + 4}") }
-    val shiftOptions = shiftsForSelection.map { CmsEntityOption(it.name, it.label) }
-
-    Column(Modifier.fillMaxWidth()) {
-        Text("SHOW", color = ModMuted, style = CmsTextStyles.eyebrow)
-        Spacer(Modifier.height(6.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            DropdownChip(
-                selectedLabel = departmentOptions.firstOrNull { it.id == selectedDeptId }?.label,
-                emptyLabel = "All departments",
-                options = departmentOptions,
-                onSelected = onSelectDepartment,
-            )
-            DropdownChip(
-                selectedLabel = sessionOptions.firstOrNull { it.id == selectedStartYear?.toString() }?.label,
-                emptyLabel = "All sessions",
-                options = sessionOptions,
-                onSelected = { onSelectStartYear(it?.toIntOrNull()) },
-                enabled = selectedDeptId != null,
-            )
-            DropdownChip(
-                selectedLabel = shiftOptions.firstOrNull { it.id == selectedShift?.name }?.label,
-                emptyLabel = "All shifts",
-                options = shiftOptions,
-                onSelected = { onSelectShift(it?.let(Session::valueOf)) },
-                enabled = selectedStartYear != null,
-            )
-        }
-    }
-}
 
 @Composable
 private fun MasterSessionTile(deptCode: String, session: AcademicSession, shift: Session?, onOpenSession: () -> Unit) {

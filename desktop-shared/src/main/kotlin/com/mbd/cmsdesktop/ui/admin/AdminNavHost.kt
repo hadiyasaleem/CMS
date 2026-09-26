@@ -184,6 +184,7 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         linkRequestRepository = component.studentLinkRequestRepository(),
                         markEditRequestRepository = component.markEditRequestRepository(),
                         examPaperSubmissionRepository = component.examPaperRepository(),
+                        departmentRepository = component.departmentRepository(),
                         onOpen = { destination ->
                             when (destination) {
                                 PeopleDestination.TEACHERS -> push(AdminScreen.Teachers)
@@ -200,6 +201,7 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         calendarRepository = component.calendarRepository(),
                         datesheetRepository = component.datesheetRepository(),
                         insightsRepository = component.insightsRepository(),
+                        departmentRepository = component.departmentRepository(),
                         onOpen = { destination ->
                             when (destination) {
                                 RecordsDestination.ATTENDANCE -> push(AdminScreen.AttendanceRecords)

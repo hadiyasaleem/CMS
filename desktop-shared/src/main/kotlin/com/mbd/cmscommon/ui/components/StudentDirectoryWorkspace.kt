@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.controller.departmentScopeOptions
 import com.mbd.cmscommon.domain.model.ShiftScope
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -75,6 +76,8 @@ fun StudentDirectoryWorkspace(
     onDepartment: (String?) -> Unit,
     onSession: (String?) -> Unit,
     onShift: (Session?) -> Unit,
+    /** The shared Department -> Session -> Shift filter. */
+    onScope: (ShiftScope) -> Unit,
     onEnrollmentStatus: (String?) -> Unit,
     onAccount: (StudentAccountFilter) -> Unit,
     onSort: (StudentDirectorySort) -> Unit,
@@ -115,17 +118,9 @@ fun StudentDirectoryWorkspace(
                     singleLine = true,
                 )
                 Spacer(Modifier.height(8.dp))
-                Text("FILTER", color = ModMuted, style = CmsTextStyles.eyebrow)
-                Spacer(Modifier.height(6.dp))
+                ShiftScopeSelector(query.scope, departmentScopeOptions(departments), sessions, onScope, label = "FILTER")
+                Spacer(Modifier.height(8.dp))
                 Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterDropdown("Department", query.deptId, listOf(null to "All departments") + departments.sortedBy { it.name }.map { it.deptId to it.name }, onDepartment)
-                    FilterDropdown(
-                        "Session",
-                        query.sessionId,
-                        listOf(null to "All sessions") + sessionOptions.map { s -> s.sessionId to "${deptNames[s.deptId] ?: s.deptId.uppercase(Locale.ROOT)} ${s.label} ${s.shiftMode.label}" },
-                        onSession,
-                    )
-                    FilterDropdown("Shift", query.shift, listOf(null to "Both shifts") + ShiftScope.shiftOptions(ShiftScope(sessionId = query.sessionId), sessions).map { it to it.label }, onShift)
                     FilterDropdown("Status", query.enrollmentStatus, listOf(null to "Any status") + enrollmentStatuses.map { it to pretty(it) }, onEnrollmentStatus)
                     FilterDropdown("Account", query.account, StudentAccountFilter.entries.map { it to it.label }, { it?.let(onAccount) })
                 }

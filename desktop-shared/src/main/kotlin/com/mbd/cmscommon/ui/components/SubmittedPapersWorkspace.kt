@@ -1,5 +1,8 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.controller.departmentScopeOptions
+import com.mbd.cmscommon.domain.model.ShiftScope
+import com.mbd.cmscommon.domain.model.AcademicSession
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -55,9 +58,9 @@ fun SubmittedPapersWorkspace(
     loading: Boolean,
     notice: String?,
     onSetTeacherFilter: (String?) -> Unit,
-    onSetDeptFilter: (String?) -> Unit,
+    sessions: List<AcademicSession>,
+    onSetScope: (ShiftScope) -> Unit,
     onSetSemesterFilter: (Int?) -> Unit,
-    onSetShiftFilter: (Session?) -> Unit,
     onClearFilters: () -> Unit,
     onDownload: (ExamPaperSubmission) -> Unit,
     onConsumeNotice: () -> Unit,
@@ -85,9 +88,9 @@ fun SubmittedPapersWorkspace(
                 departments = departments,
                 filters = filters,
                 onSetTeacherFilter = onSetTeacherFilter,
-                onSetDeptFilter = onSetDeptFilter,
+                sessions = sessions,
+                onSetScope = onSetScope,
                 onSetSemesterFilter = onSetSemesterFilter,
-                onSetShiftFilter = onSetShiftFilter,
                 onClearFilters = onClearFilters,
             )
         }
@@ -145,15 +148,13 @@ private fun PapersFilterBar(
     departments: List<Department>,
     filters: SubmittedPapersFilters,
     onSetTeacherFilter: (String?) -> Unit,
-    onSetDeptFilter: (String?) -> Unit,
+    sessions: List<AcademicSession>,
+    onSetScope: (ShiftScope) -> Unit,
     onSetSemesterFilter: (Int?) -> Unit,
-    onSetShiftFilter: (Session?) -> Unit,
     onClearFilters: () -> Unit,
 ) {
     val teacherOptions = teachers.sortedBy { it.name }.map { CmsEntityOption(it.email, it.name) }
-    val deptOptions = departments.sortedBy { it.name }.map { CmsEntityOption(it.deptId, "${it.code} · ${it.name}") }
     val semesterOptions = (1..8).map { CmsEntityOption(it.toString(), "Semester $it") }
-    val shiftOptions = Session.entries.map { CmsEntityOption(it.name, it.name) }
 
     Column(Modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -163,6 +164,8 @@ private fun PapersFilterBar(
             }
         }
         Spacer(Modifier.height(6.dp))
+        ShiftScopeSelector(filters.scope, departmentScopeOptions(departments), sessions, onSetScope, label = null)
+        Spacer(Modifier.height(8.dp))
         Row(
             modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -174,22 +177,10 @@ private fun PapersFilterBar(
                 onSelected = onSetTeacherFilter,
             )
             DropdownChip(
-                selectedLabel = deptOptions.firstOrNull { it.id == filters.deptId }?.label,
-                emptyLabel = "All departments",
-                options = deptOptions,
-                onSelected = onSetDeptFilter,
-            )
-            DropdownChip(
                 selectedLabel = semesterOptions.firstOrNull { it.id == filters.semester?.toString() }?.label,
                 emptyLabel = "All semesters",
                 options = semesterOptions,
                 onSelected = { onSetSemesterFilter(it?.toIntOrNull()) },
-            )
-            DropdownChip(
-                selectedLabel = shiftOptions.firstOrNull { it.id == filters.shift?.name }?.label,
-                emptyLabel = "All shifts",
-                options = shiftOptions,
-                onSelected = { onSetShiftFilter(it?.let(Session::valueOf)) },
             )
         }
     }

@@ -1,5 +1,11 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.controller.departmentScopeOptions
+import com.mbd.cmscommon.controller.scopeDepartments
+import com.mbd.cmscommon.controller.scopeSessions
+import com.mbd.cmscommon.controller.scopeInsights
+import com.mbd.cmscommon.controller.title
+import com.mbd.cmscommon.domain.model.ShiftScope
 import com.mbd.cmscommon.export.ExportDocument
 import com.mbd.cmscommon.export.ExportFormat
 import com.mbd.cmscommon.export.insightsExport
@@ -92,16 +98,20 @@ fun InsightsWorkspace(
 ) {
     var tab by remember { mutableStateOf(InsightsTab.SESSIONS) }
     var query by remember { mutableStateOf("") }
-    var selectedSessionId by remember { mutableStateOf<String?>(null) }
+    var filterScope by remember { mutableStateOf(ShiftScope.ALL) }
 
     val scope = if (viewer == InsightsViewer.TEACHER) {
         scopeTeacherInsights(overviews, atRisk, examStats, assignments)
     } else {
         null
     }
-    val scopedOverviews = scope?.overviews ?: overviews
-    val scopedAtRisk = scope?.atRisk ?: atRisk
-    val scopedExamStats = scope?.examStats ?: examStats
+    // Department -> Session -> Shift filter: a teacher's options are the sessions they teach.
+    val filterDepartments = if (viewer == InsightsViewer.TEACHER) assignments.scopeDepartments() else departmentScopeOptions(departments)
+    val filterSessions = if (viewer == InsightsViewer.TEACHER) assignments.scopeSessions() else sessions
+    val inScope = scopeInsights(scope?.overviews ?: overviews, scope?.atRisk ?: atRisk, scope?.examStats ?: examStats, filterScope, sessions)
+    val scopedOverviews = inScope.overviews
+    val scopedAtRisk = inScope.atRisk
+    val scopedExamStats = inScope.examStats
     val validSessionIds = sessions.map { it.sessionId }.toSet()
 
     val summary = insightsSummary(scopedOverviews, scopedAtRisk, scopedExamStats)
@@ -113,17 +123,14 @@ fun InsightsWorkspace(
     }
 
     val filteredOverviews = scopedOverviews
-        .filter { selectedSessionId == null || it.sessionId == selectedSessionId }
         .filter { query.isBlank() || sessionLabel(it.sessionId).contains(query, ignoreCase = true) }
         .sortedBy { sessionLabel(it.sessionId) }
 
     val filteredRisk = scopedAtRisk
-        .filter { selectedSessionId == null || it.sessionId == selectedSessionId }
         .filter { query.isBlank() || it.name.contains(query, ignoreCase = true) || it.rollNumber.contains(query, ignoreCase = true) }
         .sortedByDescending { riskSignals(it).size }
 
     val filteredExams = scopedExamStats
-        .filter { selectedSessionId == null || it.sessionId == selectedSessionId }
         .filter { query.isBlank() || it.courseCode.contains(query, ignoreCase = true) }
         .sortedBy { it.courseCode }
 
@@ -137,7 +144,7 @@ fun InsightsWorkspace(
             item {
                 ExportBar(
                     onExport,
-                    build = { insightsExport(filteredOverviews, filteredRisk, filteredExams, ::sessionLabel) },
+                    build = { insightsExport(filteredOverviews, filteredRisk, filteredExams, ::sessionLabel, filterScope.title(filterDepartments, sessions)) },
                     enabled = !loading,
                 )
             }
@@ -167,17 +174,8 @@ fun InsightsWorkspace(
                     placeholder = { Text("Search sessions, students, or courses") },
                     singleLine = true,
                 )
-                if (sessions.isNotEmpty()) {
-                    Spacer(Modifier.height(8.dp))
-                    CmsEntityPicker(
-                        label = "Session",
-                        selectedId = selectedSessionId,
-                        options = sessions.map { CmsEntityOption(it.sessionId, sessionLabel(it.sessionId)) },
-                        onSelected = { selectedSessionId = it },
-                        optional = true,
-                        emptyLabel = "All sessions",
-                    )
-                }
+                Spacer(Modifier.height(8.dp))
+                ShiftScopeSelector(filterScope, filterDepartments, filterSessions, { filterScope = it }, label = null)
             }
         }
 
@@ -186,8 +184,8 @@ fun InsightsWorkspace(
             tab == InsightsTab.SESSIONS -> if (filteredOverviews.isEmpty()) {
                 item { InsightsEmpty("No sessions match these filters.") }
             } else {
-                items(filteredOverviews, key = { it.sessionId }) { overview ->
-                    SessionInsightCard(overview, sessionLabel(overview.sessionId), viewer, reviewReasons(overview, validSessionIds))
+                items(filteredOverviews, key = { it.sessionId + "_" + it.shift.name }) { overview ->
+                    SessionInsightCard(overview, "${sessionLabel(overview.sessionId)} · ${overview.shift.label}", viewer, reviewReasons(overview, validSessionIds))
                 }
             }
             tab == InsightsTab.AT_RISK -> if (filteredRisk.isEmpty()) {

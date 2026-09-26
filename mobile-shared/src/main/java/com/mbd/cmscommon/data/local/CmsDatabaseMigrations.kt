@@ -1748,6 +1748,21 @@ val MIGRATION_45_46: Migration = object : Migration(45, 46) {
     }
 }
 
+/**
+ * 46 -> 47: insights at-risk and exam-stat caches carry the shift, so filters and teacher insights can narrow to
+ * one shift. Both tables are caches rebuilt by the next insights sync, so they are recreated empty.
+ */
+val MIGRATION_46_47: Migration = object : Migration(46, 47) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("DROP TABLE IF EXISTS `insight_at_risk_students`")
+        db.execSQL("CREATE TABLE IF NOT EXISTS `insight_at_risk_students` (`id` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `rollNumber` TEXT NOT NULL, `name` TEXT NOT NULL, `cgpa` REAL, `attendance` REAL, `cachedAt` INTEGER NOT NULL, `shift` TEXT NOT NULL, PRIMARY KEY(`id`))")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_insight_at_risk_students_sessionId_rollNumber` ON `insight_at_risk_students` (`sessionId`, `rollNumber`)")
+        db.execSQL("DROP TABLE IF EXISTS `insight_exam_stats`")
+        db.execSQL("CREATE TABLE IF NOT EXISTS `insight_exam_stats` (`id` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `semester` INTEGER NOT NULL, `courseCode` TEXT NOT NULL, `examType` TEXT NOT NULL, `entered` INTEGER NOT NULL, `avgScore` REAL, `minScore` INTEGER, `maxScore` INTEGER, `stddev` REAL, `outOf` INTEGER NOT NULL, `passRate` REAL, `cachedAt` INTEGER NOT NULL, `shift` TEXT NOT NULL, PRIMARY KEY(`id`))")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_insight_exam_stats_sessionId_semester_courseCode_examType` ON `insight_exam_stats` (`sessionId`, `semester`, `courseCode`, `examType`)")
+    }
+}
+
 val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_18_19,
     MIGRATION_19_20,
@@ -1777,4 +1792,5 @@ val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_43_44,
     MIGRATION_44_45,
     MIGRATION_45_46,
+    MIGRATION_46_47,
 )

@@ -30,6 +30,8 @@ data class InsightAtRiskStudentEntity(
     val cgpa: Double?,
     val attendance: Double?,
     val cachedAt: Long,
+    /** MORNING / EVENING: the student's shift. */
+    val shift: String = "MORNING",
 )
 
 @Entity(tableName = "insight_exam_stats", indices = [Index(value = ["sessionId", "semester", "courseCode", "examType"])])
@@ -47,4 +49,6 @@ data class InsightExamStatEntity(
     val outOf: Int,
     val passRate: Double?,
     val cachedAt: Long,
+    /** MORNING / EVENING: exam stats are per shift, over that shift's students. */
+    val shift: String = "MORNING",
 )

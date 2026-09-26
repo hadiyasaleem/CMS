@@ -23,8 +23,8 @@ import javax.inject.Inject
 import kotlin.math.sqrt
 
 private fun InsightSessionOverviewEntity.toDomain() = SessionOverview(sessionId, deptId, parseShift(shift) ?: Session.MORNING, currentSemester, students, avgCgpa, avgAttendance)
-private fun InsightAtRiskStudentEntity.toDomain() = AtRiskStudent(sessionId, rollNumber, name, cgpa, attendance)
-private fun InsightExamStatEntity.toDomain() = ExamStat(sessionId, semester, courseCode, runCatching { ExamType.valueOf(examType) }.getOrDefault(ExamType.MIDTERM), entered, avgScore, minScore, maxScore, stddev, outOf, passRate)
+private fun InsightAtRiskStudentEntity.toDomain() = AtRiskStudent(sessionId, rollNumber, name, cgpa, attendance, parseShift(shift))
+private fun InsightExamStatEntity.toDomain() = ExamStat(sessionId, semester, courseCode, runCatching { ExamType.valueOf(examType) }.getOrDefault(ExamType.MIDTERM), entered, avgScore, minScore, maxScore, stddev, outOf, passRate, shift = parseShift(shift))
 
 /** Cache-only Insights derived from the existing Room base tables. */
 class InsightsRepositoryLocalImpl @Inject constructor(
@@ -60,15 +60,18 @@ class InsightsRepositoryLocalImpl @Inject constructor(
             val key = "${student.sessionId}|${student.rollNumber}"
             val cgpa = latestGpa[key]?.cgpa ?: student.cgpa
             val rate = attendanceByStudent[key]
-            if ((cgpa != null && cgpa < 2.0) || (rate != null && rate < 75.0)) InsightAtRiskStudentEntity("${student.sessionId}_${student.rollNumber}", student.sessionId, student.rollNumber, student.name, cgpa, rate, cachedAt) else null
+            if ((cgpa != null && cgpa < 2.0) || (rate != null && rate < 75.0)) InsightAtRiskStudentEntity("${student.sessionId}_${student.rollNumber}", student.sessionId, student.rollNumber, student.name, cgpa, rate, cachedAt, (parseShift(student.shift) ?: Session.MORNING).name) else null
         }
-        val examStats = marks.groupBy { "${it.sessionId}|${it.courseCode}|${it.examType}" }.map { (_, rows) ->
+        // Exam stats are per shift: each shift's class sits (and is marked for) its own paper.
+        val shiftOf = students.associate { "${it.sessionId}|${it.rollNumber}" to (parseShift(it.shift) ?: Session.MORNING) }
+        val examStats = marks.groupBy { Triple("${it.sessionId}|${it.courseCode}|${it.examType}", shiftOf["${it.sessionId}|${it.rollNumber}"] ?: Session.MORNING, it.sessionId) }.map { (key, rows) ->
+            val shift = key.second
             val scores = rows.filterNot { it.wasAbsent }.map { it.score }
             val mean = scores.takeIf { it.isNotEmpty() }?.average()
             val stddev = mean?.let { average -> sqrt(scores.sumOf { (it - average) * (it - average) } / scores.size) }
             val outOf = rows.maxOfOrNull { it.maxMarks } ?: 0
             val first = rows.first()
-            InsightExamStatEntity("${first.sessionId}_${first.courseCode}_${first.examType}", first.sessionId, sessions.firstOrNull { it.sessionId == first.sessionId }?.currentSemester ?: 1, first.courseCode, first.examType, scores.size, mean, scores.minOrNull(), scores.maxOrNull(), stddev, outOf, if (scores.isEmpty() || outOf <= 0) null else scores.count { it * 100.0 / outOf >= 50.0 }.toDouble() * 100 / scores.size, cachedAt)
+            InsightExamStatEntity("${first.sessionId}_${shift.name}_${first.courseCode}_${first.examType}", first.sessionId, sessions.firstOrNull { it.sessionId == first.sessionId }?.currentSemester ?: 1, first.courseCode, first.examType, scores.size, mean, scores.minOrNull(), scores.maxOrNull(), stddev, outOf, if (scores.isEmpty() || outOf <= 0) null else scores.count { it * 100.0 / outOf >= 50.0 }.toDouble() * 100 / scores.size, cachedAt, shift.name)
         }
         insightsDao.replaceSessionOverviews(overviews)
         insightsDao.replaceAtRiskStudents(atRisk)

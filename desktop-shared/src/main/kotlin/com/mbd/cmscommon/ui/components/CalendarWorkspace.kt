@@ -1,5 +1,9 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.controller.inScope
+import com.mbd.cmscommon.controller.departmentScopeOptions
+import com.mbd.cmscommon.domain.model.ShiftScope
+import com.mbd.cmscommon.domain.model.CalendarViewerRole
 import com.mbd.cmscommon.util.clockDisplay
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
@@ -97,7 +101,9 @@ fun CalendarWorkspace(
     var pendingDelete by remember { mutableStateOf<CalendarEvent?>(null) }
 
     val today = LocalDate.now()
-    val relevant = events.filter { isVisibleTo(it, viewer) }
+    // Admins narrow the calendar by Department -> Session -> Shift; teachers and students see their own audience.
+    var filterScope by remember { mutableStateOf(ShiftScope.ALL) }
+    val relevant = events.filter { isVisibleTo(it, viewer) }.inScope(filterScope, sessions)
     val summary = calendarSummary(relevant, today)
 
     Box(modifier.fillMaxSize()) {
@@ -109,6 +115,9 @@ fun CalendarWorkspace(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item { CalendarHeader() }
+        if (viewer.role == CalendarViewerRole.ADMIN) {
+            item { ShiftScopeSelector(filterScope, departmentScopeOptions(departments), sessions, { filterScope = it }) }
+        }
 
         if (!errorMessage.isNullOrBlank()) {
             item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }

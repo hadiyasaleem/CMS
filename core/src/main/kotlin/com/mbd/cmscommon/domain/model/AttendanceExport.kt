@@ -32,13 +32,14 @@ fun buildAttendanceExportPayload(
     courseCode: String?,
     full: Map<String, Map<LocalDate, DailyAttendanceMark>>,
 ): AttendanceExportPayload? {
-    if (departmentId == null || year == null || semester == null || shift == null) return null
+    if (departmentId == null || year == null || semester == null) return null
 
-    val base = "attendance_${departmentId}_${year}_${shift.name}_sem$semester"
+    // No shift chosen means both shifts of the session.
+    val base = "attendance_${departmentId}_${year}_${shift?.name ?: "BOTH"}_sem$semester"
     val title = listOf(
         "Attendance Records",
         "Department: $departmentName",
-        "Session: $year–${year + 4} · ${shift.name} · Sem $semester",
+        "Session: $year–${year + 4} · ${shift?.let { "${it.label} shift" } ?: "Both shifts"} · Sem $semester",
     )
     val names = roster.associate { it.rollNumber to it.name }
 

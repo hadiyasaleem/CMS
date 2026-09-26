@@ -1,5 +1,9 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.controller.cascadeScope
+import com.mbd.cmscommon.controller.toCascade
+import com.mbd.cmscommon.controller.departmentScopeOptions
+import com.mbd.cmscommon.domain.model.ShiftScope
 import com.mbd.cmscommon.util.clockDisplay
 import com.mbd.cmscommon.util.isTimeRangeInvalid
 import com.mbd.cmscommon.export.ExportDocument
@@ -157,6 +161,7 @@ fun DatesheetWorkspace(
                 item {
                     when (viewMode) {
                         DatesheetViewMode.FILTERED -> FilteredDatesheetView(
+                            allSessions = sessions,
                             sessionsInDepartment = sessionsInDepartment,
                             shiftsForSelection = shiftsForSelection,
                             selectedDeptId = selectedDeptId,
@@ -187,6 +192,7 @@ fun DatesheetWorkspace(
                             onOpenDatesheet = { onOpenDatesheet(it) },
                         )
                         DatesheetViewMode.SEMESTER -> SemesterDatesheetView(
+                            allSessions = sessions,
                             resolvedSession = resolvedSession,
                             departments = departments,
                             sessionsInDepartment = sessionsInDepartment,
@@ -284,8 +290,7 @@ private fun DatesheetHeader() {
 @Composable
 private fun DatesheetFilterRow(
     departments: List<Department>,
-    sessionsInDepartment: List<AcademicSession>,
-    shiftsForSelection: List<Session>,
+    sessions: List<AcademicSession>,
     selectedDeptId: String?,
     selectedStartYear: Int?,
     selectedShift: Session?,
@@ -293,36 +298,26 @@ private fun DatesheetFilterRow(
     onSelectStartYear: (Int?) -> Unit,
     onSelectShift: (Session?) -> Unit,
 ) {
-    val departmentOptions = departments.sortedBy { it.name }.map { CmsEntityOption(it.deptId, "${it.code} · ${it.name}") }
-    val sessionOptions = sessionsInDepartment.map { it.startYear }.distinct().sorted().map { CmsEntityOption(it.toString(), "$it–${it + 4}") }
-    val shiftOptions = shiftsForSelection.map { CmsEntityOption(it.name, it.label) }
-
-    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        DropdownChip(
-            selectedLabel = departmentOptions.firstOrNull { it.id == selectedDeptId }?.label,
-            emptyLabel = "All departments",
-            options = departmentOptions,
-            onSelected = onSelectDepartment,
-        )
-        DropdownChip(
-            selectedLabel = selectedStartYear?.let { "$it–${it + 4}" },
-            emptyLabel = "All sessions",
-            options = sessionOptions,
-            onSelected = { onSelectStartYear(it?.toIntOrNull()) },
-            enabled = selectedDeptId != null,
-        )
-        DropdownChip(
-            selectedLabel = selectedShift?.label,
-            emptyLabel = "All shifts",
-            options = shiftOptions,
-            onSelected = { onSelectShift(it?.let(Session::valueOf)) },
-            enabled = selectedStartYear != null,
-        )
+    // The shared Department -> Session -> Shift selector drives the department / intake-year / shift cascade.
+    // Picking a session opens its first shift (there is no combined grid); a chosen shift then replaces it.
+    val applyScope: (ShiftScope) -> Unit = { picked ->
+        val cascade = picked.toCascade(sessions)
+        onSelectDepartment(cascade.deptId)
+        onSelectStartYear(cascade.startYear)
+        cascade.shift?.let(onSelectShift)
     }
+    ShiftScopeSelector(
+        scope = cascadeScope(selectedDeptId, selectedStartYear, selectedShift, sessions),
+        departments = departmentScopeOptions(departments),
+        sessions = sessions,
+        onScopeChange = applyScope,
+        label = null,
+    )
 }
 
 @Composable
 private fun FilteredDatesheetView(
+    allSessions: List<AcademicSession>,
     departments: List<Department>,
     sessionsInDepartment: List<AcademicSession>,
     shiftsForSelection: List<Session>,
@@ -342,7 +337,7 @@ private fun FilteredDatesheetView(
     var showCreateDialog by remember { mutableStateOf(false) }
 
     Column {
-        DatesheetFilterRow(departments, sessionsInDepartment, shiftsForSelection, selectedDeptId, selectedStartYear, selectedShift, onSelectDepartment, onSelectStartYear, onSelectShift)
+        DatesheetFilterRow(departments, allSessions, selectedDeptId, selectedStartYear, selectedShift, onSelectDepartment, onSelectStartYear, onSelectShift)
         Spacer(Modifier.height(12.dp))
         // No manual semester picker -- a datesheet is always for whichever semester the session is
         // currently in, same as timetable periods and marks entry.
@@ -530,6 +525,7 @@ private fun CalendarDatesheetView(
 
 @Composable
 private fun SemesterDatesheetView(
+    allSessions: List<AcademicSession>,
     resolvedSession: AcademicSession?,
     departments: List<Department>,
     sessionsInDepartment: List<AcademicSession>,
@@ -545,7 +541,7 @@ private fun SemesterDatesheetView(
     onOpenDatesheet: (String) -> Unit,
 ) {
     Column {
-        DatesheetFilterRow(departments, sessionsInDepartment, shiftsForSelection, selectedDeptId, selectedStartYear, selectedShift, onSelectDepartment, onSelectStartYear, onSelectShift)
+        DatesheetFilterRow(departments, allSessions, selectedDeptId, selectedStartYear, selectedShift, onSelectDepartment, onSelectStartYear, onSelectShift)
         Spacer(Modifier.height(12.dp))
 
         if (resolvedSession == null) {

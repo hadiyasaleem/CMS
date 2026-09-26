@@ -38,13 +38,13 @@ data class InsightsSummary(
 )
 
 fun canonicalSessionOverviews(rows: List<SessionOverview>): List<SessionOverview> =
-    rows.distinctBy { it.sessionId }
+    rows.distinctBy { it.sessionId to it.shift }
 
 fun canonicalAtRiskStudents(rows: List<AtRiskStudent>): List<AtRiskStudent> =
     rows.distinctBy { it.sessionId to it.rollNumber }
 
 fun canonicalExamStats(rows: List<ExamStat>): List<ExamStat> =
-    rows.distinctBy { listOf(it.sessionId, it.semester.toString(), it.courseCode.uppercase(), it.examType.name) }
+    rows.distinctBy { listOf(it.sessionId, it.shift?.name, it.semester.toString(), it.courseCode.uppercase(), it.examType.name) }
 
 fun reviewReasons(overview: SessionOverview, validSessionIds: Set<String> = emptySet()): List<String> {
     val reasons = mutableListOf<String>()
@@ -135,11 +135,20 @@ fun scopeTeacherInsights(
 ): TeacherInsightsScope {
     val classKeys = assignments.map { it.sessionId to it.courseCode.uppercase() }.toSet()
     val sessionIds = classKeys.map { it.first }.toSet()
+    // A class is one shift of a session; a null shift (unknown) keeps the whole session.
+    val taught = assignments.map { it.sessionId to it.classShift }.toSet()
+    fun teaches(sessionId: String, shift: Session?): Boolean =
+        (sessionId to null) in taught || shift == null || (sessionId to shift) in taught ||
+            taught.none { it.first == sessionId && it.second != null }
+    val classShifts = assignments.map { Triple(it.sessionId, it.courseCode.uppercase(), it.classShift) }.toSet()
 
     return TeacherInsightsScope(
-        overviews = overviews.filter { it.sessionId in sessionIds },
-        atRisk = atRisk.filter { it.sessionId in sessionIds },
-        examStats = examStats.filter { (it.sessionId to it.courseCode.uppercase()) in classKeys },
+        overviews = overviews.filter { it.sessionId in sessionIds && teaches(it.sessionId, it.shift) },
+        atRisk = atRisk.filter { it.sessionId in sessionIds && teaches(it.sessionId, it.shift) },
+        examStats = examStats.filter { stat ->
+            (stat.sessionId to stat.courseCode.uppercase()) in classKeys &&
+                (stat.shift == null || classShifts.any { it.first == stat.sessionId && it.second == stat.courseCode.uppercase() && (it.third == null || it.third == stat.shift) })
+        },
         assignedSessions = sessionIds.size,
         assignedClasses = classKeys.size,
     )

@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.domain.model.ShiftScope
 import com.mbd.cmscommon.domain.model.SemesterGpa
 import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
@@ -27,10 +28,26 @@ class SemesterResultsController(
     private val curriculumRepository: CurriculumRepository,
     sessions: Flow<List<Pair<String, String>>>,
     scope: CoroutineScope,
+    /** Departments and sessions offered by the Department -> Session -> Shift filter. */
+    filterOptions: Flow<ScopeFilterOptions> = flowOf(ScopeFilterOptions()),
 ) : ScreenController(scope) {
 
     val sessions: StateFlow<List<Pair<String, String>>> = sessions
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val filterOptions: StateFlow<ScopeFilterOptions> = filterOptions.stateIn(scope, SharingStarted.WhileSubscribed(5000), ScopeFilterOptions())
+
+    private val _filterScope = MutableStateFlow(ShiftScope.ALL)
+    val filterScope: StateFlow<ShiftScope> = _filterScope.asStateFlow()
+
+    fun setFilterScope(scope: ShiftScope) {
+        _filterScope.value = scope
+    }
+
+    /** The classes the picker offers: only those inside the chosen department / session / shift. */
+    val visibleSessions: StateFlow<List<Pair<String, String>>> = combine(this.sessions, _filterScope, this.filterOptions) { classes, filter, options ->
+        classesInScope(classes, filter, options.sessions)
+    }.stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     /** The picked class key (see [shiftClassKey]): one shift of a session, or a bare session id for all of it. */
     private val _sessionId = MutableStateFlow<String?>(null)

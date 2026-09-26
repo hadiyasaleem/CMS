@@ -28,7 +28,7 @@ import com.mbd.cmscommon.data.local.dao.TableSyncStateDao
 import com.mbd.cmscommon.data.local.dao.TeacherDao
 import com.mbd.cmscommon.data.local.dao.UserDao
 
-const val CMS_DATABASE_VERSION = 46
+const val CMS_DATABASE_VERSION = 47
 
 abstract class CmsDatabase : RoomDatabase() {
     abstract fun departmentDao(): DepartmentDao

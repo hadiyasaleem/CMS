@@ -1,5 +1,8 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.controller.inScope
+import com.mbd.cmscommon.controller.departmentScopeOptions
+import com.mbd.cmscommon.domain.model.ShiftScope
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -60,10 +63,20 @@ enum class NoticeTab(val label: String) {
 
 @Composable
 fun NotificationControllerWorkspace(controller: NotificationsController, modifier: Modifier = Modifier) {
-    val inbox by controller.inbox.collectAsState()
-    val sent by controller.sent.collectAsState()
+    val allInbox by controller.inbox.collectAsState()
+    val allSent by controller.sent.collectAsState()
     val departments by controller.departments.collectAsState()
     val publishSessions by controller.publishSessions.collectAsState()
+    // Department -> Session -> Shift filter over each notice's audience (students are already scoped to theirs).
+    var filterScope by remember { mutableStateOf(ShiftScope.ALL) }
+    val showScopeFilter = controller.viewerRole != NotificationTargetRole.STUDENT && publishSessions.isNotEmpty()
+    val filterDepartments = if (departments.isNotEmpty()) {
+        departmentScopeOptions(departments)
+    } else {
+        publishSessions.map { it.deptId to it.deptId.uppercase() }.distinct()
+    }
+    val inbox = allInbox.inScope(filterScope, publishSessions)
+    val sent = allSent.inScope(filterScope, publishSessions)
     val publishAccess by controller.publishAccess.collectAsState()
     val loading by controller.loading.collectAsState()
     val busyActionId by controller.busyActionId.collectAsState()
@@ -88,6 +101,9 @@ fun NotificationControllerWorkspace(controller: NotificationsController, modifie
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item { NotificationHero(controller.viewerRole, inbox.size) }
+        if (showScopeFilter) {
+            item { ShiftScopeSelector(filterScope, filterDepartments, publishSessions, { filterScope = it }) }
+        }
 
         if (!loadError.isNullOrBlank()) {
             item { CmsNotice(loadError ?: "", tone = NoticeTone.Error, actionLabel = "Retry", onAction = controller::refresh) }

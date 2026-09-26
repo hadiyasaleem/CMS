@@ -1,5 +1,10 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.domain.model.AcademicSession
+import com.mbd.cmscommon.domain.model.ExamPaperSubmission
+import com.mbd.cmscommon.domain.model.ShiftScope
+import com.mbd.cmscommon.domain.model.StudentProfile
+import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.model.MarkEditRequest
 import com.mbd.cmscommon.domain.model.PeopleHubSnapshot
 import com.mbd.cmscommon.domain.model.StudentLinkRequest
@@ -25,7 +30,22 @@ class PeopleHubController(
     private val markEditRequestRepository: MarkEditRequestRepository,
     private val examPaperSubmissionRepository: ExamPaperSubmissionRepository,
     scope: CoroutineScope,
+    /** Department names for the filter; without it departments are shown by their code. */
+    private val departmentRepository: DepartmentRepository? = null,
 ) : ScreenController(scope) {
+
+    private val _filterScope = MutableStateFlow(ShiftScope.ALL)
+
+    /** The Department -> Session -> Shift filter the hub's counts follow. */
+    val filterScope: StateFlow<ShiftScope> = _filterScope.asStateFlow()
+
+    private val _filterOptions = MutableStateFlow(ScopeFilterOptions())
+    val filterOptions: StateFlow<ScopeFilterOptions> = _filterOptions.asStateFlow()
+
+    fun setFilterScope(scope: ShiftScope) {
+        _filterScope.value = scope
+        publish()
+    }
 
     private val _snapshot = MutableStateFlow<PeopleHubSnapshot?>(null)
     val snapshot: StateFlow<PeopleHubSnapshot?> = _snapshot.asStateFlow()
@@ -41,7 +61,9 @@ class PeopleHubController(
     private var cachedStudentCount: Int = 0
     private var cachedLinks: List<StudentLinkRequest> = emptyList()
     private var cachedEdits: List<MarkEditRequest> = emptyList()
-    private var cachedSubmittedPapers: Int = 0
+    private var cachedSubmissions: List<ExamPaperSubmission> = emptyList()
+    private var cachedSessions: List<AcademicSession> = emptyList()
+    private var cachedProfiles: List<StudentProfile> = emptyList()
 
     init {
         refresh(fetchRemote = false)
@@ -85,7 +107,14 @@ class PeopleHubController(
                 val submittedPapersDeferred = async {
                     runCatching {
                         if (fetchRemote) examPaperSubmissionRepository.syncAll()
-                        examPaperSubmissionRepository.observeAllSubmissions().first().size
+                        examPaperSubmissionRepository.observeAllSubmissions().first()
+                    }
+                }
+                val scopeDataDeferred = async {
+                    runCatching {
+                        val sessions = sessionRepository.observeAllSessions().first()
+                        val departments = departmentRepository?.observeActiveDepartments()?.first()
+                        Triple(sessions, sessionRepository.observeAllStudentProfiles().first(), departments)
                     }
                 }
 
@@ -94,21 +123,22 @@ class PeopleHubController(
                 val linksResult = linksDeferred.await()
                 val editsResult = editsDeferred.await()
                 val submittedPapersResult = submittedPapersDeferred.await()
+                val scopeDataResult = scopeDataDeferred.await()
 
                 if (version == loadVersion) {
                     teachersResult.getOrNull()?.let { cachedTeachers = it }
                     studentsResult.getOrNull()?.let { cachedStudentCount = it }
                     linksResult.getOrNull()?.let { cachedLinks = it }
                     editsResult.getOrNull()?.let { cachedEdits = it }
-                    submittedPapersResult.getOrNull()?.let { cachedSubmittedPapers = it }
+                    submittedPapersResult.getOrNull()?.let { cachedSubmissions = it }
+                    scopeDataResult.getOrNull()?.let { (sessions, profiles, departments) ->
+                        cachedSessions = sessions
+                        cachedProfiles = profiles
+                        _filterOptions.value = departments?.let { ScopeFilterOptions.of(it, sessions) }
+                            ?: ScopeFilterOptions(sessions.map { it.deptId to it.deptId.uppercase() }.distinct(), sessions)
+                    }
 
-                    _snapshot.value = peopleHubSnapshot(
-                        cachedTeachers,
-                        cachedStudentCount,
-                        cachedLinks,
-                        cachedEdits,
-                        cachedSubmittedPapers,
-                    )
+                    publish()
                     _loadError.value = listOf(teachersResult, studentsResult, linksResult, editsResult, submittedPapersResult)
                         .firstNotNullOfOrNull { it.exceptionOrNull() }
                         ?.userMessageLogged("Some people summaries could not be loaded.")
@@ -117,4 +147,36 @@ class PeopleHubController(
             }
         }
     }
+
+    private fun publish() {
+        _snapshot.value = peopleHubSnapshotInScope(
+            PeopleHubSources(cachedTeachers, cachedStudentCount, cachedProfiles, cachedLinks, cachedEdits, cachedSubmissions, cachedSessions),
+            _filterScope.value,
+        )
+    }
+}
+
+data class PeopleHubSources(
+    val teachers: List<Teacher>,
+    val activeStudentCount: Int,
+    val profiles: List<StudentProfile>,
+    val linkRequests: List<StudentLinkRequest>,
+    val markEdits: List<MarkEditRequest>,
+    val submissions: List<ExamPaperSubmission>,
+    val sessions: List<AcademicSession>,
+)
+
+/** The People hub counts inside a scope; with nothing chosen they are college-wide. */
+fun peopleHubSnapshotInScope(sources: PeopleHubSources, scope: ShiftScope): PeopleHubSnapshot {
+    if (scope.isEmpty) {
+        return peopleHubSnapshot(sources.teachers, sources.activeStudentCount, sources.linkRequests, sources.markEdits, sources.submissions.size)
+    }
+    val activeIds = sources.sessions.filter { it.isActive && scope.matches(it) }.map { it.sessionId }.toSet()
+    return peopleHubSnapshot(
+        teachers = sources.teachers.filter { scope.deptId == null || it.deptId == scope.deptId },
+        studentCount = sources.profiles.count { it.sessionId in activeIds && scope.matches(deptOfSession(it.sessionId, sources.sessions), it.sessionId, it.shift) },
+        linkRequests = sources.linkRequests.inScope(scope, sources.sessions),
+        markEditRequests = sources.markEdits.inScope(scope, sources.sessions),
+        submittedPapers = submittedPapersMatching(sources.submissions, SubmittedPapersFilters(deptId = scope.deptId, sessionId = scope.sessionId, shift = scope.shift), sources.sessions).size,
+    )
 }

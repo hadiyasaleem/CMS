@@ -16,6 +16,8 @@ data class AtRiskStudent(
     val name: String,
     val cgpa: Double?,
     val attendance: Double?,
+    /** The student's shift; null for rows cached before insights were split by shift. */
+    val shift: Session? = null,
 )
 
 data class ExamStat(
@@ -30,4 +32,6 @@ data class ExamStat(
     val stddev: Double?,
     val outOf: Int,
     val passRate: Double?,
+    /** The shift whose students sat the exam; null for rows cached before insights were split by shift. */
+    val shift: Session? = null,
 )

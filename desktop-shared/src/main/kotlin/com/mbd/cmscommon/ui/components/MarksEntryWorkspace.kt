@@ -113,7 +113,7 @@ fun MarksEntryWorkspace(
         if (onExport != null && selected != null) {
             item { ExportBar(onExport, build = { marksSheetExport(selected, examType, roster, scores, absentRolls) }, enabled = roster.isNotEmpty()) }
         }
-        item { AssignmentPicker(assignments, selected, onSelect) }
+        item { TeacherClassPicker(assignments, selected, onSelect) }
         item {
             Row(
                 modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
@@ -185,24 +185,6 @@ private fun MarksHeader(selected: ResolvedAssignment?, examType: ExamType, avera
     }
 }
 
-@Composable
-private fun AssignmentPicker(assignments: List<ResolvedAssignment>, selected: ResolvedAssignment?, onSelect: (ResolvedAssignment) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-    Box(Modifier.fillMaxWidth()) {
-        OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) {
-            Text(selected?.let { "${it.subjectLabel} · ${it.sessionLabel}" } ?: "Select a class", modifier = Modifier.weight(1f))
-            Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.heightIn(max = 240.dp)) {
-            assignments.forEach { assignment ->
-                DropdownMenuItem(
-                    text = { Text("${assignment.subjectLabel} · ${assignment.sessionLabel}") },
-                    onClick = { onSelect(assignment); expanded = false },
-                )
-            }
-        }
-    }
-}
 
 @Composable
 private fun MarksMetrics(total: Int, locked: Int, ready: Int, absent: Int, pending: Int) {
