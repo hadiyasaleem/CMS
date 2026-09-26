@@ -1,5 +1,7 @@
 package com.mbd.cmsadmin.feature.academics
 
+import com.mbd.cmscommon.domain.model.ShiftMode
+import com.mbd.cmscommon.domain.repository.DatesheetRepository
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -26,6 +28,7 @@ class SessionDetailViewModel @Inject constructor(
     curriculumRepository: CurriculumRepository,
     timetableRepository: SessionTimetableRepository,
     feeRepository: SessionFeeRepository,
+    datesheetRepository: DatesheetRepository,
     teacherRepository: TeacherRepository,
 ) : ViewModel() {
     private val controller = SessionDetailController(
@@ -34,12 +37,14 @@ class SessionDetailViewModel @Inject constructor(
         curriculumRepository = curriculumRepository,
         timetableRepository = timetableRepository,
         feeRepository = feeRepository,
+        datesheetRepository = datesheetRepository,
         scope = viewModelScope,
     )
 
     val sessionId = controller.sessionId
     val session = controller.session
     val students = controller.students
+    val studentCountsByShift = controller.studentCountsByShift
     val subjectCounts = controller.subjectCounts
     val periods = controller.periods
     val fee = controller.fee
@@ -52,8 +57,8 @@ class SessionDetailViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun promoteSession() = controller.promoteSession()
-    fun updateDetails(programName: String?, inchargeEmail: String?, maxStudents: Int) =
-        controller.updateDetails(programName, inchargeEmail, maxStudents)
+    fun updateDetails(programName: String?, inchargeEmail: String?, maxStudents: Int, shiftMode: ShiftMode) =
+        controller.updateDetails(programName, inchargeEmail, maxStudents, shiftMode)
     fun deleteSession(onDone: () -> Unit) = controller.deleteSession(onDone)
     fun clearError() = controller.clearError()
     fun consumeNotice() = controller.consumeNotice()
@@ -70,6 +75,7 @@ fun SessionDetailScreen(
 ) {
     val session by viewModel.session.collectAsState()
     val students by viewModel.students.collectAsState()
+    val shiftCounts by viewModel.studentCountsByShift.collectAsState()
     val subjectCounts by viewModel.subjectCounts.collectAsState()
     val periods by viewModel.periods.collectAsState()
     val fee by viewModel.fee.collectAsState()
@@ -101,5 +107,6 @@ fun SessionDetailScreen(
         onDeleteSession = { viewModel.deleteSession(onDeleted) },
         onClearError = viewModel::clearError,
         onConsumeNotice = viewModel::consumeNotice,
+        shiftCounts = shiftCounts,
     )
 }

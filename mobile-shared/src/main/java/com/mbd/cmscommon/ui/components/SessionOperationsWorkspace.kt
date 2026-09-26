@@ -1,5 +1,10 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.domain.model.Session
+import com.mbd.cmscommon.domain.model.ShiftMode
+import com.mbd.cmscommon.controller.capacityError
+import com.mbd.cmscommon.controller.capacityForShiftSelection
+import com.mbd.cmscommon.controller.studentCountsByShift
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -76,7 +81,7 @@ fun SessionOperationsWorkspace(
     notice: String?,
     teachers: List<Teacher>,
     onPromoteSession: () -> Unit,
-    onUpdateDetails: (String, String, Int) -> Unit,
+    onUpdateDetails: (String, String, Int, ShiftMode) -> Unit,
     onOpenStudents: () -> Unit,
     onOpenTimetable: () -> Unit,
     onOpenSemester: (Int) -> Unit,
@@ -85,6 +90,7 @@ fun SessionOperationsWorkspace(
     onClearError: () -> Unit,
     onConsumeNotice: () -> Unit,
     modifier: Modifier = Modifier,
+    shiftCounts: Map<Session, Int> = studentCountsByShift(students),
 ) {
     var showEditDetails by remember { mutableStateOf(false) }
     var showPromoteConfirm by remember { mutableStateOf(false) }
@@ -94,7 +100,7 @@ fun SessionOperationsWorkspace(
     val configuredSemesters = subjectCounts.count { it.value > 0 }
 
     val actions = listOf(
-        SessionAction("Students", "Roster, profiles, imports, and account links", "${students.size} enrolled", Icons.Outlined.School, onOpenStudents),
+        SessionAction("Students", "Roster, profiles, imports, and account links", shiftEnrolmentLine(session, students.size, shiftCounts), Icons.Outlined.School, onOpenStudents),
         SessionAction("Timetable", "Weekly periods, subjects, rooms, and teachers", "${periods.size} period(s) configured", Icons.Outlined.CalendarMonth, onOpenTimetable),
         SessionAction("Fee structure", "Fee heads and payment instructions for this intake", if (fee != null) "Rs ${fee.totalAmount}" else "Fee structure not configured", Icons.Outlined.Payments, onOpenFees),
     )
@@ -113,6 +119,7 @@ fun SessionOperationsWorkspace(
             SessionProgressCard(
                 session,
                 students.size,
+                shiftCounts,
                 gpaRecorded,
                 configuredSemesters,
                 currentSemesterTerm = currentSemesterTerm,
@@ -150,7 +157,13 @@ fun SessionOperationsWorkspace(
     }
 
     if (showEditDetails && session != null) {
-        EditSessionDetailsDialog(session, teachers, onDismiss = { showEditDetails = false }, onSave = { program, incharge, capacity -> onUpdateDetails(program, incharge, capacity); showEditDetails = false })
+        EditSessionDetailsDialog(
+            session,
+            teachers,
+            enrolled = students.size,
+            onDismiss = { showEditDetails = false },
+            onSave = { program, incharge, capacity, mode -> onUpdateDetails(program, incharge, capacity, mode); showEditDetails = false },
+        )
     }
 
     if (showPromoteConfirm) {
@@ -194,6 +207,10 @@ private fun SessionIdentityCard(session: AcademicSession?, onEdit: () -> Unit) {
                 Spacer(Modifier.height(4.dp))
                 Text(session?.programName?.takeIf { it.isNotBlank() } ?: "Program name not configured", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
                 Text(session?.inchargeEmail?.takeIf { it.isNotBlank() } ?: "Session in-charge not assigned", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
+                if (session != null) {
+                    Spacer(Modifier.height(6.dp))
+                    StatusBadge(session.shiftMode.label.uppercase(), if (session.shiftMode == ShiftMode.EVENING) BadgeTone.Gold else BadgeTone.Navy)
+                }
             }
             StatusBadge(if (session?.isActive == true) "ACTIVE" else "ARCHIVED", if (session?.isActive == true) BadgeTone.Success else BadgeTone.Neutral)
             TextButton(onClick = onEdit) { Text("Edit", color = CmsTheme.colors.onInk) }
@@ -205,6 +222,7 @@ private fun SessionIdentityCard(session: AcademicSession?, onEdit: () -> Unit) {
 private fun SessionProgressCard(
     session: AcademicSession?,
     studentCount: Int,
+    shiftCounts: Map<Session, Int>,
     gpaRecorded: Int,
     configuredSemesters: Int,
     currentSemesterTerm: SemesterTerm?,
@@ -223,6 +241,14 @@ private fun SessionProgressCard(
             Text("Semester ${session?.currentSemester ?: 1}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(10.dp))
             ProgressLine("Student capacity", capacityUsed, if (maxStudents > 0) "$studentCount / $maxStudents enrolled" else "Seats remaining unknown")
+            if (session != null && session.shifts.size > 1) {
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    session.shifts.joinToString(" · ") { "${it.label} ${shiftCounts[it] ?: 0}" },
+                    color = ModMuted,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
             Spacer(Modifier.height(10.dp))
             ProgressLine("GPA coverage", gpaPercent, "$gpaRecorded / $studentCount recorded")
             Spacer(Modifier.height(10.dp))
@@ -320,14 +346,21 @@ private fun DangerZoneCard(studentCount: Int, onDelete: () -> Unit) {
 }
 
 @Composable
-private fun EditSessionDetailsDialog(session: AcademicSession, teachers: List<Teacher>, onDismiss: () -> Unit, onSave: (String, String, Int) -> Unit) {
+private fun EditSessionDetailsDialog(
+    session: AcademicSession,
+    teachers: List<Teacher>,
+    enrolled: Int,
+    onDismiss: () -> Unit,
+    onSave: (String, String, Int, ShiftMode) -> Unit,
+) {
     var programName by remember { mutableStateOf(session.programName ?: "") }
     var inchargeEmail by remember { mutableStateOf(session.inchargeEmail ?: "") }
+    var shifts by remember { mutableStateOf(session.shifts.toSet()) }
     var maxStudents by remember { mutableStateOf(session.maxStudents.toString()) }
 
-    val parsedCapacity = maxStudents.toIntOrNull()
-    val minimumCapacity = session.maxStudents.let { 1 }
-    val error = if (parsedCapacity == null || parsedCapacity < minimumCapacity) "Capacity must be between $minimumCapacity and 500." else null
+    val mode = ShiftMode.of(shifts)
+    val error = if (mode == null) "Tick Morning, Evening, or both." else capacityError(maxStudents, enrolled)
+    val dropping = session.shifts.filterNot { it in shifts }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -344,16 +377,40 @@ private fun EditSessionDetailsDialog(session: AcademicSession, teachers: List<Te
                     emptyLabel = "In-charge not assigned",
                 )
                 Spacer(Modifier.height(10.dp))
-                OutlinedTextField(value = maxStudents, onValueChange = { maxStudents = it }, label = { Text("Student capacity") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-                if (error != null) {
-                    Spacer(Modifier.height(8.dp))
-                    Text(error, color = SessionRed, style = MaterialTheme.typography.bodySmall)
+                SessionShiftFields(
+                    shifts = shifts,
+                    onShiftsChange = { picked -> shifts = picked; maxStudents = capacityForShiftSelection(picked, maxStudents) },
+                    capacity = maxStudents,
+                    onCapacityChange = { maxStudents = it },
+                    capacityMessage = if (mode == null) null else capacityError(maxStudents, enrolled),
+                )
+                if (dropping.isNotEmpty()) {
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        "Removing the ${dropping.joinToString(" and ") { it.label }} shift only works once it has no students, fee structure, timetable periods or datesheet.",
+                        color = SessionRed,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                if (mode == null) {
+                    Spacer(Modifier.height(6.dp))
+                    Text("Tick Morning, Evening, or both.", color = SessionRed, style = MaterialTheme.typography.bodySmall)
                 }
             }
         },
         confirmButton = {
-            TextButton(onClick = { parsedCapacity?.let { onSave(programName.trim(), inchargeEmail.trim(), it) } }, enabled = error == null) { Text("Save") }
+            TextButton(
+                onClick = { if (mode != null) maxStudents.toIntOrNull()?.let { onSave(programName.trim(), inchargeEmail.trim(), it, mode) } },
+                enabled = error == null,
+            ) { Text("Save") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     )
+}
+
+/** "38 enrolled · Morning 20 · Evening 18" for a two-shift session, "20 enrolled" otherwise. */
+private fun shiftEnrolmentLine(session: AcademicSession?, total: Int, byShift: Map<Session, Int>): String {
+    val shifts = session?.shifts.orEmpty()
+    if (shifts.size < 2) return "$total enrolled"
+    return "$total enrolled · " + shifts.joinToString(" · ") { "${it.label} ${byShift[it] ?: 0}" }
 }

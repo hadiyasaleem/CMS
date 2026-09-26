@@ -364,6 +364,7 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         curriculumRepository = component.curriculumRepository(),
                         timetableRepository = component.sessionTimetableRepository(),
                         feeRepository = component.sessionFeeRepository(),
+                        datesheetRepository = component.datesheetRepository(),
                         teacherRepository = component.teacherRepository(),
                         onOpenStudents = { sessionId -> push(AdminScreen.SessionStudents(sessionId)) },
                         onOpenTimetable = { sessionId -> push(AdminScreen.SessionTimetableRoute(sessionId)) },

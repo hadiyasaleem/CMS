@@ -1,5 +1,10 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.domain.model.Datesheet
+import com.mbd.cmscommon.domain.model.Session
+import com.mbd.cmscommon.domain.model.ShiftMode
+import com.mbd.cmscommon.domain.repository.DatesheetRepository
+import com.mbd.cmscommon.util.orThrowValidation
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.SemesterTerm
 import com.mbd.cmscommon.domain.model.SessionFeeStructure
@@ -27,6 +32,7 @@ class SessionDetailController(
     curriculumRepository: CurriculumRepository,
     private val timetableRepository: SessionTimetableRepository,
     private val feeRepository: SessionFeeRepository,
+    datesheetRepository: DatesheetRepository,
     scope: CoroutineScope,
 ) : ScreenController(scope) {
 
@@ -35,6 +41,18 @@ class SessionDetailController(
 
     val students: StateFlow<List<SessionStudent>> =
         sessionRepository.observeStudents(sessionId).stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /** Enrolled students per shift (both shifts always present); the total is [students].size. */
+    val studentCountsByShift: StateFlow<Map<Session, Int>> = students
+        .map { studentCountsByShift(it) }
+        .stateIn(scope, SharingStarted.WhileSubscribed(5000), studentCountsByShift(emptyList()))
+
+    /** This session's datesheets (all shifts) -- consulted before a shift is dropped. */
+    val datesheets: StateFlow<List<Datesheet>> = datesheetRepository.observeDatesheets()
+        .map { sheets -> sheets.filter { it.sessionId == sessionId } }
+        .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    private val _fees = MutableStateFlow<List<SessionFeeStructure>>(emptyList())
 
     val subjectCounts: StateFlow<Map<Int, Int>> = curriculumRepository.observeSessionSubjects(sessionId)
         .map { subjects -> subjects.groupingBy { it.semester }.eachCount() }
@@ -67,8 +85,10 @@ class SessionDetailController(
     init {
         launch {
             try {
+                val fees = feeRepository.getSessionFees(sessionId)
+                _fees.value = fees
                 // TODO(Task 6): show each shift's structure; for now the first configured one.
-                _fee.value = feeRepository.getSessionFees(sessionId).firstOrNull()
+                _fee.value = fees.firstOrNull()
             } finally {
                 _feeLoading.value = false
             }
@@ -88,12 +108,26 @@ class SessionDetailController(
         _notice.value = if (graduating) "Class marked as graduated." else "Promoted to semester ${currentSemester + 1}."
     }
 
-    fun updateDetails(programName: String?, inchargeEmail: String?, maxStudents: Int) = launch {
+    /**
+     * Saves program, in-charge and capacity, and switches the shifts the session runs when [shiftMode]
+     * differs. Adding a shift is always allowed; dropping one is refused while it still has students,
+     * fees, periods or a datesheet (see [shiftModeChangeError]; the database enforces the same rule).
+     */
+    fun updateDetails(programName: String?, inchargeEmail: String?, maxStudents: Int, shiftMode: ShiftMode? = null) = launch {
         requireValid((programName ?: "").trim().length <= 120) { "Program name must not exceed 120 characters." }
         requireValid(FieldValidators.emailError(inchargeEmail ?: "", required = false) == null) { "Choose a valid session in-charge." }
-        requireValid(maxStudents in 1..50) { "Student capacity must be between 1 and 50." }
+        val current = session.value ?: return@launch
+        val target = shiftMode ?: current.shiftMode
+        val modeChanged = target != current.shiftMode
+        if (modeChanged || maxStudents != current.maxStudents) {
+            shiftModeChangeError(current, target, maxStudents, students.value, _fees.value, periods.value, datesheets.value)
+                .orThrowValidation()
+        } else {
+            capacityError(maxStudents.toString(), students.value.size).orThrowValidation()
+        }
+        if (modeChanged) sessionRepository.updateShiftMode(sessionId, target, maxStudents)
         sessionRepository.updateSessionDetails(sessionId, programName, inchargeEmail, maxStudents)
-        _notice.value = "Session details updated."
+        _notice.value = if (modeChanged) "Session now runs ${target.label}." else "Session details updated."
     }
 
     fun deleteSession(onDone: () -> Unit) = launch {

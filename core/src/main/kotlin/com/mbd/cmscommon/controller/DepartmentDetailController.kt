@@ -51,13 +51,18 @@ class DepartmentDetailController(
         launch { _department.value = departmentRepository.getDepartment(deptId) }
     }
 
-    fun createSession(startYear: Int, shift: Session) = launch {
+    /**
+     * Creates one session for the intake year serving the ticked [shifts] (Morning, Evening or both), with
+     * [maxStudents] seats in total. A department has at most one session per intake year.
+     */
+    fun createSession(startYear: Int, shifts: Set<Session>, maxStudents: Int) = launch {
         // The UI only ever offers full 4-digit years (see intakeYearOptions() in
         // DepartmentDetailWorkspace); this guards the controller boundary in case anything else
         // ever calls this directly with a 2-digit year like 21 instead of 2021.
         requireValid(startYear in 1900..9999) { "Enter a valid 4-digit intake year." }
-        // TODO(Task 3): the form will pick Morning/Evening checkboxes and a max-students value directly.
-        sessionRepository.createSession(deptId, startYear, ShiftMode.of(setOf(shift)) ?: ShiftMode.MORNING)
+        createSessionError(startYear, shifts, maxStudents.toString(), sessions.value).orThrowValidation()
+        val mode = ShiftMode.of(shifts) ?: return@launch
+        sessionRepository.createSession(deptId, startYear, mode, maxStudents)
         _notice.value = "Session created."
     }
 

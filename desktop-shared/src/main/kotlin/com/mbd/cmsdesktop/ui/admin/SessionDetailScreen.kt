@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.ui.admin
 
+import com.mbd.cmscommon.domain.repository.DatesheetRepository
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -20,6 +21,7 @@ fun SessionDetailScreen(
     curriculumRepository: CurriculumRepository,
     timetableRepository: SessionTimetableRepository,
     feeRepository: SessionFeeRepository,
+    datesheetRepository: DatesheetRepository,
     teacherRepository: TeacherRepository,
     onOpenStudents: (String) -> Unit,
     onOpenTimetable: (String) -> Unit,
@@ -28,11 +30,12 @@ fun SessionDetailScreen(
     onDeleted: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    val controller = remember(sessionId, sessionRepository, curriculumRepository, timetableRepository, feeRepository) {
-        SessionDetailController(sessionId, sessionRepository, curriculumRepository, timetableRepository, feeRepository, scope)
+    val controller = remember(sessionId, sessionRepository, curriculumRepository, timetableRepository, feeRepository, datesheetRepository) {
+        SessionDetailController(sessionId, sessionRepository, curriculumRepository, timetableRepository, feeRepository, datesheetRepository, scope)
     }
     val session by controller.session.collectAsState()
     val students by controller.students.collectAsState()
+    val shiftCounts by controller.studentCountsByShift.collectAsState()
     val subjectCounts by controller.subjectCounts.collectAsState()
     val periods by controller.periods.collectAsState()
     val fee by controller.fee.collectAsState()
@@ -56,8 +59,8 @@ fun SessionDetailScreen(
         notice = notice,
         teachers = teachers,
         onPromoteSession = controller::promoteSession,
-        onUpdateDetails = { programName, inchargeEmail, maxStudents ->
-            controller.updateDetails(programName, inchargeEmail, maxStudents)
+        onUpdateDetails = { programName, inchargeEmail, maxStudents, shiftMode ->
+            controller.updateDetails(programName, inchargeEmail, maxStudents, shiftMode)
         },
         onOpenStudents = { onOpenStudents(sessionId) },
         onOpenTimetable = { onOpenTimetable(sessionId) },
@@ -66,5 +69,6 @@ fun SessionDetailScreen(
         onDeleteSession = { controller.deleteSession(onDeleted) },
         onClearError = controller::clearError,
         onConsumeNotice = controller::consumeNotice,
+        shiftCounts = shiftCounts,
     )
 }

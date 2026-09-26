@@ -1,5 +1,9 @@
 package com.mbd.cmscommon.ui.components
 
+import androidx.compose.material3.Checkbox
+import com.mbd.cmscommon.controller.capacityError
+import com.mbd.cmscommon.controller.capacityForShiftSelection
+import com.mbd.cmscommon.controller.createSessionError
 import com.mbd.cmscommon.domain.model.ShiftMode
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -60,7 +64,7 @@ fun DepartmentDetailWorkspace(
     errorMessage: String?,
     actionMessage: String?,
     onOpenSession: (String) -> Unit,
-    onCreateSession: (Int, Session) -> Unit,
+    onCreateSession: (Int, Set<Session>, Int) -> Unit,
     onUpdateDepartment: (String, String, String?, String?) -> Unit,
     onClearError: () -> Unit,
     onConsumeNotice: () -> Unit,
@@ -129,7 +133,7 @@ fun DepartmentDetailWorkspace(
                     ) {
                         CmsChip("All shifts", selected = shiftFilter == null, onClick = { shiftFilter = null })
                         Session.entries.forEach { shift ->
-                            CmsChip(shift.name, selected = shiftFilter == shift, onClick = { shiftFilter = shift })
+                            CmsChip(shift.label, selected = shiftFilter == shift, onClick = { shiftFilter = shift })
                         }
                     }
                 }
@@ -187,8 +191,9 @@ fun DepartmentDetailWorkspace(
 
     if (showAddSession) {
         AddDepartmentSessionDialog(
+            existing = sessions,
             onDismiss = { showAddSession = false },
-            onConfirm = { year, shift -> onCreateSession(year, shift); showAddSession = false },
+            onConfirm = { year, shifts, capacity -> onCreateSession(year, shifts, capacity); showAddSession = false },
         )
     }
 
@@ -327,40 +332,89 @@ private fun SessionEmptyState(filtered: Boolean, onAction: () -> Unit) {
 }
 
 @Composable
-private fun AddDepartmentSessionDialog(onDismiss: () -> Unit, onConfirm: (Int, Session) -> Unit) {
+private fun AddDepartmentSessionDialog(existing: List<AcademicSession>, onDismiss: () -> Unit, onConfirm: (Int, Set<Session>, Int) -> Unit) {
     var year by remember { mutableStateOf<Int?>(null) }
-    var shift by remember { mutableStateOf(Session.MORNING) }
-    val parsedYear = year
+    var shifts by remember { mutableStateOf(setOf(Session.MORNING)) }
+    var capacity by remember { mutableStateOf(AcademicSession.defaultMaxStudents(ShiftMode.MORNING).toString()) }
+    val takenYears = existing.map { it.startYear }.toSet()
+    val error = createSessionError(year, shifts, capacity, existing)
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Create session", style = MaterialTheme.typography.headlineSmall) },
         text = {
             Column {
+                // One session per intake year: years that already have a session are not offered.
                 CmsEntityPicker(
                     label = "Intake year",
                     selectedId = year?.toString(),
-                    options = intakeYearOptions().map { CmsEntityOption(it.toString(), it.toString()) },
+                    options = intakeYearOptions().filterNot { it in takenYears }.map { CmsEntityOption(it.toString(), "$it–${it + 4}") },
                     onSelected = { year = it?.toIntOrNull() },
                     emptyLabel = "Select intake year",
                 )
                 Spacer(Modifier.height(10.dp))
-                Text("SHIFT", color = ModMuted, style = CmsTextStyles.eyebrow)
-                Spacer(Modifier.height(6.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Session.entries.forEach { option ->
-                        CmsChip(option.name, selected = shift == option, onClick = { shift = option })
-                    }
+                SessionShiftFields(
+                    shifts = shifts,
+                    onShiftsChange = { picked -> shifts = picked; capacity = capacityForShiftSelection(picked, capacity) },
+                    capacity = capacity,
+                    onCapacityChange = { capacity = it },
+                    capacityMessage = capacityError(capacity),
+                )
+                if (error != null && year != null && capacityError(capacity) == null) {
+                    Spacer(Modifier.height(6.dp))
+                    Text(error, color = CmsTheme.colors.accent, style = MaterialTheme.typography.bodySmall)
                 }
             }
         },
         confirmButton = {
-            TextButton(onClick = { parsedYear?.let { onConfirm(it, shift) } }, enabled = parsedYear != null) { Text("Create session") }
+            TextButton(
+                onClick = { year?.let { y -> capacity.toIntOrNull()?.let { onConfirm(y, shifts, it) } } },
+                enabled = error == null,
+            ) { Text("Create session") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
+}
+
+/**
+ * Morning/Evening checkboxes plus the max-students field. Ticking or unticking a shift re-fills the
+ * capacity with its default (50 for one shift, 100 for both); the admin can still type another value.
+ */
+@Composable
+internal fun SessionShiftFields(
+    shifts: Set<Session>,
+    onShiftsChange: (Set<Session>) -> Unit,
+    capacity: String,
+    onCapacityChange: (String) -> Unit,
+    capacityMessage: String?,
+) {
+    Text("SHIFTS", color = ModMuted, style = CmsTextStyles.eyebrow)
+    Spacer(Modifier.height(4.dp))
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Session.entries.forEach { shift ->
+            Row(
+                modifier = Modifier.clickable { onShiftsChange(if (shift in shifts) shifts - shift else shifts + shift) },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Checkbox(checked = shift in shifts, onCheckedChange = { checked -> onShiftsChange(if (checked) shifts + shift else shifts - shift) })
+                Text(shift.label, modifier = Modifier.padding(end = 12.dp))
+            }
+        }
+    }
+    Text(
+        if (shifts.size == 2) "One session serves both shifts; subjects and term dates are shared." else "Tick both to run Morning and Evening in this one session.",
+        color = ModMuted,
+        style = MaterialTheme.typography.bodySmall,
+    )
+    Spacer(Modifier.height(10.dp))
+    OutlinedTextField(
+        value = capacity,
+        onValueChange = { onCapacityChange(it.filter(Char::isDigit).take(3)) },
+        label = { Text("Max students") },
+        supportingText = { Text(capacityMessage ?: "Filled in from the shifts you tick (50 per shift); you can change it.") },
+        isError = capacityMessage != null,
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = true,
     )
 }
 

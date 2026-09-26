@@ -40,7 +40,7 @@ class DepartmentDetailViewModel @Inject constructor(
     val teachers = teacherRepository.observeActiveTeachers()
         .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    fun createSession(startYear: Int, shift: Session) = controller.createSession(startYear, shift)
+    fun createSession(startYear: Int, shifts: Set<Session>, maxStudents: Int) = controller.createSession(startYear, shifts, maxStudents)
     fun observeStudentCount(sessionId: String) =
         sessionRepository.observeStudents(sessionId).map { it.size }
 
