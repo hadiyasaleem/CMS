@@ -1,5 +1,7 @@
 package com.mbd.cmsdesktop.ui.shared
 
+import com.mbd.cmscommon.controller.observeShiftOf
+import com.mbd.cmscommon.controller.studentDatesheet
 import com.mbd.cmsdesktop.platform.rememberDocumentExport
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -144,14 +146,17 @@ private fun collectBusy(ec: DatesheetEditorController): Boolean {
 @Composable
 fun StudentDatesheetsScreen(
     sessionId: String,
+    rollNumber: String,
     datesheetRepository: DatesheetRepository,
     sessionRepository: AcademicSessionRepository,
 ) {
     val session by sessionRepository.observeSession(sessionId).collectAsState(initial = null)
     val semester = session?.currentSemester
-    val sheet by datesheetRepository.observeDatesheets()
-        .map { sheets -> sheets.firstOrNull { it.sessionId == sessionId && it.semester == semester && it.published } }
-        .collectAsState(initial = null as Datesheet?)
+    val shift by remember(sessionId, rollNumber) { sessionRepository.observeShiftOf(sessionId, rollNumber) }.collectAsState(initial = null)
+    // Datesheets are per shift: the student's own shift's published sheet only.
+    val sheet by remember(sessionId, semester, shift) {
+        datesheetRepository.observeDatesheets().map { sheets -> studentDatesheet(sheets, sessionId, semester, shift) }
+    }.collectAsState(initial = null as Datesheet?)
     val allSlots by datesheetRepository.observeAllSlots().collectAsState(initial = emptyList())
     val slots = sheet?.let { s -> allSlots.filter { it.datesheetId == s.id } }.orEmpty()
 

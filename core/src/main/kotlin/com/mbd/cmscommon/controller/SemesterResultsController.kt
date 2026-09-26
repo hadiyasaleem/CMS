@@ -14,9 +14,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 class SemesterResultsController(
@@ -30,18 +32,35 @@ class SemesterResultsController(
     val sessions: StateFlow<List<Pair<String, String>>> = sessions
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    /** The picked class key (see [shiftClassKey]): one shift of a session, or a bare session id for all of it. */
     private val _sessionId = MutableStateFlow<String?>(null)
     val sessionId: StateFlow<String?> = _sessionId.asStateFlow()
+
+    /** The session behind the picked class, without its shift. */
+    private val selectedSessionId: String? get() = _sessionId.value?.let { parseShiftClassKey(it).first }
 
     private val _semester = MutableStateFlow(1)
     val semester: StateFlow<Int> = _semester.asStateFlow()
 
     val roster: StateFlow<List<SessionStudent>> = _sessionId
-        .flatMapLatest { sid -> if (sid == null) flowOf(emptyList()) else sessionRepository.observeStudents(sid) }
+        .flatMapLatest { key ->
+            if (key == null) {
+                flowOf(emptyList())
+            } else {
+                // Results are recorded per student; a shift's class lists that shift's students only.
+                val (sid, shift) = parseShiftClassKey(key)
+                sessionRepository.observeStudents(sid).map { studentsForTab(it, shift) }
+            }
+        }
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _results = MutableStateFlow<Map<String, SemesterGpa>>(emptyMap())
-    val results: StateFlow<Map<String, SemesterGpa>> = _results.asStateFlow()
+
+    /** The class's results only: the session's other shift is not counted in this class's summary. */
+    val results: StateFlow<Map<String, SemesterGpa>> = combine(_results, roster) { all, students ->
+        val rolls = students.map { it.rollNumber }.toSet()
+        all.filterKeys { it in rolls }
+    }.stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
     private val _subjects = MutableStateFlow<List<String>>(emptyList())
     val subjects: StateFlow<List<String>> = _subjects.asStateFlow()
@@ -71,7 +90,7 @@ class SemesterResultsController(
     }
 
     private fun reload(fetchRemote: Boolean) {
-        val sid = _sessionId.value ?: return
+        val sid = selectedSessionId ?: return
         launch {
             try {
                 _loadState.value = Outcome.Loading
@@ -100,7 +119,7 @@ class SemesterResultsController(
         remarks: String?,
         supply: List<String>,
     ) {
-        val sid = _sessionId.value ?: return
+        val sid = selectedSessionId ?: return
         launch {
             try {
                 _saveState.value = Outcome.Loading

@@ -45,7 +45,9 @@ fun MarkAttendanceScreen(onOpenHistory: (String) -> Unit, viewModel: MarkAttenda
         onToggleLate = controller::toggleLate,
         onRemark = controller::setRemark,
         onLectureTopic = controller::setLectureTopic,
-        onHistory = { sessionId, courseCode -> onOpenHistory(TeacherDestination.attendanceHistory(sessionId, courseCode)) },
+        onHistory = { sessionId, courseCode ->
+            onOpenHistory(TeacherDestination.attendanceHistory(sessionId, courseCode, viewModel.controller.selected.value?.classShift))
+        },
         onSubmit = controller::submit,
         date = date,
         topics = topics,

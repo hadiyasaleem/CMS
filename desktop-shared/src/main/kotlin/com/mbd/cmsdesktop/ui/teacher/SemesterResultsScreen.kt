@@ -30,7 +30,7 @@ fun SemesterResultsScreen(
             sessionRepository,
             curriculumRepository,
             assignmentsProvider.observeAssignmentsFor(teacherId)
-                .map { assignments -> assignments.map { it.sessionId to it.sessionLabel }.distinct() },
+                .map { assignments -> assignments.map { it.classKey to it.sessionLabel }.distinct() },
             scope,
         )
     }

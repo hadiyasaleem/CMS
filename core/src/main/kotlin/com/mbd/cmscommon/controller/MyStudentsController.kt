@@ -27,7 +27,7 @@ class MyStudentsController(
 
     val roster: StateFlow<List<SessionStudent>> = _selected
         .flatMapLatest { assignment ->
-            if (assignment == null) flowOf(emptyList()) else sessionRepository.observeStudents(assignment.sessionId)
+            if (assignment == null) flowOf(emptyList()) else sessionRepository.observeStudents(assignment.sessionId).map { studentsForTab(it, assignment.classShift) }
         }
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 

@@ -8,7 +8,10 @@ import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.AttendanceStatus
 import com.mbd.cmscommon.domain.model.DailyAttendanceMark
+import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.SessionStudent
+import com.mbd.cmscommon.domain.model.parseShift
+import com.mbd.cmscommon.controller.studentsForTab
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.AttendanceEditRequestRepository
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
@@ -50,6 +53,8 @@ class AttendanceHistoryViewModel @Inject constructor(
 
     val sessionId: String = checkNotNull(savedStateHandle["sessionId"])
     val courseCode: String = checkNotNull(savedStateHandle["courseCode"])
+    /** The class's shift; null (legacy "ALL") shows the whole session. */
+    val shift: Session? = parseShift(savedStateHandle.get<String>("shift"))
 
     private val _month = MutableStateFlow(LocalDate.now().withDayOfMonth(1))
     val month: StateFlow<YearMonth> = _month.map { YearMonth.from(it) }
@@ -61,7 +66,7 @@ class AttendanceHistoryViewModel @Inject constructor(
     private val _loading = MutableStateFlow(true)
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
 
-    val roster: StateFlow<List<SessionStudent>> = sessionRepository.observeStudents(sessionId)
+    val roster: StateFlow<List<SessionStudent>> = sessionRepository.observeStudents(sessionId).map { studentsForTab(it, shift) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val session: StateFlow<AcademicSession?> = sessionRepository.observeSession(sessionId)
@@ -89,7 +94,9 @@ class AttendanceHistoryViewModel @Inject constructor(
         try {
             val from = _month.value
             val to = from.withDayOfMonth(from.lengthOfMonth())
+            val classRolls = studentsForTab(sessionRepository.observeStudents(sessionId).first(), shift).map { it.rollNumber }.toSet()
             val dailyMarks = attendanceRepository.marksBetween(sessionId, courseCode, from, to)
+                .filter { shift == null || it.rollNumber in classRolls }
             _marks.value = dailyMarks.groupBy { it.rollNumber }
                 .mapValues { (_, marks) -> marks.associateBy { it.date } }
             loadPending(from, to)
@@ -165,7 +172,7 @@ class AttendanceHistoryViewModel @Inject constructor(
             runCatching {
                 val academicSession = sessionRepository.observeSession(sessionId).first()
                 val doc = attendanceRegisterExport(courseCode, academicSession, YearMonth.from(_month.value), roster.value, marks.value,
-                    resolveRegisterContext(academicSession, courseCode, departmentRepository, curriculumRepository, timetableRepository))
+                    resolveRegisterContext(academicSession, courseCode, departmentRepository, curriculumRepository, timetableRepository, shift), shift)
                 DocumentExporter.export(context, doc, format)
             }.onFailure { _error.value = it.userMessageLogged("AttendanceHistoryViewModel.export", "Could not export the attendance register.") }
         }

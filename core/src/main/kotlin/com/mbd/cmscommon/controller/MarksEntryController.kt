@@ -43,7 +43,10 @@ class MarksEntryController(
     }
 
     val roster: StateFlow<List<SessionStudent>> = _selected
-        .flatMapLatest { assignment -> if (assignment == null) flowOf(emptyList()) else sessionRepository.observeStudents(assignment.sessionId) }
+        .flatMapLatest { assignment ->
+            // A class is one shift of a session: only that shift's students are on its register.
+            if (assignment == null) flowOf(emptyList()) else sessionRepository.observeStudents(assignment.sessionId).map { studentsForTab(it, assignment.classShift) }
+        }
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val session: StateFlow<AcademicSession?> = _selected

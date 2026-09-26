@@ -1,5 +1,8 @@
 package com.mbd.cmscommon.teacher
 
+import com.mbd.cmscommon.controller.shiftClassKey
+import com.mbd.cmscommon.domain.model.Session
+
 data class ResolvedAssignment(
     val sessionId: String,
     val sessionLabel: String,
@@ -9,7 +12,12 @@ data class ResolvedAssignment(
     val deptName: String = "",
     val sessionName: String = "",
     val shift: String = "",
-)
+    /** The shift this class is taught in; its roster is that shift's students only. Null when unknown. */
+    val classShift: Session? = null,
+) {
+    /** "IT_2022@EVENING": identifies this class for pickers and navigation. */
+    val classKey: String get() = shiftClassKey(sessionId, classShift)
+}
 
 /** Optional class filters: a null field means "any", and only the chosen fields narrow the list. */
 data class AssignmentFilter(

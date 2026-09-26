@@ -65,8 +65,10 @@ class MasterTimetableController(
         }
     }.stateIn(scope, SharingStarted.WhileSubscribed(5000), null)
 
+    /** The selected shift's grid only: Morning and Evening periods can share slot times. */
     val periods: StateFlow<List<SessionPeriod>> = resolvedSession
         .flatMapLatest { session -> if (session != null) timetableRepository.observeWeek(session.sessionId) else flowOf(emptyList()) }
+        .combine(_selectedShift) { periods, shift -> periodsForShift(periods, shift) }
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     init {
@@ -102,7 +104,10 @@ class MasterTimetableController(
 
     fun selectStartYear(year: Int?) {
         _selectedStartYear.value = year
-        _selectedShift.value = null
+        // A single-shift session has only one tab, so pick it; a two-shift session opens on Morning.
+        _selectedShift.value = year?.let { y ->
+            sessions.value.filter { it.deptId == _selectedDeptId.value && it.startYear == y }.flatMap { it.shifts }.distinct().minOrNull()
+        }
     }
 
     fun selectShift(shift: Session?) {

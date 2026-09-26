@@ -22,11 +22,14 @@ import com.mbd.cmscommon.domain.repository.TeacherRepository
 import java.time.DayOfWeek
 import java.time.LocalDate
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 class SessionTimetableController(
@@ -38,11 +41,26 @@ class SessionTimetableController(
     buildingRepository: BuildingRepository,
     roomRepository: RoomRepository,
     scope: CoroutineScope,
+    initialShift: Session? = null,
 ) : ScreenController(scope) {
 
     val session: StateFlow<AcademicSession?> =
         sessionRepository.observeSession(sessionId).stateIn(scope, SharingStarted.WhileSubscribed(5000), null)
 
+    private val _pickedShift = MutableStateFlow(initialShift)
+
+    /** The Morning/Evening tab being edited: only shifts the session runs, and no combined view. */
+    val shift: StateFlow<Session> = combine(session, _pickedShift) { s, picked -> shiftTab(s, picked) }
+        .stateIn(scope, SharingStarted.Eagerly, initialShift ?: Session.MORNING)
+
+    val shifts: StateFlow<List<Session>> = session.map { shiftTabs(it) }
+        .stateIn(scope, SharingStarted.Eagerly, shiftTabs(null))
+
+    fun selectShift(picked: Session) {
+        _pickedShift.value = picked
+    }
+
+    /** Every shift's periods; the workspace shows the selected tab's grid. */
     val periods: StateFlow<List<SessionPeriod>> =
         timetableRepository.observeWeek(sessionId).stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -79,8 +97,8 @@ class SessionTimetableController(
         effectiveFrom: LocalDate?,
         effectiveTo: LocalDate?,
         replaces: SessionPeriod?,
-        // TODO(Task 7): the Morning/Evening tab supplies this; an edit keeps the period's own shift.
-        shift: Session = replaces?.shift ?: Session.MORNING,
+        // A new period goes on the open tab; an edit keeps the period's own shift.
+        shift: Session = replaces?.shift ?: this.shift.value,
     ) = launch {
         requireValid(periodType == PeriodType.BREAK || subject != null) { "Choose a subject for this period." }
 

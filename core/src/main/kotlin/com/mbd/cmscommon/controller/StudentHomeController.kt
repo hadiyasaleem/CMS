@@ -38,7 +38,10 @@ class StudentHomeController(
     val ui: StateFlow<StudentHomeUi> = combine(
         attendanceRepository.observeStudentTallies(sessionId, rollNumber),
         timetableRepository.observeWeek(sessionId),
-    ) { tallies, periods ->
+        me,
+    ) { tallies, allPeriods, student ->
+        // Only the student's own shift's grid: Morning and Evening periods can share slot times.
+        val periods = periodsForShift(allPeriods, student?.shift)
         val today = LocalDate.now()
         val activeToday = activeLectures(periods, today)
 

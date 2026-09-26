@@ -219,7 +219,7 @@ private fun AssignmentPicker(assignments: List<ResolvedAssignment>, selected: Re
         Spacer(Modifier.height(8.dp))
         Box(Modifier.fillMaxWidth()) {
             OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) {
-                Text(selected?.let { "${it.subjectLabel} (${it.courseCode})" } ?: "Select a class", modifier = Modifier.weight(1f))
+                Text(selected?.let { "${it.subjectLabel} · ${it.sessionLabel}" } ?: "Select a class", modifier = Modifier.weight(1f))
                 Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
             }
             DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.heightIn(max = 240.dp)) {

@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.ui.teacher
 
+import com.mbd.cmscommon.domain.model.Session
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -23,7 +24,7 @@ fun MarkAttendanceScreen(
     notificationRepository: NotificationRepository,
     curriculumRepository: CurriculumRepository,
     assignmentsProvider: TeacherAssignmentsProvider,
-    onOpenHistory: (sessionId: String, courseCode: String) -> Unit = { _, _ -> },
+    onOpenHistory: (sessionId: String, courseCode: String, shift: Session?) -> Unit = { _, _, _ -> },
 ) {
     val assignments by assignmentsProvider.observeAssignmentsFor(teacherId).collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
@@ -61,7 +62,7 @@ fun MarkAttendanceScreen(
         onToggleLate = controller::toggleLate,
         onRemark = controller::setRemark,
         onLectureTopic = controller::setLectureTopic,
-        onHistory = onOpenHistory,
+        onHistory = { sessionId, courseCode -> onOpenHistory(sessionId, courseCode, controller.selected.value?.classShift) },
         onSubmit = controller::submit,
         date = date,
         topics = topics,

@@ -1,5 +1,6 @@
 package com.mbd.cmsadmin.feature.academics
 
+import com.mbd.cmscommon.controller.shiftClassOptions
 import com.mbd.cmscommon.util.rememberDocumentExport
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -29,9 +30,10 @@ class SemesterResultsViewModel @Inject constructor(
         sessionRepository = sessionRepository,
         curriculumRepository = curriculumRepository,
         sessions = combine(sessionRepository.observeAllSessions(), departmentRepository.observeActiveDepartments()) { sessions, depts ->
-            sessions.map { session ->
+            // One class per shift: results are recorded for that shift's students.
+            shiftClassOptions(sessions) { session ->
                 val deptName = depts.firstOrNull { it.deptId == session.deptId }?.name ?: session.deptId
-                session.sessionId to "$deptName ${session.label}"
+                "$deptName ${session.label}"
             }
         },
         scope = viewModelScope,

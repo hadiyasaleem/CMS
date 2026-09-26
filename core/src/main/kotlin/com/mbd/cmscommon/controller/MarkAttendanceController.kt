@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -58,7 +59,12 @@ class MarkAttendanceController(
         _alreadyMarked.value = false
         _submitState.value = null
         launch {
+            val classRolls = runCatching { studentsForTab(sessionRepository.observeStudents(assignment.sessionId).first(), assignment.classShift) }
+                .getOrDefault(emptyList()).map { it.rollNumber }.toSet()
+            // Attendance rows carry no shift, so keep this class's students only: the other shift's register
+            // for the same subject and day must not read as already marked here.
             val marks = runCatching { attendanceRepository.marksBetween(assignment.sessionId, assignment.courseCode, day, day) }.getOrDefault(emptyList())
+                .filter { assignment.classShift == null || it.rollNumber in classRolls }
             if (marks.isEmpty() || token != loadToken) return@launch // stale: another date/class was picked meanwhile
             _statuses.value = marks.associate { it.rollNumber to it.status }
             _late.value = marks.filter { it.isLate }.map { it.rollNumber }.toSet()
@@ -94,7 +100,10 @@ class MarkAttendanceController(
     }
 
     val roster: StateFlow<List<SessionStudent>> = _selected
-        .flatMapLatest { assignment -> if (assignment == null) flowOf(emptyList()) else sessionRepository.observeStudents(assignment.sessionId) }
+        .flatMapLatest { assignment ->
+            // A class is one shift of a session: only that shift's students are on its register.
+            if (assignment == null) flowOf(emptyList()) else sessionRepository.observeStudents(assignment.sessionId).map { studentsForTab(it, assignment.classShift) }
+        }
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val termPercents: StateFlow<Map<String, Float>> = _selected

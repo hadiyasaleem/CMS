@@ -37,6 +37,8 @@ fun SessionTimetableScreen(
     val rooms by controller.rooms.collectAsState()
     val currentSemesterTerm by controller.currentSemesterTerm.collectAsState()
     val errorMessage by controller.error.collectAsState()
+    val shift by controller.shift.collectAsState()
+    val shifts by controller.shifts.collectAsState()
 
     SessionTimetableWorkspace(
 
@@ -52,5 +54,8 @@ fun SessionTimetableScreen(
         onSavePeriod = controller::savePeriod,
         onRemovePeriod = controller::removePeriod,
         onClearError = controller::clearError,
+        shift = shift,
+        shifts = shifts,
+        onSelectShift = controller::selectShift,
     )
 }

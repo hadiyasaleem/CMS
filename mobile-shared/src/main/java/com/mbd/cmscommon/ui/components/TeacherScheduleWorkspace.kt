@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.controller.periodSessionLabel
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -114,7 +115,7 @@ fun TeacherScheduleWorkspace(
                                 periodByDayAndSlot[day to slot]?.let { period ->
                                     GridCell(
                                         title = period.subjectName,
-                                        subtitle = sessions.firstOrNull { it.sessionId == period.sessionId }?.label ?: period.sessionId,
+                                        subtitle = periodSessionLabel(sessions.firstOrNull { it.sessionId == period.sessionId }, period),
                                         meta = period.roomNo?.ifBlank { null } ?: "No room",
                                     )
                                 }
@@ -199,6 +200,7 @@ private fun TeacherPeriodDetailDialog(period: SessionPeriod, session: AcademicSe
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 ScheduleDetailRow("Session", session?.label ?: period.sessionId)
+                ScheduleDetailRow("Shift", period.shift.label)
                 ScheduleDetailRow("Day", period.day.getDisplayName(TextStyle.FULL, Locale.ENGLISH))
                 ScheduleDetailRow("Time", period.timeRange)
                 ScheduleDetailRow("Subject code", period.courseCode)

@@ -154,13 +154,14 @@ fun TeacherNavHost(role: UserRole.Teacher, component: DesktopAppComponent, windo
                     notificationRepository = component.notificationRepository(),
                     curriculumRepository = component.curriculumRepository(),
                     assignmentsProvider = assignmentsProvider,
-                    onOpenHistory = { sessionId, courseCode -> screen = TeacherScreen.AttendanceHistory(sessionId, courseCode) },
+                    onOpenHistory = { sessionId, courseCode, shift -> screen = TeacherScreen.AttendanceHistory(sessionId, courseCode, shift = shift) },
                 )
 
                 is TeacherScreen.AttendanceHistory -> AttendanceHistoryScreen(
                     sessionId = currentScreen.sessionId,
                     courseCode = currentScreen.courseCode,
                     initialMonth = currentScreen.month,
+                    shift = currentScreen.shift,
                     sessionRepository = component.academicSessionRepository(),
                     attendanceRepository = component.sessionAttendanceRepository(),
                     editRequestRepository = component.attendanceEditRequestRepository(),
@@ -169,7 +170,7 @@ fun TeacherNavHost(role: UserRole.Teacher, component: DesktopAppComponent, windo
                     timetableRepository = component.sessionTimetableRepository(),
                     window = window,
                     onOpenStudent = { roll, month ->
-                        screen = TeacherScreen.AttendanceStudentSummary(currentScreen.sessionId, currentScreen.courseCode, roll, month)
+                        screen = TeacherScreen.AttendanceStudentSummary(currentScreen.sessionId, currentScreen.courseCode, roll, month, currentScreen.shift)
                     },
                 )
 
@@ -181,7 +182,7 @@ fun TeacherNavHost(role: UserRole.Teacher, component: DesktopAppComponent, windo
                     curriculumRepository = component.curriculumRepository(),
                     attendanceRepository = component.sessionAttendanceRepository(),
                     window = window,
-                    onBack = { screen = TeacherScreen.AttendanceHistory(currentScreen.sessionId, currentScreen.courseCode, currentScreen.returnMonth) },
+                    onBack = { screen = TeacherScreen.AttendanceHistory(currentScreen.sessionId, currentScreen.courseCode, currentScreen.returnMonth, currentScreen.returnShift) },
                 )
 
                 TeacherScreen.ExamsHub -> ExamsHubScreen(

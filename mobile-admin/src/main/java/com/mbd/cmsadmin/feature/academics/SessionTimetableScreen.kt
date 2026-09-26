@@ -54,6 +54,10 @@ class SessionTimetableViewModel @Inject constructor(
     val rooms = controller.rooms
     val currentSemesterTerm = controller.currentSemesterTerm
     val error = controller.error
+    val shift = controller.shift
+    val shifts = controller.shifts
+
+    fun selectShift(shift: com.mbd.cmscommon.domain.model.Session) = controller.selectShift(shift)
 
     fun savePeriod(
         day: DayOfWeek,
@@ -84,6 +88,8 @@ fun SessionTimetableScreen(viewModel: SessionTimetableViewModel = hiltViewModel(
     val rooms by viewModel.rooms.collectAsState()
     val currentSemesterTerm by viewModel.currentSemesterTerm.collectAsState()
     val errorMessage by viewModel.error.collectAsState()
+    val shift by viewModel.shift.collectAsState()
+    val shifts by viewModel.shifts.collectAsState()
 
     SessionTimetableWorkspace(
 
@@ -99,5 +105,8 @@ fun SessionTimetableScreen(viewModel: SessionTimetableViewModel = hiltViewModel(
         onSavePeriod = viewModel::savePeriod,
         onRemovePeriod = viewModel::removePeriod,
         onClearError = viewModel::clearError,
+        shift = shift,
+        shifts = shifts,
+        onSelectShift = viewModel::selectShift,
     )
 }

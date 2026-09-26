@@ -112,7 +112,7 @@ fun MasterTimetableWorkspace(
             }
             else -> {
                 item {
-                    MasterSessionTile(department?.code ?: resolvedSession.deptId, resolvedSession, onOpenSession = { onOpenSession(resolvedSession.sessionId) })
+                    MasterSessionTile(department?.code ?: resolvedSession.deptId, resolvedSession, selectedShift, onOpenSession = { onOpenSession(resolvedSession.sessionId) })
                 }
                 if (periods.isEmpty()) {
                     item { MasterEmptyCard("No periods scheduled", "This session has no timetable periods yet.") }
@@ -130,7 +130,7 @@ fun MasterTimetableWorkspace(
                                             GridCell(
                                                 title = if (isBreak) "BREAK" else period.subjectName,
                                                 subtitle = if (isBreak) "" else period.teacherName.ifBlank { "Unassigned" },
-                                                meta = if (isBreak) "" else period.roomNo?.ifBlank { null } ?: "No room",
+                                                meta = if (isBreak) period.shift.label else "${period.roomNo?.ifBlank { null } ?: "No room"} · ${period.shift.label}",
                                                 isBreak = isBreak,
                                                 isAlert = !isBreak && (period.teacherId.isBlank() || period.roomNo.isNullOrBlank()),
                                             )
@@ -192,7 +192,7 @@ private fun MasterFilters(
 ) {
     val departmentOptions = departments.sortedBy { it.name }.map { CmsEntityOption(it.deptId, "${it.code} · ${it.name}") }
     val sessionOptions = sessionsInDepartment.map { it.startYear }.distinct().sorted().map { CmsEntityOption(it.toString(), "$it–${it + 4}") }
-    val shiftOptions = shiftsForSelection.map { CmsEntityOption(it.name, it.name) }
+    val shiftOptions = shiftsForSelection.map { CmsEntityOption(it.name, it.label) }
 
     Column(Modifier.fillMaxWidth()) {
         Text("SHOW", color = ModMuted, style = CmsTextStyles.eyebrow)
@@ -226,11 +226,11 @@ private fun MasterFilters(
 }
 
 @Composable
-private fun MasterSessionTile(deptCode: String, session: AcademicSession, onOpenSession: () -> Unit) {
+private fun MasterSessionTile(deptCode: String, session: AcademicSession, shift: Session?, onOpenSession: () -> Unit) {
     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Row(Modifier.padding(16.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text("$deptCode - ${session.label} - ${session.shiftMode.label}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                Text("$deptCode - ${session.label} - ${shift?.label ?: session.shiftMode.label}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                 Text(session.programName?.takeIf { it.isNotBlank() } ?: "Program not configured", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             }
             TextButton(onClick = onOpenSession) { Text("Open editor") }
@@ -246,6 +246,7 @@ private fun PeriodDetailDialog(period: SessionPeriod, onDismiss: () -> Unit) {
         title = { Text(if (isBreak) "Break" else period.subjectName) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                DetailRow("Shift", period.shift.label)
                 DetailRow("Day", period.day.getDisplayName(TextStyle.FULL, Locale.ENGLISH))
                 DetailRow("Time", period.timeRange)
                 if (!isBreak) {

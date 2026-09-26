@@ -295,7 +295,7 @@ private fun DatesheetFilterRow(
 ) {
     val departmentOptions = departments.sortedBy { it.name }.map { CmsEntityOption(it.deptId, "${it.code} · ${it.name}") }
     val sessionOptions = sessionsInDepartment.map { it.startYear }.distinct().sorted().map { CmsEntityOption(it.toString(), "$it–${it + 4}") }
-    val shiftOptions = shiftsForSelection.map { CmsEntityOption(it.name, it.name) }
+    val shiftOptions = shiftsForSelection.map { CmsEntityOption(it.name, it.label) }
 
     Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         DropdownChip(
@@ -312,7 +312,7 @@ private fun DatesheetFilterRow(
             enabled = selectedDeptId != null,
         )
         DropdownChip(
-            selectedLabel = selectedShift?.name,
+            selectedLabel = selectedShift?.label,
             emptyLabel = "All shifts",
             options = shiftOptions,
             onSelected = { onSelectShift(it?.let(Session::valueOf)) },
@@ -352,6 +352,15 @@ private fun FilteredDatesheetView(
             }
             else -> {
                 val semester = resolvedSession.currentSemester
+                if (resolvedSession.shifts.size > 1) {
+                    // One datesheet per shift: Morning and Evening can have different dates and times.
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        resolvedSession.shifts.forEach { option ->
+                            CmsChip("${option.label} shift", selected = option == selectedShift, onClick = { onSelectShift(option) })
+                        }
+                    }
+                    Spacer(Modifier.height(10.dp))
+                }
                 val existing = datesheets.firstOrNull { it.sessionId == resolvedSession.sessionId && it.semester == semester && (selectedShift == null || it.shift == selectedShift) }
                 if (existing != null) {
                     DatesheetSummaryTile(existing, resolvedSession, onClick = { onOpenDatesheet(existing.id) })
@@ -366,7 +375,7 @@ private fun FilteredDatesheetView(
                 } else {
                     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
                         Column(Modifier.padding(16.dp)) {
-                            Text("No Mid Term datesheet yet for Semester $semester (the session's current semester).", style = MaterialTheme.typography.bodyMedium)
+                            Text("No Mid Term datesheet yet for the ${selectedShift?.label ?: resolvedSession.shiftMode.label} shift, Semester $semester (the session's current semester).", style = MaterialTheme.typography.bodyMedium)
                             Spacer(Modifier.height(10.dp))
                             CmsPrimaryButton(text = "Create datesheet", onClick = { showCreateDialog = true })
                         }
@@ -379,6 +388,7 @@ private fun FilteredDatesheetView(
     if (showCreateDialog && resolvedSession != null) {
         CreateDatesheetDialog(
             session = resolvedSession,
+            shift = selectedShift,
             semester = resolvedSession.currentSemester,
             buildings = buildings,
             busy = busy,
@@ -555,7 +565,9 @@ private fun SemesterDatesheetView(
             }
             Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
                 candidateSessions.forEach { session ->
-                    SessionCurrentSemesterSection(session, departments, datesheets, slotsByDatesheet, onOpenDatesheet)
+                    session.shifts.filter { selectedShift == null || it == selectedShift }.forEach { shift ->
+                        SessionCurrentSemesterSection(session, shift, departments, datesheets, slotsByDatesheet, onOpenDatesheet)
+                    }
                 }
             }
             return@Column
@@ -563,7 +575,7 @@ private fun SemesterDatesheetView(
 
         data class Entry(val semester: Int, val rawDate: String, val cell: GridCell, val datesheetId: String)
 
-        val sessionSheets = datesheets.filter { it.sessionId == resolvedSession.sessionId }
+        val sessionSheets = datesheets.filter { it.sessionId == resolvedSession.sessionId && (selectedShift == null || it.shift == selectedShift) }
         val sessionSlots = sessionSheets.flatMap { sheet -> slotsByDatesheet[sheet.id].orEmpty() }
         val entries = sessionSheets.flatMap { sheet ->
             slotsByDatesheet[sheet.id].orEmpty().mapNotNull { slot ->
@@ -603,19 +615,20 @@ private fun SemesterDatesheetView(
 @Composable
 private fun SessionCurrentSemesterSection(
     session: AcademicSession,
+    shift: Session,
     departments: List<Department>,
     datesheets: List<Datesheet>,
     slotsByDatesheet: Map<String, List<DatesheetSlot>>,
     onOpenDatesheet: (String) -> Unit,
 ) {
     val semester = session.currentSemester
-    val sheet = datesheets.firstOrNull { it.sessionId == session.sessionId && it.semester == semester }
+    val sheet = datesheets.firstOrNull { it.sessionId == session.sessionId && it.semester == semester && it.shift == shift }
     val deptCode = departments.firstOrNull { it.deptId == session.deptId }?.code
 
     Column {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                listOfNotNull(deptCode, "Semester $semester", session.shiftMode.label).joinToString(" · "), // TODO(Task 7): per-shift datesheets
+                listOfNotNull(deptCode, "Semester $semester", shift.label).joinToString(" · "),
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleSmall,
                 modifier = Modifier.weight(1f),
@@ -819,6 +832,7 @@ private fun PaperRow(slot: DatesheetSlot, sheet: Datesheet, canManage: Boolean, 
 @Composable
 private fun CreateDatesheetDialog(
     session: AcademicSession,
+    shift: Session?,
     semester: Int,
     buildings: List<Building>,
     busy: Boolean,
@@ -839,7 +853,7 @@ private fun CreateDatesheetDialog(
         title = { Text("New Mid Term datesheet") },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
-                Text("${session.label} · ${session.shiftMode.label} · Semester $semester", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                Text("${session.label} · ${shift?.label ?: session.shiftMode.label} · Semester $semester", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.height(10.dp))
                 Text("Papers will be prefilled for every subject in this semester's curriculum.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.height(10.dp))

@@ -81,7 +81,10 @@ class DatesheetBrowseController(
 
     fun selectStartYear(year: Int?) {
         _selectedStartYear.value = year
-        _selectedShift.value = null
+        // A single-shift session has only one tab, so pick it; a two-shift session opens on Morning.
+        _selectedShift.value = year?.let { y ->
+            sessions.value.filter { it.deptId == _selectedDeptId.value && it.startYear == y }.flatMap { it.shifts }.distinct().minOrNull()
+        }
     }
 
     fun selectShift(shift: Session?) {

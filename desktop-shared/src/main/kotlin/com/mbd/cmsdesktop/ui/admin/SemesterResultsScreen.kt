@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.ui.admin
 
+import com.mbd.cmscommon.controller.shiftClassOptions
 import com.mbd.cmsdesktop.platform.rememberDocumentExport
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -30,9 +31,10 @@ fun SemesterResultsScreen(
             sessionRepository,
             curriculumRepository,
             combine(sessionRepository.observeAllSessions(), departmentRepository.observeActiveDepartments()) { sessions, depts ->
-                sessions.map { session ->
+                // One class per shift: results are recorded for that shift's students.
+                shiftClassOptions(sessions) { session ->
                     val deptName = depts.firstOrNull { it.deptId == session.deptId }?.name ?: session.deptId
-                    session.sessionId to "$deptName ${session.label}"
+                    "$deptName ${session.label}"
                 }
             },
             scope,

@@ -39,8 +39,9 @@ private fun pct(value: Int, total: Int): String = if (total == 0) "-" else "${(v
 private fun num(value: Double?, digits: Int = 2): String = value?.let { "%.${digits}f".format(Locale.ENGLISH, it) } ?: "-"
 private fun letter(status: AttendanceStatus): String = status.name.take(1)
 private fun titleCase(raw: String): String = raw.lowercase().replace('_', ' ').replaceFirstChar { it.uppercase() }
-fun sessionTitle(session: AcademicSession?): String =
-    session?.let { "${it.deptId.uppercase(Locale.ROOT)} ${it.label} · ${it.shiftMode.label} · Semester ${it.currentSemester}" } ?: ""
+/** "IT 2022–2026 · Evening · Semester 3"; without [shift] the session's shifts ("Morning & Evening") are shown. */
+fun sessionTitle(session: AcademicSession?, shift: Session? = null): String =
+    session?.let { "${it.deptId.uppercase(Locale.ROOT)} ${it.label} · ${shift?.label ?: it.shiftMode.label} · Semester ${it.currentSemester}" } ?: ""
 
 fun AttendanceExportPayload.toExportDocument() = singleSectionDocument(fileBase, title, header, rows)
 
@@ -63,6 +64,8 @@ fun attendanceRegisterExport(
     roster: List<SessionStudent>,
     marks: Map<String, Map<LocalDate, DailyAttendanceMark>>,
     context: RegisterContext = RegisterContext(),
+    /** The class's shift: a register belongs to one shift's students. Null prints the session's shifts. */
+    shift: Session? = null,
 ): ExportDocument {
     val days = (1..month.lengthOfMonth()).map(month::atDay)
     val datesWithMarks = marks.values.flatMap { it.keys }.toSet()
@@ -87,8 +90,7 @@ fun attendanceRegisterExport(
         add(listOfNotNull(
             context.departmentName?.takeIf { it.isNotBlank() }?.let { "Department: $it" },
             session?.let { "Semester: ${it.currentSemester}" },
-            // TODO(Task 7): the register belongs to one shift's class; use that shift once classes carry it.
-            session?.let { "Shift: ${it.shiftMode.label}" },
+            (shift?.label ?: session?.shiftMode?.label)?.let { "Shift: $it" },
         ).joinToString(" | "))
         add(listOfNotNull(
             "Subject: $subject".takeIf { subject.isNotBlank() },
@@ -101,7 +103,7 @@ fun attendanceRegisterExport(
     }.filter { it.isNotBlank() }
 
     return ExportDocument(
-        fileBase = "attendance_${courseCode}_$month",
+        fileBase = listOfNotNull("attendance", courseCode, shift?.name?.lowercase(Locale.ROOT), month.toString()).joinToString("_"),
         title = title,
         sections = listOf(ExportSection("Register", header, rows, blackColumns = holidayColumns)),
     )
@@ -243,7 +245,7 @@ fun sessionFeesExport(session: AcademicSession?, departmentName: String?, struct
     )
 }
 
-fun timetableExport(session: AcademicSession?, periods: List<SessionPeriod>): ExportDocument {
+fun timetableExport(session: AcademicSession?, periods: List<SessionPeriod>, shift: Session? = null): ExportDocument {
     val dayOrder = DayOfWeek.entries
     val header = listOf("Day", "Start", "End", "Course", "Subject", "Type", "Teacher", "Room", "Effective")
     val rows = periods.sortedWith(compareBy({ dayOrder.indexOf(it.day) }, { it.startTime })).map { p ->
@@ -254,8 +256,8 @@ fun timetableExport(session: AcademicSession?, periods: List<SessionPeriod>): Ex
         )
     }
     return ExportDocument(
-        fileBase = "timetable_${session?.sessionId ?: "session"}",
-        title = listOfNotNull("Class Timetable", sessionTitle(session).ifBlank { null }),
+        fileBase = listOfNotNull("timetable", session?.sessionId ?: "session", shift?.name?.lowercase(Locale.ROOT)).joinToString("_"),
+        title = listOfNotNull("Class Timetable", sessionTitle(session, shift).ifBlank { null }),
         sections = listOf(ExportSection("Timetable", header, rows)),
     )
 }
@@ -269,8 +271,8 @@ fun datesheetExport(sheetLabel: String, sheet: Datesheet, slots: List<DatesheetS
         )
     }
     return ExportDocument(
-        fileBase = "datesheet_${sheet.sessionId}_sem${sheet.semester}",
-        title = listOfNotNull("Datesheet", sheetLabel, if (sheet.published) "Published" else "Draft", sheet.instructions?.takeIf { it.isNotBlank() }),
+        fileBase = "datesheet_${sheet.sessionId}_${sheet.shift.name.lowercase(Locale.ROOT)}_sem${sheet.semester}",
+        title = listOfNotNull("Datesheet", sheetLabel, "${sheet.shift.label} shift".takeIf { !sheetLabel.contains(sheet.shift.label) }, if (sheet.published) "Published" else "Draft", sheet.instructions?.takeIf { it.isNotBlank() }),
         sections = listOf(ExportSection("Papers", header, rows)),
     )
 }
@@ -419,6 +421,7 @@ suspend fun resolveRegisterContext(
     departments: com.mbd.cmscommon.domain.repository.DepartmentRepository,
     curriculum: com.mbd.cmscommon.domain.repository.CurriculumRepository,
     timetable: com.mbd.cmscommon.domain.repository.SessionTimetableRepository,
+    shift: Session? = null,
 ): RegisterContext {
     if (session == null) return RegisterContext()
     val department = runCatching { departments.getDepartment(session.deptId)?.name }.getOrNull()
@@ -426,7 +429,9 @@ suspend fun resolveRegisterContext(
         curriculum.observeSemesterSubjects(session.sessionId, session.currentSemester).first().firstOrNull { it.courseCode == courseCode }?.name
     }.getOrNull()
     val period = runCatching {
-        timetable.observeWeek(session.sessionId).first().firstOrNull { it.courseCode == courseCode && it.teacherName.isNotBlank() }
+        // The teacher of this shift's class; each shift can have its own teacher for the subject.
+        timetable.observeWeek(session.sessionId).first()
+            .firstOrNull { it.courseCode == courseCode && it.teacherName.isNotBlank() && (shift == null || it.shift == shift) }
     }.getOrNull()
     return RegisterContext(department, subject ?: period?.subjectName, period?.teacherName)
 }

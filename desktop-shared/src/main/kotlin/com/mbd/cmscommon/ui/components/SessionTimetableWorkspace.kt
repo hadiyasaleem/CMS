@@ -1,5 +1,7 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.controller.periodsForShift
+import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.util.clockDisplay
 import com.mbd.cmscommon.util.isDateRangeReversed
 import com.mbd.cmscommon.export.ExportDocument
@@ -84,30 +86,51 @@ fun SessionTimetableWorkspace(
     onClearError: () -> Unit,
     onExport: ((ExportDocument, ExportFormat) -> Unit)? = null,
     modifier: Modifier = Modifier,
+    /** The Morning/Evening tab shown; [periods] holds every shift and only this shift's grid is shown. */
+    shift: Session = Session.MORNING,
+    shifts: List<Session> = listOf(shift),
+    onSelectShift: (Session) -> Unit = {},
 ) {
+    // No combined view: Morning and Evening can use the same slot times, so each shift is its own grid.
+    val shown = periodsForShift(periods, shift)
     var editorState by remember { mutableStateOf<SessionPeriod?>(null) }
     var addingPeriodDay by remember { mutableStateOf<DayOfWeek?>(null) }
     var pendingRemove by remember { mutableStateOf<SessionPeriod?>(null) }
     var detailPeriod by remember { mutableStateOf<SessionPeriod?>(null) }
 
-    val roomsConfigured = periods.count { !it.roomNo.isNullOrBlank() }
-    val teacherIds = periods.filter { it.periodType != PeriodType.BREAK }.map { it.teacherId }.filter { it.isNotBlank() }.distinct()
-    val conflictIds = conflictingPeriodIds(periods)
-    val periodByDayAndSlot = periods.associateBy { it.day to it.timeRange }
-    val timeSlots = periods.map { it.timeRange }.distinct().sortedBy { it.substringBefore('–') }
+    val roomsConfigured = shown.count { !it.roomNo.isNullOrBlank() }
+    val teacherIds = shown.filter { it.periodType != PeriodType.BREAK }.map { it.teacherId }.filter { it.isNotBlank() }.distinct()
+    val conflictIds = conflictingPeriodIds(shown)
+    val periodByDayAndSlot = shown.associateBy { it.day to it.timeRange }
+    val timeSlots = shown.map { it.timeRange }.distinct().sortedBy { it.substringBefore('–') }
 
     Box(modifier.fillMaxSize()) {
         val listState = rememberLazyListState()
         WithVerticalScrollbar(listState) {
         LazyColumn(Modifier.fillMaxWidth(), state = listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            item { TimetableHero(session) }
+            item { TimetableHero(session, shift) }
+            item {
+                Column {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        shifts.forEach { option ->
+                            CmsChip("${option.label} shift", selected = option == shift, onClick = { onSelectShift(option) })
+                        }
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        if (shifts.size > 1) "Each shift has its own weekly grid. Teachers and rooms can't be double-booked across shifts." else "This session runs ${shift.label} only.",
+                        color = ModMuted,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
             if (onExport != null) {
-                item { ExportBar(onExport, build = { timetableExport(session, periods) }, enabled = periods.isNotEmpty()) }
+                item { ExportBar(onExport, build = { timetableExport(session, shown, shift) }, enabled = shown.isNotEmpty()) }
             }
 
-            item { TimetableSummaryCard(periods.size, roomsConfigured, teacherIds.size, conflictIds.size) }
+            item { TimetableSummaryCard(shown.size, roomsConfigured, teacherIds.size, conflictIds.size) }
 
-            if (periods.isEmpty()) {
+            if (shown.isEmpty()) {
                 item { TimetableEmptyState(onAdd = { addingPeriodDay = DayOfWeek.MONDAY }) }
             } else {
                 item {
@@ -171,7 +194,7 @@ fun SessionTimetableWorkspace(
                 days.forEach { day ->
                     val replaces = when {
                         original != null && original.day == day -> original
-                        original != null -> periods.firstOrNull {
+                        original != null -> shown.firstOrNull {
                             it.day == day && it.courseCode == original.courseCode &&
                                 it.startTime == original.startTime && it.endTime == original.endTime
                         }
@@ -232,14 +255,14 @@ private fun conflictingPeriodIds(periods: List<SessionPeriod>): Set<String> {
 }
 
 @Composable
-private fun TimetableHero(session: AcademicSession?) {
+private fun TimetableHero(session: AcademicSession?, shift: Session) {
     Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Column(Modifier.padding(20.dp)) {
             Text("WEEKLY TIMETABLE", color = TimetableGold, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
             Text(session?.label ?: "Session", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
             Spacer(Modifier.height(4.dp))
-            Text("Weekly period schedule for this session", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
+            Text("Weekly period schedule for the ${shift.label} shift", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }

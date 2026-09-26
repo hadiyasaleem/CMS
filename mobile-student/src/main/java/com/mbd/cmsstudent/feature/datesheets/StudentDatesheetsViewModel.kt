@@ -1,5 +1,6 @@
 package com.mbd.cmsstudent.feature.datesheets
 
+import com.mbd.cmscommon.controller.studentDatesheet
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.domain.model.Datesheet
@@ -35,7 +36,7 @@ class StudentDatesheetsViewModel @Inject constructor(
     val error: StateFlow<String?> = _error.asStateFlow()
 
     val context: StateFlow<StudentContext?> = currentStudentProvider.observeContext()
-        .distinctUntilChangedBy { it?.studentId }
+        .distinctUntilChangedBy { it?.studentId to it?.shift }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     val sheet: StateFlow<Datesheet?> = context
@@ -44,7 +45,8 @@ class StudentDatesheetsViewModel @Inject constructor(
                 flowOf(null)
             } else {
                 datesheetRepository.observeDatesheets().map { sheets ->
-                    sheets.firstOrNull { it.sessionId == ctx.sessionId && it.semester == ctx.session?.currentSemester && it.published }
+                    // Datesheets are per shift: the student's own shift's published sheet only.
+                    studentDatesheet(sheets, ctx.sessionId, ctx.session?.currentSemester, ctx.shift)
                 }
             }
         }

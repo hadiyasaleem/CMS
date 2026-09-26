@@ -38,7 +38,7 @@ fun MyStudentsScreen(
 
     LaunchedEffect(assignments, selected) {
         val selectionExists = selected != null &&
-            assignments.any { it.sessionId == selected?.sessionId && it.courseCode == selected?.courseCode }
+            assignments.any { it.classKey == selected?.classKey && it.courseCode == selected?.courseCode }
         if (!selectionExists) {
             assignments.firstOrNull()?.let { controller.select(it) }
         }

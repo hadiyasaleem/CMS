@@ -1,5 +1,6 @@
 package com.mbd.cmsstudent.feature.timetable
 
+import com.mbd.cmscommon.controller.periodsForShift
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.domain.model.StudentTimetableSnapshot
@@ -34,7 +35,7 @@ class MyTimetableViewModel @Inject constructor(
     val error: StateFlow<String?> = _error.asStateFlow()
 
     val snapshot = currentStudentProvider.observeContext()
-        .distinctUntilChangedBy { it?.studentId }
+        .distinctUntilChangedBy { it?.studentId to it?.shift }
         .flatMapLatest { context ->
             if (context == null) {
                 currentSessionId = null
@@ -42,7 +43,7 @@ class MyTimetableViewModel @Inject constructor(
             } else {
                 currentSessionId = context.sessionId
                 timetableRepository.observeWeek(context.sessionId)
-                    .map { periods -> studentTimetableSnapshot(periods, LocalDate.now(), LocalTime.now()) }
+                    .map { periods -> studentTimetableSnapshot(periodsForShift(periods, context.shift), LocalDate.now(), LocalTime.now()) }
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)

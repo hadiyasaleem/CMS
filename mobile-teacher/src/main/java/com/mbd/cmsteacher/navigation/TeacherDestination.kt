@@ -16,7 +16,7 @@ sealed class TeacherDestination(
 ) {
     data object Home : TeacherDestination("home", "Home", "Home", Icons.Filled.Home)
     data object Attendance : TeacherDestination("attendance", "Mark Attendance", "Attend", Icons.Filled.FactCheck)
-    data object AttendanceHistory : TeacherDestination("attendance_history/{sessionId}/{courseCode}", "Attendance History")
+    data object AttendanceHistory : TeacherDestination("attendance_history/{sessionId}/{courseCode}/{shift}", "Attendance History")
     data object AttendanceStudent : TeacherDestination("attendance_student/{sessionId}/{courseCode}/{rollNumber}", "Student Attendance")
     data object ExamsHub : TeacherDestination("exams_hub", "Exams", "Exams", Icons.Filled.MenuBook)
     data object Marks : TeacherDestination("marks", "Marks Entry")
@@ -35,7 +35,9 @@ sealed class TeacherDestination(
     companion object {
         val bottomNavItems = listOf(Home, Attendance, ExamsHub, Schedule, MenuHub)
 
-        fun attendanceHistory(sessionId: String, courseCode: String) = "attendance_history/$sessionId/$courseCode"
+        /** [shift] is the class's shift ("ALL" when unknown): the register lists that shift's students only. */
+        fun attendanceHistory(sessionId: String, courseCode: String, shift: com.mbd.cmscommon.domain.model.Session?) =
+            "attendance_history/$sessionId/$courseCode/${shift?.name ?: "ALL"}"
 
         fun attendanceStudent(sessionId: String, courseCode: String, rollNumber: String) =
             "attendance_student/$sessionId/$courseCode/$rollNumber"

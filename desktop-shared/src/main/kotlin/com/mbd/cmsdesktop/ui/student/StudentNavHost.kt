@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.ui.student
 
+import com.mbd.cmscommon.controller.observeShiftOf
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -165,7 +166,11 @@ private fun StudentShell(role: UserRole.LinkedStudent, component: DesktopAppComp
                                 StudentExamsDestination.DATESHEETS -> open(StudentScreen.Datesheets)
                             }
                         }
-                        StudentScreen.Timetable -> StudentTimetableScreen(sessionId, component.sessionTimetableRepository())
+                        StudentScreen.Timetable -> StudentTimetableScreen(
+                            sessionId,
+                            component.sessionTimetableRepository(),
+                            shift = component.academicSessionRepository().observeShiftOf(sessionId, rollNumber),
+                        )
                         StudentScreen.MoreHub -> StudentMoreScreen(
                             sessionId, deptId, rollNumber,
                             component.calendarRepository(), component.sessionFeeRepository(),
@@ -184,6 +189,7 @@ private fun StudentShell(role: UserRole.LinkedStudent, component: DesktopAppComp
                         StudentScreen.Results -> StudentResultsScreen(sessionId, rollNumber, component.sessionMarksRepository())
                         StudentScreen.Datesheets -> StudentDatesheetsScreen(
                             sessionId = sessionId,
+                            rollNumber = rollNumber,
                             datesheetRepository = component.datesheetRepository(),
                             sessionRepository = component.academicSessionRepository(),
                         )

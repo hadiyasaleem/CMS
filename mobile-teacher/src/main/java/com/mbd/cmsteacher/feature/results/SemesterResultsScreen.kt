@@ -29,7 +29,7 @@ class SemesterResultsViewModel @Inject constructor(
         sessionRepository = sessionRepository,
         curriculumRepository = curriculumRepository,
         sessions = assignmentsProvider.observeMyAssignments()
-            .map { assignments -> assignments.map { it.sessionId to it.sessionLabel }.distinct() },
+            .map { assignments -> assignments.map { it.classKey to it.sessionLabel }.distinct() },
         scope = viewModelScope,
     )
 }

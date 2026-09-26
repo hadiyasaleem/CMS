@@ -25,7 +25,7 @@ fun sessionTimetableSnapshot(periods: List<SessionPeriod>): SessionTimetableSnap
     val valid = periods.filterNot { malformed.contains(it.id) }
 
     val conflicts = mutableListOf<TimetableConflict>()
-    valid.groupBy { it.day }.values.forEach { dayPeriods ->
+    valid.groupBy { it.shift to it.day }.values.forEach { dayPeriods ->
         dayPeriods.forEachIndexed { index, period ->
             dayPeriods.drop(index + 1).filter { periodsOverlap(period, it) }.forEach { other ->
                 conflicts += TimetableConflict(period.id, other.id)
@@ -49,8 +49,8 @@ fun validateTimetableDraft(
     effectiveTo: String,
     existing: SessionPeriod?,
     allPeriods: List<SessionPeriod>,
-    // TODO(Task 7): the Morning/Evening tab supplies this. Morning and Evening are separate grids, so a
-    // draft only clashes with periods of its own shift.
+    // Morning and Evening are separate grids, so a draft only overlaps periods of its own shift. Teacher and
+    // room double-booking is checked across every shift and session by the database.
     shift: Session = existing?.shift ?: Session.MORNING,
 ): TimetableDraftValidation {
     val startTime = parseTimetableTime(start)

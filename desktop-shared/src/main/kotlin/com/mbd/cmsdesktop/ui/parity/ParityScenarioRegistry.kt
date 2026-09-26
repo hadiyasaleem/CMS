@@ -36,7 +36,7 @@ object ParityScenarioRegistry {
         role(ParityRole.ADMIN, PERMISSION_STATES, "link_requests", "mark_edit_requests")
         role(
             ParityRole.TEACHER, FORM_STATES,
-            "auth", "attendance", "attendance_history/{sessionId}/{courseCode}", "marks",
+            "auth", "attendance", "attendance_history/{sessionId}/{courseCode}/{shift}", "marks",
             "semester_results", "exam_paper",
         )
         role(
