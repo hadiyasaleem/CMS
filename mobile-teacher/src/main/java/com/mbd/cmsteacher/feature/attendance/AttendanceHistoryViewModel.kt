@@ -11,9 +11,13 @@ import com.mbd.cmscommon.domain.model.DailyAttendanceMark
 import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.AttendanceEditRequestRepository
+import com.mbd.cmscommon.domain.repository.CurriculumRepository
+import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
+import com.mbd.cmscommon.domain.repository.SessionTimetableRepository
 import com.mbd.cmscommon.export.ExportFormat
 import com.mbd.cmscommon.export.attendanceRegisterExport
+import com.mbd.cmscommon.export.resolveRegisterContext
 import com.mbd.cmscommon.util.DocumentExporter
 import com.mbd.cmscommon.util.Outcome
 import com.mbd.cmscommon.util.userMessageLogged
@@ -39,6 +43,9 @@ class AttendanceHistoryViewModel @Inject constructor(
     private val attendanceRepository: SessionAttendanceRepository,
     private val sessionRepository: AcademicSessionRepository,
     private val editRequestRepository: AttendanceEditRequestRepository,
+    private val departmentRepository: DepartmentRepository,
+    private val curriculumRepository: CurriculumRepository,
+    private val timetableRepository: SessionTimetableRepository,
 ) : ViewModel() {
 
     val sessionId: String = checkNotNull(savedStateHandle["sessionId"])
@@ -157,7 +164,8 @@ class AttendanceHistoryViewModel @Inject constructor(
             // File IO / share-intent failures (ActivityNotFoundException, IOException) must not crash the app.
             runCatching {
                 val academicSession = sessionRepository.observeSession(sessionId).first()
-                val doc = attendanceRegisterExport(courseCode, academicSession, YearMonth.from(_month.value), roster.value, marks.value)
+                val doc = attendanceRegisterExport(courseCode, academicSession, YearMonth.from(_month.value), roster.value, marks.value,
+                    resolveRegisterContext(academicSession, courseCode, departmentRepository, curriculumRepository, timetableRepository))
                 DocumentExporter.export(context, doc, format)
             }.onFailure { _error.value = it.userMessageLogged("AttendanceHistoryViewModel.export", "Could not export the attendance register.") }
         }

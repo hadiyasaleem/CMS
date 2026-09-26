@@ -28,6 +28,7 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlinx.coroutines.flow.first
 
 private val MONTH = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH)
 private val WEEKDAY = DateTimeFormatter.ofPattern("EEE", Locale.ENGLISH)
@@ -41,31 +42,85 @@ fun sessionTitle(session: AcademicSession?): String =
 
 fun AttendanceExportPayload.toExportDocument() = singleSectionDocument(fileBase, title, header, rows)
 
-/** Teacher monthly register: one column per day, Sundays marked as holidays, totals at the end. */
+/** Names shown in the register's title block; blank values are left out. */
+data class RegisterContext(
+    val departmentName: String? = null,
+    val subjectName: String? = null,
+    val teacherName: String? = null,
+)
+
+/**
+ * Teacher monthly register: one column per day, Sundays (holidays) as solid black columns, totals at
+ * the end. The title carries department, semester, shift, subject, teacher, month and the lecture
+ * topics the teacher entered while marking attendance that month.
+ */
 fun attendanceRegisterExport(
     courseCode: String,
     session: AcademicSession?,
     month: YearMonth,
     roster: List<SessionStudent>,
     marks: Map<String, Map<LocalDate, DailyAttendanceMark>>,
+    context: RegisterContext = RegisterContext(),
 ): ExportDocument {
     val days = (1..month.lengthOfMonth()).map(month::atDay)
     val datesWithMarks = marks.values.flatMap { it.keys }.toSet()
-    val header = listOf("Roll", "Name") +
-        days.map { d -> d.dayOfMonth.toString().padStart(2, '0') + " " + d.format(WEEKDAY) + if (isRegisterHoliday(d, datesWithMarks)) " (Holiday)" else "" } +
-        listOf("P", "A", "L", "Late", "%")
+    val holidayColumns = days.withIndex().filter { (_, d) -> isRegisterHoliday(d, datesWithMarks) }.map { 2 + it.index }.toSet()
+    val header = listOf("Roll", "Name") + days.map { it.dayOfMonth.toString().padStart(2, '0') } + listOf("P", "A", "L", "Late", "%")
     val rows = roster.sortedBy { it.rollNumber }.map { student ->
         val byDate = marks[student.rollNumber].orEmpty()
         val counts = attendanceCounts(byDate.values)
         listOf(student.rollNumber, student.name) +
-            days.map { d -> if (isRegisterHoliday(d, datesWithMarks)) "H" else byDate[d]?.let { letter(it.status) + if (it.isLate) "*" else "" } ?: "" } +
+            days.map { d -> if (isRegisterHoliday(d, datesWithMarks)) "" else byDate[d]?.let { letter(it.status) + if (it.isLate) "*" else "" } ?: "" } +
             listOf(counts.present.toString(), counts.absent.toString(), counts.leave.toString(), counts.late.toString(), pct(counts.present, counts.total))
     }
+
+    val topics = marks.values.flatMap { it.values }
+        .filter { !it.lectureTopic.isNullOrBlank() }
+        .groupBy { it.date }
+        .toSortedMap()
+        .map { (date, ms) -> date.dayOfMonth.toString().padStart(2, '0') + " " + date.format(WEEKDAY) + ": " + ms.map { it.lectureTopic!!.trim() }.distinct().joinToString("; ") }
+
+    val subject = listOfNotNull(context.subjectName?.takeIf { it.isNotBlank() }, courseCode.takeIf { it.isNotBlank() }?.let { "($it)" }).joinToString(" ")
+    val title = buildList {
+        add("Attendance Register - ${month.format(MONTH)}")
+        add(listOfNotNull(
+            context.departmentName?.takeIf { it.isNotBlank() }?.let { "Department: $it" },
+            session?.let { "Semester: ${it.currentSemester}" },
+            session?.let { "Shift: ${titleCase(it.shift.name)}" },
+        ).joinToString(" | "))
+        add(listOfNotNull(
+            "Subject: $subject".takeIf { subject.isNotBlank() },
+            context.teacherName?.takeIf { it.isNotBlank() }?.let { "Teacher: $it" },
+        ).joinToString(" | "))
+        add("P present | A absent | L leave | * late | black column = holiday")
+        if (topics.isNotEmpty()) {
+            add("Topics covered:")
+            topics.forEach { addAll(wrapLine(it, 120).mapIndexed { i, part -> if (i == 0) "  $part" else "    $part" }) }
+        }
+    }.filter { it.isNotBlank() }
+
     return ExportDocument(
         fileBase = "attendance_${courseCode}_$month",
-        title = listOfNotNull("Attendance Register", "$courseCode · ${month.format(MONTH)}", sessionTitle(session).ifBlank { null }, "P present · A absent · L leave · * late · H holiday"),
-        sections = listOf(ExportSection("Register", header, rows)),
+        title = title,
+        sections = listOf(ExportSection("Register", header, rows, blackColumns = holidayColumns)),
     )
+}
+
+/** Greedy word wrap so long titles/topics stay inside the PDF page width. */
+internal fun wrapLine(text: String, maxChars: Int): List<String> {
+    if (text.length <= maxChars) return listOf(text)
+    val lines = mutableListOf<String>()
+    var current = StringBuilder()
+    for (word in text.split(' ')) {
+        if (current.isNotEmpty() && current.length + 1 + word.length > maxChars) {
+            lines += current.toString()
+            current = StringBuilder()
+        }
+        if (current.isNotEmpty()) current.append(' ')
+        current.append(word)
+    }
+    if (current.isNotEmpty()) lines += current.toString()
+    return lines
 }
 
 fun termSummaryExport(
@@ -338,4 +393,26 @@ fun studentRecordExport(record: com.mbd.cmscommon.controller.StudentRecord): Exp
             ExportSection("Fees and fines", listOf("Type", "Item", "Amount (PKR)", "Note"), fees),
         ),
     )
+}
+
+/**
+ * Looks up the department, subject and teacher names for a register title. Each lookup is best-effort:
+ * a missing name is simply left out of the title rather than failing the export.
+ */
+suspend fun resolveRegisterContext(
+    session: AcademicSession?,
+    courseCode: String,
+    departments: com.mbd.cmscommon.domain.repository.DepartmentRepository,
+    curriculum: com.mbd.cmscommon.domain.repository.CurriculumRepository,
+    timetable: com.mbd.cmscommon.domain.repository.SessionTimetableRepository,
+): RegisterContext {
+    if (session == null) return RegisterContext()
+    val department = runCatching { departments.getDepartment(session.deptId)?.name }.getOrNull()
+    val subject = runCatching {
+        curriculum.observeSemesterSubjects(session.sessionId, session.currentSemester).first().firstOrNull { it.courseCode == courseCode }?.name
+    }.getOrNull()
+    val period = runCatching {
+        timetable.observeWeek(session.sessionId).first().firstOrNull { it.courseCode == courseCode && it.teacherName.isNotBlank() }
+    }.getOrNull()
+    return RegisterContext(department, subject ?: period?.subjectName, period?.teacherName)
 }

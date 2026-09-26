@@ -100,7 +100,7 @@ object DocumentExporter {
                 y += 6
             }
 
-            fun drawRow(cells: List<String>, widths: List<Float>, header: Boolean) {
+            fun drawRow(cells: List<String>, widths: List<Float>, header: Boolean, black: Set<Int> = emptySet()) {
                 val s = stream!!
                 if (header) {
                     s.setNonStrokingColor(0.12f, 0.12f, 0.12f)
@@ -112,10 +112,16 @@ object DocumentExporter {
                 s.setLineWidth(0.6f)
                 var x = MARGIN
                 widths.forEachIndexed { i, w ->
+                    if (i in black) {
+                        s.setNonStrokingColor(0f, 0f, 0f)
+                        s.addRect(x, PAGE_H - (y + ROW_H), w, ROW_H)
+                        s.fill()
+                        s.setStrokingColor(0.47f, 0.47f, 0.47f)
+                    }
                     s.addRect(x, PAGE_H - (y + ROW_H), w, ROW_H)
                     s.stroke()
                     val font = if (header) bold else regular
-                    text(fit(cells.getOrNull(i).orEmpty(), font, 8f, w - 6f), x + 3f, y + ROW_H - 5f, font, 8f, white = header)
+                    if (i !in black) text(fit(cells.getOrNull(i).orEmpty(), font, 8f, w - 6f), x + 3f, y + ROW_H - 5f, font, 8f, white = header)
                     x += w
                 }
                 y += ROW_H
@@ -129,13 +135,13 @@ object DocumentExporter {
                     text(pdfSafe(section.name, bold), MARGIN, y + 11f, bold, 11f)
                     y += 16f
                 }
-                if (section.header.isNotEmpty()) drawRow(section.header, widths, header = true)
+                if (section.header.isNotEmpty()) drawRow(section.header, widths, header = true, black = section.blackColumns)
                 section.rows.forEach { row ->
                     if (y + ROW_H > PAGE_H - MARGIN) {
                         newPage()
-                        if (section.header.isNotEmpty()) drawRow(section.header, widths, header = true)
+                        if (section.header.isNotEmpty()) drawRow(section.header, widths, header = true, black = section.blackColumns)
                     }
-                    drawRow(row, widths, header = false)
+                    drawRow(row, widths, header = false, black = section.blackColumns)
                 }
                 y += 14f
             }

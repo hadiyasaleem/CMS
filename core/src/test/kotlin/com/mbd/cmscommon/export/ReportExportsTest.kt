@@ -27,11 +27,12 @@ class ReportExportsTest {
         val doc = attendanceRegisterExport("GE-163", null, month, listOf(student("IT-21-09", "Amina")), marks)
         val section = doc.sections.single()
         assertEquals(2 + 30 + 5, section.header.size)
-        assertTrue(section.header[2 + 5].endsWith("(Holiday)")) // Sep 6
+        assertEquals("06", section.header[2 + 5]) // Sep 6
+        assertEquals(setOf(2 + 5, 2 + 12, 2 + 19, 2 + 26), section.blackColumns)
         val row = section.rows.single()
         assertEquals("P*", row[2])
         assertEquals("A", row[3])
-        assertEquals("H", row[2 + 5])
+        assertEquals("", row[2 + 5])
         assertEquals(listOf("1", "1", "0", "1", "50%"), row.takeLast(5))
     }
 

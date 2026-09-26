@@ -12,6 +12,7 @@ object XlsxWriter {
 
     private const val STYLE_TITLE = 1
     private const val STYLE_HEADER = 2
+    private const val STYLE_BLACK = 3
     private val NUMBER = Regex("^-?(0|[1-9]\\d{0,13})(\\.\\d+)?$")
 
     fun write(doc: ExportDocument, out: OutputStream) {
@@ -50,6 +51,7 @@ object XlsxWriter {
     }
 
     private fun sheet(title: List<String>, section: ExportSection): String {
+        val black = section.blackColumns
         val rows = mutableListOf<Pair<List<String>, Int>>()
         title.forEach { rows += listOf(it) to STYLE_TITLE }
         if (title.isNotEmpty()) rows += emptyList<String>() to 0
@@ -77,7 +79,10 @@ object XlsxWriter {
             append("<sheetData>")
             rows.forEachIndexed { r, (cells, style) ->
                 append("""<row r="${r + 1}">""")
-                cells.forEachIndexed { c, value -> append(cell(columnName(c) + (r + 1), value, style)) }
+                cells.forEachIndexed { c, value ->
+                    val isBlack = c in black && (style == STYLE_HEADER || style == 0)
+                    append(cell(columnName(c) + (r + 1), if (isBlack) "" else value, if (isBlack) STYLE_BLACK else style))
+                }
                 append("</row>")
             }
             append("</sheetData></worksheet>")
@@ -149,6 +154,6 @@ object XlsxWriter {
 
     private const val ROOT_RELS = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>"""
 
-    // xf 0 = default, 1 = title (bold 13pt), 2 = header (bold, light grey fill, thin border).
-    private const val STYLES = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="13"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE7E6E6"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"/><right style="thin"/><top style="thin"/><bottom style="thin"/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="0" fontId="2" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>"""
+    // xf 0 = default, 1 = title (bold 13pt), 2 = header (bold, light grey fill, thin border), 3 = solid black cell.
+    private const val STYLES = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="13"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE7E6E6"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FF000000"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"/><right style="thin"/><top style="thin"/><bottom style="thin"/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="4"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="0" fontId="2" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/><xf numFmtId="0" fontId="0" fillId="3" borderId="1" xfId="0" applyFill="1" applyBorder="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>"""
 }

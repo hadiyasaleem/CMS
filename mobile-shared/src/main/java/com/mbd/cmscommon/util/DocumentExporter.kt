@@ -58,6 +58,7 @@ object DocumentExporter {
         val bodyPaint = Paint().apply { textSize = 8f; isAntiAlias = true }
         val headText = Paint().apply { textSize = 8f; isFakeBoldText = true; color = Color.WHITE; isAntiAlias = true }
         val gridPaint = Paint().apply { style = Paint.Style.STROKE; strokeWidth = 0.6f; color = Color.rgb(120, 120, 120) }
+        val blackFill = Paint().apply { style = Paint.Style.FILL; color = Color.BLACK }
         val headerBg = Paint().apply { style = Paint.Style.FILL; color = Color.rgb(30, 30, 30) }
 
         var pageNo = 0
@@ -76,15 +77,16 @@ object DocumentExporter {
             y += 6
         }
 
-        fun drawRow(cells: List<String>, widths: List<Float>, header: Boolean) {
+        fun drawRow(cells: List<String>, widths: List<Float>, header: Boolean, black: Set<Int> = emptySet()) {
             val canvas = page!!.canvas
             val tableW = widths.sum()
             if (header) canvas.drawRect(margin, y, margin + tableW, y + rowH, headerBg)
             var x = margin
             widths.forEachIndexed { i, w ->
+                if (i in black) canvas.drawRect(x, y, x + w, y + rowH, blackFill)
                 canvas.drawRect(x, y, x + w, y + rowH, gridPaint)
                 val paint = if (header) headText else bodyPaint
-                val text = cells.getOrNull(i).orEmpty()
+                val text = if (i in black) "" else cells.getOrNull(i).orEmpty()
                 val fit = paint.breakText(text, true, w - 6f, null)
                 canvas.drawText(text.substring(0, fit), x + 3f, y + rowH - 5f, paint)
                 x += w
@@ -100,13 +102,13 @@ object DocumentExporter {
                 page!!.canvas.drawText(section.name, margin, y + 11f, sectionPaint)
                 y += 16f
             }
-            if (section.header.isNotEmpty()) drawRow(section.header, widths, header = true)
+            if (section.header.isNotEmpty()) drawRow(section.header, widths, header = true, black = section.blackColumns)
             section.rows.forEach { row ->
                 if (y + rowH > pageH - margin) {
                     newPage()
-                    if (section.header.isNotEmpty()) drawRow(section.header, widths, header = true)
+                    if (section.header.isNotEmpty()) drawRow(section.header, widths, header = true, black = section.blackColumns)
                 }
-                drawRow(row, widths, header = false)
+                drawRow(row, widths, header = false, black = section.blackColumns)
             }
             y += 14f
         }

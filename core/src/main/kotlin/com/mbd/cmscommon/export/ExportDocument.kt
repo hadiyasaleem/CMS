@@ -13,6 +13,8 @@ data class ExportSection(
     val name: String,
     val header: List<String>,
     val rows: List<List<String>>,
+    /** Column indexes drawn solid black (e.g. Sundays in the attendance register). */
+    val blackColumns: Set<Int> = emptySet(),
 )
 
 fun singleSectionDocument(fileBase: String, title: List<String>, header: List<String>, rows: List<List<String>>) =

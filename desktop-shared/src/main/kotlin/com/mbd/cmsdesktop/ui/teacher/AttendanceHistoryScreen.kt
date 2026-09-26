@@ -12,7 +12,11 @@ import androidx.compose.ui.awt.ComposeWindow
 import com.mbd.cmscommon.domain.model.DailyAttendanceMark
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.AttendanceEditRequestRepository
+import com.mbd.cmscommon.domain.repository.CurriculumRepository
+import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
+import com.mbd.cmscommon.domain.repository.SessionTimetableRepository
+import com.mbd.cmscommon.export.resolveRegisterContext
 import com.mbd.cmscommon.ui.components.AttendanceHistoryWorkspace
 import com.mbd.cmscommon.util.Outcome
 import com.mbd.cmscommon.util.userMessageLogged
@@ -34,6 +38,9 @@ fun AttendanceHistoryScreen(
     sessionRepository: AcademicSessionRepository,
     attendanceRepository: SessionAttendanceRepository,
     editRequestRepository: AttendanceEditRequestRepository,
+    departmentRepository: DepartmentRepository,
+    curriculumRepository: CurriculumRepository,
+    timetableRepository: SessionTimetableRepository,
     window: ComposeWindow,
     onOpenStudent: (rollNumber: String, month: YearMonth) -> Unit,
 ) {
@@ -113,10 +120,13 @@ fun AttendanceHistoryScreen(
         onPreviousMonth = { month = month.minusMonths(1) },
         onNextMonth = { month = month.plusMonths(1) },
         onExport = { format ->
-            try {
-                DocumentExporter.export(window, attendanceRegisterExport(courseCode, session, month, roster, marks), format)
-            } catch (t: Throwable) {
+            scope.launch {
+              try {
+                val context = resolveRegisterContext(session, courseCode, departmentRepository, curriculumRepository, timetableRepository)
+                DocumentExporter.export(window, attendanceRegisterExport(courseCode, session, month, roster, marks, context), format)
+              } catch (t: Throwable) {
                 error = t.userMessageLogged("AttendanceHistoryScreen.export", "Could not export the attendance register.")
+              }
             }
         },
         errorMessage = error,

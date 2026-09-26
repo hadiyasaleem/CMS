@@ -163,6 +163,9 @@ fun TeacherNavHost(role: UserRole.Teacher, component: DesktopAppComponent, windo
                     sessionRepository = component.academicSessionRepository(),
                     attendanceRepository = component.sessionAttendanceRepository(),
                     editRequestRepository = component.attendanceEditRequestRepository(),
+                    departmentRepository = component.departmentRepository(),
+                    curriculumRepository = component.curriculumRepository(),
+                    timetableRepository = component.sessionTimetableRepository(),
                     window = window,
                     onOpenStudent = { roll, month ->
                         screen = TeacherScreen.AttendanceStudentSummary(currentScreen.sessionId, currentScreen.courseCode, roll, month)
