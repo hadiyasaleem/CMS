@@ -1,5 +1,9 @@
 package com.mbd.cmscommon.ui.components
 
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Checkbox
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -377,18 +381,35 @@ private fun StudentAttendanceCard(
             }
             Spacer(Modifier.height(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                if (status != null) {
-                    PalSegment(selected = status, onSelect = onStatus, enabled = !locked)
-                } else {
-                    Row {
-                        AttendanceStatus.entries.forEach { entry ->
-                            TextButton(onClick = { onStatus(entry) }, enabled = !locked) { Text(entry.name.take(1)) }
-                        }
-                    }
+                AttendanceStatus.entries.forEach { entry ->
+                    StatusCircle(
+                        letter = entry.name.take(1),
+                        color = when (entry) {
+                            AttendanceStatus.PRESENT -> RegisterGreen
+                            AttendanceStatus.ABSENT -> RegisterRed
+                            else -> RegisterGold
+                        },
+                        selected = status == entry,
+                        enabled = !locked,
+                        onClick = { onStatus(entry) },
+                    )
+                    Spacer(Modifier.width(10.dp))
                 }
                 Spacer(Modifier.weight(1f))
-                TextButton(onClick = onToggleLate, enabled = !locked) { Text(if (isLate) "Late" else "New") }
-                TextButton(onClick = onNote, enabled = !locked) { Text("Note") }
+                FilterChip(
+                    selected = isLate,
+                    onClick = onToggleLate,
+                    enabled = !locked,
+                    label = { Text("Late") },
+                    leadingIcon = if (isLate) { { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(16.dp)) } } else null,
+                )
+                Spacer(Modifier.width(6.dp))
+                FilterChip(
+                    selected = !remark.isNullOrBlank(),
+                    onClick = onNote,
+                    enabled = !locked || !remark.isNullOrBlank(),
+                    label = { Text("Note") },
+                )
             }
             if (!remark.isNullOrBlank()) {
                 Spacer(Modifier.height(4.dp))
@@ -399,11 +420,28 @@ private fun StudentAttendanceCard(
 }
 
 @Composable
+private fun StatusCircle(letter: String, color: Color, selected: Boolean, enabled: Boolean, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        enabled = enabled,
+        shape = CircleShape,
+        color = if (selected) color else Color.Transparent,
+        contentColor = if (selected) Color.White else color,
+        border = BorderStroke(if (selected) 0.dp else 1.5.dp, color.copy(alpha = if (enabled) 1f else 0.4f)),
+        modifier = Modifier.size(40.dp),
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(letter, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
+        }
+    }
+}
+
+@Composable
 private fun SubmitCard(unmarked: Int, locked: Boolean, allMarked: Boolean, loading: Boolean, onSubmit: () -> Unit) {
     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Text(
-                if (locked) "Submitted for today. This register cannot be changed." else if (allMarked) "The register is complete and ready to submit." else "Every student needs an explicit P, A, or L status.",
+                if (locked) "Submitted for this date. Use Attendance History to request changes." else if (allMarked) "The register is complete and ready to submit." else "Every student needs an explicit P, A, or L status.",
                 color = ModMuted,
                 style = MaterialTheme.typography.bodyMedium,
             )
