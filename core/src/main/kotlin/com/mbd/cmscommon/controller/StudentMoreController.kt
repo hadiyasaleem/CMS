@@ -52,7 +52,9 @@ class StudentMoreController(
         launch {
             _loading.value = true
             _loadError.value = null
+            // The roster row's shift; before it syncs, the session's (only or first) shift.
             val shift = runCatching { sessionRepository.getStudentProfile(sessionId, rollNumber)?.shift }.getOrNull()
+                ?: runCatching { sessionRepository.observeSession(sessionId).first()?.shifts?.firstOrNull() }.getOrNull()
             coroutineScope {
                 val events = async {
                     runCatching {

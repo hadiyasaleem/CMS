@@ -454,7 +454,7 @@ private fun RegisterCell(mark: DailyAttendanceMark?, pending: Boolean, enabled: 
 private fun RegisterLegend() {
     Text(
         "P present · A absent · L leave · dark dot = late or has a remark · gold dot = edit request pending. " +
-            "Tap a name for the term summary, or a cell for details and edit requests.",
+            "Select a name for the term summary, or a cell for details and edit requests.",
         color = ModMuted,
         style = MaterialTheme.typography.bodySmall,
     )

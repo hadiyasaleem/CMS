@@ -64,7 +64,7 @@ class MoreHubViewModel @Inject constructor(
                     val profileResult = runCatching { sessionRepository.getStudentProfile(context.sessionId, context.rollNumber) }
                     val profile = profileResult.orLogCritical("MoreHubViewModel.getStudentProfile")
                     // Fees are per shift: use the structure of the student's own shift.
-                    val feeResult = runCatching { feeRepository.getSessionFee(context.sessionId, profile?.shift ?: Session.MORNING) }
+                    val feeResult = runCatching { feeRepository.getSessionFee(context.sessionId, context.shift ?: profile?.shift ?: context.session?.shifts?.firstOrNull() ?: Session.MORNING) }
                     val fee = feeResult.orLogCritical("MoreHubViewModel.getSessionFee")
                     val unreadResult = runCatching {
                         notificationRepository.observeUnreadCount(

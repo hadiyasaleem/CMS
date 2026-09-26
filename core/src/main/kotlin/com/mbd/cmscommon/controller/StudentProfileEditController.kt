@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.domain.model.shiftForRoll
 import kotlinx.coroutines.flow.first
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.AcademicSession
@@ -45,7 +46,13 @@ class StudentProfileEditController(
     init {
         launch {
             _profile.value = sessionRepository.getStudentProfile(sessionId, rollNumber)
-                ?: StudentProfile(sessionId = sessionId, rollNumber = rollNumber, name = "", shift = Session.MORNING)
+                ?: StudentProfile(
+                    sessionId = sessionId,
+                    rollNumber = rollNumber,
+                    name = "",
+                    // No profile cached yet: the roll number's serial block decides the shift.
+                    shift = sessionRepository.observeSession(sessionId).first()?.let { shiftForRoll(it, rollNumber) } ?: Session.MORNING,
+                )
         }
         loadFines()
     }

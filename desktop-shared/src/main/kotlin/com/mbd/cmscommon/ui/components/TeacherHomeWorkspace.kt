@@ -1,7 +1,7 @@
 package com.mbd.cmscommon.ui.components
 
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -43,33 +43,29 @@ import com.mbd.cmscommon.domain.model.SessionPeriod
 import com.mbd.cmscommon.domain.model.TeacherHomeSnapshot
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
-import com.mbd.cmscommon.ui.theme.ModAccent
-import com.mbd.cmscommon.ui.theme.ModGround
-import com.mbd.cmscommon.ui.theme.ModInk
-import com.mbd.cmscommon.ui.theme.ModMuted
-import com.mbd.cmscommon.ui.theme.ModSuccess
-import com.mbd.cmscommon.ui.theme.ModSurface
-import com.mbd.cmscommon.ui.theme.ModTrack
-import com.mbd.cmscommon.ui.theme.ModWarn
 
-private val HomeCanvas = ModGround
-private val HomeBorder = ModTrack
-private val HomeGreen = ModSuccess
-private val HomeBlue = ModInk
-private val HomeGold = ModWarn
-private val HomeRed = ModAccent
+/** Design-system tone roles for the home action cards; resolved to [CmsTheme] tokens at render. */
+private enum class HomeTone { SUCCESS, NAVY, WARN, ACCENT }
+
+@Composable
+private fun HomeTone.color(): Color = when (this) {
+    HomeTone.SUCCESS -> CmsTheme.colors.success
+    HomeTone.NAVY -> CmsTheme.colors.navy
+    HomeTone.WARN -> CmsTheme.colors.warn
+    HomeTone.ACCENT -> CmsTheme.colors.accent
+}
 
 enum class TeacherHomeDestination { ATTENDANCE, MARKS, EXAM_PAPER, STUDENTS, SCHEDULE, NOTIFICATIONS }
 
-private data class HomeAction(val destination: TeacherHomeDestination, val title: String, val detail: String, val icon: ImageVector, val tone: Color)
+private data class HomeAction(val destination: TeacherHomeDestination, val title: String, val detail: String, val icon: ImageVector, val tone: HomeTone)
 
 private val TEACHER_HOME_ACTIONS = listOf(
-    HomeAction(TeacherHomeDestination.ATTENDANCE, "Mark Attendance", "Record today's class", Icons.Outlined.FactCheck, HomeGreen),
-    HomeAction(TeacherHomeDestination.MARKS, "Marks Entry", "Assessments and scores", Icons.Outlined.RateReview, HomeBlue),
-    HomeAction(TeacherHomeDestination.EXAM_PAPER, "Exam Paper", "Submit a paper", Icons.Outlined.UploadFile, HomeGold),
-    HomeAction(TeacherHomeDestination.STUDENTS, "My Students", "Rosters and progress", Icons.Outlined.Groups, HomeBlue),
-    HomeAction(TeacherHomeDestination.SCHEDULE, "My Schedule", "Full teaching week", Icons.Outlined.CalendarMonth, HomeGreen),
-    HomeAction(TeacherHomeDestination.NOTIFICATIONS, "Notifications", "Faculty updates", Icons.Outlined.Notifications, HomeRed),
+    HomeAction(TeacherHomeDestination.ATTENDANCE, "Mark Attendance", "Record today's class", Icons.Outlined.FactCheck, HomeTone.SUCCESS),
+    HomeAction(TeacherHomeDestination.MARKS, "Marks Entry", "Assessments and scores", Icons.Outlined.RateReview, HomeTone.NAVY),
+    HomeAction(TeacherHomeDestination.EXAM_PAPER, "Exam Paper", "Submit a paper", Icons.Outlined.UploadFile, HomeTone.WARN),
+    HomeAction(TeacherHomeDestination.STUDENTS, "My Students", "Rosters and progress", Icons.Outlined.Groups, HomeTone.NAVY),
+    HomeAction(TeacherHomeDestination.SCHEDULE, "My Schedule", "Full teaching week", Icons.Outlined.CalendarMonth, HomeTone.SUCCESS),
+    HomeAction(TeacherHomeDestination.NOTIFICATIONS, "Notifications", "Faculty updates", Icons.Outlined.Notifications, HomeTone.ACCENT),
 )
 
 @Composable
@@ -82,7 +78,7 @@ fun TeacherHomeWorkspace(
     val listState = rememberLazyListState()
     WithVerticalScrollbar(listState) {
     LazyColumn( state = listState,
-        modifier = modifier.fillMaxWidth().background(HomeCanvas),
+        modifier = modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -98,7 +94,7 @@ fun TeacherHomeWorkspace(
 
 @Composable
 private fun HomeHeader(heroPainter: Painter, snapshot: TeacherHomeSnapshot) {
-    Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = ModInk) {
+    Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = CmsTheme.colors.ink) {
         Box(Modifier.fillMaxSize()) {
             Image(
                 painter = heroPainter,
@@ -128,23 +124,23 @@ private fun HomeMetrics(snapshot: TeacherHomeSnapshot) {
 
 @Composable
 private fun HomeMetric(value: String, label: String, modifier: Modifier) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, HomeBorder)) {
+    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.surfaceBright, border = BorderStroke(1.dp, CmsTheme.colors.track)) {
         Column(Modifier.padding(14.dp)) {
             Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
+            Text(label.uppercase(), color = CmsTheme.colors.muted, style = CmsTextStyles.eyebrow)
         }
     }
 }
 
 @Composable
 private fun TodayCard(snapshot: TeacherHomeSnapshot) {
-    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, HomeBorder)) {
+    Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surfaceBright, border = BorderStroke(1.dp, CmsTheme.colors.track)) {
         Column(Modifier.padding(16.dp)) {
-            Text("TODAY'S CLASSES", color = ModMuted, style = CmsTextStyles.eyebrow)
+            Text("TODAY'S CLASSES", color = CmsTheme.colors.muted, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
             if (snapshot.todaysClasses.isEmpty()) {
-                Text("No lectures scheduled today.", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
-                Text("Your teaching overview is clear for the rest of today.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                Text("No lectures scheduled today.", color = CmsTheme.colors.muted, style = MaterialTheme.typography.bodyMedium)
+                Text("Your teaching overview is clear for the rest of today.", color = CmsTheme.colors.muted, style = MaterialTheme.typography.bodySmall)
             } else {
                 snapshot.todaysClasses.forEach { period -> ClassRow(period, isNext = period.id == snapshot.nextClass?.id) }
             }
@@ -155,10 +151,10 @@ private fun TodayCard(snapshot: TeacherHomeSnapshot) {
 @Composable
 private fun ClassRow(period: SessionPeriod, isNext: Boolean) {
     Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(period.timeRange, modifier = Modifier.width(90.dp), color = HomeBlue, style = MaterialTheme.typography.bodySmall)
+        Text(period.timeRange, modifier = Modifier.width(90.dp), color = CmsTheme.colors.navy, style = MaterialTheme.typography.bodySmall)
         Column(Modifier.weight(1f)) {
             Text(period.subjectName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
-            Text(listOfNotNull(period.building, period.roomNo).joinToString(" / "), color = ModMuted, style = MaterialTheme.typography.bodySmall)
+            Text(listOfNotNull(period.building, period.roomNo).joinToString(" / "), color = CmsTheme.colors.muted, style = MaterialTheme.typography.bodySmall)
         }
         if (isNext) StatusBadge("NEXT", BadgeTone.Navy)
     }
@@ -166,49 +162,51 @@ private fun ClassRow(period: SessionPeriod, isNext: Boolean) {
 
 @Composable
 private fun WeeklyLoadCard(snapshot: TeacherHomeSnapshot) {
-    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, HomeBorder)) {
+    val barTone = CmsTheme.colors.navy
+    Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surfaceBright, border = BorderStroke(1.dp, CmsTheme.colors.track)) {
         Column(Modifier.padding(16.dp)) {
-            Text("WEEKLY LOAD", color = ModMuted, style = CmsTextStyles.eyebrow)
+            Text("WEEKLY LOAD", color = CmsTheme.colors.muted, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(10.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 snapshot.weeklyLoad.forEach { day ->
                     Column(Modifier.weight(1f)) {
                         Surface(
                             shape = RoundedCornerShape(8.dp),
-                            color = if (day.isToday) HomeBlue else HomeBlue.copy(alpha = (0.15f + 0.15f * day.count).coerceAtMost(0.9f)),
+                            color = if (day.isToday) barTone else barTone.copy(alpha = (0.15f + 0.15f * day.count).coerceAtMost(0.9f)),
                         ) {
                             Text(
                                 day.count.toString(),
                                 modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                                color = ModSurface,
+                                color = CmsTheme.colors.onInk,
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                                 style = MaterialTheme.typography.labelMedium,
                             )
                         }
-                        Text(day.label, modifier = Modifier.fillMaxWidth(), color = ModMuted, textAlign = androidx.compose.ui.text.style.TextAlign.Center, style = MaterialTheme.typography.labelSmall)
+                        Text(day.label, modifier = Modifier.fillMaxWidth(), color = CmsTheme.colors.muted, textAlign = androidx.compose.ui.text.style.TextAlign.Center, style = MaterialTheme.typography.labelSmall)
                     }
                 }
             }
             Spacer(Modifier.height(8.dp))
-            Text("Busiest: ${snapshot.busiestDay}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+            Text("Busiest: ${snapshot.busiestDay}", color = CmsTheme.colors.muted, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
 
 @Composable
 private fun HomeActionCard(action: HomeAction, onClick: () -> Unit) {
+    val tone = action.tone.color()
     Surface(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
-        color = ModSurface,
-        border = BorderStroke(1.dp, action.tone.copy(alpha = 0.25f)),
+        color = MaterialTheme.colorScheme.surfaceBright,
+        border = BorderStroke(1.dp, tone.copy(alpha = 0.25f)),
     ) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(action.icon, contentDescription = null, tint = action.tone)
+            Icon(action.icon, contentDescription = null, tint = tone)
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(action.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                Text(action.detail, color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                Text(action.detail, color = CmsTheme.colors.muted, style = MaterialTheme.typography.bodySmall)
             }
         }
     }
