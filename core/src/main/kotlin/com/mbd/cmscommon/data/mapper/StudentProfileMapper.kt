@@ -3,17 +3,21 @@ package com.mbd.cmscommon.data.mapper
 import com.mbd.cmscommon.data.remote.PgTime
 import com.mbd.cmscommon.data.remote.dto.SessionStudentDto
 import com.mbd.cmscommon.data.remote.dto.StudentProfileDto
+import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.StudentProfile
+import com.mbd.cmscommon.domain.model.parseShift
 
 object StudentProfileMapper {
     fun dtoToDomain(
         dto: StudentProfileDto,
         fallbackSessionId: String = "",
         fallbackRollNumber: String = "",
+        fallbackShift: Session = Session.MORNING,
     ): StudentProfile = StudentProfile(
         sessionId = dto.sessionId ?: fallbackSessionId,
         rollNumber = dto.rollNumber ?: fallbackRollNumber,
         name = dto.name ?: "",
+        shift = parseShift(dto.shift) ?: fallbackShift,
         universityRollNo = dto.universityRollNo,
         registrationNo = dto.registrationNo,
         fatherName = dto.fatherName,
@@ -51,6 +55,7 @@ object StudentProfileMapper {
         sessionId = domain.sessionId,
         rollNumber = domain.rollNumber,
         name = domain.name,
+        shift = domain.shift.name,
         universityRollNo = domain.universityRollNo,
         registrationNo = domain.registrationNo,
         fatherName = domain.fatherName,
@@ -84,6 +89,7 @@ object StudentProfileMapper {
         sessionId = dto.sessionId,
         rollNumber = dto.rollNumber,
         name = dto.name,
+        shift = dto.shift,
         linkedEmail = dto.linkedEmail,
         gpa = dto.gpa,
         cgpa = dto.cgpa,

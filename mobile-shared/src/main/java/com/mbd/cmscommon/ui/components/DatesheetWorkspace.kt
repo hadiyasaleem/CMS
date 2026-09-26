@@ -352,7 +352,7 @@ private fun FilteredDatesheetView(
             }
             else -> {
                 val semester = resolvedSession.currentSemester
-                val existing = datesheets.firstOrNull { it.sessionId == resolvedSession.sessionId && it.semester == semester }
+                val existing = datesheets.firstOrNull { it.sessionId == resolvedSession.sessionId && it.semester == semester && (selectedShift == null || it.shift == selectedShift) }
                 if (existing != null) {
                     DatesheetSummaryTile(existing, resolvedSession, onClick = { onOpenDatesheet(existing.id) })
                 } else if (!resolvedSession.isActive) {
@@ -402,7 +402,7 @@ private fun DatesheetSummaryTile(sheet: Datesheet, session: AcademicSession, onC
         Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("Semester ${sheet.semester}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
-                Text("${session.label} · ${session.shift.name}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                Text("${session.label} · ${sheet.shift.label}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             }
             StatusBadge(if (sheet.published) "PUBLISHED" else "DRAFT", if (sheet.published) BadgeTone.Success else BadgeTone.Neutral)
         }
@@ -447,7 +447,7 @@ private fun GroupedDatesheetView(
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     Text(
-                                        listOfNotNull(dept.code, "Semester ${session.currentSemester}", session.shift.name).joinToString(" · "),
+                                        listOfNotNull(dept.code, "Semester ${session.currentSemester}", session.shiftMode.label).joinToString(" · "),
                                         modifier = Modifier.weight(1f),
                                         style = MaterialTheme.typography.bodyMedium,
                                     )
@@ -485,7 +485,7 @@ private fun CalendarDatesheetView(
     val entries = datesheets.flatMap { sheet ->
         val session = sessionsById[sheet.sessionId]
         val deptCode = session?.let { departmentsById[it.deptId]?.code }
-        val column = listOfNotNull(deptCode, "Semester ${sheet.semester}", session?.shift?.name).joinToString(" · ")
+        val column = listOfNotNull(deptCode, "Semester ${sheet.semester}", sheet.shift.label).joinToString(" · ")
             .ifBlank { sheet.sessionId }
         slotsByDatesheet[sheet.id].orEmpty().mapNotNull { slot ->
             val date = slot.examDate ?: return@mapNotNull null
@@ -547,8 +547,8 @@ private fun SemesterDatesheetView(
             // current-semester schedule as its own titled section instead of demanding a single pick.
             val candidateSessions = sessionsInDepartment
                 .filter { selectedStartYear == null || it.startYear == selectedStartYear }
-                .filter { selectedShift == null || it.shift == selectedShift }
-                .sortedWith(compareByDescending<AcademicSession> { it.startYear }.thenBy { it.shift.name })
+                .filter { selectedShift == null || it.runs(selectedShift) }
+                .sortedWith(compareByDescending<AcademicSession> { it.startYear }.thenBy { it.shiftMode.ordinal })
             if (candidateSessions.isEmpty()) {
                 Text("This department has no sessions yet.", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
                 return@Column
@@ -615,7 +615,7 @@ private fun SessionCurrentSemesterSection(
     Column {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                listOfNotNull(deptCode, "Semester $semester", session.shift.name).joinToString(" · "),
+                listOfNotNull(deptCode, "Semester $semester", session.shiftMode.label).joinToString(" · "), // TODO(Task 7): per-shift datesheets
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleSmall,
                 modifier = Modifier.weight(1f),
@@ -839,7 +839,7 @@ private fun CreateDatesheetDialog(
         title = { Text("New Mid Term datesheet") },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
-                Text("${session.label} · ${session.shift.name} · Semester $semester", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                Text("${session.label} · ${session.shiftMode.label} · Semester $semester", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.height(10.dp))
                 Text("Papers will be prefilled for every subject in this semester's curriculum.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.height(10.dp))

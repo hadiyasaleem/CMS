@@ -162,7 +162,7 @@ class AttendanceRecordsViewModel @Inject constructor(
         _fullLoading.value = false
     }
 
-    fun load(sessionId: String, semester: Int) {
+    fun load(sessionId: String, semester: Int, shift: Session) {
         val version = ++reportLoadVersion
         viewModelScope.launch {
             _loading.value = true
@@ -175,8 +175,10 @@ class AttendanceRecordsViewModel @Inject constructor(
                 val term = curriculumRepository.getSemesterTerm(sessionId, semester)
                 val subjects = curriculumRepository.observeSemesterSubjects(sessionId, semester).first()
                 if (version == reportLoadVersion) {
-                    _roster.value = roster
-                    _raw.value = raw
+                    val shiftRoster = roster.filter { it.shift == shift }
+                    val shiftRolls = shiftRoster.map { it.rollNumber }.toSet()
+                    _roster.value = shiftRoster
+                    _raw.value = raw.filter { it.rollNumber in shiftRolls }
                     _term.value = term
                     _subjects.value = subjects
                 }
@@ -238,12 +240,13 @@ fun AttendanceRecordsScreen(viewModel: AttendanceRecordsViewModel = hiltViewMode
     val context = LocalContext.current
 
     val years = sessions.filter { it.deptId == deptId }.map { it.startYear }.distinct().sortedDescending()
-    val shifts = sessions.filter { it.deptId == deptId && it.startYear == year }.map { it.shift }.distinct()
-    val sessionId = if (deptId != null && year != null && shift != null) "${deptId}_${year}_${shift!!.name}" else null
+    val shifts = sessions.filter { it.deptId == deptId && it.startYear == year }.flatMap { it.shifts }.distinct().sorted()
+    // One session serves both shifts; the chosen shift narrows its roster (TODO(Task 8): shared scope filter).
+    val sessionId = if (deptId != null && year != null && shift != null) AcademicSession.buildId(deptId!!, year!!) else null
 
-    LaunchedEffect(sessionId, semester) {
-        val sid = sessionId; val sem = semester
-        if (sid != null && sem != null) viewModel.load(sid, sem) else viewModel.clear()
+    LaunchedEffect(sessionId, semester, shift) {
+        val sid = sessionId; val sem = semester; val sh = shift
+        if (sid != null && sem != null && sh != null) viewModel.load(sid, sem, sh) else viewModel.clear()
     }
 
     // Months allowed: bounded by the semester's class dates when set, else derived from the data.
@@ -344,7 +347,7 @@ fun AttendanceRecordsScreen(viewModel: AttendanceRecordsViewModel = hiltViewMode
             sessionId == null || semester == null -> EmptyState("Pick a department, session, semester and shift.")
             reportLoading -> EmptyState("Loading attendance report…")
             error != null -> ErrorBanner(error!!, onRetry = {
-                viewModel.load(sessionId, semester!!)
+                viewModel.load(sessionId, semester!!, shift!!)
                 if (mode == ReportMode.FULL && course != null && month != null) viewModel.loadFull(sessionId, course!!, month!!)
             })
             mode == ReportMode.SEMESTER -> {

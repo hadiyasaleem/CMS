@@ -103,7 +103,7 @@ private fun RecordHero(record: StudentRecord?, rollNumber: String, onBack: () ->
                 val subtitle = listOfNotNull(
                     p?.rollNumber ?: rollNumber,
                     record?.department?.name,
-                    record?.session?.let { "${it.label} · ${recordPretty(it.shift.name)} · Semester ${it.currentSemester}" },
+                    record?.session?.let { "${it.label} · ${p?.shift?.label ?: it.shiftMode.label} · Semester ${it.currentSemester}" },
                 ).joinToString(" · ")
                 Text(subtitle, color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
                 if (p != null) {

@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.CalendarViewerContext
 import com.mbd.cmscommon.domain.model.CalendarViewerRole
 import com.mbd.cmscommon.domain.model.NotificationTargetRole
@@ -61,7 +62,8 @@ class StudentMoreController(
                 val fee = async {
                     runCatching {
                         if (fetchRemote) feeRepository.syncSession(sessionId)
-                        feeRepository.getSessionFee(sessionId)
+                        val shift = sessionRepository.getStudentProfile(sessionId, rollNumber)?.shift ?: Session.MORNING
+                        feeRepository.getSessionFee(sessionId, shift)
                     }
                 }
                 val profile = async { runCatching { sessionRepository.getStudentProfile(sessionId, rollNumber) } }

@@ -38,7 +38,9 @@ class TeacherAssignmentsProvider @Inject constructor(
                     val session = sessions.firstOrNull { it.sessionId == sessionId }
                     val department = departments.firstOrNull { it.deptId == session?.deptId }
                     val deptName = department?.code ?: session?.deptId?.uppercase(Locale.ROOT) ?: sessionId
-                    val shiftShort = if (session?.shift == Session.EVENING) "E" else "M"
+                    // TODO(Task 7): group by (session, course, shift) so each shift is its own class.
+                    val groupShift = group.map { it.shift }.distinct().singleOrNull()
+                    val shiftShort = groupShift?.shortLabel ?: session?.shifts?.joinToString("/") { it.shortLabel } ?: ""
                     val sessionLabel = if (session != null) "$deptName · ${session.label} ($shiftShort)" else sessionId
                     ResolvedAssignment(
                         sessionId = sessionId,
@@ -47,7 +49,7 @@ class TeacherAssignmentsProvider @Inject constructor(
                         subjectLabel = "$courseCode — ${group.first().subjectName}",
                         deptName = department?.code ?: session?.deptId?.uppercase(Locale.ROOT) ?: "",
                         sessionName = session?.label ?: "",
-                        shift = if (session == null) "" else if (session.shift == Session.EVENING) "Evening" else "Morning",
+                        shift = groupShift?.label ?: "",
                     )
                 }
                 .sortedWith(compareBy({ it.sessionLabel }, { it.courseCode }))

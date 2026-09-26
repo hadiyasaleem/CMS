@@ -1,5 +1,6 @@
 package com.mbd.cmsstudent.feature.hub
 
+import com.mbd.cmscommon.domain.model.Session
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -60,10 +61,11 @@ class MoreHubViewModel @Inject constructor(
                 _refreshTrigger.map {
                     val eventsResult = runCatching { calendarRepository.getEvents() }
                     val events = eventsResult.orLogCritical("MoreHubViewModel.getEvents", emptyList())
-                    val feeResult = runCatching { feeRepository.getSessionFee(context.sessionId) }
-                    val fee = feeResult.orLogCritical("MoreHubViewModel.getSessionFee")
                     val profileResult = runCatching { sessionRepository.getStudentProfile(context.sessionId, context.rollNumber) }
                     val profile = profileResult.orLogCritical("MoreHubViewModel.getStudentProfile")
+                    // Fees are per shift: use the structure of the student's own shift.
+                    val feeResult = runCatching { feeRepository.getSessionFee(context.sessionId, profile?.shift ?: Session.MORNING) }
+                    val fee = feeResult.orLogCritical("MoreHubViewModel.getSessionFee")
                     val unreadResult = runCatching {
                         notificationRepository.observeUnreadCount(
                             NotificationTargetRole.STUDENT,

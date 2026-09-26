@@ -89,7 +89,7 @@ fun StudentDirectoryWorkspace(
     val deptNames = departments.associate { it.deptId to it.name }
     val sessionOptions = sessions
         .filter { query.deptId == null || it.deptId == query.deptId }
-        .sortedWith(compareBy({ it.deptId }, { -it.startYear }, { it.shift }))
+        .sortedWith(compareBy({ it.deptId }, { -it.startYear }))
 
     val listState = rememberLazyListState()
     WithVerticalScrollbar(listState) {
@@ -121,7 +121,7 @@ fun StudentDirectoryWorkspace(
                     FilterDropdown(
                         "Session",
                         query.sessionId,
-                        listOf(null to "All sessions") + sessionOptions.map { s -> s.sessionId to "${deptNames[s.deptId] ?: s.deptId.uppercase(Locale.ROOT)} ${s.label} ${pretty(s.shift.name)}" },
+                        listOf(null to "All sessions") + sessionOptions.map { s -> s.sessionId to "${deptNames[s.deptId] ?: s.deptId.uppercase(Locale.ROOT)} ${s.label} ${s.shiftMode.label}" },
                         onSession,
                     )
                     FilterDropdown("Shift", query.shift, listOf(null to "Both shifts") + Session.entries.map { it to pretty(it.name) }, onShift)
@@ -196,7 +196,7 @@ private fun DirectoryCard(row: StudentDirectoryRow, onClick: () -> Unit) {
     val sessionText = listOfNotNull(
         row.departmentName ?: row.session?.deptId?.uppercase(Locale.ROOT),
         row.session?.label,
-        row.session?.shift?.name?.let(::pretty),
+        p.shift.label,
         row.session?.currentSemester?.let { "Sem $it" },
     ).joinToString(" · ")
     Surface(

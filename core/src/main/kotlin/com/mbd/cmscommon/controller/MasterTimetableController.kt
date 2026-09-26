@@ -53,7 +53,7 @@ class MasterTimetableController(
 
     /** Shifts available for the selected department + intake year, offered as choices for the "Shift" dropdown. */
     val shiftsForSelection: StateFlow<List<Session>> = combine(sessionsInDepartment, _selectedStartYear) { inDept, year ->
-        if (year == null) emptyList() else inDept.filter { it.startYear == year }.map { it.shift }.distinct()
+        if (year == null) emptyList() else inDept.filter { it.startYear == year }.flatMap { it.shifts }.distinct()
     }.stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     /** The single session identified once department + intake year + shift are all chosen. */
@@ -61,7 +61,7 @@ class MasterTimetableController(
         if (deptId == null || year == null || shift == null) {
             null
         } else {
-            all.firstOrNull { it.deptId == deptId && it.startYear == year && it.shift == shift }
+            all.firstOrNull { it.deptId == deptId && it.startYear == year && it.runs(shift) }
         }
     }.stateIn(scope, SharingStarted.WhileSubscribed(5000), null)
 

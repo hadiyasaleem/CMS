@@ -5,6 +5,6 @@ object StudentIdCodec {
 
     fun rollOf(studentId: String): String = studentId.substringAfterLast('_')
 
-    fun deptIdOf(sessionId: String): String =
-        sessionId.substringBeforeLast('_').substringBeforeLast('_')
+    /** Session ids are "{deptId}_{startYear}" (one session per intake, both shifts). */
+    fun deptIdOf(sessionId: String): String = sessionId.substringBeforeLast('_')
 }

@@ -23,14 +23,18 @@ fun feeChallanNumber(sessionId: String, rollNumber: String, cadenceLabel: String
 
 /** Admin's placeholder header for previewing the fee structure they're editing, before any real
  * student exists to generate one from -- unmistakably not a real document (prefixed "SAMPLE"). */
-fun sampleFeeChallanHeader(session: AcademicSession?, department: Department?): FeeChallanHeader {
+fun sampleFeeChallanHeader(
+    session: AcademicSession?,
+    department: Department?,
+    shift: Session = session?.shifts?.firstOrNull() ?: Session.MORNING,
+): FeeChallanHeader {
     val sessionId = session?.sessionId ?: "sample-session"
     return FeeChallanHeader(
         studentName = "Sample Student",
         rollNumber = "${department?.code ?: "XX"}-00-00",
         fatherName = "Sample Father Name",
         sessionLabel = session?.label ?: "----–----",
-        shift = session?.shift?.name ?: "MORNING",
+        shift = shift.name,
         deptCode = department?.code,
         challanNumber = "SAMPLE-" + feeChallanNumber(sessionId, "00-00", session?.currentSemester?.toString() ?: "1"),
         issueDate = LocalDate.now().toString(),

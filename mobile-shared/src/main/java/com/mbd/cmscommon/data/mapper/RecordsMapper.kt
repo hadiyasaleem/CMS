@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.mapper
 
+import com.mbd.cmscommon.domain.model.parseShift
 import com.mbd.cmscommon.data.local.entity.CalendarEventEntity
 import com.mbd.cmscommon.data.local.entity.FineEntity
 import com.mbd.cmscommon.data.remote.PgTime
@@ -23,6 +24,7 @@ object CalendarEventMapper {
         audience = dto.audience ?: "ALL",
         deptId = dto.deptId,
         sessionId = dto.sessionId,
+        shift = dto.shift,
         createdAt = PgTime.parseOrEpoch(dto.createdAt).toEpochMilli(),
         createdBy = dto.createdBy,
         updatedAt = PgTime.parseOrEpoch(dto.updatedAt).toEpochMilli(),
@@ -45,6 +47,7 @@ object CalendarEventMapper {
         audience = entity.audience,
         deptId = entity.deptId,
         sessionId = entity.sessionId,
+        shift = parseShift(entity.shift),
         createdAt = Instant.ofEpochMilli(entity.createdAt),
         createdBy = entity.createdBy,
         updatedAt = Instant.ofEpochMilli(entity.updatedAt),

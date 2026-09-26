@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.FeeChallanHeader
 import com.mbd.cmscommon.domain.model.SessionFeeStructure
 import com.mbd.cmscommon.domain.model.feeChallanNumber
@@ -41,10 +42,10 @@ class StudentFeeChallanController(
             _loading.value = true
             try {
                 if (fetchRemote) feeRepository.syncSession(sessionId)
-                _fee.value = feeRepository.getSessionFee(sessionId)
-
                 val resolvedSession = sessionRepository.observeSession(sessionId).first()
                 val profile = sessionRepository.getStudentProfile(sessionId, rollNumber)
+                val shift = profile?.shift ?: resolvedSession?.shifts?.firstOrNull() ?: Session.MORNING
+                _fee.value = feeRepository.getSessionFee(sessionId, shift)
                 val department = resolvedSession?.deptId?.let { departmentRepository.getDepartment(it) }
 
                 _header.value = FeeChallanHeader(
@@ -52,7 +53,7 @@ class StudentFeeChallanController(
                     rollNumber = rollNumber,
                     fatherName = profile?.fatherName?.takeIf { it.isNotBlank() } ?: profile?.guardianName,
                     sessionLabel = resolvedSession?.label ?: sessionId,
-                    shift = resolvedSession?.shift?.name ?: "",
+                    shift = shift.name,
                     deptCode = department?.code,
                     challanNumber = feeChallanNumber(sessionId, rollNumber, _fee.value?.cadence?.name ?: "FEE"),
                     issueDate = LocalDate.now().toString(),

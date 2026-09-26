@@ -21,7 +21,12 @@ import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.SessionPromotionResult
 import com.mbd.cmscommon.domain.model.SessionStudent
+import com.mbd.cmscommon.domain.model.ShiftMode
 import com.mbd.cmscommon.domain.model.StudentProfile
+import com.mbd.cmscommon.domain.model.parseShift
+import com.mbd.cmscommon.domain.model.parseShiftMode
+import com.mbd.cmscommon.domain.model.rollBlockError
+import com.mbd.cmscommon.domain.repository.AvailableRollNumber
 import com.mbd.cmscommon.domain.model.profilePhotoExtension
 import com.mbd.cmscommon.domain.model.profilePhotoUploadError
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
@@ -70,14 +75,13 @@ class AcademicSessionRepositoryImpl @Inject constructor(
     private suspend fun deptOf(sessionId: String): String = sessionDao.getById(sessionId)?.deptId ?: ""
 
     private fun AcademicSessionDto.toEntity(fallbackDeptId: String): AcademicSessionEntity {
-        val shift = runCatching { Session.valueOf(this.shift ?: "") }.getOrDefault(Session.MORNING)
         return AcademicStructureMapper.sessionDomainToEntity(
             AcademicSession(
                 sessionId = sessionId ?: "",
                 deptId = deptId ?: fallbackDeptId,
                 startYear = startYear,
                 endYear = endYear,
-                shift = shift,
+                shiftMode = parseShiftMode(shiftMode) ?: ShiftMode.MORNING,
                 currentSemester = currentSemester.coerceIn(1, 8),
                 isActive = isActive,
                 programName = programName,
@@ -106,6 +110,7 @@ class AcademicSessionRepositoryImpl @Inject constructor(
         deptId = deptId,
         rollNumber = rollNumber ?: "",
         name = name ?: "",
+        shift = shift ?: Session.MORNING.name,
         linkedEmail = linkedEmail,
         gpa = gpa,
         cgpa = cgpa,
@@ -137,22 +142,24 @@ class AcademicSessionRepositoryImpl @Inject constructor(
 
     override fun observeActiveSessionStudentCount(): Flow<Int> = studentDao.observeActiveSessionStudentCount()
 
-    override suspend fun createSession(deptId: String, startYear: Int, shift: Session): AcademicSession {
+    override suspend fun createSession(deptId: String, startYear: Int, shiftMode: ShiftMode, maxStudents: Int): AcademicSession {
+        require(maxStudents in 1..AcademicSession.MAX_CAPACITY) { "Student capacity must be between 1 and ${AcademicSession.MAX_CAPACITY}." }
         val session = AcademicSession(
-            sessionId = AcademicSession.buildId(deptId, startYear, shift),
+            sessionId = AcademicSession.buildId(deptId, startYear),
             deptId = deptId,
             startYear = startYear,
             endYear = startYear + 4,
-            shift = shift,
+            shiftMode = shiftMode,
             currentSemester = 1,
-            maxStudents = 0,
+            maxStudents = maxStudents,
         )
         val dto = AcademicSessionDto(
             sessionId = session.sessionId,
             deptId = deptId,
             startYear = startYear,
             endYear = session.endYear,
-            shift = shift.name,
+            shiftMode = shiftMode.name,
+            maxStudents = maxStudents,
             currentSemester = 1,
             isActive = true,
         )
@@ -162,6 +169,21 @@ class AcademicSessionRepositoryImpl @Inject constructor(
         }
         sessionDao.upsert(AcademicStructureMapper.sessionDomainToEntity(session))
         return session
+    }
+
+    override suspend fun updateShiftMode(sessionId: String, shiftMode: ShiftMode, maxStudents: Int) {
+        require(maxStudents in 1..AcademicSession.MAX_CAPACITY) { "Student capacity must be between 1 and ${AcademicSession.MAX_CAPACITY}." }
+        // The database (trg_session_shift_change) is the authority: it rejects dropping a shift that still
+        // has data, or a capacity that would push an existing roll number out of its shift's block.
+        postgrest.from(SupabaseTables.ACADEMIC_SESSIONS).update({
+            set("shift_mode", shiftMode.name)
+            set("max_students", maxStudents)
+        }) {
+            filter { eq("session_id", sessionId) }
+        }
+        sessionDao.getById(sessionId)?.let { cached ->
+            sessionDao.upsert(cached.copy(shiftMode = shiftMode.name, maxStudents = maxStudents, updatedAt = System.currentTimeMillis()))
+        }
     }
 
     override suspend fun promoteSession(sessionId: String): SessionPromotionResult {
@@ -206,18 +228,22 @@ class AcademicSessionRepositoryImpl @Inject constructor(
         sessionDao.deleteById(sessionId)
     }
 
-    override suspend fun addStudent(sessionId: String, rollNumber: String, name: String, gpa: Double?, cgpa: Double?) {
-        val deptId = deptOf(sessionId)
-        // A freshly created session stores maxStudents = 0 (cap not set yet). Treat a non-positive
-        // cap as "unset" and fall back to the default so students can be added before the admin
-        // configures a real capacity (otherwise count >= 0 always rejects with "Session is full").
-        val maxStudents = sessionDao.getById(sessionId)?.maxStudents?.takeIf { it > 0 } ?: 50
+    override suspend fun addStudent(sessionId: String, rollNumber: String, name: String, shift: Session, gpa: Double?, cgpa: Double?) {
+        val cachedSession = sessionDao.getById(sessionId)
+        val deptId = cachedSession?.deptId ?: ""
+        // Older caches may hold maxStudents = 0 (cap not set yet); treat a non-positive cap as the default.
+        val maxStudents = cachedSession?.maxStudents?.takeIf { it > 0 } ?: AcademicSession.MAX_STUDENTS
         val count = studentDao.countForSession(sessionId)
         if (count >= maxStudents) {
             error("Session is full ($maxStudents students max).")
         }
         val roll = FieldValidators.normalizeRollNumber(rollNumber)
-        val dto = SessionStudentDto(sessionId = sessionId, rollNumber = roll, name = name.trim(), gpa = gpa, cgpa = cgpa)
+        // Friendly pre-check of the roll-number block; the database enforces the same rule.
+        val mode = parseShiftMode(cachedSession?.shiftMode)
+        if (mode != null) {
+            rollBlockError(mode, maxStudents, shift, roll)?.let { throw IllegalArgumentException(it) }
+        }
+        val dto = SessionStudentDto(sessionId = sessionId, rollNumber = roll, name = name.trim(), shift = shift.name, gpa = gpa, cgpa = cgpa)
         postgrest.from(SupabaseTables.SESSION_STUDENTS).upsert(dto) { onConflict = "session_id,roll_number" }
         studentDao.upsert(
             SessionStudentEntity(
@@ -226,6 +252,7 @@ class AcademicSessionRepositoryImpl @Inject constructor(
                 deptId = deptId,
                 rollNumber = roll,
                 name = name.trim(),
+                shift = shift.name,
                 linkedEmail = null,
                 gpa = gpa,
                 cgpa = cgpa,
@@ -246,11 +273,15 @@ class AcademicSessionRepositoryImpl @Inject constructor(
     }
 
     @Serializable
-    private data class RollNumberRow(@SerialName("roll_number") val rollNumber: String)
+    private data class RollNumberRow(
+        @SerialName("roll_number") val rollNumber: String,
+        @SerialName("shift") val shift: String? = null,
+    )
 
-    override suspend fun getAvailableRollNumbers(sessionId: String): List<String> {
+    override suspend fun getAvailableRollNumbers(sessionId: String): List<AvailableRollNumber> {
         val params = buildJsonObject { put("p_session", sessionId) }
-        return postgrest.rpc(SupabaseTables.RPC_AVAILABLE_ROLL_NUMBERS, params).decodeList<RollNumberRow>().map { it.rollNumber }
+        return postgrest.rpc(SupabaseTables.RPC_AVAILABLE_ROLL_NUMBERS, params).decodeList<RollNumberRow>()
+            .map { AvailableRollNumber(it.rollNumber, parseShift(it.shift) ?: Session.MORNING) }
     }
 
     override suspend fun delinkStudent(sessionId: String, rollNumber: String, reviewedBy: String?) {
@@ -302,17 +333,19 @@ class AcademicSessionRepositoryImpl @Inject constructor(
             sessionId = cached.sessionId,
             rollNumber = cached.rollNumber,
             name = cached.name,
+            shift = cached.shift,
             linkedEmail = cached.linkedEmail,
             gpa = cached.gpa,
             cgpa = cached.cgpa,
         )
-        return StudentProfileMapper.dtoToDomain(dto, cached.sessionId, cached.rollNumber)
+        return StudentProfileMapper.dtoToDomain(dto, cached.sessionId, cached.rollNumber, parseShift(cached.shift) ?: Session.MORNING)
     }
     override suspend fun saveStudentProfile(profile: StudentProfile) {
         val dto = StudentProfileDto(
             sessionId = profile.sessionId,
             rollNumber = profile.rollNumber,
             name = profile.name,
+            shift = profile.shift.name,
             universityRollNo = profile.universityRollNo,
             registrationNo = profile.registrationNo,
             fatherName = profile.fatherName,
@@ -352,6 +385,7 @@ class AcademicSessionRepositoryImpl @Inject constructor(
             studentDao.upsert(
                 cached.copy(
                     name = profile.name,
+                    shift = profile.shift.name,
                     linkedEmail = profile.linkedEmail,
                     gpa = profile.gpa,
                     cgpa = profile.cgpa,
@@ -501,6 +535,7 @@ class AcademicSessionRepositoryImpl @Inject constructor(
                 sessionId = cached.sessionId,
                 rollNumber = cached.rollNumber,
                 name = cached.name,
+                shift = cached.shift,
                 linkedEmail = cached.linkedEmail,
                 gpa = cached.gpa,
                 cgpa = cached.cgpa,

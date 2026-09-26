@@ -73,7 +73,7 @@ fun studentDirectoryPage(all: List<StudentDirectoryRow>, query: StudentDirectory
             .any { it.contains(search, ignoreCase = true) }) &&
             (query.deptId == null || row.session?.deptId == query.deptId) &&
             (query.sessionId == null || p.sessionId == query.sessionId) &&
-            (query.shift == null || row.session?.shift == query.shift) &&
+            (query.shift == null || p.shift == query.shift) &&
             (query.enrollmentStatus == null || p.enrollmentStatus.equals(query.enrollmentStatus, ignoreCase = true)) &&
             when (query.account) {
                 StudentAccountFilter.ALL -> true

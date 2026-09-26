@@ -1697,6 +1697,57 @@ val MIGRATION_44_45: Migration = object : Migration(44, 45) {
     }
 }
 
+/**
+ * Session & shift consolidation: one academic session per intake now serves Morning, Evening or both.
+ * Sessions carry shiftMode instead of shift and are keyed "{deptId}_{startYear}"; students, periods, fee
+ * structures and datesheets gained a shift; events/notifications gained optional shift targeting; the
+ * insights overview is per session and shift.
+ *
+ * Every session id changed format, so the cached session-scoped data can't be carried over: the changed
+ * tables are recreated empty, the other session-scoped caches are emptied, and every sync checkpoint is
+ * reset so the next sync repopulates everything from the server.
+ */
+val MIGRATION_45_46: Migration = object : Migration(45, 46) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("DROP TABLE IF EXISTS `academic_sessions`")
+        db.execSQL("CREATE TABLE IF NOT EXISTS `academic_sessions` (`sessionId` TEXT NOT NULL, `deptId` TEXT NOT NULL, `startYear` INTEGER NOT NULL, `endYear` INTEGER NOT NULL, `shiftMode` TEXT NOT NULL, `currentSemester` INTEGER NOT NULL, `isActive` INTEGER NOT NULL, `programName` TEXT, `inchargeEmail` TEXT, `maxStudents` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `createdBy` TEXT, `updatedAt` INTEGER NOT NULL, `updatedBy` TEXT, `isDeleted` INTEGER NOT NULL, `deletedAt` INTEGER, `deletedBy` TEXT, PRIMARY KEY(`sessionId`))")
+        db.execSQL("DROP TABLE IF EXISTS `session_students`")
+        db.execSQL("CREATE TABLE IF NOT EXISTS `session_students` (`id` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `deptId` TEXT NOT NULL, `rollNumber` TEXT NOT NULL, `name` TEXT NOT NULL, `shift` TEXT NOT NULL, `linkedEmail` TEXT, `gpa` REAL, `cgpa` REAL, `profileJson` TEXT, `createdAt` INTEGER NOT NULL, `createdBy` TEXT, `updatedAt` INTEGER NOT NULL, `updatedBy` TEXT, `isDeleted` INTEGER NOT NULL, `deletedAt` INTEGER, `deletedBy` TEXT, PRIMARY KEY(`id`))")
+        db.execSQL("DROP TABLE IF EXISTS `session_periods`")
+        db.execSQL("CREATE TABLE IF NOT EXISTS `session_periods` (`id` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `shift` TEXT NOT NULL, `deptId` TEXT NOT NULL, `day` TEXT NOT NULL, `startTime` TEXT, `endTime` TEXT, `courseCode` TEXT, `subjectName` TEXT, `teacherId` TEXT, `teacherName` TEXT, `periodType` TEXT NOT NULL, `creditHours` INTEGER, `roomNo` TEXT, `building` TEXT, `notes` TEXT, `effectiveFrom` TEXT, `effectiveTo` TEXT, `createdAt` INTEGER NOT NULL, `createdBy` TEXT, `updatedAt` INTEGER NOT NULL, `updatedBy` TEXT, `isDeleted` INTEGER NOT NULL, `deletedAt` INTEGER, `deletedBy` TEXT, PRIMARY KEY(`id`))")
+        db.execSQL("DROP TABLE IF EXISTS `session_fees`")
+        db.execSQL("CREATE TABLE IF NOT EXISTS `session_fees` (`sessionId` TEXT NOT NULL, `shift` TEXT NOT NULL, `cadence` TEXT NOT NULL, `academicYear` TEXT, `dueDate` TEXT, `lateFineNote` TEXT, `paymentNote` TEXT, `createdAt` INTEGER NOT NULL, `createdBy` TEXT, `updatedAt` INTEGER NOT NULL, `updatedBy` TEXT, `isDeleted` INTEGER NOT NULL, `deletedAt` INTEGER, `deletedBy` TEXT, PRIMARY KEY(`sessionId`, `shift`))")
+        db.execSQL("DROP TABLE IF EXISTS `session_fee_heads`")
+        db.execSQL("CREATE TABLE IF NOT EXISTS `session_fee_heads` (`id` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `shift` TEXT NOT NULL, `label` TEXT NOT NULL, `amount` REAL NOT NULL, `position` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `createdBy` TEXT, `updatedAt` INTEGER NOT NULL, `updatedBy` TEXT, `isDeleted` INTEGER NOT NULL, `deletedAt` INTEGER, `deletedBy` TEXT, PRIMARY KEY(`id`))")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_session_fee_heads_sessionId_shift_position` ON `session_fee_heads` (`sessionId`, `shift`, `position`)")
+        db.execSQL("DROP TABLE IF EXISTS `datesheets`")
+        db.execSQL("CREATE TABLE IF NOT EXISTS `datesheets` (`datesheetId` TEXT NOT NULL, `sessionId` TEXT NOT NULL, `shift` TEXT NOT NULL, `semester` INTEGER NOT NULL, `defaultStartTime` TEXT, `defaultEndTime` TEXT, `defaultBuildingId` TEXT, `published` INTEGER NOT NULL, `instructions` TEXT, `createdAt` INTEGER NOT NULL, `createdBy` TEXT, `updatedAt` INTEGER NOT NULL, `updatedBy` TEXT, `isDeleted` INTEGER NOT NULL, `deletedAt` INTEGER, `deletedBy` TEXT, PRIMARY KEY(`datesheetId`))")
+        db.execSQL("DROP TABLE IF EXISTS `calendar_events`")
+        db.execSQL("CREATE TABLE IF NOT EXISTS `calendar_events` (`eventId` TEXT NOT NULL, `title` TEXT NOT NULL, `eventType` TEXT NOT NULL, `startDate` TEXT NOT NULL, `endDate` TEXT, `startTime` TEXT, `endTime` TEXT, `description` TEXT, `venue` TEXT, `audience` TEXT NOT NULL, `deptId` TEXT, `sessionId` TEXT, `shift` TEXT, `createdAt` INTEGER NOT NULL, `createdBy` TEXT, `updatedAt` INTEGER NOT NULL, `updatedBy` TEXT, `isDeleted` INTEGER NOT NULL, `deletedAt` INTEGER, `deletedBy` TEXT, PRIMARY KEY(`eventId`))")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_calendar_events_startDate` ON `calendar_events` (`startDate`)")
+        db.execSQL("DROP TABLE IF EXISTS `notifications`")
+        db.execSQL("CREATE TABLE IF NOT EXISTS `notifications` (`notificationId` TEXT NOT NULL, `title` TEXT NOT NULL, `body` TEXT, `targetRole` TEXT NOT NULL, `targetOfferingId` TEXT, `createdByUid` TEXT, `priority` TEXT NOT NULL, `targetDeptId` TEXT, `targetShift` TEXT, `attachmentPath` TEXT, `expiresAt` INTEGER, `createdAt` INTEGER NOT NULL, `createdBy` TEXT, `updatedAt` INTEGER NOT NULL, `updatedBy` TEXT, `isDeleted` INTEGER NOT NULL, `deletedAt` INTEGER, `deletedBy` TEXT, PRIMARY KEY(`notificationId`))")
+        db.execSQL("DROP TABLE IF EXISTS `insight_session_overviews`")
+        db.execSQL("CREATE TABLE IF NOT EXISTS `insight_session_overviews` (`sessionId` TEXT NOT NULL, `deptId` TEXT NOT NULL, `shift` TEXT NOT NULL, `currentSemester` INTEGER NOT NULL, `students` INTEGER NOT NULL, `avgCgpa` REAL, `avgAttendance` REAL, `cachedAt` INTEGER NOT NULL, PRIMARY KEY(`sessionId`, `shift`))")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_insight_session_overviews_deptId_sessionId` ON `insight_session_overviews` (`deptId`, `sessionId`)")
+        db.execSQL("DELETE FROM `semester_subjects`")
+        db.execSQL("DELETE FROM `semester_terms`")
+        db.execSQL("DELETE FROM `session_attendance_rows`")
+        db.execSQL("DELETE FROM `session_attendance_tally`")
+        db.execSQL("DELETE FROM `session_marks`")
+        db.execSQL("DELETE FROM `student_semester_gpa`")
+        db.execSQL("DELETE FROM `fines`")
+        db.execSQL("DELETE FROM `datesheet_slots`")
+        db.execSQL("DELETE FROM `mark_edit_requests`")
+        db.execSQL("DELETE FROM `exam_paper_submissions`")
+        db.execSQL("DELETE FROM `student_link_requests`")
+        db.execSQL("DELETE FROM `insight_at_risk_students`")
+        db.execSQL("DELETE FROM `insight_exam_stats`")
+        db.execSQL("DELETE FROM `table_sync_state`")
+        db.execSQL("DELETE FROM `sync_state`")
+    }
+}
+
 val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_18_19,
     MIGRATION_19_20,
@@ -1725,4 +1776,5 @@ val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_42_43,
     MIGRATION_43_44,
     MIGRATION_44_45,
+    MIGRATION_45_46,
 )

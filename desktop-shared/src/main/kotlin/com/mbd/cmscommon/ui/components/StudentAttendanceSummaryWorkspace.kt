@@ -121,7 +121,7 @@ private fun StudentInfoCard(rollNumber: String, student: SessionStudent?, sessio
             Text("STUDENT", color = ModMuted, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
             InfoLine("Roll number", student?.rollNumber ?: rollNumber)
-            InfoLine("Session", session?.let { "${it.label} · ${it.shift.name.lowercase().replaceFirstChar { c -> c.uppercase() }}" } ?: "--")
+            InfoLine("Session", session?.let { "${it.label} · ${student?.shift?.label ?: it.shiftMode.label}" } ?: "--")
             InfoLine("Semester", session?.currentSemester?.toString() ?: "--")
             InfoLine(
                 "Term",

@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.repository
 
+import com.mbd.cmscommon.domain.model.parseShift
 import com.mbd.cmscommon.data.remote.PgTime
 import com.mbd.cmscommon.data.remote.SupabaseTables
 import com.mbd.cmscommon.data.remote.dto.CalendarEventDto
@@ -34,6 +35,7 @@ class CalendarRepositoryImpl @Inject constructor(
             audience = event.audience.ifBlank { "ALL" },
             deptId = event.deptId?.trim()?.takeIf { it.isNotBlank() },
             sessionId = event.sessionId?.trim()?.takeIf { it.isNotBlank() },
+            shift = event.shift?.name?.takeIf { !event.sessionId.isNullOrBlank() },
             createdBy = createdBy,
         )
         postgrest.from(SupabaseTables.CALENDAR_EVENTS).insert(dto)
@@ -58,6 +60,7 @@ class CalendarRepositoryImpl @Inject constructor(
         audience = audience ?: "ALL",
         deptId = deptId,
         sessionId = sessionId,
+        shift = parseShift(shift),
         createdAt = PgTime.parseOrEpoch(createdAt),
         createdBy = createdBy,
         updatedAt = PgTime.parseOrEpoch(updatedAt),

@@ -28,6 +28,7 @@ fun studentHomeSnapshot(
     lecturesToday: Int,
     nextClass: NextClass?,
     weakestSubject: WeakSubject?,
+    shift: Session? = null,
 ): StudentHomeSnapshot {
     val displayName = name.trim().ifBlank { "Student" }
 
@@ -37,8 +38,8 @@ fun studentHomeSnapshot(
         val program = session.programName?.takeIf { it.isNotBlank() }
         val semester = "Semester ${session.currentSemester}"
         val label = session.label
-        val shift = session.shift.name.lowercase(Locale.ROOT).replaceFirstChar { it.uppercase(Locale.ROOT) }
-        listOfNotNull(program, semester, label, shift).joinToString(" / ").ifBlank { "Academic dashboard" }
+        val shiftLabel = shift?.label ?: session.shiftMode.label
+        listOfNotNull(program, semester, label, shiftLabel).joinToString(" / ").ifBlank { "Academic dashboard" }
     }
 
     val semesterLabel = session?.let { "${it.currentSemester} of 8" } ?: "-"

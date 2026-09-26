@@ -142,15 +142,16 @@ fun AttendanceRecordsScreen(
     }
 
     val years = sessions.filter { it.deptId == deptId }.map { it.startYear }.distinct().sortedDescending()
-    val shifts = sessions.filter { it.deptId == deptId && it.startYear == year }.map { it.shift }.distinct()
+    val shifts = sessions.filter { it.deptId == deptId && it.startYear == year }.flatMap { it.shifts }.distinct().sorted()
+    // One session serves both shifts; the chosen shift narrows its roster (TODO(Task 8): shared scope filter).
     val sessionId = if (deptId != null && year != null && shift != null) {
-        AcademicSession.buildId(deptId!!, year!!, shift!!)
+        AcademicSession.buildId(deptId!!, year!!)
     } else {
         null
     }
 
     // Reads the cached roster, attendance, term, and curriculum whenever the selected scope changes.
-    LaunchedEffect(sessionId, semester, retryVersion) {
+    LaunchedEffect(sessionId, semester, shift, retryVersion) {
         val sid = sessionId
         val sem = semester
         if (sid == null || sem == null) {
@@ -170,8 +171,10 @@ fun AttendanceRecordsScreen(
             val loadedRaw = attendanceRepository.semesterMarks(sid, sem)
             val loadedTerm = curriculumRepository.getSemesterTerm(sid, sem)
             val loadedSubjects = curriculumRepository.observeSemesterSubjects(sid, sem).firstOrNull().orEmpty()
-            roster = loadedRoster
-            raw = loadedRaw
+            val shiftRoster = loadedRoster.filter { it.shift == shift }
+            val shiftRolls = shiftRoster.map { it.rollNumber }.toSet()
+            roster = shiftRoster
+            raw = loadedRaw.filter { it.rollNumber in shiftRolls }
             term = loadedTerm
             subjects = loadedSubjects
         } catch (t: Throwable) {

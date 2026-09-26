@@ -12,6 +12,7 @@ import com.mbd.cmscommon.data.sync.SyncCheckpoint
 import com.mbd.cmscommon.data.sync.SyncCheckpointDefaults
 import com.mbd.cmscommon.data.sync.SyncCheckpointStore
 import com.mbd.cmscommon.data.sync.maxRemoteUpdatedAt
+import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.SessionPeriod
 import com.mbd.cmscommon.domain.repository.SessionTimetableRepository
 import io.github.jan.supabase.postgrest.Postgrest
@@ -35,11 +36,12 @@ class SessionTimetableRepositoryImpl @Inject constructor(
     private suspend fun deptOf(sessionId: String): String = sessionDao.getById(sessionId)?.deptId ?: ""
 
     private fun periodLocalId(dto: TimetablePeriodDto, fallbackSessionId: String): String =
-        dto.id ?: "${dto.sessionId ?: fallbackSessionId}_${dto.day}_${dto.startTime}"
+        dto.id ?: "${dto.sessionId ?: fallbackSessionId}_${dto.shift}_${dto.day}_${dto.startTime}"
 
     private fun TimetablePeriodDto.toEntity(sessionId: String, deptId: String): SessionPeriodEntity = SessionPeriodEntity(
         id = periodLocalId(this, sessionId),
         sessionId = this.sessionId ?: sessionId,
+        shift = shift ?: Session.MORNING.name,
         deptId = deptId,
         day = day ?: DayOfWeek.MONDAY.name,
         startTime = startTime,
@@ -79,6 +81,7 @@ class SessionTimetableRepositoryImpl @Inject constructor(
     override suspend fun savePeriod(period: SessionPeriod) {
         val dto = TimetablePeriodDto(
             sessionId = period.sessionId,
+            shift = period.shift.name,
             day = period.day.name,
             startTime = period.startTime,
             endTime = period.endTime,
@@ -97,10 +100,10 @@ class SessionTimetableRepositoryImpl @Inject constructor(
             updatedBy = period.updatedBy,
         )
         val saved = postgrest.from(SupabaseTables.TIMETABLE_PERIODS).upsert(dto) {
-            onConflict = "primary_session_id,day,start_time"
+            onConflict = "primary_session_id,shift,day,start_time"
             select()
         }.decodeList<TimetablePeriodDto>().first()
-        periodDao.deleteForSlot(period.sessionId, period.day.name, period.startTime)
+        periodDao.deleteForSlot(period.sessionId, period.shift.name, period.day.name, period.startTime)
         periodDao.upsertAll(listOf(saved.toEntity(period.sessionId, deptOf(period.sessionId))))
     }
 
@@ -108,11 +111,12 @@ class SessionTimetableRepositoryImpl @Inject constructor(
         postgrest.from(SupabaseTables.TIMETABLE_PERIODS).update({ set("is_deleted", true) }) {
             filter {
                 eq("primary_session_id", period.sessionId)
+                eq("shift", period.shift.name)
                 eq("day", period.day.name)
                 eq("start_time", period.startTime)
             }
         }
-        periodDao.deleteForSlot(period.sessionId, period.day.name, period.startTime)
+        periodDao.deleteForSlot(period.sessionId, period.shift.name, period.day.name, period.startTime)
     }
 
     override suspend fun syncSession(sessionId: String) {

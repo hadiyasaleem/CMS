@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.mapper
 
+import com.mbd.cmscommon.domain.model.parseShift
 import com.mbd.cmscommon.data.local.entity.NotificationEntity
 import com.mbd.cmscommon.data.remote.PgTime
 import com.mbd.cmscommon.data.remote.dto.NotificationDto
@@ -24,6 +25,7 @@ object NotificationMapper {
         createdByUid = dto.createdByEmail ?: "",
         priority = parsePriority(dto.priority),
         targetDeptId = dto.targetDeptId,
+        targetShift = parseShift(dto.targetShift),
         attachmentPath = dto.attachmentPath,
         expiresAt = PgTime.parse(dto.expiresAt),
         createdAt = PgTime.parseOrEpoch(dto.createdAt),
@@ -38,6 +40,7 @@ object NotificationMapper {
         targetRole = domain.targetRole?.name,
         targetDeptId = domain.targetDeptId,
         targetSessionId = domain.targetOfferingId,
+        targetShift = domain.targetShift?.name,
         priority = domain.priority.name,
         attachmentPath = domain.attachmentPath,
         expiresAt = domain.expiresAt?.toString(),
@@ -55,6 +58,7 @@ object NotificationMapper {
         createdByUid = domain.createdByUid,
         priority = domain.priority.name,
         targetDeptId = domain.targetDeptId,
+        targetShift = domain.targetShift?.name,
         attachmentPath = domain.attachmentPath,
         expiresAt = domain.expiresAt?.toEpochMilli(),
         createdAt = domain.createdAt.toEpochMilli(),
@@ -72,6 +76,7 @@ object NotificationMapper {
         createdByUid = entity.createdByUid ?: "",
         priority = parsePriority(entity.priority),
         targetDeptId = entity.targetDeptId,
+        targetShift = parseShift(entity.targetShift),
         attachmentPath = entity.attachmentPath,
         expiresAt = entity.expiresAt?.let { Instant.ofEpochMilli(it) },
         createdAt = Instant.ofEpochMilli(entity.createdAt),

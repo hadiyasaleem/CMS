@@ -39,7 +39,7 @@ private fun num(value: Double?, digits: Int = 2): String = value?.let { "%.${dig
 private fun letter(status: AttendanceStatus): String = status.name.take(1)
 private fun titleCase(raw: String): String = raw.lowercase().replace('_', ' ').replaceFirstChar { it.uppercase() }
 fun sessionTitle(session: AcademicSession?): String =
-    session?.let { "${it.deptId.uppercase(Locale.ROOT)} ${it.label} · ${titleCase(it.shift.name)} · Semester ${it.currentSemester}" } ?: ""
+    session?.let { "${it.deptId.uppercase(Locale.ROOT)} ${it.label} · ${it.shiftMode.label} · Semester ${it.currentSemester}" } ?: ""
 
 fun AttendanceExportPayload.toExportDocument() = singleSectionDocument(fileBase, title, header, rows)
 
@@ -86,7 +86,8 @@ fun attendanceRegisterExport(
         add(listOfNotNull(
             context.departmentName?.takeIf { it.isNotBlank() }?.let { "Department: $it" },
             session?.let { "Semester: ${it.currentSemester}" },
-            session?.let { "Shift: ${titleCase(it.shift.name)}" },
+            // TODO(Task 7): the register belongs to one shift's class; use that shift once classes carry it.
+            session?.let { "Shift: ${it.shiftMode.label}" },
         ).joinToString(" | "))
         add(listOfNotNull(
             "Subject: $subject".takeIf { subject.isNotBlank() },
@@ -336,7 +337,7 @@ fun studentDirectoryExport(rows: List<com.mbd.cmscommon.controller.StudentDirect
         val p = r.profile
         listOf(
             p.rollNumber, p.name, r.departmentName ?: r.session?.deptId?.uppercase(Locale.ROOT).orEmpty(), r.session?.label.orEmpty(),
-            r.session?.shift?.name?.let(::titleCase).orEmpty(), r.session?.currentSemester?.toString().orEmpty(), titleCase(p.enrollmentStatus),
+            p.shift.label, r.session?.currentSemester?.toString().orEmpty(), titleCase(p.enrollmentStatus),
             p.universityRollNo.orEmpty(), p.registrationNo.orEmpty(), p.fatherName.orEmpty(), p.gender.orEmpty(), p.phone.orEmpty(),
             p.linkedEmail.ifBlank { "Not linked" }, num(p.gpa), num(p.cgpa),
         )

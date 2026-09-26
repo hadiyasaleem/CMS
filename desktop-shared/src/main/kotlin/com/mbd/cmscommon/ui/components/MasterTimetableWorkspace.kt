@@ -230,7 +230,7 @@ private fun MasterSessionTile(deptCode: String, session: AcademicSession, onOpen
     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Row(Modifier.padding(16.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text("$deptCode - ${session.label} - ${session.shift}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                Text("$deptCode - ${session.label} - ${session.shiftMode.label}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                 Text(session.programName?.takeIf { it.isNotBlank() } ?: "Program not configured", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             }
             TextButton(onClick = onOpenSession) { Text("Open editor") }

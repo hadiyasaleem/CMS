@@ -203,8 +203,8 @@ private fun LinkRequestForm(
     var message by remember { mutableStateOf("") }
 
     val sessionsForDept = state.sessions.filter { deptId == null || it.deptId == deptId }
-    val shiftsForDept = sessionsForDept.map { it.shift }.distinct()
-    val sessionsForDeptAndShift = sessionsForDept.filter { shift == null || it.shift == shift }
+    val shiftsForDept = sessionsForDept.flatMap { it.shifts }.distinct().sorted()
+    val sessionsForDeptAndShift = sessionsForDept.filter { it.runs(shift ?: return@filter true) }
     val busy = state.submitState is Outcome.Loading
     val valid = sessionId != null && !rollNumber.isNullOrBlank() && name.isNotBlank() && cnic.isNotBlank()
 

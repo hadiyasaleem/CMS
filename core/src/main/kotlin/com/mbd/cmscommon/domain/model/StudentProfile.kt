@@ -6,6 +6,8 @@ data class StudentProfile(
     val sessionId: String,
     val rollNumber: String,
     val name: String,
+    /** The one shift this student belongs to; must be a shift their session runs. */
+    val shift: Session,
     val universityRollNo: String? = null,
     val registrationNo: String? = null,
     val fatherName: String? = null,

@@ -53,6 +53,7 @@ class CalendarRepositoryLocalImpl @Inject constructor(
             audience = event.audience.ifBlank { "ALL" },
             deptId = event.deptId?.trim()?.takeIf { it.isNotBlank() },
             sessionId = event.sessionId?.trim()?.takeIf { it.isNotBlank() },
+            shift = event.shift?.name?.takeIf { !event.sessionId.isNullOrBlank() },
             createdBy = createdBy,
         )
         val inserted = postgrest.from(SupabaseTables.CALENDAR_EVENTS).insert(dto) { select() }.decodeList<CalendarEventDto>().first()

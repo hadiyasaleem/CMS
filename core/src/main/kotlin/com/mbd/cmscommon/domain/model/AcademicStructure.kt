@@ -12,7 +12,7 @@ data class AcademicSession(
     val deptId: String,
     val startYear: Int,
     val endYear: Int,
-    val shift: Session,
+    val shiftMode: ShiftMode,
     val currentSemester: Int,
     val isActive: Boolean = true,
     val programName: String? = null,
@@ -25,11 +25,23 @@ data class AcademicSession(
 ) : BaseEntity() {
     val label: String get() = "$startYear–$endYear"
 
+    /** The shifts this session runs, Morning first. */
+    val shifts: List<Session> get() = shiftMode.shifts
+
+    fun runs(shift: Session): Boolean = shiftMode.allows(shift)
+
     companion object {
+        /** Default capacity for a single-shift session; a BOTH session defaults to twice this. */
         const val MAX_STUDENTS = 50
+        /** Largest capacity the database accepts (academic_sessions_max_students_range). */
+        const val MAX_CAPACITY = 200
         const val TOTAL_SEMESTERS = 8
-        fun buildId(deptId: String, startYear: Int, shift: Session): String =
-            "${deptId}_${startYear}_${shift.name}"
+
+        /** One session per department and intake year: "{deptId}_{startYear}" (enforced by the database). */
+        fun buildId(deptId: String, startYear: Int): String = "${deptId}_$startYear"
+
+        /** The max-students value the create form fills in for [mode]: 50 for one shift, 100 for both. */
+        fun defaultMaxStudents(mode: ShiftMode): Int = if (mode == ShiftMode.BOTH) MAX_STUDENTS * 2 else MAX_STUDENTS
     }
 }
 
@@ -101,6 +113,7 @@ enum class SubjectType {
 data class SessionPeriod(
     val id: String,
     val sessionId: String,
+    val shift: Session,
     val day: DayOfWeek,
     val startTime: String,
     val endTime: String,
@@ -123,8 +136,9 @@ data class SessionPeriod(
     val timeRange: String get() = "${clockDisplay(startTime)}–${clockDisplay(endTime)}"
 
     companion object {
-        fun buildId(sessionId: String, day: DayOfWeek, startTime: String): String =
-            "${sessionId}_${day.name}_$startTime"
+        /** One slot per session, shift, day and start time (the database's uq_session_slot). */
+        fun buildId(sessionId: String, shift: Session, day: DayOfWeek, startTime: String): String =
+            "${sessionId}_${shift.name}_${day.name}_$startTime"
     }
 }
 
@@ -161,6 +175,7 @@ data class SessionStudent(
     val deptId: String,
     val rollNumber: String,
     val name: String,
+    val shift: Session,
     val linkedEmail: String = "",
     val gpa: Double? = null,
     val cgpa: Double? = null,
@@ -175,8 +190,10 @@ data class SessionStudent(
     }
 }
 
+/** One shift's fee structure within a session; Morning and Evening are configured independently. */
 data class SessionFeeStructure(
     val sessionId: String,
+    val shift: Session,
     val cadence: FeeType,
     val heads: List<FeeHead>,
     val academicYear: String? = null,

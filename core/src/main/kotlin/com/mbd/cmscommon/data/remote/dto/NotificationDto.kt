@@ -10,6 +10,7 @@ data class NotificationDto(
     val targetRole: String? = null,
     val targetDeptId: String? = null,
     val targetSessionId: String? = null,
+    val targetShift: String? = null,
     val priority: String? = null,
     val attachmentPath: String? = null,
     val expiresAt: String? = null,

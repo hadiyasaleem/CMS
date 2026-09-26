@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.util.clockDisplay
 import com.mbd.cmscommon.util.orThrowValidation
 import com.mbd.cmscommon.util.requireValid
@@ -78,14 +79,17 @@ class SessionTimetableController(
         effectiveFrom: LocalDate?,
         effectiveTo: LocalDate?,
         replaces: SessionPeriod?,
+        // TODO(Task 7): the Morning/Evening tab supplies this; an edit keeps the period's own shift.
+        shift: Session = replaces?.shift ?: Session.MORNING,
     ) = launch {
         requireValid(periodType == PeriodType.BREAK || subject != null) { "Choose a subject for this period." }
 
         val normalizedStart = start.trim()
         val normalizedEnd = end.trim()
         val period = SessionPeriod(
-            id = SessionPeriod.buildId(sessionId, day, normalizedStart),
+            id = SessionPeriod.buildId(sessionId, shift, day, normalizedStart),
             sessionId = sessionId,
+            shift = shift,
             day = day,
             startTime = normalizedStart,
             endTime = normalizedEnd,
@@ -107,7 +111,7 @@ class SessionTimetableController(
         timetableRepository.savePeriod(period)
         // Compare as HH:mm: a stored "09:00:00" and a re-picked "09:00" are the same slot, and treating
         // them as a move would delete the row savePeriod just upserted.
-        if (replaces != null && (replaces.day != period.day || clockDisplay(replaces.startTime) != clockDisplay(period.startTime))) {
+        if (replaces != null && (replaces.shift != period.shift || replaces.day != period.day || clockDisplay(replaces.startTime) != clockDisplay(period.startTime))) {
             timetableRepository.removePeriod(replaces)
         }
     }

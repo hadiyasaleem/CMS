@@ -67,7 +67,8 @@ class SessionDetailController(
     init {
         launch {
             try {
-                _fee.value = feeRepository.getSessionFee(sessionId)
+                // TODO(Task 6): show each shift's structure; for now the first configured one.
+                _fee.value = feeRepository.getSessionFees(sessionId).firstOrNull()
             } finally {
                 _feeLoading.value = false
             }

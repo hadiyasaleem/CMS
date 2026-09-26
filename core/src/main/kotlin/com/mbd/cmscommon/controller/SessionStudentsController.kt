@@ -1,5 +1,7 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.domain.model.Session
+import com.mbd.cmscommon.domain.model.shiftForRoll
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
@@ -72,7 +74,9 @@ class SessionStudentsController(
                 "Roll number $normalizedRoll is already enrolled in this session."
             }
 
-            repo.addStudent(sessionId, normalizedRoll, normalizedName, gpa, cgpa)
+            // TODO(Task 5): the add form will ask for the shift; until then it follows the roll-number block.
+            val shift = currentSession?.let { shiftForRoll(it, normalizedRoll) } ?: Session.MORNING
+            repo.addStudent(sessionId, normalizedRoll, normalizedName, shift, gpa, cgpa)
         } catch (t: Throwable) {
             throw IllegalStateException(t.userMessageLogged("Could not add the student."), t)
         }
@@ -98,7 +102,9 @@ class SessionStudentsController(
                     !knownRolls.add(normalizedRoll) -> failures += "Row ${row.rowNumber}: Roll number $normalizedRoll is already enrolled."
                     else -> {
                         try {
-                            repo.addStudent(sessionId, normalizedRoll, normalizedName, null, null)
+                            // TODO(Task 5): imports will carry a shift column; until then it follows the roll block.
+                            val shift = currentSession?.let { shiftForRoll(it, normalizedRoll) } ?: Session.MORNING
+                            repo.addStudent(sessionId, normalizedRoll, normalizedName, shift, null, null)
                             succeeded++
                         } catch (t: Throwable) {
                             failures += "Row ${row.rowNumber}: ${t.userMessageLogged("Could not add this student.")}"

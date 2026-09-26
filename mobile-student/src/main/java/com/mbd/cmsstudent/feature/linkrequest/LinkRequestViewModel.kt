@@ -50,7 +50,7 @@ class LinkRequestViewModel @Inject constructor(
         } else {
             flow {
                 emit(null)
-                emit(runCatching { sessionRepository.getAvailableRollNumbers(sessionId) }.getOrDefault(emptyList()))
+                emit(runCatching { sessionRepository.getAvailableRollNumbers(sessionId).map { it.rollNumber } }.getOrDefault(emptyList())) // TODO(Task 5): show each roll's shift
             }
         }
     }

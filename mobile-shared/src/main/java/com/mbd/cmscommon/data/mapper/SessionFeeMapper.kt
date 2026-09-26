@@ -1,5 +1,7 @@
 package com.mbd.cmscommon.data.mapper
 
+import com.mbd.cmscommon.domain.model.Session
+import com.mbd.cmscommon.domain.model.parseShift
 import com.mbd.cmscommon.data.local.entity.SessionFeeEntity
 import com.mbd.cmscommon.data.local.entity.SessionFeeHeadEntity
 import com.mbd.cmscommon.data.remote.PgTime
@@ -14,6 +16,7 @@ import java.util.Locale
 object SessionFeeMapper {
     fun feeDtoToEntity(dto: SessionFeeDto): SessionFeeEntity = SessionFeeEntity(
         sessionId = dto.sessionId ?: "",
+        shift = dto.shift ?: Session.MORNING.name,
         cadence = dto.cadence ?: "",
         academicYear = dto.academicYear,
         dueDate = dto.dueDate,
@@ -29,8 +32,9 @@ object SessionFeeMapper {
     )
 
     fun headDtoToEntity(dto: SessionFeeHeadDto): SessionFeeHeadEntity = SessionFeeHeadEntity(
-        id = headLocalId(dto.sessionId ?: "", dto.label ?: ""),
+        id = headLocalId(dto.sessionId ?: "", parseShift(dto.shift) ?: Session.MORNING, dto.label ?: ""),
         sessionId = dto.sessionId ?: "",
+        shift = dto.shift ?: Session.MORNING.name,
         label = dto.label ?: "",
         amount = dto.amount,
         position = dto.position,
@@ -57,6 +61,7 @@ object SessionFeeMapper {
         }
         return SessionFeeStructure(
             sessionId = fee.sessionId,
+            shift = parseShift(fee.shift) ?: Session.MORNING,
             cadence = feeType,
             heads = domainHeads,
             academicYear = fee.academicYear,
@@ -70,5 +75,6 @@ object SessionFeeMapper {
         )
     }
 
-    fun headLocalId(sessionId: String, label: String): String = "${sessionId}_${label.trim().lowercase(Locale.ROOT)}"
+    fun headLocalId(sessionId: String, shift: Session, label: String): String =
+        "${sessionId}_${shift.name}_${label.trim().lowercase(Locale.ROOT)}"
 }

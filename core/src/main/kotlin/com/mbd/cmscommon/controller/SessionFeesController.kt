@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.Department
 import com.mbd.cmscommon.domain.model.FeeHead
@@ -29,6 +30,8 @@ class SessionFeesController(
     departmentRepository: DepartmentRepository,
     private val updatedBy: String,
     scope: CoroutineScope,
+    // TODO(Task 6): Morning/Evening tabs choose this; until then the editor works on the Morning structure.
+    val shift: Session = Session.MORNING,
 ) : ScreenController(scope) {
 
     val session: StateFlow<AcademicSession?> =
@@ -61,7 +64,7 @@ class SessionFeesController(
         val loadVersion = structureVersion
         launch {
             try {
-                val loaded = repo.getSessionFee(sessionId)
+                val loaded = repo.getSessionFee(sessionId, shift)
                 if (loadVersion == structureVersion) _structure.value = loaded
             } finally {
                 _loading.value = false
@@ -92,6 +95,7 @@ class SessionFeesController(
 
             val updated = SessionFeeStructure(
                 sessionId = sessionId,
+                shift = shift,
                 cadence = cadence,
                 heads = normalizedHeads,
                 academicYear = year.takeIf { it.isNotBlank() },

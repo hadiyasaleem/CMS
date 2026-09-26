@@ -52,6 +52,7 @@ class DatesheetRepositoryLocalImpl @Inject constructor(
     override suspend fun createDatesheet(draft: DatesheetDraft, createdBy: String): String {
         val dto = DatesheetDto(
             sessionId = draft.sessionId,
+            shift = draft.shift.name,
             semester = draft.semester,
             defaultStartTime = draft.defaultStartTime,
             defaultEndTime = draft.defaultEndTime,

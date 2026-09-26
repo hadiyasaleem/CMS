@@ -12,11 +12,15 @@ import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.SessionPeriod
 import com.mbd.cmscommon.domain.model.SessionPromotionResult
 import com.mbd.cmscommon.domain.model.SessionStudent
+import com.mbd.cmscommon.domain.model.ShiftMode
 import com.mbd.cmscommon.domain.model.StudentProfile
 import com.mbd.cmscommon.domain.model.SubjectExamScore
 import java.time.DayOfWeek
 import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
+
+/** An unclaimed roll number offered by the account-linking picker, with the shift it belongs to. */
+data class AvailableRollNumber(val rollNumber: String, val shift: Session)
 
 interface AcademicSessionRepository {
     fun observeSessionsForDept(deptId: String): Flow<List<AcademicSession>>
@@ -26,12 +30,22 @@ interface AcademicSessionRepository {
     /** Students enrolled in a currently-active session -- excludes graduated/inactive intakes. */
     fun observeActiveSessionStudentCount(): Flow<Int>
 
-    suspend fun createSession(deptId: String, startYear: Int, shift: Session): AcademicSession
+    /** One session per department + intake year; [maxStudents] defaults to 50 for one shift, 100 for both. */
+    suspend fun createSession(
+        deptId: String,
+        startYear: Int,
+        shiftMode: ShiftMode,
+        maxStudents: Int = AcademicSession.defaultMaxStudents(shiftMode),
+    ): AcademicSession
+    /** Changes which shifts the session runs (and optionally its capacity). The database refuses to drop a
+     * shift that still has students, fees, periods or a datesheet, or to strand a roll number outside its block. */
+    suspend fun updateShiftMode(sessionId: String, shiftMode: ShiftMode, maxStudents: Int)
     /** Advances the session by one semester, or graduates the class if it's already on the final semester. */
     suspend fun promoteSession(sessionId: String): SessionPromotionResult
     suspend fun updateSessionDetails(sessionId: String, programName: String?, inchargeEmail: String?, maxStudents: Int)
     suspend fun deleteSession(sessionId: String)
-    suspend fun addStudent(sessionId: String, rollNumber: String, name: String, gpa: Double? = null, cgpa: Double? = null)
+    /** Adds a student to exactly one [shift]; the roll number must sit in that shift's serial block. */
+    suspend fun addStudent(sessionId: String, rollNumber: String, name: String, shift: Session, gpa: Double? = null, cgpa: Double? = null)
     suspend fun deleteStudent(studentId: String)
     suspend fun getStudentProfile(sessionId: String, rollNumber: String): StudentProfile?
     /** Every locally cached student across all sessions, with the full profile decoded. */
@@ -39,7 +53,7 @@ interface AcademicSessionRepository {
     /** Roll numbers in this session not yet claimed by a linked Student account -- backs the
      * account-linking form's roll-number picker. Goes through a SECURITY DEFINER RPC (not a plain
      * select) since an unlinked caller has no RLS visibility into session_students otherwise. */
-    suspend fun getAvailableRollNumbers(sessionId: String): List<String>
+    suspend fun getAvailableRollNumbers(sessionId: String): List<AvailableRollNumber>
     /** Clears this roster row's linked account (and the corresponding profile's linked_session_id/
      * linked_roll), so it goes back to unlinked and a fresh account-linking claim can be approved
      * for it -- used both for an admin-initiated delink and as the "previous account" side effect
@@ -140,7 +154,10 @@ interface SessionTimetableRepository {
 }
 
 interface SessionFeeRepository {
-    suspend fun getSessionFee(sessionId: String): com.mbd.cmscommon.domain.model.SessionFeeStructure?
+    /** One shift's fee structure; Morning and Evening are configured independently. */
+    suspend fun getSessionFee(sessionId: String, shift: Session): com.mbd.cmscommon.domain.model.SessionFeeStructure?
+    /** Every configured shift's structure for the session. */
+    suspend fun getSessionFees(sessionId: String): List<com.mbd.cmscommon.domain.model.SessionFeeStructure>
     suspend fun syncSession(sessionId: String) = Unit
     suspend fun syncAll() = Unit
     suspend fun saveSessionFee(structure: com.mbd.cmscommon.domain.model.SessionFeeStructure, updatedBy: String)

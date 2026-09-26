@@ -274,7 +274,7 @@ private fun ComposeNotificationDialog(
                         CmsEntityPicker(
                             label = "Academic session",
                             selectedId = sessionId,
-                            options = sessions.map { CmsEntityOption(it.sessionId, "${it.startYear}-${it.endYear} ${it.shift}") },
+                            options = sessions.map { CmsEntityOption(it.sessionId, "${it.startYear}-${it.endYear} ${it.shiftMode.label}") },
                             onSelected = { sessionId = it },
                             optional = true,
                             emptyLabel = "All students",
@@ -296,7 +296,7 @@ private fun ComposeNotificationDialog(
                     CmsEntityPicker(
                         label = "Your class session",
                         selectedId = sessionId,
-                        options = sessions.map { CmsEntityOption(it.sessionId, "${it.startYear}-${it.endYear} ${it.shift}") },
+                        options = sessions.map { CmsEntityOption(it.sessionId, "${it.startYear}-${it.endYear} ${it.shiftMode.label}") },
                         onSelected = { sessionId = it },
                     )
                 }

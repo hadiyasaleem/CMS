@@ -5,6 +5,7 @@ import java.time.Instant
 data class Datesheet(
     val id: String,
     val sessionId: String,
+    val shift: Session,
     val semester: Int,
     val defaultStartTime: String? = null,
     val defaultEndTime: String? = null,
@@ -51,7 +52,7 @@ fun DatesheetSlot.isScheduled(sheet: Datesheet): Boolean =
 
 /** "Mid Term · Information Technology 2023–2027 Morning · Semester 3" */
 fun datesheetLabel(sheet: Datesheet, session: AcademicSession?, department: Department?): String {
-    val sessionLabel = session?.let { "${it.label} ${it.shift.name.lowercase().replaceFirstChar(Char::uppercase)}" } ?: sheet.sessionId
+    val sessionLabel = session?.let { "${it.label} ${sheet.shift.label}" } ?: sheet.sessionId
     val deptLabel = department?.name?.let { "$it " } ?: ""
     return "Mid Term · $deptLabel$sessionLabel · Semester ${sheet.semester}"
 }

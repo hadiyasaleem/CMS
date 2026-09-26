@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.PeriodType
 import com.mbd.cmscommon.domain.model.SessionPeriod
 import java.time.DayOfWeek
@@ -48,6 +49,9 @@ fun validateTimetableDraft(
     effectiveTo: String,
     existing: SessionPeriod?,
     allPeriods: List<SessionPeriod>,
+    // TODO(Task 7): the Morning/Evening tab supplies this. Morning and Evening are separate grids, so a
+    // draft only clashes with periods of its own shift.
+    shift: Session = existing?.shift ?: Session.MORNING,
 ): TimetableDraftValidation {
     val startTime = parseTimetableTime(start)
     val endTime = parseTimetableTime(end)
@@ -74,6 +78,7 @@ fun validateTimetableDraft(
             day = day,
             startTime = start.trim(),
             endTime = end.trim(),
+            shift = shift,
             courseCode = "DRAFT",
             subjectName = "Draft",
             teacherId = "",
@@ -86,7 +91,7 @@ fun validateTimetableDraft(
     }
 
     val overlapping = candidate?.let { draft ->
-        allPeriods.firstOrNull { it.id != existing?.id && periodIssue(it) == null && periodsOverlap(draft, it) }
+        allPeriods.firstOrNull { it.id != existing?.id && it.shift == draft.shift && periodIssue(it) == null && periodsOverlap(draft, it) }
     }
 
     val overlapError = overlapping?.let {
@@ -107,6 +112,7 @@ fun validateTimetablePeriod(period: SessionPeriod, existing: SessionPeriod?, all
         effectiveTo = period.effectiveTo?.toString() ?: "",
         existing = existing,
         allPeriods = allPeriods,
+        shift = period.shift,
     ).firstError
 }
 

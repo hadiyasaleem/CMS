@@ -13,6 +13,9 @@ import com.mbd.cmscommon.domain.model.SemesterTerm
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.SessionPeriod
 import com.mbd.cmscommon.domain.model.SessionStudent
+import com.mbd.cmscommon.domain.model.ShiftMode
+import com.mbd.cmscommon.domain.model.parseShift
+import com.mbd.cmscommon.domain.model.parseShiftMode
 import com.mbd.cmscommon.domain.model.SubjectType
 import java.time.DayOfWeek
 import java.time.Instant
@@ -28,7 +31,7 @@ object AcademicStructureMapper {
         deptId = e.deptId,
         startYear = e.startYear,
         endYear = e.endYear,
-        shift = runCatching { Session.valueOf(e.shift) }.getOrDefault(Session.MORNING),
+        shiftMode = parseShiftMode(e.shiftMode) ?: ShiftMode.MORNING,
         currentSemester = e.currentSemester,
         isActive = e.isActive,
         programName = e.programName,
@@ -45,7 +48,7 @@ object AcademicStructureMapper {
         deptId = s.deptId,
         startYear = s.startYear,
         endYear = s.endYear,
-        shift = s.shift.name,
+        shiftMode = s.shiftMode.name,
         currentSemester = s.currentSemester,
         isActive = s.isActive,
         programName = s.programName,
@@ -105,6 +108,7 @@ object AcademicStructureMapper {
         deptId = e.deptId,
         rollNumber = e.rollNumber,
         name = e.name,
+        shift = parseShift(e.shift) ?: Session.MORNING,
         linkedEmail = e.linkedEmail ?: "",
         gpa = e.gpa,
         cgpa = e.cgpa,
@@ -118,6 +122,7 @@ object AcademicStructureMapper {
     fun periodEntityToDomain(e: SessionPeriodEntity): SessionPeriod = SessionPeriod(
         id = e.id,
         sessionId = e.sessionId,
+        shift = parseShift(e.shift) ?: Session.MORNING,
         day = runCatching { DayOfWeek.valueOf(e.day) }.getOrDefault(DayOfWeek.MONDAY),
         startTime = e.startTime ?: "",
         endTime = e.endTime ?: "",

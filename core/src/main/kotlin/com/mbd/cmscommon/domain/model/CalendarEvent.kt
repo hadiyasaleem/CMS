@@ -15,6 +15,8 @@ data class CalendarEvent(
     val audience: String = "ALL",
     val deptId: String? = null,
     val sessionId: String? = null,
+    /** Narrows a session-targeted event to one shift; null = both shifts. Requires [sessionId]. */
+    val shift: Session? = null,
     override val createdAt: Instant = Instant.EPOCH,
     override val createdBy: String? = null,
     override val updatedAt: Instant = Instant.EPOCH,

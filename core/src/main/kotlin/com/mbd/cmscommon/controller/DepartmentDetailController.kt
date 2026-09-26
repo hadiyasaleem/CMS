@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.domain.model.ShiftMode
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.Department
 import com.mbd.cmscommon.domain.model.Session
@@ -55,7 +56,8 @@ class DepartmentDetailController(
         // DepartmentDetailWorkspace); this guards the controller boundary in case anything else
         // ever calls this directly with a 2-digit year like 21 instead of 2021.
         requireValid(startYear in 1900..9999) { "Enter a valid 4-digit intake year." }
-        sessionRepository.createSession(deptId, startYear, shift)
+        // TODO(Task 3): the form will pick Morning/Evening checkboxes and a max-students value directly.
+        sessionRepository.createSession(deptId, startYear, ShiftMode.of(setOf(shift)) ?: ShiftMode.MORNING)
         _notice.value = "Session created."
     }
 

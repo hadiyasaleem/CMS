@@ -1,5 +1,7 @@
 package com.mbd.cmscommon.data.mapper
 
+import com.mbd.cmscommon.domain.model.Session
+import com.mbd.cmscommon.domain.model.parseShift
 import com.mbd.cmscommon.data.local.entity.DatesheetEntity
 import com.mbd.cmscommon.data.local.entity.DatesheetSlotEntity
 import com.mbd.cmscommon.data.remote.PgTime
@@ -13,6 +15,7 @@ object DatesheetMapper {
     fun dtoToEntity(dto: DatesheetDto): DatesheetEntity = DatesheetEntity(
         datesheetId = dto.id ?: "",
         sessionId = dto.sessionId ?: "",
+        shift = dto.shift ?: Session.MORNING.name,
         semester = dto.semester,
         defaultStartTime = dto.defaultStartTime,
         defaultEndTime = dto.defaultEndTime,
@@ -31,6 +34,7 @@ object DatesheetMapper {
     fun entityToDomain(entity: DatesheetEntity): Datesheet = Datesheet(
         id = entity.datesheetId,
         sessionId = entity.sessionId,
+        shift = parseShift(entity.shift) ?: Session.MORNING,
         semester = entity.semester,
         defaultStartTime = entity.defaultStartTime,
         defaultEndTime = entity.defaultEndTime,

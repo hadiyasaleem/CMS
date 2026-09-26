@@ -246,7 +246,7 @@ fun StudentOwnProfileWorkspace(
             ProfileSectionCard("Current program and performance", "Academic standing") {
                 ProfileInfoRow("Department", departmentName ?: "Not recorded")
                 ProfileInfoRow("Academic session", session?.label ?: "Not recorded")
-                ProfileInfoRow("Shift", session?.shift?.name ?: "Not recorded")
+                ProfileInfoRow("Shift", profile?.shift?.label ?: session?.shiftMode?.label ?: "Not recorded")
                 ProfileInfoRow("Class roll", rollNumber)
             }
         }

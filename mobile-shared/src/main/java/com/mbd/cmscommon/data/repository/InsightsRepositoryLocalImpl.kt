@@ -14,12 +14,15 @@ import com.mbd.cmscommon.domain.model.ExamStat
 import com.mbd.cmscommon.domain.model.ExamType
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.SessionOverview
+import com.mbd.cmscommon.domain.model.ShiftMode
+import com.mbd.cmscommon.domain.model.parseShift
+import com.mbd.cmscommon.domain.model.parseShiftMode
 import com.mbd.cmscommon.domain.repository.InsightsRepository
 import java.time.Instant
 import javax.inject.Inject
 import kotlin.math.sqrt
 
-private fun InsightSessionOverviewEntity.toDomain() = SessionOverview(sessionId, deptId, runCatching { Session.valueOf(shift) }.getOrDefault(Session.MORNING), currentSemester, students, avgCgpa, avgAttendance)
+private fun InsightSessionOverviewEntity.toDomain() = SessionOverview(sessionId, deptId, parseShift(shift) ?: Session.MORNING, currentSemester, students, avgCgpa, avgAttendance)
 private fun InsightAtRiskStudentEntity.toDomain() = AtRiskStudent(sessionId, rollNumber, name, cgpa, attendance)
 private fun InsightExamStatEntity.toDomain() = ExamStat(sessionId, semester, courseCode, runCatching { ExamType.valueOf(examType) }.getOrDefault(ExamType.MIDTERM), entered, avgScore, minScore, maxScore, stddev, outOf, passRate)
 
@@ -43,11 +46,15 @@ class InsightsRepositoryLocalImpl @Inject constructor(
         val attendanceByStudent = attendance.groupBy { "${it.sessionId}|${it.rollNumber}" }.mapValues { (_, rows) ->
             rows.count { it.status.equals("PRESENT", true) || it.status.equals("LATE", true) }.toDouble() * 100 / rows.size
         }
-        val overviews = sessions.map { session ->
-            val roster = students.filter { it.sessionId == session.sessionId }
-            val cgpas = roster.mapNotNull { latestGpa["${session.sessionId}|${it.rollNumber}"]?.cgpa }
-            val rates = roster.mapNotNull { attendanceByStudent["${session.sessionId}|${it.rollNumber}"] }
-            InsightSessionOverviewEntity(session.sessionId, session.deptId, session.shift, session.currentSemester, roster.size, cgpas.takeIf { it.isNotEmpty() }?.average(), rates.takeIf { it.isNotEmpty() }?.average(), cachedAt)
+        // One overview per shift the session runs, over that shift's students.
+        val overviews = sessions.flatMap { session ->
+            val mode = parseShiftMode(session.shiftMode) ?: ShiftMode.MORNING
+            mode.shifts.map { shift ->
+                val roster = students.filter { it.sessionId == session.sessionId && (parseShift(it.shift) ?: Session.MORNING) == shift }
+                val cgpas = roster.mapNotNull { latestGpa["${session.sessionId}|${it.rollNumber}"]?.cgpa }
+                val rates = roster.mapNotNull { attendanceByStudent["${session.sessionId}|${it.rollNumber}"] }
+                InsightSessionOverviewEntity(session.sessionId, session.deptId, shift.name, session.currentSemester, roster.size, cgpas.takeIf { it.isNotEmpty() }?.average(), rates.takeIf { it.isNotEmpty() }?.average(), cachedAt)
+            }
         }
         val atRisk = students.mapNotNull { student ->
             val key = "${student.sessionId}|${student.rollNumber}"

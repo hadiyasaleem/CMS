@@ -20,8 +20,8 @@ fun departmentPortfolioStats(sessionCounts: List<Pair<AcademicSession, Int>>): M
     return byDept.mapValues { (_, rows) ->
         val studentCount = rows.sumOf { it.second }
         val totalCapacity = rows.sumOf { it.first.maxStudents }
-        val morningSessions = rows.count { it.first.shift == Session.MORNING }
-        val eveningSessions = rows.count { it.first.shift == Session.EVENING }
+        val morningSessions = rows.count { it.first.runs(Session.MORNING) }
+        val eveningSessions = rows.count { it.first.runs(Session.EVENING) }
         val semesters = rows.map { it.first.currentSemester }
         DepartmentPortfolioStats(
             studentCount = studentCount,

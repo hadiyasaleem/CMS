@@ -61,7 +61,7 @@ class DatesheetBrowseController(
     }.stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val shiftsForSelection: StateFlow<List<Session>> = combine(sessionsInDepartment, _selectedStartYear) { inDept, year ->
-        if (year == null) emptyList() else inDept.filter { it.startYear == year }.map { it.shift }.distinct()
+        if (year == null) emptyList() else inDept.filter { it.startYear == year }.flatMap { it.shifts }.distinct()
     }.stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val resolvedSession: StateFlow<AcademicSession?> =
@@ -69,7 +69,7 @@ class DatesheetBrowseController(
             if (deptId == null || year == null || shift == null) {
                 null
             } else {
-                all.firstOrNull { it.deptId == deptId && it.startYear == year && it.shift == shift }
+                all.firstOrNull { it.deptId == deptId && it.startYear == year && it.runs(shift) }
             }
         }.stateIn(scope, SharingStarted.WhileSubscribed(5000), null)
 
@@ -95,10 +95,21 @@ class DatesheetBrowseController(
     }
 
     /** Creates the datesheet shell for (session, semester); DatesheetEditorController prefills its papers once mounted. */
-    suspend fun createDatesheet(sessionId: String, semester: Int, defaultStartTime: String?, defaultEndTime: String?, defaultBuildingId: String?, instructions: String?, createdBy: String): String {
+    suspend fun createDatesheet(
+        sessionId: String,
+        semester: Int,
+        defaultStartTime: String?,
+        defaultEndTime: String?,
+        defaultBuildingId: String?,
+        instructions: String?,
+        createdBy: String,
+        shift: Session? = null,
+    ): String {
         val session = sessions.value.firstOrNull { it.sessionId == sessionId }
         requireValid(session?.isActive == true) { "This session has graduated and can no longer have new datesheets created for it." }
-        val draft = DatesheetDraft(sessionId, semester, defaultStartTime, defaultEndTime, defaultBuildingId, instructions, published = false)
+        // Datesheets are per shift; default to the shift chosen in the browse filters.
+        val sheetShift = shift ?: _selectedShift.value?.takeIf { session?.runs(it) == true } ?: session?.shifts?.firstOrNull() ?: Session.MORNING
+        val draft = DatesheetDraft(sessionId, sheetShift, semester, defaultStartTime, defaultEndTime, defaultBuildingId, instructions, published = false)
         validationMessage(draft).orThrowValidation()
         return datesheetRepository.createDatesheet(draft, createdBy)
     }

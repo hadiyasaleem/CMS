@@ -184,8 +184,8 @@ interface SessionPeriodDao {
     @Query("DELETE FROM session_periods WHERE sessionId = :sessionId AND day = :day")
     suspend fun deleteForSessionDay(sessionId: String, day: String)
 
-    @Query("DELETE FROM session_periods WHERE sessionId = :sessionId AND day = :day AND startTime = :startTime")
-    suspend fun deleteForSlot(sessionId: String, day: String, startTime: String?)
+    @Query("DELETE FROM session_periods WHERE sessionId = :sessionId AND shift = :shift AND day = :day AND startTime = :startTime")
+    suspend fun deleteForSlot(sessionId: String, shift: String, day: String, startTime: String?)
 
     suspend fun applyDelta(upserts: List<SessionPeriodEntity>, deletedIds: List<String>) {
         if (upserts.isNotEmpty()) upsertAll(upserts)

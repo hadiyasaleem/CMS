@@ -24,6 +24,8 @@ data class Notification(
     val createdByUid: String,
     val priority: NotificationPriority = NotificationPriority.NORMAL,
     val targetDeptId: String? = null,
+    /** Narrows a session-targeted notification to one shift; null = both. Requires [targetOfferingId]. */
+    val targetShift: Session? = null,
     val attachmentPath: String? = null,
     val expiresAt: Instant? = null,
     override val createdAt: Instant,

@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.ui.admin
 
+import com.mbd.cmscommon.domain.model.Session
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -46,7 +47,7 @@ fun StudentProfileScreen(
     val photoBusy by controller.photoBusy.collectAsState()
     val photoCacheDir = remember { File(System.getProperty("java.io.tmpdir"), "cms_student_photos").apply { mkdirs() } }
 
-    val loadedProfile = profile ?: StudentProfile(sessionId = sessionId, rollNumber = rollNumber, name = "")
+    val loadedProfile = profile ?: StudentProfile(sessionId = sessionId, rollNumber = rollNumber, name = "", shift = Session.MORNING)
 
     StudentProfileWorkspace(
         loadedProfile = loadedProfile,

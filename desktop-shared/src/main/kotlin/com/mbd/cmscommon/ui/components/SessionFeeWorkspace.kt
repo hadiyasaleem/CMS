@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.export.ExportDocument
 import com.mbd.cmscommon.export.ExportFormat
 import com.mbd.cmscommon.export.sessionFeesExport
@@ -78,6 +79,8 @@ fun SessionFeeWorkspace(
     onDownloadSamplePdf: (FeeChallanHeader, SessionFeeStructure) -> Unit,
     onExport: ((ExportDocument, ExportFormat) -> Unit)? = null,
     modifier: Modifier = Modifier,
+    // TODO(Task 6): Morning/Evening tabs pick the shift being edited.
+    shift: Session = structure?.shift ?: Session.MORNING,
 ) {
     var initialized by remember { mutableStateOf(false) }
     var showSampleChallan by remember { mutableStateOf(false) }
@@ -209,9 +212,10 @@ fun SessionFeeWorkspace(
     }
 
     if (showSampleChallan) {
-        val sampleHeader = sampleFeeChallanHeader(session, department)
+        val sampleHeader = sampleFeeChallanHeader(session, department, shift)
         val sampleStructure = SessionFeeStructure(
             sessionId = sessionId,
+            shift = shift,
             cadence = cadence,
             heads = heads,
             academicYear = academicYear.takeIf { it.isNotBlank() },

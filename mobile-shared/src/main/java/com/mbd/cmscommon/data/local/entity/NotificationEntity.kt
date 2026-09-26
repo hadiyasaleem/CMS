@@ -13,6 +13,7 @@ data class NotificationEntity(
     val createdByUid: String?,
     val priority: String,
     val targetDeptId: String?,
+    val targetShift: String?,
     val attachmentPath: String?,
     val expiresAt: Long?,
     val createdAt: Long = 0L,

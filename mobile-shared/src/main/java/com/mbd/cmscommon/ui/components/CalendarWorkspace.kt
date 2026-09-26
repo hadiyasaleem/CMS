@@ -456,7 +456,7 @@ private fun CreateCalendarEventDialog(
                     CmsEntityPicker(
                         label = "Academic session",
                         selectedId = sessionId,
-                        options = sessions.filter { it.deptId == deptId }.map { CmsEntityOption(it.sessionId, "${it.startYear}-${it.endYear} ${it.shift}") },
+                        options = sessions.filter { it.deptId == deptId }.map { CmsEntityOption(it.sessionId, "${it.startYear}-${it.endYear} ${it.shiftMode.label}") },
                         onSelected = { sessionId = it },
                         optional = true,
                         emptyLabel = "All sessions",

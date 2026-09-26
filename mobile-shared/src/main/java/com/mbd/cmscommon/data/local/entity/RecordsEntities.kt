@@ -18,6 +18,7 @@ data class CalendarEventEntity(
     val audience: String,
     val deptId: String?,
     val sessionId: String?,
+    val shift: String?,
     val createdAt: Long = 0L,
     val createdBy: String? = null,
     val updatedAt: Long = 0L,

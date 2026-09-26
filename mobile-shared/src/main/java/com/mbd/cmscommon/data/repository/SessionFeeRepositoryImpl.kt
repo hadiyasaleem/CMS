@@ -9,6 +9,7 @@ import com.mbd.cmscommon.data.remote.dto.SessionFeeHeadDto
 import com.mbd.cmscommon.data.sync.SyncCheckpointDefaults
 import com.mbd.cmscommon.data.sync.SyncCheckpointStore
 import com.mbd.cmscommon.data.sync.fetchIncrementalDelta
+import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.SessionFeeStructure
 import com.mbd.cmscommon.domain.repository.SessionFeeRepository
 import io.github.jan.supabase.postgrest.Postgrest
@@ -24,17 +25,22 @@ class SessionFeeRepositoryImpl @Inject constructor(
     private fun syncOwnerKey() =
         sessionManager.accountKey ?: SyncCheckpointDefaults.ownerKey("anonymous-local")
 
-    override suspend fun getSessionFee(sessionId: String): SessionFeeStructure? {
-        val fee = feeDao.getFee(sessionId) ?: return null
-        return SessionFeeMapper.toDomain(fee, feeDao.getHeads(sessionId))
+    override suspend fun getSessionFee(sessionId: String, shift: Session): SessionFeeStructure? {
+        val fee = feeDao.getFee(sessionId, shift.name) ?: return null
+        return SessionFeeMapper.toDomain(fee, feeDao.getHeads(sessionId, shift.name))
     }
+
+    override suspend fun getSessionFees(sessionId: String): List<SessionFeeStructure> =
+        feeDao.getFees(sessionId).map { fee -> SessionFeeMapper.toDomain(fee, feeDao.getHeads(sessionId, fee.shift)) }
 
     override suspend fun saveSessionFee(structure: SessionFeeStructure, updatedBy: String) {
         require(structure.heads.all { it.label.trim().isNotBlank() }) { "Every fee head needs a label." }
         require(structure.heads.all { it.amount > 0.0 }) { "Every fee amount must be greater than zero." }
 
+        val shift = structure.shift.name
         val feeDto = SessionFeeDto(
             sessionId = structure.sessionId,
+            shift = shift,
             cadence = structure.cadence.name,
             academicYear = structure.academicYear,
             dueDate = structure.dueDate,
@@ -42,16 +48,22 @@ class SessionFeeRepositoryImpl @Inject constructor(
             paymentNote = structure.paymentNote,
             updatedBy = updatedBy,
         )
-        postgrest.from(SupabaseTables.SESSION_FEES).upsert(feeDto) { onConflict = "session_id" }
+        postgrest.from(SupabaseTables.SESSION_FEES).upsert(feeDto) { onConflict = "session_id,shift" }
 
         postgrest.from(SupabaseTables.SESSION_FEE_HEADS).update({
             set("is_deleted", true)
             set("updated_by", updatedBy)
-        }) { filter { eq("session_id", structure.sessionId) } }
+        }) {
+            filter {
+                eq("session_id", structure.sessionId)
+                eq("shift", shift)
+            }
+        }
 
         val heads = structure.heads.mapIndexed { index, head ->
             SessionFeeHeadDto(
                 sessionId = structure.sessionId,
+                shift = shift,
                 label = head.label,
                 amount = head.amount,
                 position = index,
@@ -61,7 +73,7 @@ class SessionFeeRepositoryImpl @Inject constructor(
         }
         if (heads.isNotEmpty()) {
             postgrest.from(SupabaseTables.SESSION_FEE_HEADS).upsert(heads) {
-                onConflict = "session_id,label"
+                onConflict = "session_id,shift,label"
             }
         }
 
@@ -70,7 +82,7 @@ class SessionFeeRepositoryImpl @Inject constructor(
             listOf(SessionFeeMapper.feeDtoToEntity(feeDto).copy(createdAt = now, updatedAt = now)),
             emptyList(),
         )
-        feeDao.deleteHeadsForSession(structure.sessionId)
+        feeDao.deleteHeadsFor(structure.sessionId, shift)
         feeDao.applyHeadDelta(
             heads.map { SessionFeeMapper.headDtoToEntity(it).copy(createdAt = now, updatedAt = now) },
             emptyList(),
@@ -89,7 +101,7 @@ class SessionFeeRepositoryImpl @Inject constructor(
             applyDelta = { feeDelta ->
                 val feeEntities = feeDelta.map(SessionFeeMapper::feeDtoToEntity)
                 val (deletedFees, activeFees) = feeEntities.partition { it.isDeleted }
-                feeDao.applyFeeDelta(activeFees, deletedFees.map { it.sessionId })
+                feeDao.applyFeeDelta(activeFees, deletedFees.map { it.sessionId to it.shift })
             },
         ) { since, from, to ->
             postgrest.from(SupabaseTables.SESSION_FEES).select {
@@ -130,7 +142,7 @@ class SessionFeeRepositoryImpl @Inject constructor(
             applyDelta = { feeDelta ->
                 val feeEntities = feeDelta.map(SessionFeeMapper::feeDtoToEntity)
                 val (deletedFees, activeFees) = feeEntities.partition { it.isDeleted }
-                feeDao.applyFeeDelta(activeFees, deletedFees.map { it.sessionId })
+                feeDao.applyFeeDelta(activeFees, deletedFees.map { it.sessionId to it.shift })
             },
         ) { since, from, to ->
             postgrest.from(SupabaseTables.SESSION_FEES).select {

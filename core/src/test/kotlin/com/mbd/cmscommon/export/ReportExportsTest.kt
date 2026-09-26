@@ -3,6 +3,7 @@ package com.mbd.cmscommon.export
 import com.mbd.cmscommon.domain.model.AttendanceStatus
 import com.mbd.cmscommon.domain.model.DailyAttendanceMark
 import com.mbd.cmscommon.domain.model.ExamType
+import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.teacher.ResolvedAssignment
 import java.time.LocalDate
@@ -13,7 +14,7 @@ import org.junit.Test
 
 class ReportExportsTest {
 
-    private fun student(roll: String, name: String) = SessionStudent(id = roll, sessionId = "s1", deptId = "it", rollNumber = roll, name = name)
+    private fun student(roll: String, name: String) = SessionStudent(id = roll, sessionId = "s1", deptId = "it", rollNumber = roll, name = name, shift = Session.MORNING)
 
     @Test
     fun registerHasEveryDayMarksSundayHolidaysAndTotals() {

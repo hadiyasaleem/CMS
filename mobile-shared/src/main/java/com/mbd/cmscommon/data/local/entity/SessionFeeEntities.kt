@@ -4,9 +4,11 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "session_fees")
+/** One shift's fee structure: keyed by (sessionId, shift), matching the database. */
+@Entity(tableName = "session_fees", primaryKeys = ["sessionId", "shift"])
 data class SessionFeeEntity(
-    @PrimaryKey val sessionId: String,
+    val sessionId: String,
+    val shift: String,
     val cadence: String,
     val academicYear: String?,
     val dueDate: String?,
@@ -21,10 +23,11 @@ data class SessionFeeEntity(
     val deletedBy: String? = null,
 )
 
-@Entity(tableName = "session_fee_heads", indices = [Index(value = ["sessionId", "position"])])
+@Entity(tableName = "session_fee_heads", indices = [Index(value = ["sessionId", "shift", "position"])])
 data class SessionFeeHeadEntity(
     @PrimaryKey val id: String,
     val sessionId: String,
+    val shift: String,
     val label: String,
     val amount: Double,
     val position: Int,

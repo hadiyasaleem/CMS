@@ -105,6 +105,7 @@ class DatesheetEditorController(
         val current = requireCurrentSheet()
         val draft = DatesheetDraft(
             sessionId = current.sessionId,
+            shift = current.shift,
             semester = current.semester,
             defaultStartTime = defaultStartTime,
             defaultEndTime = defaultEndTime,

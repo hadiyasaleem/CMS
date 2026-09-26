@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 data class DatesheetDto(
     val id: String? = null,
     val sessionId: String? = null,
+    val shift: String? = null,
     val semester: Int = 0,
     val defaultStartTime: String? = null,
     val defaultEndTime: String? = null,

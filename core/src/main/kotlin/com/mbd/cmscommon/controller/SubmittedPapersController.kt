@@ -62,7 +62,7 @@ class SubmittedPapersController(
             (filters.teacherEmail == null || sub.teacherId.equals(filters.teacherEmail, ignoreCase = true)) &&
                 (filters.deptId == null || session?.deptId == filters.deptId) &&
                 (filters.semester == null || sub.semester == filters.semester) &&
-                (filters.shift == null || session?.shift == filters.shift)
+                (filters.shift == null || session?.runs(filters.shift) == true) // TODO(Task 8): match the paper's datesheet shift
         }
         val byTeacherLabel = { sub: ExamPaperSubmission -> teacherNameByEmail[sub.teacherId.lowercase()] ?: sub.teacherId }
         matched.groupBy(byTeacherLabel)

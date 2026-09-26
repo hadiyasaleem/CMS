@@ -9,7 +9,8 @@ data class AcademicSessionDto(
     val deptId: String? = null,
     val startYear: Int = 0,
     val endYear: Int = 0,
-    val shift: String? = null,
+    /** MORNING / EVENING / BOTH (academic_sessions.shift_mode). */
+    val shiftMode: String? = null,
     val programName: String? = null,
     val inchargeEmail: String? = null,
     val maxStudents: Int = 0,
@@ -63,6 +64,7 @@ data class SessionStudentDto(
     val sessionId: String? = null,
     val rollNumber: String? = null,
     val name: String? = null,
+    val shift: String? = null,
     val linkedEmail: String? = null,
     val gpa: Double? = null,
     val cgpa: Double? = null,
@@ -80,6 +82,7 @@ data class StudentProfileDto(
     val sessionId: String? = null,
     val rollNumber: String? = null,
     val name: String? = null,
+    val shift: String? = null,
     val universityRollNo: String? = null,
     val registrationNo: String? = null,
     val fatherName: String? = null,
@@ -120,6 +123,7 @@ data class StudentProfileDto(
 data class TimetablePeriodDto(
     val id: String? = null,
     @SerialName("primary_session_id") val sessionId: String? = null,
+    val shift: String? = null,
     val day: String? = null,
     val startTime: String? = null,
     val endTime: String? = null,

@@ -47,7 +47,7 @@ fun StudentLinkRequestScreen(component: DesktopAppComponent, onLinked: (UserRole
             availableRollNumbers = null
         } else {
             availableRollNumbers = null
-            availableRollNumbers = runCatching { component.academicSessionRepository().getAvailableRollNumbers(sessionId) }.getOrDefault(emptyList())
+            availableRollNumbers = runCatching { component.academicSessionRepository().getAvailableRollNumbers(sessionId).map { it.rollNumber } }.getOrDefault(emptyList()) // TODO(Task 5): show each roll's shift
         }
     }
 

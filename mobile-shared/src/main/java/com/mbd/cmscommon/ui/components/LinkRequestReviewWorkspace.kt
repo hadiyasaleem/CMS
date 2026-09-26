@@ -108,7 +108,7 @@ fun LinkRequestReviewWorkspace(
     fun sessionLabel(sessionId: String?): String {
         val session = sessions.firstOrNull { it.sessionId == sessionId }
         val dept = departments.firstOrNull { it.deptId == session?.deptId }?.name
-        return if (session != null) "${dept ?: session.deptId} ${session.label} ${session.shift}" else "No session selected"
+        return if (session != null) "${dept ?: session.deptId} ${session.label} ${session.shiftMode.label}" else "No session selected"
     }
 
     val filtered = requests.filter { request ->

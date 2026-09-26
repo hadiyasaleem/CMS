@@ -22,6 +22,7 @@ data class DatesheetViewerContext(
 
 data class DatesheetDraft(
     val sessionId: String,
+    val shift: Session,
     val semester: Int,
     val defaultStartTime: String? = null,
     val defaultEndTime: String? = null,

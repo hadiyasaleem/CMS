@@ -232,7 +232,7 @@ class NotificationsController(
         if (sessionId != null) {
             val session = sessions.value.firstOrNull { it.sessionId == sessionId }
             return if (session != null) {
-                "the ${session.startYear}-${session.endYear} ${session.shift.name.lowercase(Locale.ROOT)} session"
+                "the ${session.startYear}-${session.endYear} session"
             } else {
                 sessionId
             }

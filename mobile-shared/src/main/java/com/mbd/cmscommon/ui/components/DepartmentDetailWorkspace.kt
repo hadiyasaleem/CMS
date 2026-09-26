@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.domain.model.ShiftMode
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -72,7 +73,7 @@ fun DepartmentDetailWorkspace(
     var showGraduated by remember { mutableStateOf(false) }
 
     val snapshot = departmentDetailSnapshot(sessions, studentCounts)
-    fun List<AcademicSession>.matchingQuery() = filter { shiftFilter == null || it.shift == shiftFilter }
+    fun List<AcademicSession>.matchingQuery() = filter { it.runs(shiftFilter ?: return@filter true) }
         .filter { query.isBlank() || it.label.contains(query, ignoreCase = true) || (it.programName ?: "").contains(query, ignoreCase = true) }
         .sortedByDescending { it.startYear }
     val filtered = snapshot.sessions.matchingQuery()
@@ -271,11 +272,18 @@ private fun DepartmentSessionCard(session: AcademicSession, studentCount: Int, o
         Column(Modifier.padding(16.dp).heightIn(min = 184.dp)) {
             Column {
                 Text("Session ${session.label}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                Text("${session.shift} · Semester ${session.currentSemester}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                Text("${session.shiftMode.label} · Semester ${session.currentSemester}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             }
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                StatusBadge(session.shift.name, if (session.shift == Session.MORNING) BadgeTone.Navy else BadgeTone.Gold)
+                StatusBadge(
+                    session.shiftMode.label.uppercase(),
+                    when (session.shiftMode) {
+                        ShiftMode.MORNING -> BadgeTone.Navy
+                        ShiftMode.EVENING -> BadgeTone.Gold
+                        ShiftMode.BOTH -> BadgeTone.Neutral
+                    },
+                )
                 if (!session.isActive) {
                     StatusBadge("GRADUATED", BadgeTone.Neutral)
                 }

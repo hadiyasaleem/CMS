@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class SessionFeeDto(
     val sessionId: String? = null,
+    val shift: String? = null,
     val cadence: String? = null,
     val academicYear: String? = null,
     val dueDate: String? = null,
@@ -22,6 +23,7 @@ data class SessionFeeDto(
 @Serializable
 data class SessionFeeHeadDto(
     val sessionId: String? = null,
+    val shift: String? = null,
     val label: String? = null,
     val amount: Double = 0.0,
     val position: Int = 0,

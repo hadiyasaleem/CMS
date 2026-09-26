@@ -1,5 +1,6 @@
 package com.mbd.cmsstudent.feature.fees
 
+import com.mbd.cmscommon.domain.model.Session
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.domain.model.FeeChallanHeader
@@ -51,18 +52,20 @@ class FeeChallanViewModel @Inject constructor(
             } else {
                 currentSessionId = context.sessionId
                 _refreshTrigger.map {
-                    val structureResult = runCatching { feeRepository.getSessionFee(context.sessionId) }
+                    // Fees are per shift: use the structure of the student's own shift.
+                    val profile = runCatching { academicSessionRepository.getStudentProfile(context.sessionId, context.rollNumber) }.getOrNull()
+                    val shift = profile?.shift ?: context.session?.shifts?.firstOrNull() ?: Session.MORNING
+                    val structureResult = runCatching { feeRepository.getSessionFee(context.sessionId, shift) }
                     val structure = structureResult.orLogCritical("FeeChallanViewModel.getSessionFee")
                     _error.value = if (structureResult.isFailure) "Could not load fee details. Pull to refresh to try again." else null
 
                     val department = context.deptId.let { runCatching { departmentRepository.getDepartment(it) }.getOrNull() }
-                    val profile = runCatching { academicSessionRepository.getStudentProfile(context.sessionId, context.rollNumber) }.getOrNull()
                     _header.value = FeeChallanHeader(
                         studentName = context.name.ifBlank { context.rollNumber },
                         rollNumber = context.rollNumber,
                         fatherName = profile?.fatherName?.takeIf { it.isNotBlank() } ?: profile?.guardianName,
                         sessionLabel = context.session?.label ?: context.sessionId,
-                        shift = context.session?.shift?.name ?: "",
+                        shift = shift.name,
                         deptCode = department?.code,
                         challanNumber = feeChallanNumber(context.sessionId, context.rollNumber, structure?.cadence?.name ?: "FEE"),
                         issueDate = LocalDate.now().toString(),

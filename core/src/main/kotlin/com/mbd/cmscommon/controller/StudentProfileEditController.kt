@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.Fine
 import com.mbd.cmscommon.domain.model.StudentProfile
@@ -43,7 +44,7 @@ class StudentProfileEditController(
     init {
         launch {
             _profile.value = sessionRepository.getStudentProfile(sessionId, rollNumber)
-                ?: StudentProfile(sessionId = sessionId, rollNumber = rollNumber, name = "")
+                ?: StudentProfile(sessionId = sessionId, rollNumber = rollNumber, name = "", shift = Session.MORNING)
         }
         loadFines()
     }

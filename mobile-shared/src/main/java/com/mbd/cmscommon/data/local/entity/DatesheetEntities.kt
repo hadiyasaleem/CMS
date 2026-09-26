@@ -8,6 +8,7 @@ import androidx.room.PrimaryKey
 data class DatesheetEntity(
     @PrimaryKey val datesheetId: String,
     val sessionId: String,
+    val shift: String,
     val semester: Int,
     val defaultStartTime: String?,
     val defaultEndTime: String?,

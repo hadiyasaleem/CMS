@@ -85,7 +85,7 @@ class StudentRecordController(
                     .orLogCritical("StudentRecordController.marks").orEmpty(),
                 results = runCatching { marksRepository.getSemesterGpa(sessionId, rollNumber) }
                     .orLogCritical("StudentRecordController.results").orEmpty().sortedBy { it.semester },
-                feeStructure = runCatching { feeRepository.getSessionFee(sessionId) }.orLogCritical("StudentRecordController.fees"),
+                feeStructure = runCatching { feeRepository.getSessionFee(sessionId, profile.shift) }.orLogCritical("StudentRecordController.fees"),
                 snapshot = studentProfileSnapshot(profile, fines),
             )
         } finally {

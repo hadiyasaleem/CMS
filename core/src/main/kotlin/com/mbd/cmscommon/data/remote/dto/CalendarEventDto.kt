@@ -16,6 +16,7 @@ data class CalendarEventDto(
     val audience: String? = null,
     val deptId: String? = null,
     val sessionId: String? = null,
+    val shift: String? = null,
     val createdBy: String? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null,

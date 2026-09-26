@@ -4,9 +4,14 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "insight_session_overviews", indices = [Index(value = ["deptId", "sessionId"])])
+/** One row per session and shift the session runs. */
+@Entity(
+    tableName = "insight_session_overviews",
+    primaryKeys = ["sessionId", "shift"],
+    indices = [Index(value = ["deptId", "sessionId"])],
+)
 data class InsightSessionOverviewEntity(
-    @PrimaryKey val sessionId: String,
+    val sessionId: String,
     val deptId: String,
     val shift: String,
     val currentSemester: Int,
