@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.controller.MarkAttendanceController
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
+import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.NotificationRepository
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
 import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider
@@ -19,6 +20,7 @@ class MarkAttendanceViewModel @Inject constructor(
     attendanceRepository: SessionAttendanceRepository,
     sessionRepository: AcademicSessionRepository,
     notificationRepository: NotificationRepository,
+    curriculumRepository: CurriculumRepository,
     assignmentsProvider: TeacherAssignmentsProvider,
 ) : ViewModel() {
 
@@ -26,6 +28,7 @@ class MarkAttendanceViewModel @Inject constructor(
         attendanceRepository = attendanceRepository,
         sessionRepository = sessionRepository,
         notificationRepository = notificationRepository,
+        curriculumRepository = curriculumRepository,
         teacherId = sessionManager.accountKey.orEmpty(),
         scope = viewModelScope,
     )

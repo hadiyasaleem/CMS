@@ -8,6 +8,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.res.painterResource
 import com.mbd.cmscommon.controller.MarkAttendanceController
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
+import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.NotificationRepository
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
 import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider
@@ -20,13 +21,14 @@ fun MarkAttendanceScreen(
     sessionRepository: AcademicSessionRepository,
     attendanceRepository: SessionAttendanceRepository,
     notificationRepository: NotificationRepository,
+    curriculumRepository: CurriculumRepository,
     assignmentsProvider: TeacherAssignmentsProvider,
     onOpenHistory: (sessionId: String, courseCode: String) -> Unit = { _, _ -> },
 ) {
     val assignments by assignmentsProvider.observeAssignmentsFor(teacherId).collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
-    val controller = remember(attendanceRepository, sessionRepository, notificationRepository, teacherId) {
-        MarkAttendanceController(attendanceRepository, sessionRepository, notificationRepository, teacherId, scope)
+    val controller = remember(attendanceRepository, sessionRepository, notificationRepository, curriculumRepository, teacherId) {
+        MarkAttendanceController(attendanceRepository, sessionRepository, notificationRepository, curriculumRepository, teacherId, scope)
     }
     val selected by controller.selected.collectAsState()
     val roster by controller.roster.collectAsState()
@@ -39,6 +41,7 @@ fun MarkAttendanceScreen(
     val lectureTopic by controller.lectureTopic.collectAsState()
     val submitState by controller.submitState.collectAsState()
     val date by controller.date.collectAsState()
+    val topics by controller.topics.collectAsState()
 
     MarkAttendanceWorkspace(
         heroPainter = painterResource("teacher-attendance-hero.jpg"),
@@ -61,6 +64,8 @@ fun MarkAttendanceScreen(
         onHistory = onOpenHistory,
         onSubmit = controller::submit,
         date = date,
+        topics = topics,
+        onToggleTopic = controller::toggleTopic,
         onDate = controller::setDate,
     )
 }

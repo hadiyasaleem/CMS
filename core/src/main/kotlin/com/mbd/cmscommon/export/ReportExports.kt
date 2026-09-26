@@ -21,6 +21,7 @@ import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.domain.model.StudentTermAttendance
 import com.mbd.cmscommon.domain.model.Teacher
 import com.mbd.cmscommon.domain.model.attendanceCounts
+import com.mbd.cmscommon.domain.model.distinctTaughtTopics
 import com.mbd.cmscommon.domain.model.isRegisterHoliday
 import com.mbd.cmscommon.teacher.ResolvedAssignment
 import java.time.DayOfWeek
@@ -74,11 +75,10 @@ fun attendanceRegisterExport(
             listOf(counts.present.toString(), counts.absent.toString(), counts.leave.toString(), counts.late.toString(), pct(counts.present, counts.total))
     }
 
-    val topics = marks.values.flatMap { it.values }
-        .filter { !it.lectureTopic.isNullOrBlank() }
-        .groupBy { it.date }
-        .toSortedMap()
-        .map { (date, ms) -> date.dayOfMonth.toString().padStart(2, '0') + " " + date.format(WEEKDAY) + ": " + ms.map { it.lectureTopic!!.trim() }.distinct().joinToString("; ") }
+    // A topic taught on several days is listed once, in the order it was first taught.
+    val topics = distinctTaughtTopics(
+        marks.values.flatMap { it.values }.filter { !it.lectureTopic.isNullOrBlank() }.sortedBy { it.date }.map { it.lectureTopic },
+    )
 
     val subject = listOfNotNull(context.subjectName?.takeIf { it.isNotBlank() }, courseCode.takeIf { it.isNotBlank() }?.let { "($it)" }).joinToString(" ")
     val title = buildList {
@@ -94,8 +94,7 @@ fun attendanceRegisterExport(
         ).joinToString(" | "))
         add("P present | A absent | L leave | * late | black column = holiday")
         if (topics.isNotEmpty()) {
-            add("Topics covered:")
-            topics.forEach { addAll(wrapLine(it, 120).mapIndexed { i, part -> if (i == 0) "  $part" else "    $part" }) }
+            addAll(wrapLine("Topics covered: " + topics.joinToString(", "), 120))
         }
     }.filter { it.isNotBlank() }
 

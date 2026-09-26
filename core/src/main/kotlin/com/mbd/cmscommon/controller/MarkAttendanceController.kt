@@ -5,6 +5,8 @@ import com.mbd.cmscommon.domain.model.AttendanceStatus
 import com.mbd.cmscommon.domain.model.NotificationTargetRole
 import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
+import com.mbd.cmscommon.domain.model.outlineTopics
+import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.NotificationRepository
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
 import com.mbd.cmscommon.teacher.ResolvedAssignment
@@ -25,6 +27,7 @@ class MarkAttendanceController(
     private val attendanceRepository: SessionAttendanceRepository,
     private val sessionRepository: AcademicSessionRepository,
     private val notificationRepository: NotificationRepository,
+    curriculumRepository: CurriculumRepository,
     private val teacherId: String,
     scope: CoroutineScope,
 ) : ScreenController(scope) {
@@ -71,8 +74,23 @@ class MarkAttendanceController(
     private val _lectureTopic = MutableStateFlow("")
     val lectureTopic: StateFlow<String> = _lectureTopic.asStateFlow()
 
+    /** Topics from the selected subject's outline (comma separated by the admin), offered as chips. */
+    val topics: StateFlow<List<String>> = _selected
+        .flatMapLatest { assignment ->
+            if (assignment == null) flowOf(emptyList()) else sessionRepository.observeSession(assignment.sessionId).flatMapLatest { session ->
+                if (session == null) flowOf(emptyList()) else curriculumRepository.observeSemesterSubjects(session.sessionId, session.currentSemester)
+                    .map { subjects -> outlineTopics(subjects.firstOrNull { it.courseCode == assignment.courseCode }?.outline) }
+            }
+        }
+        .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun toggleTopic(topic: String) {
+        if (_alreadyMarked.value) return
+        setLectureTopic(com.mbd.cmscommon.domain.model.toggleTopic(_lectureTopic.value, topic))
+    }
+
     fun setLectureTopic(text: String) {
-        _lectureTopic.value = text.take(200)
+        _lectureTopic.value = text.take(TOPIC_MAX)
     }
 
     val roster: StateFlow<List<SessionStudent>> = _selected
@@ -136,7 +154,7 @@ class MarkAttendanceController(
             return
         }
 
-        if (_lectureTopic.value.trim().length > 200) {
+        if (_lectureTopic.value.trim().length > TOPIC_MAX) {
             _submitState.value = Outcome.Error("Attendance notes are too long.", IllegalArgumentException("attendance text length"))
             return
         }
@@ -185,3 +203,5 @@ class MarkAttendanceController(
         }
     }
 }
+
+private const val TOPIC_MAX = 500

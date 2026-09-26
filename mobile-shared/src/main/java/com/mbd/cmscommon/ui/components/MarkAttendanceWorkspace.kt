@@ -46,6 +46,9 @@ import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.domain.model.AttendanceRegisterSummary
 import com.mbd.cmscommon.domain.model.AttendanceStatus
 import com.mbd.cmscommon.domain.model.SessionStudent
+import com.mbd.cmscommon.domain.model.taughtTopics
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import com.mbd.cmscommon.domain.model.attendanceRegisterSummary
 import com.mbd.cmscommon.teacher.ResolvedAssignment
 import com.mbd.cmscommon.teacher.AssignmentFilter
@@ -98,6 +101,8 @@ fun MarkAttendanceWorkspace(
     modifier: Modifier = Modifier,
     date: LocalDate = LocalDate.now(),
     onDate: (LocalDate) -> Unit = {},
+    topics: List<String> = emptyList(),
+    onToggleTopic: (String) -> Unit = {},
 ) {
     var noteRoll by remember { mutableStateOf<String?>(null) }
     val locked = alreadyMarked
@@ -118,6 +123,8 @@ fun MarkAttendanceWorkspace(
                 date = date,
                 onDate = onDate,
                 topic = lectureTopic,
+                topics = topics,
+                onToggleTopic = onToggleTopic,
                 onTopic = onLectureTopic,
                 onHistory = { selected?.let { onHistory(it.sessionId, it.courseCode) } },
             )
@@ -276,7 +283,7 @@ private fun SummaryPill(text: String, color: Color) {
 }
 
 @Composable
-private fun RegisterTools(selected: ResolvedAssignment?, locked: Boolean, date: LocalDate, onDate: (LocalDate) -> Unit, topic: String, onTopic: (String) -> Unit, onHistory: () -> Unit) {
+private fun RegisterTools(selected: ResolvedAssignment?, locked: Boolean, date: LocalDate, onDate: (LocalDate) -> Unit, topic: String, topics: List<String>, onToggleTopic: (String) -> Unit, onTopic: (String) -> Unit, onHistory: () -> Unit) {
     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             CmsDateField(
@@ -287,10 +294,20 @@ private fun RegisterTools(selected: ResolvedAssignment?, locked: Boolean, date: 
                 supportingText = if (locked) "Already marked on this date - use Attendance History to request changes." else "Pick a past date to view or mark it.",
             )
             Spacer(Modifier.height(8.dp))
+            if (topics.isNotEmpty()) {
+                Text("TOPICS TAUGHT", color = ModMuted, style = CmsTextStyles.eyebrow)
+                Spacer(Modifier.height(6.dp))
+                val chosen = taughtTopics(topic).map { it.lowercase() }.toSet()
+                @OptIn(ExperimentalLayoutApi::class)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    topics.forEach { t -> CmsChip(t, selected = t.lowercase() in chosen, onClick = { if (!locked) onToggleTopic(t) }) }
+                }
+                Spacer(Modifier.height(8.dp))
+            }
             OutlinedTextField(
                 value = topic,
                 onValueChange = onTopic,
-                label = { Text("Lecture topic (optional)") },
+                label = { Text(if (topics.isEmpty()) "Topics taught (optional, comma separated)" else "Other topics (comma separated)") },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !locked,
                 singleLine = true,

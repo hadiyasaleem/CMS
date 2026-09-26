@@ -152,6 +152,7 @@ fun TeacherNavHost(role: UserRole.Teacher, component: DesktopAppComponent, windo
                     sessionRepository = component.academicSessionRepository(),
                     attendanceRepository = component.sessionAttendanceRepository(),
                     notificationRepository = component.notificationRepository(),
+                    curriculumRepository = component.curriculumRepository(),
                     assignmentsProvider = assignmentsProvider,
                     onOpenHistory = { sessionId, courseCode -> screen = TeacherScreen.AttendanceHistory(sessionId, courseCode) },
                 )

@@ -25,6 +25,7 @@ fun MarkAttendanceScreen(onOpenHistory: (String) -> Unit, viewModel: MarkAttenda
     val lectureTopic by controller.lectureTopic.collectAsState()
     val submitState by controller.submitState.collectAsState()
     val date by controller.date.collectAsState()
+    val topics by controller.topics.collectAsState()
 
     MarkAttendanceWorkspace(
         heroPainter = painterResource(R.drawable.teacher_attendance_hero),
@@ -47,6 +48,8 @@ fun MarkAttendanceScreen(onOpenHistory: (String) -> Unit, viewModel: MarkAttenda
         onHistory = { sessionId, courseCode -> onOpenHistory(TeacherDestination.attendanceHistory(sessionId, courseCode)) },
         onSubmit = controller::submit,
         date = date,
+        topics = topics,
+        onToggleTopic = controller::toggleTopic,
         onDate = controller::setDate,
     )
 }

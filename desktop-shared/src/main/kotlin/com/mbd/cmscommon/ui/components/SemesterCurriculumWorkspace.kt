@@ -303,7 +303,7 @@ private fun SubjectEditorDialog(
                     Switch(checked = elective, onCheckedChange = { elective = it })
                 }
                 Spacer(Modifier.height(10.dp))
-                OutlinedTextField(value = outline, onValueChange = { outline = it }, label = { Text("Course outline (optional)") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
+                OutlinedTextField(value = outline, onValueChange = { outline = it }, label = { Text("Course outline / topics (optional)") }, supportingText = { Text("Comma-separated topics, e.g. Arrays, Linked lists, Trees. Teachers pick from these when marking attendance.") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
                 if (error != null) {
                     Spacer(Modifier.height(8.dp))
                     Text(error, color = CurriculumRed, style = MaterialTheme.typography.bodySmall)
