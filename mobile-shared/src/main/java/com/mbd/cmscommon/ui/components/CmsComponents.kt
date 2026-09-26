@@ -1,5 +1,7 @@
 package com.mbd.cmscommon.ui.components
 
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.IntrinsicSize
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
 import androidx.compose.animation.core.animateFloatAsState
@@ -97,11 +99,11 @@ fun CmsCard(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
 @Composable
 fun LeftStripeCard(stripeColor: Color, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     CmsCard(modifier) {
-        Row(Modifier.fillMaxWidth()) {
+        Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
             Box(
                 Modifier
                     .width(4.dp)
-                    .fillMaxSize()
+                    .fillMaxHeight()
                     .background(stripeColor),
             )
             Box(Modifier.weight(1f)) {
