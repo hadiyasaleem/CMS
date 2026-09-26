@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.util.CmsException
 import com.mbd.cmscommon.util.requireValid
 import com.mbd.cmscommon.domain.model.AcademicSession
@@ -36,7 +37,7 @@ class NotificationsController(
     sessionRepository: AcademicSessionRepository,
     departmentRepository: DepartmentRepository,
     audienceContext: Flow<NotificationAudienceContext> = flowOf(NotificationAudienceContext()),
-    private val publisherKind: NotificationPublisherKind = NotificationPublisherKind.NONE,
+    val publisherKind: NotificationPublisherKind = NotificationPublisherKind.NONE,
     private val permissionCheck: (suspend () -> Boolean)? = null,
     teacherAssignments: Flow<List<ResolvedAssignment>> = flowOf(emptyList()),
     scope: CoroutineScope,
@@ -77,6 +78,11 @@ class NotificationsController(
             }.stateIn(scope, SharingStarted.Eagerly, emptyList())
         NotificationPublisherKind.NONE -> MutableStateFlow(emptyList())
     }
+
+    /** The shifts a teacher teaches in each session; a teacher may narrow a notice only to one of those. */
+    val teachingShifts: StateFlow<Map<String, Set<Session>>> = teacherAssignments
+        .map { list -> list.filter { it.classShift != null }.groupBy { it.sessionId }.mapValues { (_, a) -> a.mapNotNull { it.classShift }.toSet() } }
+        .stateIn(scope, SharingStarted.Eagerly, emptyMap())
 
     private val _publishAccess = MutableStateFlow(
         when {
@@ -138,41 +144,41 @@ class NotificationsController(
                 "The expiry date must be in the future."
             }
 
-            val (targetRole, targetDepartment, targetSession) = when (publisherKind) {
+            // Department -> Session -> Shift targeting: each level is optional and narrows the audience.
+            val sessionPicked = draft.sessionId?.let { id -> publishSessions.value.firstOrNull { it.sessionId == id } }
+            requireValid(draft.sessionId == null || sessionPicked != null) {
+                if (publisherKind == NotificationPublisherKind.TEACHER) "Choose one of your assigned sessions." else "Choose a valid academic session."
+            }
+            requireValid(draft.shift == null || sessionPicked != null) { "Choose a session before narrowing to a shift." }
+            requireValid(draft.shift == null || sessionPicked!!.runs(draft.shift)) { "This session does not run the ${draft.shift?.label} shift." }
+            val targetDepartment = sessionPicked?.deptId ?: draft.departmentId
+            requireValid(draft.departmentId == null || targetDepartment == draft.departmentId) {
+                "The session does not belong to the chosen department."
+            }
+
+            val targetRole = when (publisherKind) {
                 NotificationPublisherKind.ADMIN -> {
-                    val role = draft.targetRole
-                    val dept = draft.departmentId
-                    val session = draft.sessionId
-                    requireValid(session == null || role == NotificationTargetRole.STUDENT) {
-                        "Session notices can only target students."
-                    }
-                    requireValid(dept == null || session == null) {
-                        "Choose either a department or an academic session, not both."
-                    }
-                    requireValid(dept == null || role != NotificationTargetRole.ADMIN) {
+                    requireValid(targetDepartment == null || draft.targetRole != NotificationTargetRole.ADMIN) {
                         "Admin notices are always college-wide."
                     }
-                    if (session != null) {
-                        requireValid(publishSessions.value.any { it.sessionId == session }) { "Choose a valid academic session." }
+                    if (targetDepartment != null) {
+                        requireValid(departments.value.any { it.deptId == targetDepartment }) { "Choose a valid department." }
                     }
-                    if (dept != null) {
-                        requireValid(departments.value.any { it.deptId == dept }) { "Choose a valid department." }
-                    }
-                    Triple(role, dept, session)
+                    draft.targetRole
                 }
                 NotificationPublisherKind.TEACHER -> {
-                    val session = draft.sessionId
-                    requireValid(session != null && publishSessions.value.any { it.sessionId == session }) {
-                        "Choose one of your assigned sessions."
+                    requireValid(sessionPicked != null) { "Choose one of your assigned sessions." }
+                    requireValid(draft.shift == null || draft.shift in teachingShifts.value[sessionPicked!!.sessionId].orEmpty()) {
+                        "You don't teach the ${draft.shift?.label} shift of this session."
                     }
-                    Triple(NotificationTargetRole.STUDENT, null, session)
+                    NotificationTargetRole.STUDENT
                 }
                 NotificationPublisherKind.NONE -> throw CmsException.Permission("Publishing is unavailable for this account.")
             }
 
-            repository.send(title, body, targetRole, targetSession, accountKey, draft.priority, targetDepartment, draft.expiresAt)
+            repository.send(title, body, targetRole, sessionPicked?.sessionId, accountKey, draft.priority, targetDepartment, draft.expiresAt, draft.shift)
             repository.syncAuthoredByCurrentUser(accountKey)
-            _notice.value = "Notification sent to ${audienceLabel(targetRole, targetDepartment, targetSession)}."
+            _notice.value = "Notification sent to ${audienceLabel(targetRole, targetDepartment, sessionPicked?.sessionId, draft.shift)}."
         } catch (t: Throwable) {
             _composeError.value = t.userMessageLogged("Could not send this notification.")
         } finally {
@@ -228,13 +234,14 @@ class NotificationsController(
         }
     }
 
-    private fun audienceLabel(role: NotificationTargetRole, departmentId: String?, sessionId: String?): String {
+    private fun audienceLabel(role: NotificationTargetRole, departmentId: String?, sessionId: String?, shift: Session?): String {
         if (sessionId != null) {
             val session = sessions.value.firstOrNull { it.sessionId == sessionId }
+            val shiftPart = shift?.let { " (${it.label} shift)" }.orEmpty()
             return if (session != null) {
-                "the ${session.startYear}-${session.endYear} session"
+                "the ${session.startYear}-${session.endYear} session$shiftPart"
             } else {
-                sessionId
+                sessionId + shiftPart
             }
         }
         if (departmentId != null) {

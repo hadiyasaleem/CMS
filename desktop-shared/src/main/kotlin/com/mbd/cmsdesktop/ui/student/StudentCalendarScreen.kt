@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.ui.student
 
+import com.mbd.cmscommon.controller.observeShiftOf
 import androidx.compose.runtime.getValue
 
 import androidx.compose.runtime.Composable
@@ -26,7 +27,12 @@ fun StudentCalendarScreen(
     repository: CalendarRepository,
     departmentRepository: DepartmentRepository,
     sessionRepository: AcademicSessionRepository,
+    rollNumber: String? = null,
 ) {
+    // A shift-targeted event reaches only the student's own shift.
+    val shift by remember(sessionId, rollNumber) {
+        rollNumber?.let { sessionRepository.observeShiftOf(sessionId, it) } ?: kotlinx.coroutines.flow.flowOf(null)
+    }.collectAsState(initial = null)
     val scope = rememberCoroutineScope()
     val controller = remember(repository) { EventsController(repository, scope) }
     val events by controller.events.collectAsState()
@@ -37,7 +43,7 @@ fun StudentCalendarScreen(
 
     CalendarWorkspace(
         events = events.orEmpty(),
-        viewer = CalendarViewerContext(CalendarViewerRole.STUDENT, departmentId, setOf(sessionId)),
+        viewer = CalendarViewerContext(CalendarViewerRole.STUDENT, departmentId, setOf(sessionId), shift),
         departments = emptyList(),
         sessions = emptyList(),
         canEdit = false,

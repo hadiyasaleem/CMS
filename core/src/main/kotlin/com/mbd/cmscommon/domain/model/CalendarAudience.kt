@@ -13,9 +13,27 @@ enum class CalendarViewerRole {
 
 data class CalendarViewerContext(
     val role: CalendarViewerRole,
+    /** A student's department, or a teacher's home department. */
     val departmentId: String? = null,
     val sessionIds: Set<String> = emptySet(),
-)
+    /** A student's own shift: a shift-targeted event reaches only that shift. */
+    val shift: Session? = null,
+    /** The sessions and shifts a teacher teaches; null falls back to [sessionIds] (any shift). */
+    val taughtClasses: Set<TaughtClass>? = null,
+) {
+    /** The viewer for the shared targeting rule ([audienceReaches]). */
+    val audienceViewer: AudienceViewer
+        get() = when (role) {
+            CalendarViewerRole.ADMIN -> AudienceViewer.Admin
+            CalendarViewerRole.STUDENT -> AudienceViewer.Student(departmentId, sessionIds.singleOrNull(), shift)
+            CalendarViewerRole.TEACHER -> AudienceViewer.Teacher(
+                departmentId,
+                taughtClasses ?: sessionIds.flatMap { id ->
+                    Session.entries.map { TaughtClass(id, id.substringBeforeLast('_'), it) }
+                }.toSet(),
+            )
+        }
+}
 
 data class CalendarSummary(
     val upcoming: Int,
@@ -128,10 +146,7 @@ fun isVisibleTo(event: CalendarEvent, viewer: CalendarViewerContext): Boolean {
     val audienceMatches = event.audience.equals("ALL", ignoreCase = true) ||
         event.audience.equals(viewer.role.name, ignoreCase = true)
     if (!audienceMatches) return false
-    if (!event.deptId.isNullOrBlank() && !event.deptId.equals(viewer.departmentId, ignoreCase = true)) {
-        return false
-    }
-    return event.sessionId.isNullOrBlank() || viewer.sessionIds.contains(event.sessionId)
+    return audienceReaches(event.audienceTarget, viewer.audienceViewer)
 }
 
 fun validationMessage(event: CalendarEvent): String? {

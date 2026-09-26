@@ -52,6 +52,7 @@ class StudentMoreController(
         launch {
             _loading.value = true
             _loadError.value = null
+            val shift = runCatching { sessionRepository.getStudentProfile(sessionId, rollNumber)?.shift }.getOrNull()
             coroutineScope {
                 val events = async {
                     runCatching {
@@ -62,14 +63,13 @@ class StudentMoreController(
                 val fee = async {
                     runCatching {
                         if (fetchRemote) feeRepository.syncSession(sessionId)
-                        val shift = sessionRepository.getStudentProfile(sessionId, rollNumber)?.shift ?: Session.MORNING
-                        feeRepository.getSessionFee(sessionId, shift)
+                        feeRepository.getSessionFee(sessionId, shift ?: Session.MORNING)
                     }
                 }
                 val profile = async { runCatching { sessionRepository.getStudentProfile(sessionId, rollNumber) } }
                 val unread = async {
                     runCatching {
-                        val audience = NotificationAudienceContext(sessionId, departmentId)
+                        val audience = NotificationAudienceContext(sessionId, departmentId, shift)
                         if (fetchRemote) notificationRepository.sync(NotificationTargetRole.STUDENT, audience)
                         notificationRepository.observeUnreadCount(NotificationTargetRole.STUDENT, audience).first()
                     }
@@ -82,7 +82,7 @@ class StudentMoreController(
                 val results = listOf(eventResult, feeResult, profileResult, unreadResult)
 
                 if (request == version) {
-                    val viewer = CalendarViewerContext(CalendarViewerRole.STUDENT, departmentId, setOf(sessionId))
+                    val viewer = CalendarViewerContext(CalendarViewerRole.STUDENT, departmentId, setOf(sessionId), shift)
                     _snapshot.value = studentMoreSnapshot(
                         eventResult.getOrDefault(emptyList()),
                         feeResult.getOrNull(),

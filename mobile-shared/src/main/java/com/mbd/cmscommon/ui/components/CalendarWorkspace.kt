@@ -415,8 +415,8 @@ private fun CreateCalendarEventDialog(
     var title by remember { mutableStateOf("") }
     var type by remember { mutableStateOf("EVENT") }
     var audience by remember { mutableStateOf("ALL") }
-    var deptId by remember { mutableStateOf<String?>(null) }
-    var sessionId by remember { mutableStateOf<String?>(null) }
+    // Department -> Session -> Shift target; none chosen is college-wide.
+    var target by remember { mutableStateOf(ShiftScope.ALL) }
     var startDate by remember { mutableStateOf(initialDate) }
     var endDate by remember { mutableStateOf("") }
     var startTime by remember { mutableStateOf("") }
@@ -435,8 +435,9 @@ private fun CreateCalendarEventDialog(
         description = description.trim().ifBlank { null },
         venue = venue.trim().ifBlank { null },
         audience = audience,
-        deptId = deptId,
-        sessionId = sessionId,
+        deptId = target.deptId,
+        sessionId = target.sessionId,
+        shift = target.shift,
     )
     val error = validationMessage(draft)
 
@@ -451,27 +452,18 @@ private fun CreateCalendarEventDialog(
                 Spacer(Modifier.height(10.dp))
                 DropdownField("Audience", audience, AUDIENCES, onSelect = { audience = it })
                 Spacer(Modifier.height(10.dp))
-                Text("Academic scope", style = MaterialTheme.typography.labelMedium)
-                CmsEntityPicker(
-                    label = "Department",
-                    selectedId = deptId,
-                    options = departments.map { CmsEntityOption(it.deptId, it.name) },
-                    onSelected = { deptId = it; sessionId = null },
-                    optional = true,
-                    emptyLabel = "College wide",
-                    modifier = Modifier.padding(top = 6.dp),
+                ShiftScopeSelector(target, departmentScopeOptions(departments), sessions, { target = it }, label = "ACADEMIC SCOPE")
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    when {
+                        target.isEmpty -> "Reaches the whole college."
+                        target.sessionId == null -> "Reaches every session and both shifts of this department."
+                        target.shift == null -> "Reaches both shifts of this session."
+                        else -> "Reaches only the ${target.shift!!.label} shift of this session."
+                    },
+                    color = ModMuted,
+                    style = MaterialTheme.typography.bodySmall,
                 )
-                if (deptId != null) {
-                    CmsEntityPicker(
-                        label = "Academic session",
-                        selectedId = sessionId,
-                        options = sessions.filter { it.deptId == deptId }.map { CmsEntityOption(it.sessionId, "${it.startYear}-${it.endYear} ${it.shiftMode.label}") },
-                        onSelected = { sessionId = it },
-                        optional = true,
-                        emptyLabel = "All sessions",
-                        modifier = Modifier.padding(top = 8.dp),
-                    )
-                }
                 Spacer(Modifier.height(10.dp))
                 CmsDateField(value = startDate, onValueChange = { startDate = it }, label = "Start date")
                 Spacer(Modifier.height(10.dp))

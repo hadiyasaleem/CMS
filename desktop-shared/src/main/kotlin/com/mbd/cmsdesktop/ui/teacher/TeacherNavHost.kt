@@ -1,5 +1,8 @@
 package com.mbd.cmsdesktop.ui.teacher
 
+import com.mbd.cmscommon.controller.teacherNotificationAudience
+import com.mbd.cmscommon.controller.taughtClasses
+import kotlinx.coroutines.flow.combine
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -85,8 +88,9 @@ fun TeacherNavHost(role: UserRole.Teacher, component: DesktopAppComponent, windo
     val teacherId = role.teacherId
 
     LaunchedEffect(teacherId) {
-        val teacher = component.teacherRepository().getTeacher(teacherId)
-        notificationContext = NotificationAudienceContext(departmentId = teacher?.deptId)
+        // Scoped notices reach this teacher's department and the sessions/shifts they teach.
+        combine(component.teacherRepository().observeTeacher(teacherId), assignmentsProvider.observeAssignmentsFor(teacherId), ::teacherNotificationAudience)
+            .collect { notificationContext = it }
 
     }
 
@@ -271,6 +275,7 @@ fun TeacherNavHost(role: UserRole.Teacher, component: DesktopAppComponent, windo
                             role = CalendarViewerRole.TEACHER,
                             departmentId = teacherProfile?.deptId,
                             sessionIds = calendarAssignments.mapTo(mutableSetOf()) { it.sessionId },
+                            taughtClasses = calendarAssignments.taughtClasses(),
                         ),
                         canEdit = false,
                     )
@@ -321,8 +326,7 @@ fun TeacherNavHost(role: UserRole.Teacher, component: DesktopAppComponent, windo
                 TeacherScreen.Notifications -> {
                     val teacherId2 = component.sessionManager().accountKey.orEmpty()
                     val audienceContext = remember(teacherId2) {
-                        component.teacherRepository().observeTeacher(teacherId2)
-                            .map { NotificationAudienceContext(departmentId = it?.deptId) }
+                        combine(component.teacherRepository().observeTeacher(teacherId2), assignmentsProvider.observeAssignmentsFor(teacherId2), ::teacherNotificationAudience)
                     }
                     val permissionCheck: suspend () -> Boolean = remember(teacherId2) {
                         { component.teacherRepository().getTeacher(teacherId2)?.permissions?.canSendNotifications == true }

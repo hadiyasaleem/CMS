@@ -1,5 +1,9 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.controller.NotificationPublisherKind
+import com.mbd.cmscommon.domain.model.AcademicSession
+import com.mbd.cmscommon.domain.model.Session
+import com.mbd.cmscommon.domain.model.ShiftMode
 import com.mbd.cmscommon.controller.inScope
 import com.mbd.cmscommon.controller.departmentScopeOptions
 import com.mbd.cmscommon.domain.model.ShiftScope
@@ -66,6 +70,7 @@ fun NotificationControllerWorkspace(controller: NotificationsController, modifie
     val allSent by controller.sent.collectAsState()
     val departments by controller.departments.collectAsState()
     val publishSessions by controller.publishSessions.collectAsState()
+    val teachingShifts by controller.teachingShifts.collectAsState()
     // Department -> Session -> Shift filter over each notice's audience (students are already scoped to theirs).
     var filterScope by remember { mutableStateOf(ShiftScope.ALL) }
     val showScopeFilter = controller.viewerRole != NotificationTargetRole.STUDENT && publishSessions.isNotEmpty()
@@ -155,8 +160,9 @@ fun NotificationControllerWorkspace(controller: NotificationsController, modifie
     if (showCompose) {
         ComposeNotificationDialog(
             viewerRole = controller.viewerRole,
+            teacherComposer = controller.publisherKind == NotificationPublisherKind.TEACHER,
             departments = departments,
-            sessions = publishSessions,
+            sessions = teacherShiftSessions(publishSessions, teachingShifts),
             busy = busyActionId == NotificationsController.SEND_ACTION,
             onDismiss = { showCompose = false },
             onSend = { draft -> controller.send(draft); showCompose = false },
@@ -248,6 +254,7 @@ private fun NotificationEmpty(tab: NoticeTab) {
 @Composable
 private fun ComposeNotificationDialog(
     viewerRole: NotificationTargetRole,
+    teacherComposer: Boolean,
     departments: List<com.mbd.cmscommon.domain.model.Department>,
     sessions: List<com.mbd.cmscommon.domain.model.AcademicSession>,
     busy: Boolean,
@@ -258,12 +265,12 @@ private fun ComposeNotificationDialog(
     var body by remember { mutableStateOf("") }
     var targetRole by remember { mutableStateOf(NotificationTargetRole.ALL) }
     var priority by remember { mutableStateOf(NotificationPriority.NORMAL) }
-    var deptId by remember { mutableStateOf<String?>(null) }
-    var sessionId by remember { mutableStateOf<String?>(null) }
+    // Department -> Session -> Shift target; every level is optional (college-wide when none is chosen).
+    var target by remember { mutableStateOf(ShiftScope.ALL) }
 
     val titleValid = title.trim().length in 3..120
     val bodyValid = body.trim().length in 5..2000
-    val teacherAudience = sessions.isNotEmpty() && departments.isEmpty()
+    val teacherAudience = teacherComposer
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -285,36 +292,18 @@ private fun ComposeNotificationDialog(
                             CmsChip(role.name, selected = targetRole == role, onClick = { targetRole = role })
                         }
                     }
-                    if (targetRole == NotificationTargetRole.STUDENT && sessions.isNotEmpty()) {
+                    if (targetRole != NotificationTargetRole.ADMIN) {
                         Spacer(Modifier.height(10.dp))
-                        CmsEntityPicker(
-                            label = "Academic session",
-                            selectedId = sessionId,
-                            options = sessions.map { CmsEntityOption(it.sessionId, "${it.startYear}-${it.endYear} ${it.shiftMode.label}") },
-                            onSelected = { sessionId = it },
-                            optional = true,
-                            emptyLabel = "All students",
-                        )
-                    }
-                    if (targetRole != NotificationTargetRole.ADMIN && departments.isNotEmpty()) {
-                        Spacer(Modifier.height(10.dp))
-                        CmsEntityPicker(
-                            label = "Department scope",
-                            selectedId = deptId,
-                            options = departments.map { CmsEntityOption(it.deptId, it.name) },
-                            onSelected = { deptId = it },
-                            optional = true,
-                            emptyLabel = "College wide",
-                        )
+                        ShiftScopeSelector(target, departmentScopeOptions(departments), sessions, { target = it }, label = "REACHES")
+                        Spacer(Modifier.height(4.dp))
+                        Text(audienceHint(target), color = ModMuted, style = MaterialTheme.typography.bodySmall)
                     }
                 } else {
                     Spacer(Modifier.height(10.dp))
-                    CmsEntityPicker(
-                        label = "Your class session",
-                        selectedId = sessionId,
-                        options = sessions.map { CmsEntityOption(it.sessionId, "${it.startYear}-${it.endYear} ${it.shiftMode.label}") },
-                        onSelected = { sessionId = it },
-                    )
+                    // Teachers notify students of the sessions (and shifts) they teach.
+                    ShiftScopeSelector(target, sessions.map { it.deptId to it.deptId.uppercase() }.distinct(), sessions, { target = it }, label = "YOUR CLASS")
+                    Spacer(Modifier.height(4.dp))
+                    Text(if (target.sessionId == null) "Choose one of your sessions." else audienceHint(target), color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
                 Spacer(Modifier.height(10.dp))
                 Text("PRIORITY", color = ModMuted, style = CmsTextStyles.eyebrow)
@@ -338,14 +327,27 @@ private fun ComposeNotificationDialog(
                             body = body,
                             targetRole = if (teacherAudience) NotificationTargetRole.STUDENT else targetRole,
                             priority = priority,
-                            departmentId = deptId,
-                            sessionId = sessionId,
+                            departmentId = target.deptId.takeIf { teacherAudience || targetRole != NotificationTargetRole.ADMIN },
+                            sessionId = target.sessionId.takeIf { teacherAudience || targetRole != NotificationTargetRole.ADMIN },
+                            shift = target.shift.takeIf { teacherAudience || targetRole != NotificationTargetRole.ADMIN },
                         ),
                     )
                 },
-                enabled = titleValid && bodyValid && !busy && (!teacherAudience || sessionId != null),
+                enabled = titleValid && bodyValid && !busy && (!teacherAudience || target.sessionId != null),
             ) { Text(if (busy) "Sending..." else "Send notification") }
         },
         dismissButton = { TextButton(onClick = onDismiss, enabled = !busy) { Text("Cancel") } },
     )
 }
+
+/** "Reaches: IT 2022–2026, Evening shift" -- who a scoped notice or event is for. */
+private fun audienceHint(target: ShiftScope): String = when {
+    target.isEmpty -> "Reaches the whole college."
+    target.sessionId == null -> "Reaches every session and both shifts of this department."
+    target.shift == null -> "Reaches both shifts of this session."
+    else -> "Reaches only the ${target.shift?.label} shift of this session."
+}
+
+/** For a teacher, each session offers only the shifts they teach in it (an admin's map is empty: all shifts). */
+private fun teacherShiftSessions(sessions: List<AcademicSession>, teachingShifts: Map<String, Set<Session>>): List<AcademicSession> =
+    sessions.map { session -> ShiftMode.of(teachingShifts[session.sessionId].orEmpty())?.let { session.copy(shiftMode = it) } ?: session }

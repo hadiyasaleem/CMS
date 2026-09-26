@@ -2018,6 +2018,14 @@ export type Database = {
         Returns: boolean
       }
       teacher_can: { Args: { flag: string }; Returns: boolean }
+      teacher_reaches: {
+        Args: {
+          p_dept: string
+          p_session: string
+          p_shift: Database["public"]["Enums"]["shift"]
+        }
+        Returns: boolean
+      }
       teaches: { Args: { p_session: string }; Returns: boolean }
       teaches_shift: {
         Args: {

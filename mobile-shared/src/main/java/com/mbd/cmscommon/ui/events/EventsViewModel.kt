@@ -1,5 +1,10 @@
 package com.mbd.cmscommon.ui.events
 
+import com.mbd.cmscommon.controller.observeShiftOf
+import com.mbd.cmscommon.controller.taughtClasses
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.auth.SessionManager
@@ -42,20 +47,27 @@ class EventsViewModel @Inject constructor(
         userRepository.observeCurrentUserRole(),
         teacherRepository.observeTeacher(accountKey),
         assignmentsProvider.observeMyAssignments(),
-    ) { role, teacher, teaching ->
+    ) { role, teacher, teaching -> Triple(role, teacher, teaching) }.flatMapLatest { (role, teacher, teaching) ->
         when (role) {
-            null -> null
-            is UserRole.Admin -> CalendarViewerContext(CalendarViewerRole.ADMIN)
-            is UserRole.Teacher -> CalendarViewerContext(
-                CalendarViewerRole.TEACHER,
-                teacher?.deptId,
-                teaching.map { it.sessionId }.toSet(),
+            null -> flowOf(null)
+            is UserRole.Admin -> flowOf(CalendarViewerContext(CalendarViewerRole.ADMIN))
+            // A teacher sees events for their department and the sessions/shifts they teach.
+            is UserRole.Teacher -> flowOf(
+                CalendarViewerContext(
+                    CalendarViewerRole.TEACHER,
+                    teacher?.deptId,
+                    teaching.map { it.sessionId }.toSet(),
+                    taughtClasses = teaching.taughtClasses(),
+                ),
             )
+            // A student sees their department, session and own shift's events.
             is UserRole.LinkedStudent -> {
                 val sessionId = StudentIdCodec.sessionIdOf(role.studentId)
-                CalendarViewerContext(CalendarViewerRole.STUDENT, StudentIdCodec.deptIdOf(sessionId), setOf(sessionId))
+                sessionRepository.observeShiftOf(sessionId, StudentIdCodec.rollOf(role.studentId)).map { shift ->
+                    CalendarViewerContext(CalendarViewerRole.STUDENT, StudentIdCodec.deptIdOf(sessionId), setOf(sessionId), shift)
+                }
             }
-            is UserRole.UnlinkedStudent -> CalendarViewerContext(CalendarViewerRole.STUDENT)
+            is UserRole.UnlinkedStudent -> flowOf(CalendarViewerContext(CalendarViewerRole.STUDENT))
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 

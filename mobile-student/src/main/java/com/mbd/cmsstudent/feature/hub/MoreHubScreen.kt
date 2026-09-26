@@ -69,7 +69,7 @@ class MoreHubViewModel @Inject constructor(
                     val unreadResult = runCatching {
                         notificationRepository.observeUnreadCount(
                             NotificationTargetRole.STUDENT,
-                            NotificationAudienceContext(sessionId = context.sessionId, departmentId = context.deptId),
+                            NotificationAudienceContext(sessionId = context.sessionId, departmentId = context.deptId, shift = context.shift ?: profile?.shift),
                         ).first()
                     }
                     val unread = unreadResult.orLogCritical("MoreHubViewModel.observeUnreadCount", 0)
@@ -83,7 +83,7 @@ class MoreHubViewModel @Inject constructor(
                         fee = fee,
                         unreadNotifications = unread,
                         profile = profile,
-                        viewer = CalendarViewerContext(CalendarViewerRole.STUDENT, context.deptId, setOf(context.sessionId)),
+                        viewer = CalendarViewerContext(CalendarViewerRole.STUDENT, context.deptId, setOf(context.sessionId), context.shift ?: profile?.shift),
                         today = LocalDate.now(),
                     )
                 }

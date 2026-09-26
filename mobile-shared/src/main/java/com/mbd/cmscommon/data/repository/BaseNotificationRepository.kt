@@ -1,5 +1,7 @@
 package com.mbd.cmscommon.data.repository
 
+import com.mbd.cmscommon.domain.model.Session
+import com.mbd.cmscommon.domain.repository.notificationReaches
 import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.local.dao.NotificationDao
 import com.mbd.cmscommon.data.mapper.NotificationMapper
@@ -43,21 +45,29 @@ abstract class BaseNotificationRepository(
 
     private fun syncOwnerKey(): String = sessionManager.accountKey ?: SyncCheckpointDefaults.ownerKey("anonymous-local")
 
-    override fun observeForRole(role: NotificationTargetRole, context: NotificationAudienceContext): Flow<List<Notification>> =
-        notificationDao.observeForRole(role.name, context.sessionId, context.departmentId, role == NotificationTargetRole.ADMIN, System.currentTimeMillis())
-            .map { rows -> rows.map(NotificationMapper::entityToDomain) }
+    override fun observeForRole(role: NotificationTargetRole, context: NotificationAudienceContext): Flow<List<Notification>> {
+        // Teachers are matched by the sessions and shifts they teach, which SQL can't take as a parameter:
+        // read every scope for the role and apply the shared rule (the server's RLS already did the same).
+        val teacherRule = role == NotificationTargetRole.TEACHER && context.taughtClasses != null
+        val includeAllScopes = role == NotificationTargetRole.ADMIN || teacherRule
+        return notificationDao.observeForRole(role.name, context.sessionId, context.departmentId, context.shift?.name, includeAllScopes, System.currentTimeMillis())
+            .map { rows ->
+                rows.map(NotificationMapper::entityToDomain)
+                    .filter { !teacherRule || notificationReaches(it, role, context) }
+            }
+    }
 
     override fun observeAuthoredByCurrentUser(uid: String): Flow<List<Notification>> =
         notificationDao.observeAuthoredBy(uid).map { rows -> rows.map(NotificationMapper::entityToDomain) }
 
     override fun observeUnreadCount(role: NotificationTargetRole, context: NotificationAudienceContext): Flow<Int> =
         observeLastViewedAt().distinctUntilChanged().flatMapLatest { since ->
-            notificationDao.observeUnreadCount(role.name, context.sessionId, context.departmentId, role == NotificationTargetRole.ADMIN, System.currentTimeMillis(), since)
+            observeForRole(role, context).map { items -> items.count { it.createdAt.toEpochMilli() >= since } }
         }
 
     override suspend fun sync(role: NotificationTargetRole, context: NotificationAudienceContext) {
         val ownerKey = syncOwnerKey()
-        val scopeKey = SyncCheckpointDefaults.scoped("role" to role.name, "session" to context.sessionId, "dept" to context.departmentId)
+        val scopeKey = SyncCheckpointDefaults.scoped("role" to role.name, "session" to context.sessionId, "dept" to context.departmentId, "shift" to context.shift?.name)
         val since = checkpointStore.get(ownerKey, SupabaseTables.NOTIFICATIONS, scopeKey)?.lastUpdatedAt ?: SyncCheckpointDefaults.EPOCH
         var maxUpdatedAt = since
         var offset = 0L
@@ -119,6 +129,7 @@ abstract class BaseNotificationRepository(
         priority: NotificationPriority,
         targetDeptId: String?,
         expiresAt: Instant?,
+        targetShift: Session?,
     ) {
         val domain = Notification(
             notificationId = "",
@@ -129,6 +140,7 @@ abstract class BaseNotificationRepository(
             createdByUid = createdByUid,
             priority = priority,
             targetDeptId = targetDeptId,
+            targetShift = targetShift,
             expiresAt = expiresAt,
             createdAt = Instant.EPOCH,
         )

@@ -22,7 +22,7 @@ class NotificationsBadgeViewModel @Inject constructor(
         .flatMapLatest { context ->
             repository.observeUnreadCount(
                 NotificationTargetRole.STUDENT,
-                NotificationAudienceContext(sessionId = context?.sessionId, departmentId = context?.deptId),
+                NotificationAudienceContext(sessionId = context?.sessionId, departmentId = context?.deptId, shift = context?.shift),
             )
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)

@@ -52,8 +52,8 @@ fun reviewReasons(
     if (notification.createdAt == Instant.EPOCH) reasons += "Missing publish time"
     if (notification.createdAt.isAfter(now.plusSeconds(300))) reasons += "Publish time is in the future"
 
-    if (!notification.targetOfferingId.isNullOrBlank() && notification.targetRole != NotificationTargetRole.STUDENT) {
-        reasons += "Session target is only valid for students"
+    if (notification.targetShift != null && notification.targetOfferingId.isNullOrBlank()) {
+        reasons += "Shift target needs a session"
     }
     if (!notification.targetDeptId.isNullOrBlank() && notification.targetRole == NotificationTargetRole.ADMIN) {
         reasons += "Admin notices must be college-wide"

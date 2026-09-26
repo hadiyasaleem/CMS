@@ -7,6 +7,7 @@ import com.mbd.cmscommon.domain.model.CalendarEvent
 import com.mbd.cmscommon.domain.model.MarkEditRequest
 import com.mbd.cmscommon.domain.model.Notification
 import com.mbd.cmscommon.domain.model.StudentLinkRequest
+import com.mbd.cmscommon.domain.model.TaughtClass
 import com.mbd.cmscommon.domain.model.ExamStat
 import com.mbd.cmscommon.domain.model.SessionOverview
 import com.mbd.cmscommon.domain.model.shiftForRoll
@@ -194,3 +195,7 @@ fun List<SessionPeriod>.inScope(scope: ShiftScope, sessions: Collection<Academic
 @JvmName("paperSlotsInScope")
 fun List<TeacherPaperSlot>.inScope(scope: ShiftScope, sessions: Collection<AcademicSession>): List<TeacherPaperSlot> =
     if (scope.isEmpty) this else filter { scope.matchesSessionItem(it.datesheet.sessionId, it.datesheet.shift, sessions) }
+
+/** The sessions and shifts a teacher teaches, for event and notification targeting. */
+fun List<ResolvedAssignment>.taughtClasses(): Set<TaughtClass> =
+    mapNotNull { a -> a.classShift?.let { TaughtClass(a.sessionId, a.deptId.ifBlank { StudentIdCodec.deptIdOf(a.sessionId) }, it) } }.toSet()

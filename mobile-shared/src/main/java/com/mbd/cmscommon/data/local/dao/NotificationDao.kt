@@ -12,6 +12,11 @@ interface NotificationDao {
     @Query("SELECT * FROM notifications WHERE createdByUid = :uid ORDER BY createdAt DESC")
     fun observeAuthoredBy(uid: String): Flow<List<NotificationEntity>>
 
+    /**
+     * The same progressive rule the server's RLS applies: every level a notice targets (department, session,
+     * shift) must match the reader. [includeAllScopes] skips the scope levels (admins, and teachers, whose
+     * taught sessions and shifts are matched in Kotlin by NotificationAudienceContext).
+     */
     @Query(
         """
         SELECT * FROM notifications
@@ -19,6 +24,7 @@ interface NotificationDao {
           AND (targetRole = :role OR targetRole = 'ALL')
           AND (:includeAllScopes = 1 OR targetOfferingId IS NULL OR targetOfferingId = :sessionId)
           AND (:includeAllScopes = 1 OR targetDeptId IS NULL OR targetDeptId = :departmentId)
+          AND (:includeAllScopes = 1 OR targetShift IS NULL OR targetShift = :shift)
           AND (expiresAt IS NULL OR expiresAt >= :nowMillis)
         ORDER BY createdAt DESC
         """,
@@ -27,29 +33,10 @@ interface NotificationDao {
         role: String,
         sessionId: String?,
         departmentId: String?,
+        shift: String?,
         includeAllScopes: Boolean,
         nowMillis: Long,
     ): Flow<List<NotificationEntity>>
-
-    @Query(
-        """
-        SELECT COUNT(*) FROM notifications
-        WHERE isDeleted = 0
-          AND (targetRole = :role OR targetRole = 'ALL')
-          AND (:includeAllScopes = 1 OR targetOfferingId IS NULL OR targetOfferingId = :sessionId)
-          AND (:includeAllScopes = 1 OR targetDeptId IS NULL OR targetDeptId = :departmentId)
-          AND (expiresAt IS NULL OR expiresAt >= :nowMillis)
-          AND createdAt >= :sinceMillis
-        """,
-    )
-    fun observeUnreadCount(
-        role: String,
-        sessionId: String?,
-        departmentId: String?,
-        includeAllScopes: Boolean,
-        nowMillis: Long,
-        sinceMillis: Long,
-    ): Flow<Int>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(items: List<NotificationEntity>)

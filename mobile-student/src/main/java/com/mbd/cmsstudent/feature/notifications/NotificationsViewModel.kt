@@ -33,7 +33,7 @@ class NotificationsViewModel @Inject constructor(
         // Supply the student's session/dept so the controller's STUDENT init filter passes and
         // sync runs (otherwise sessionId is null → infinite spinner, no sync, session notices hidden).
         audienceContext = currentStudentProvider.observeContext().map {
-            NotificationAudienceContext(sessionId = it?.sessionId, departmentId = it?.deptId)
+            NotificationAudienceContext(sessionId = it?.sessionId, departmentId = it?.deptId, shift = it?.shift)
         },
         scope = viewModelScope,
     )

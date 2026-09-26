@@ -1,5 +1,7 @@
 package com.mbd.cmsteacher.feature.hub
 
+import com.mbd.cmscommon.controller.teacherNotificationAudience
+import kotlinx.coroutines.flow.flatMapLatest
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.auth.SessionManager
@@ -26,10 +28,13 @@ class MenuViewModel @Inject constructor(
 
     private val teacherId = sessionManager.accountKey.orEmpty()
 
+    private val unread = combine(teacherRepository.observeTeacher(teacherId), assignmentsProvider.observeMyAssignments(), ::teacherNotificationAudience)
+        .flatMapLatest { notificationRepository.observeUnreadCount(NotificationTargetRole.TEACHER, it) }
+
     val snapshot = combine(
         teacherRepository.observeTeacher(teacherId),
         assignmentsProvider.observeMyAssignments(),
-        notificationRepository.observeUnreadCount(NotificationTargetRole.TEACHER),
+        unread,
         linkRequestRepository.observePendingRequests(),
     ) { profile, assignments, unread, pending ->
         teacherMenuSnapshot(profile, assignments, unread, pending.size)

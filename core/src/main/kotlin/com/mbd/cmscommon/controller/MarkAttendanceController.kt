@@ -203,6 +203,9 @@ class MarkAttendanceController(
                     targetRole = NotificationTargetRole.ADMIN,
                     targetOfferingId = assignment.sessionId,
                     createdByUid = teacherId,
+                    // The class this register belongs to: its department, session and shift.
+                    targetDeptId = assignment.deptId.ifBlank { null },
+                    targetShift = assignment.classShift,
                 )
             }
             _alreadyMarked.value = true

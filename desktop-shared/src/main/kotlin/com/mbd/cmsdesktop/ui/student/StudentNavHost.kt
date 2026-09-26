@@ -1,5 +1,7 @@
 package com.mbd.cmsdesktop.ui.student
 
+import com.mbd.cmscommon.controller.observeStudentAudience
+import kotlinx.coroutines.flow.flatMapLatest
 import com.mbd.cmscommon.controller.observeShiftOf
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -80,9 +82,11 @@ private fun StudentShell(role: UserRole.LinkedStudent, component: DesktopAppComp
     val deptId = StudentIdCodec.deptIdOf(sessionId)
     val rollNumber = StudentIdCodec.rollOf(role.studentId)
 
-    val unreadCount by component.notificationRepository()
-        .observeUnreadCount(NotificationTargetRole.STUDENT)
-        .collectAsState(initial = 0)
+    // The student's department, session and shift decide which scoped notices reach them.
+    val studentAudience = remember(sessionId, rollNumber) { component.academicSessionRepository().observeStudentAudience(sessionId, rollNumber) }
+    val unreadCount by remember(studentAudience) {
+        studentAudience.flatMapLatest { component.notificationRepository().observeUnreadCount(NotificationTargetRole.STUDENT, it) }
+    }.collectAsState(initial = 0)
 
     fun refreshCurrentScreen() {
         if (shellRefreshing) return
@@ -193,7 +197,7 @@ private fun StudentShell(role: UserRole.LinkedStudent, component: DesktopAppComp
                             datesheetRepository = component.datesheetRepository(),
                             sessionRepository = component.academicSessionRepository(),
                         )
-                        StudentScreen.Events -> StudentCalendarScreen(sessionId, deptId, component.calendarRepository(), component.departmentRepository(), component.academicSessionRepository())
+                        StudentScreen.Events -> StudentCalendarScreen(sessionId, deptId, component.calendarRepository(), component.departmentRepository(), component.academicSessionRepository(), rollNumber)
                         StudentScreen.Fees -> StudentFeeChallanScreen(
                             sessionId = sessionId,
                             rollNumber = rollNumber,
@@ -208,6 +212,7 @@ private fun StudentShell(role: UserRole.LinkedStudent, component: DesktopAppComp
                             accountKey = accountKey,
                             sessionRepository = component.academicSessionRepository(),
                             departmentRepository = component.departmentRepository(),
+                            audienceContext = studentAudience,
                         )
                         StudentScreen.Profile -> StudentOwnProfileScreen(
                             sessionId, rollNumber, component.sessionManager(), component.academicSessionRepository(), component.departmentRepository(), component.fineRepository(),
