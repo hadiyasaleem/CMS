@@ -29,7 +29,7 @@ export type Database = {
           max_students: number
           program_name: string | null
           session_id: string
-          shift: Database["public"]["Enums"]["shift"]
+          shift_mode: Database["public"]["Enums"]["shift_mode"]
           start_year: number
           updated_at: string
           updated_by: string | null
@@ -48,7 +48,7 @@ export type Database = {
           max_students?: number
           program_name?: string | null
           session_id: string
-          shift: Database["public"]["Enums"]["shift"]
+          shift_mode: Database["public"]["Enums"]["shift_mode"]
           start_year: number
           updated_at?: string
           updated_by?: string | null
@@ -67,7 +67,7 @@ export type Database = {
           max_students?: number
           program_name?: string | null
           session_id?: string
-          shift?: Database["public"]["Enums"]["shift"]
+          shift_mode?: Database["public"]["Enums"]["shift_mode"]
           start_year?: number
           updated_at?: string
           updated_by?: string | null
@@ -296,6 +296,7 @@ export type Database = {
           id: string
           is_deleted: boolean
           session_id: string | null
+          shift: Database["public"]["Enums"]["shift"] | null
           start_date: string
           start_time: string | null
           title: string
@@ -317,6 +318,7 @@ export type Database = {
           id?: string
           is_deleted?: boolean
           session_id?: string | null
+          shift?: Database["public"]["Enums"]["shift"] | null
           start_date: string
           start_time?: string | null
           title: string
@@ -338,6 +340,7 @@ export type Database = {
           id?: string
           is_deleted?: boolean
           session_id?: string | null
+          shift?: Database["public"]["Enums"]["shift"] | null
           start_date?: string
           start_time?: string | null
           title?: string
@@ -472,6 +475,7 @@ export type Database = {
           published: boolean
           semester: number
           session_id: string
+          shift: Database["public"]["Enums"]["shift"]
           updated_at: string
           updated_by: string | null
         }
@@ -489,6 +493,7 @@ export type Database = {
           published?: boolean
           semester: number
           session_id: string
+          shift: Database["public"]["Enums"]["shift"]
           updated_at?: string
           updated_by?: string | null
         }
@@ -506,6 +511,7 @@ export type Database = {
           published?: boolean
           semester?: number
           session_id?: string
+          shift?: Database["public"]["Enums"]["shift"]
           updated_at?: string
           updated_by?: string | null
         }
@@ -871,6 +877,7 @@ export type Database = {
           target_dept_id: string | null
           target_role: Database["public"]["Enums"]["notif_target"] | null
           target_session_id: string | null
+          target_shift: Database["public"]["Enums"]["shift"] | null
           title: string
           updated_at: string
           updated_by: string | null
@@ -890,6 +897,7 @@ export type Database = {
           target_dept_id?: string | null
           target_role?: Database["public"]["Enums"]["notif_target"] | null
           target_session_id?: string | null
+          target_shift?: Database["public"]["Enums"]["shift"] | null
           title: string
           updated_at?: string
           updated_by?: string | null
@@ -909,6 +917,7 @@ export type Database = {
           target_dept_id?: string | null
           target_role?: Database["public"]["Enums"]["notif_target"] | null
           target_session_id?: string | null
+          target_shift?: Database["public"]["Enums"]["shift"] | null
           title?: string
           updated_at?: string
           updated_by?: string | null
@@ -1247,6 +1256,7 @@ export type Database = {
           label: string
           position: number
           session_id: string
+          shift: Database["public"]["Enums"]["shift"]
           updated_at: string
           updated_by: string | null
         }
@@ -1260,6 +1270,7 @@ export type Database = {
           label: string
           position?: number
           session_id: string
+          shift: Database["public"]["Enums"]["shift"]
           updated_at?: string
           updated_by?: string | null
         }
@@ -1273,16 +1284,17 @@ export type Database = {
           label?: string
           position?: number
           session_id?: string
+          shift?: Database["public"]["Enums"]["shift"]
           updated_at?: string
           updated_by?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "session_fee_heads_session_id_fkey"
-            columns: ["session_id"]
+            foreignKeyName: "session_fee_heads_session_shift_fkey"
+            columns: ["session_id", "shift"]
             isOneToOne: false
             referencedRelation: "session_fees"
-            referencedColumns: ["session_id"]
+            referencedColumns: ["session_id", "shift"]
           },
         ]
       }
@@ -1299,6 +1311,7 @@ export type Database = {
           late_fine_note: string | null
           payment_note: string | null
           session_id: string
+          shift: Database["public"]["Enums"]["shift"]
           updated_at: string
           updated_by: string | null
         }
@@ -1314,6 +1327,7 @@ export type Database = {
           late_fine_note?: string | null
           payment_note?: string | null
           session_id: string
+          shift: Database["public"]["Enums"]["shift"]
           updated_at?: string
           updated_by?: string | null
         }
@@ -1329,6 +1343,7 @@ export type Database = {
           late_fine_note?: string | null
           payment_note?: string | null
           session_id?: string
+          shift?: Database["public"]["Enums"]["shift"]
           updated_at?: string
           updated_by?: string | null
         }
@@ -1336,7 +1351,7 @@ export type Database = {
           {
             foreignKeyName: "session_fees_session_id_fkey"
             columns: ["session_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "academic_sessions"
             referencedColumns: ["session_id"]
           },
@@ -1448,6 +1463,7 @@ export type Database = {
           religion: string | null
           roll_number: string
           session_id: string
+          shift: Database["public"]["Enums"]["shift"]
           special_needs: string | null
           university_roll_no: string | null
           updated_at: string
@@ -1487,6 +1503,7 @@ export type Database = {
           religion?: string | null
           roll_number: string
           session_id: string
+          shift: Database["public"]["Enums"]["shift"]
           special_needs?: string | null
           university_roll_no?: string | null
           updated_at?: string
@@ -1526,6 +1543,7 @@ export type Database = {
           religion?: string | null
           roll_number?: string
           session_id?: string
+          shift?: Database["public"]["Enums"]["shift"]
           special_needs?: string | null
           university_roll_no?: string | null
           updated_at?: string
@@ -1862,6 +1880,7 @@ export type Database = {
           period_type: Database["public"]["Enums"]["period_type"]
           primary_session_id: string
           room_no: string | null
+          shift: Database["public"]["Enums"]["shift"]
           start_time: string
           subject_name: string | null
           teacher_email: string | null
@@ -1887,6 +1906,7 @@ export type Database = {
           period_type?: Database["public"]["Enums"]["period_type"]
           primary_session_id: string
           room_no?: string | null
+          shift: Database["public"]["Enums"]["shift"]
           start_time: string
           subject_name?: string | null
           teacher_email?: string | null
@@ -1912,6 +1932,7 @@ export type Database = {
           period_type?: Database["public"]["Enums"]["period_type"]
           primary_session_id?: string
           room_no?: string | null
+          shift?: Database["public"]["Enums"]["shift"]
           start_time?: string
           subject_name?: string | null
           teacher_email?: string | null
@@ -1954,14 +1975,17 @@ export type Database = {
         Args: { p_session: string }
         Returns: {
           roll_number: string
+          shift: Database["public"]["Enums"]["shift"]
         }[]
       }
       bootstrap_admin_email: { Args: never; Returns: string }
       current_email: { Args: never; Returns: string }
       is_active_teacher: { Args: never; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
+      my_dept: { Args: never; Returns: string }
       my_roll: { Args: never; Returns: string }
       my_session: { Args: never; Returns: string }
+      my_shift: { Args: never; Returns: Database["public"]["Enums"]["shift"] }
       record_semester_result: {
         Args: {
           p_cgpa: number
@@ -1977,8 +2001,35 @@ export type Database = {
         }
         Returns: undefined
       }
+      roll_block_error: {
+        Args: {
+          p_max: number
+          p_mode: Database["public"]["Enums"]["shift_mode"]
+          p_roll: string
+          p_shift: Database["public"]["Enums"]["shift"]
+        }
+        Returns: string
+      }
+      session_allows_shift: {
+        Args: {
+          p_session: string
+          p_shift: Database["public"]["Enums"]["shift"]
+        }
+        Returns: boolean
+      }
       teacher_can: { Args: { flag: string }; Returns: boolean }
       teaches: { Args: { p_session: string }; Returns: boolean }
+      teaches_shift: {
+        Args: {
+          p_session: string
+          p_shift: Database["public"]["Enums"]["shift"]
+        }
+        Returns: boolean
+      }
+      teaches_student: {
+        Args: { p_roll: string; p_session: string }
+        Returns: boolean
+      }
     }
     Enums: {
       account_status: "ACTIVE" | "DISABLED" | "BANNED"
@@ -2007,6 +2058,7 @@ export type Database = {
       review_status: "SUBMITTED" | "REVIEWED"
       semester_result: "PROMOTED" | "REPEATED" | "PROBATION" | "PENDING"
       shift: "MORNING" | "EVENING"
+      shift_mode: "MORNING" | "EVENING" | "BOTH"
       subject_type: "THEORY" | "LAB"
       user_role: "ADMIN" | "TEACHER" | "STUDENT"
       weekday:
@@ -2165,6 +2217,7 @@ export const Constants = {
       review_status: ["SUBMITTED", "REVIEWED"],
       semester_result: ["PROMOTED", "REPEATED", "PROBATION", "PENDING"],
       shift: ["MORNING", "EVENING"],
+      shift_mode: ["MORNING", "EVENING", "BOTH"],
       subject_type: ["THEORY", "LAB"],
       user_role: ["ADMIN", "TEACHER", "STUDENT"],
       weekday: [
