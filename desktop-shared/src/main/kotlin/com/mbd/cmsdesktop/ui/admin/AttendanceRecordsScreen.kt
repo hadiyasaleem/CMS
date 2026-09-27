@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.ui.admin
 
+import com.mbd.cmscommon.ui.components.DialogScrollBody
 import com.mbd.cmscommon.controller.departmentScopeOptions
 import com.mbd.cmscommon.controller.studentsForTab
 import com.mbd.cmscommon.domain.model.ShiftScope
@@ -388,14 +389,14 @@ fun AttendanceRecordsScreen(
             onDismissRequest = { cellDetail = null },
             confirmButton = { TextButton(onClick = { cellDetail = null }) { Text("Close") } },
             title = { Text("$name · ${mark.date}") },
-            text = {
+            text = { DialogScrollBody {
                 Column {
                     DetailLine("Status", mark.status.name)
                     DetailLine("Late", if (mark.isLate) "Yes" else "No")
                     DetailLine("Comment", mark.remark?.takeIf { it.isNotBlank() } ?: "—")
                     DetailLine("Taught", mark.lectureTopic?.takeIf { it.isNotBlank() } ?: "—")
                 }
-            },
+            }},
         )
     }
 
@@ -404,7 +405,7 @@ fun AttendanceRecordsScreen(
             onDismissRequest = { actionError = null },
             confirmButton = { TextButton(onClick = { actionError = null }) { Text("Close") } },
             title = { Text("Export failed") },
-            text = { Text(message) },
+            text = { DialogScrollBody { Text(message) }},
         )
     }
 }

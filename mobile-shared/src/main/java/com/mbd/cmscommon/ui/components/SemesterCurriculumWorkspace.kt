@@ -287,7 +287,7 @@ private fun SubjectEditorDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (existing == null) "Semester subject" else "Edit subject", style = MaterialTheme.typography.headlineSmall) },
-        text = {
+        text = { DialogScrollBody {
             Column {
                 OutlinedTextField(value = code, onValueChange = { code = it }, label = { Text("Course code") }, placeholder = { Text("IT-301") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 Spacer(Modifier.height(10.dp))
@@ -315,7 +315,7 @@ private fun SubjectEditorDialog(
                     Text(error, color = CurriculumRed, style = MaterialTheme.typography.bodySmall)
                 }
             }
-        },
+        }},
         confirmButton = {
             TextButton(
                 onClick = { parsedCredits?.let { onSave(code.trim().uppercase(), name.trim(), it, type, elective, outline.trim()) } },
@@ -344,7 +344,7 @@ private fun TermDatesEditorDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Class term", style = MaterialTheme.typography.headlineSmall) },
-        text = {
+        text = { DialogScrollBody {
             Column {
                 Text("Set the semester start and end dates. Leave both blank to clear the term.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.height(10.dp))
@@ -356,7 +356,7 @@ private fun TermDatesEditorDialog(
                     Text(error ?: "", color = CurriculumRed, style = MaterialTheme.typography.bodySmall)
                 }
             }
-        },
+        }},
         confirmButton = {
             TextButton(
                 onClick = {

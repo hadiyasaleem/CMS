@@ -297,7 +297,7 @@ private fun ResultEditorDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Edit semester result", style = MaterialTheme.typography.headlineSmall) },
-        text = {
+        text = { DialogScrollBody {
             Column {
                 Text(student.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
                 Spacer(Modifier.height(8.dp))
@@ -344,7 +344,7 @@ private fun ResultEditorDialog(
                     }
                 }
             }
-        },
+        }},
         confirmButton = {
             TextButton(
                 onClick = {

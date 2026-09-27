@@ -342,7 +342,7 @@ private fun AddDepartmentSessionDialog(existing: List<AcademicSession>, onDismis
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Create session", style = MaterialTheme.typography.headlineSmall) },
-        text = {
+        text = { DialogScrollBody {
             Column {
                 // One session per intake year: years that already have a session are not offered.
                 CmsEntityPicker(
@@ -365,7 +365,7 @@ private fun AddDepartmentSessionDialog(existing: List<AcademicSession>, onDismis
                     Text(error, color = CmsTheme.colors.accent, style = MaterialTheme.typography.bodySmall)
                 }
             }
-        },
+        }},
         confirmButton = {
             TextButton(
                 onClick = { year?.let { y -> capacity.toIntOrNull()?.let { onConfirm(y, shifts, it) } } },
@@ -439,7 +439,7 @@ private fun EditDepartmentDetailsDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Department", style = MaterialTheme.typography.headlineSmall) },
-        text = {
+        text = { DialogScrollBody {
             Column {
                 OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Department name") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 Spacer(Modifier.height(10.dp))
@@ -462,7 +462,7 @@ private fun EditDepartmentDetailsDialog(
                     minLines = 2,
                 )
             }
-        },
+        }},
         confirmButton = {
             TextButton(onClick = { onConfirm(name, code, hodEmail.ifBlank { null }, description.ifBlank { null }) }) { Text("Save changes") }
         },

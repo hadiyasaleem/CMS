@@ -272,7 +272,7 @@ fun TeacherDirectoryWorkspace(
         AlertDialog(
             onDismissRequest = { pendingStatus = null },
             title = { Text(label, style = MaterialTheme.typography.headlineSmall) },
-            text = { Text("Current status: ${teacher.status}. This changes ${teacher.name}'s sign-in access.") },
+            text = { DialogScrollBody { Text("Current status: ${teacher.status}. This changes ${teacher.name}'s sign-in access.") }},
             confirmButton = { TextButton(onClick = { onSetStatus(teacher, status); pendingStatus = null }) { Text(label) } },
             dismissButton = { TextButton(onClick = { pendingStatus = null }) { Text("Cancel") } },
         )
@@ -304,7 +304,7 @@ fun TeacherDirectoryWorkspace(
         AlertDialog(
             onDismissRequest = onConsumeNotice,
             title = { Text("Success", style = MaterialTheme.typography.headlineSmall) },
-            text = { Text(notice) },
+            text = { DialogScrollBody { Text(notice) }},
             confirmButton = { TextButton(onClick = onConsumeNotice) { Text("OK") } },
         )
     }
@@ -672,7 +672,7 @@ private fun ResetPasswordDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Reset ${teacher.name}'s password", style = MaterialTheme.typography.headlineSmall) },
-        text = {
+        text = { DialogScrollBody {
             Column {
                 Text(
                     "Set a new temporary password. Share it with ${teacher.name} directly -- they'll sign in with it.",
@@ -695,7 +695,7 @@ private fun ResetPasswordDialog(
                     singleLine = true,
                 )
             }
-        },
+        }},
         confirmButton = {
             TextButton(onClick = { onConfirm(newPassword) }, enabled = passwordError == null && !busy) {
                 Text(if (busy) "Resetting" else "Reset password")

@@ -350,7 +350,7 @@ private fun AddRosterStudentDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Add student", style = MaterialTheme.typography.headlineSmall) },
-        text = {
+        text = { DialogScrollBody {
             Column {
                 Text("Shift *", style = MaterialTheme.typography.labelLarge, color = ModMuted)
                 Spacer(Modifier.height(6.dp))
@@ -394,7 +394,7 @@ private fun AddRosterStudentDialog(
                     Text(error, color = RosterRed, style = MaterialTheme.typography.bodySmall)
                 }
             }
-        },
+        }},
         confirmButton = {
             TextButton(onClick = { onConfirm(effectiveRoll.trim(), name.trim(), shift) }, enabled = !blank && name.isNotBlank() && error == null) { Text("Add") }
         },

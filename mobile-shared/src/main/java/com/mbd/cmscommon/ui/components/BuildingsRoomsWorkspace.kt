@@ -265,13 +265,13 @@ private fun BuildingEditorDialog(existing: Building?, onDismiss: () -> Unit, onC
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (existing == null) "Add building" else "Edit building") },
-        text = {
+        text = { DialogScrollBody {
             Column {
                 CmsTextField(value = name, onValueChange = { name = it }, label = "Building name", placeholder = "Main Block", isError = name.isNotBlank() && nameError != null, supportingText = nameError.takeIf { name.isNotBlank() })
                 Spacer(Modifier.height(12.dp))
                 CmsTextField(value = code, onValueChange = { code = it.uppercase().take(10) }, label = "Code (optional)", placeholder = "MB")
             }
-        },
+        }},
         confirmButton = {
             CmsPrimaryButton(
                 text = if (existing == null) "Create building" else "Save changes",
@@ -297,7 +297,7 @@ private fun RoomEditorDialog(existing: Room?, onDismiss: () -> Unit, onConfirm: 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (existing == null) "Add room" else "Edit room") },
-        text = {
+        text = { DialogScrollBody {
             Column {
                 CmsTextField(value = roomNo, onValueChange = { roomNo = it }, label = "Room number", placeholder = "101", isError = roomNo.isNotBlank() && roomNoError != null, supportingText = roomNoError.takeIf { roomNo.isNotBlank() })
                 Spacer(Modifier.height(12.dp))
@@ -316,7 +316,7 @@ private fun RoomEditorDialog(existing: Room?, onDismiss: () -> Unit, onConfirm: 
                     Text("Usable as a teacher office")
                 }
             }
-        },
+        }},
         confirmButton = {
             CmsPrimaryButton(
                 text = if (existing == null) "Create room" else "Save changes",

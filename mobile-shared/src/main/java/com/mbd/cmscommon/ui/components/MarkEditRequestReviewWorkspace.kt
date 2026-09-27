@@ -255,7 +255,7 @@ fun MarkEditRequestReviewWorkspace(
         AlertDialog(
             onDismissRequest = { attendanceApproval = null },
             title = { Text("Attendance change review", style = MaterialTheme.typography.headlineSmall) },
-            text = { Text("Set roll ${request.rollNumber} to ${attendanceLabel(request.requestedStatus, request.requestedIsLate)} on ${request.date.format(MarkDateFormat)}?") },
+            text = { DialogScrollBody { Text("Set roll ${request.rollNumber} to ${attendanceLabel(request.requestedStatus, request.requestedIsLate)} on ${request.date.format(MarkDateFormat)}?") }},
             confirmButton = { TextButton(onClick = { onApproveAttendance(request); attendanceApproval = null }) { Text("Approve") } },
             dismissButton = { TextButton(onClick = { attendanceApproval = null }) { Text("Cancel") } },
         )
@@ -265,7 +265,7 @@ fun MarkEditRequestReviewWorkspace(
         AlertDialog(
             onDismissRequest = { attendanceRejection = null },
             title = { Text("Reject request", style = MaterialTheme.typography.headlineSmall) },
-            text = { Text("Reject the requested attendance change for roll ${request.rollNumber}?") },
+            text = { DialogScrollBody { Text("Reject the requested attendance change for roll ${request.rollNumber}?") }},
             confirmButton = { TextButton(onClick = { onRejectAttendance(request); attendanceRejection = null }) { Text("Reject") } },
             dismissButton = { TextButton(onClick = { attendanceRejection = null }) { Text("Cancel") } },
         )
@@ -275,7 +275,7 @@ fun MarkEditRequestReviewWorkspace(
         AlertDialog(
             onDismissRequest = { approvalTarget = null },
             title = { Text("Score change review", style = MaterialTheme.typography.headlineSmall) },
-            text = { Text("Approve the requested change for ${studentName(request)} in ${request.courseCode}?") },
+            text = { DialogScrollBody { Text("Approve the requested change for ${studentName(request)} in ${request.courseCode}?") }},
             confirmButton = { TextButton(onClick = { onApprove(request); approvalTarget = null }) { Text("Approve") } },
             dismissButton = { TextButton(onClick = { approvalTarget = null }) { Text("Cancel") } },
         )
@@ -285,7 +285,7 @@ fun MarkEditRequestReviewWorkspace(
         AlertDialog(
             onDismissRequest = { rejectionTarget = null },
             title = { Text("Reject request", style = MaterialTheme.typography.headlineSmall) },
-            text = { Text("Reject the requested score change for ${studentName(request)}?") },
+            text = { DialogScrollBody { Text("Reject the requested score change for ${studentName(request)}?") }},
             confirmButton = { TextButton(onClick = { onReject(request); rejectionTarget = null }) { Text("Reject") } },
             dismissButton = { TextButton(onClick = { rejectionTarget = null }) { Text("Cancel") } },
         )

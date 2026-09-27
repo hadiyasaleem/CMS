@@ -1,5 +1,6 @@
 package com.mbd.cmsadmin.feature.departments
 
+import com.mbd.cmscommon.ui.components.DialogScrollBody
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -131,7 +132,7 @@ private fun DepartmentEditorDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (department == null) "Add department" else "Edit department", style = MaterialTheme.typography.titleLarge) },
-        text = {
+        text = { DialogScrollBody {
             Column {
                 Text(
                     if (department == null) {
@@ -157,7 +158,7 @@ private fun DepartmentEditorDialog(
                 Spacer(Modifier.height(12.dp))
                 CmsTextField(value = description, onValueChange = { description = it.take(500) }, label = "Description (optional)")
             }
-        },
+        }},
         confirmButton = {
             CmsPrimaryButton(
                 text = if (department == null) "Create department" else "Save changes",

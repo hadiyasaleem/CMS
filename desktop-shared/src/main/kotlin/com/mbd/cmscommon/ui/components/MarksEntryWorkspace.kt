@@ -315,7 +315,7 @@ private fun RequestMarkEditDialog(
     androidx.compose.material3.AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Request edit", style = MaterialTheme.typography.headlineSmall) },
-        text = {
+        text = { DialogScrollBody {
             Column {
                 Text("Current score: ${currentScore ?: "--"}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.height(8.dp))
@@ -337,7 +337,7 @@ private fun RequestMarkEditDialog(
                 )
                 Text("Maximum 500 characters", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             }
-        },
+        }},
         confirmButton = {
             TextButton(onClick = { parsed?.let { onSubmit(it, reason) } }, enabled = valid) { Text("Send request") }
         },

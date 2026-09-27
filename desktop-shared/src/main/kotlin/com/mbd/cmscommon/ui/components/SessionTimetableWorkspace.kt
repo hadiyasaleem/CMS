@@ -299,7 +299,7 @@ private fun SessionPeriodDetailDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (isBreak) "Break" else period.subjectName.ifBlank { period.courseCode }) },
-        text = {
+        text = { DialogScrollBody {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 if (hasConflict) {
                     StatusBadge("TIME CONFLICT", BadgeTone.Error)
@@ -315,7 +315,7 @@ private fun SessionPeriodDetailDialog(
                     period.notes?.takeIf { it.isNotBlank() }?.let { DetailRow("Notes", it) }
                 }
             }
-        },
+        }},
         confirmButton = { TextButton(onClick = onEdit) { Text("Edit") } },
         dismissButton = {
             Row {

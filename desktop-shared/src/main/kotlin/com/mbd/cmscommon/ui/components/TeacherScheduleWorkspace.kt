@@ -210,7 +210,7 @@ private fun TeacherPeriodDetailDialog(period: SessionPeriod, session: AcademicSe
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(period.subjectName) },
-        text = {
+        text = { DialogScrollBody {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 ScheduleDetailRow("Session", session?.label ?: period.sessionId)
                 ScheduleDetailRow("Shift", period.shift.label)
@@ -220,7 +220,7 @@ private fun TeacherPeriodDetailDialog(period: SessionPeriod, session: AcademicSe
                 ScheduleDetailRow("Room", listOfNotNull(period.building, period.roomNo).joinToString(" / ").ifBlank { "Not assigned" })
                 period.notes?.takeIf { it.isNotBlank() }?.let { ScheduleDetailRow("Notes", it) }
             }
-        },
+        }},
         confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } },
     )
 }

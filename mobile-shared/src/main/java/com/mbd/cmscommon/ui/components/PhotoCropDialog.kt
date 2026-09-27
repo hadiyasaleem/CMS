@@ -70,7 +70,7 @@ fun PhotoCropDialog(source: ImageBitmap, onCancel: () -> Unit, onCropped: (Image
     AlertDialog(
         onDismissRequest = onCancel,
         title = { Text("Crop photo") },
-        text = {
+        text = { DialogScrollBody {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(
                     modifier = Modifier
@@ -113,7 +113,7 @@ fun PhotoCropDialog(source: ImageBitmap, onCancel: () -> Unit, onCropped: (Image
                     valueRange = 1f..3f,
                 )
             }
-        },
+        }},
         confirmButton = {
             TextButton(onClick = { onCropped(cropToSquare(source, zoom, offset, viewportPx, CROP_OUTPUT_PX)) }) {
                 Text("Use photo")

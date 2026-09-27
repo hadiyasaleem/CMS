@@ -490,7 +490,7 @@ private fun CellDetailDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(cell.student.name, style = MaterialTheme.typography.headlineSmall) },
-        text = {
+        text = { DialogScrollBody {
             Column {
                 Text("Roll ${cell.student.rollNumber} · ${cell.date.format(HistoryDateFormatter)}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.height(10.dp))
@@ -535,7 +535,7 @@ private fun CellDetailDialog(
                     }
                 }
             }
-        },
+        }},
         confirmButton = {
             if (editing && !pending) {
                 TextButton(onClick = { onSubmit(status, late, reason) }, enabled = changed && reason.isNotBlank() && !submitting) {

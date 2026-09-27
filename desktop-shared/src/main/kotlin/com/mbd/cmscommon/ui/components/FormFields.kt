@@ -123,7 +123,7 @@ fun CmsDateField(
                 }
             },
         ) {
-            DatePicker(state = state)
+            DialogScrollBody { DatePicker(state = state) }
         }
     }
 }
@@ -171,12 +171,12 @@ fun CmsTimeField(
         AlertDialog(
             onDismissRequest = { showPicker = false },
             title = { Text(label) },
-            text = {
+            text = { DialogScrollBody {
                 Column {
                     TimePicker(state = state)
                     if (tooEarly) Text("Pick a time after ${clockDisplay(minTime)}.", color = MaterialTheme.colorScheme.error)
                 }
-            },
+            }},
             confirmButton = {
                 TextButton(
                     onClick = {

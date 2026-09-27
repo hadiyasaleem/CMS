@@ -434,7 +434,7 @@ private fun AddProfileFineDialog(onDismiss: () -> Unit, onConfirm: (String, Doub
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Fine", style = MaterialTheme.typography.headlineSmall) },
-        text = {
+        text = { DialogScrollBody {
             Column {
                 Text("CATEGORY", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
@@ -453,7 +453,7 @@ private fun AddProfileFineDialog(onDismiss: () -> Unit, onConfirm: (String, Doub
                     Text(error, color = ProfileRed, style = MaterialTheme.typography.bodySmall)
                 }
             }
-        },
+        }},
         confirmButton = {
             TextButton(onClick = { parsedAmount?.let { onConfirm(category, it, reason.trim()) } }, enabled = parsedAmount != null && parsedAmount > 0.0) { Text("Add") }
         },

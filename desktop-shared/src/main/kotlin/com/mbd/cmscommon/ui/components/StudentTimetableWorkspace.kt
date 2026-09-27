@@ -224,7 +224,7 @@ private fun StudentPeriodDetailDialog(item: StudentScheduledPeriod, onDismiss: (
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(item.period.subjectName) },
-        text = {
+        text = { DialogScrollBody {
             Column {
                 DetailRow(Icons.Filled.Person, item.period.teacherName.ifBlank { "Teacher not assigned" })
                 DetailRow(Icons.Filled.LocationOn, listOfNotNull(item.period.building, item.period.roomNo).joinToString(" / ").ifBlank { "Location not assigned" })
@@ -236,7 +236,7 @@ private fun StudentPeriodDetailDialog(item: StudentScheduledPeriod, onDismiss: (
                     Text("Notes: $it", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
             }
-        },
+        }},
         confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } },
     )
 }

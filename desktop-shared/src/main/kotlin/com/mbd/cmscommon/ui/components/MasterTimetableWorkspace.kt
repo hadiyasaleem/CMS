@@ -205,7 +205,7 @@ private fun PeriodDetailDialog(period: SessionPeriod, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (isBreak) "Break" else period.subjectName) },
-        text = {
+        text = { DialogScrollBody {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 DetailRow("Shift", period.shift.label)
                 DetailRow("Day", period.day.getDisplayName(TextStyle.FULL, Locale.ENGLISH))
@@ -219,7 +219,7 @@ private fun PeriodDetailDialog(period: SessionPeriod, onDismiss: () -> Unit) {
                     period.notes?.takeIf { it.isNotBlank() }?.let { DetailRow("Notes", it) }
                 }
             }
-        },
+        }},
         confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } },
     )
 }

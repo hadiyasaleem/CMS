@@ -164,7 +164,7 @@ fun MarkAttendanceWorkspace(
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { noteRoll = null },
             title = { Text("Note: ${student?.name ?: roll}", style = MaterialTheme.typography.headlineSmall) },
-            text = { OutlinedTextField(value = text, onValueChange = { text = it }, modifier = Modifier.fillMaxWidth(), minLines = 2) },
+            text = { DialogScrollBody { OutlinedTextField(value = text, onValueChange = { text = it }, modifier = Modifier.fillMaxWidth(), minLines = 2) }},
             confirmButton = { TextButton(onClick = { onRemark(roll, text); noteRoll = null }) { Text("Add note") } },
             dismissButton = { TextButton(onClick = { noteRoll = null }) { Text("Cancel") } },
         )

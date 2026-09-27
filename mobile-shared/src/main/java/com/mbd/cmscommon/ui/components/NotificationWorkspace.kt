@@ -275,7 +275,7 @@ private fun ComposeNotificationDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Compose notification", style = MaterialTheme.typography.headlineSmall) },
-        text = {
+        text = { DialogScrollBody {
             Column {
                 OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Title") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 Spacer(Modifier.height(10.dp))
@@ -317,7 +317,7 @@ private fun ComposeNotificationDialog(
                     }
                 }
             }
-        },
+        }},
         confirmButton = {
             TextButton(
                 onClick = {

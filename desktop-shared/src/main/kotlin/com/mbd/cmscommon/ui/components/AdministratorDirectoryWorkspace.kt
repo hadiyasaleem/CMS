@@ -434,7 +434,7 @@ private fun CreateAdministratorDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Create full-access account", style = MaterialTheme.typography.headlineSmall) },
-        text = {
+        text = { DialogScrollBody {
             Column {
                 OutlinedTextField(
                     value = email,
@@ -489,7 +489,7 @@ private fun CreateAdministratorDialog(
                     Text("I confirm this person is authorized for full administrative access.", style = MaterialTheme.typography.bodySmall)
                 }
             }
-        },
+        }},
         confirmButton = {
             TextButton(onClick = { onCreate(normalizedEmail, password) }, enabled = valid && !creating) {
                 if (creating) {

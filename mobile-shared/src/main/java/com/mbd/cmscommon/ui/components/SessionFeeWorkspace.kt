@@ -397,7 +397,7 @@ private fun FeeHeadEditorDialog(existing: FeeHead?, existingLabels: Set<String>,
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (existing == null) "Fee head" else "Edit fee head", style = MaterialTheme.typography.headlineSmall) },
-        text = {
+        text = { DialogScrollBody {
             Column {
                 OutlinedTextField(value = label, onValueChange = { label = it }, label = { Text("Fee head") }, placeholder = { Text("Tuition fee") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 Spacer(Modifier.height(10.dp))
@@ -407,7 +407,7 @@ private fun FeeHeadEditorDialog(existing: FeeHead?, existingLabels: Set<String>,
                     Text(error, color = FeeRed, style = MaterialTheme.typography.bodySmall)
                 }
             }
-        },
+        }},
         confirmButton = {
             TextButton(onClick = { parsedAmount?.let { onSave(label.trim(), it) } }, enabled = label.isNotBlank() && error == null) { Text("Add") }
         },

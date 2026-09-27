@@ -451,7 +451,7 @@ private fun CreateCalendarEventDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Calendar event", style = MaterialTheme.typography.headlineSmall) },
-        text = {
+        text = { DialogScrollBody {
             Column {
                 OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Title") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 Spacer(Modifier.height(10.dp))
@@ -489,7 +489,7 @@ private fun CreateCalendarEventDialog(
                     Text(error, color = CmsTheme.colors.accent, style = MaterialTheme.typography.bodySmall)
                 }
             }
-        },
+        }},
         confirmButton = {
             TextButton(onClick = { onConfirm(draft) }, enabled = error == null && !busy) { Text(if (busy) "Saving" else "Add event") }
         },

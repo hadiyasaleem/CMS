@@ -237,7 +237,7 @@ fun LinkRequestReviewWorkspace(
         AlertDialog(
             onDismissRequest = { approvalTarget = null },
             title = { Text("Approve student link?", style = MaterialTheme.typography.headlineSmall) },
-            text = {
+            text = { DialogScrollBody {
                 val verification = verifications[linkRequestVerificationKey(request)]
                 Text(
                     if (verification?.linkedEmail.isNullOrBlank()) {
@@ -246,7 +246,7 @@ fun LinkRequestReviewWorkspace(
                         "This will replace the existing link (${verification?.linkedEmail}) with ${request.requestedByUid}."
                     },
                 )
-            },
+            }},
             confirmButton = {
                 TextButton(onClick = { onApprove(request, false); approvalTarget = null }) { Text("Approve link") }
             },
@@ -259,7 +259,7 @@ fun LinkRequestReviewWorkspace(
         AlertDialog(
             onDismissRequest = { overrideTarget = null },
             title = { Text("Override and approve?", style = MaterialTheme.typography.headlineSmall) },
-            text = {
+            text = { DialogScrollBody {
                 Column {
                     Text(
                         "The claimed details don't fully match the official record -- review the identity claim below before overriding.",
@@ -279,7 +279,7 @@ fun LinkRequestReviewWorkspace(
                         )
                     }
                 }
-            },
+            }},
             confirmButton = {
                 TextButton(onClick = { onApprove(request, true); overrideTarget = null }) { Text("Override & approve", color = LinkRed) }
             },
@@ -292,13 +292,13 @@ fun LinkRequestReviewWorkspace(
         AlertDialog(
             onDismissRequest = { rejectionTarget = null },
             title = { Text("Reject request", style = MaterialTheme.typography.headlineSmall) },
-            text = {
+            text = { DialogScrollBody {
                 Column {
                     Text("The reason is shown to the student.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(8.dp))
                     OutlinedTextField(value = reason, onValueChange = { reason = it }, modifier = Modifier.fillMaxWidth(), minLines = 2)
                 }
-            },
+            }},
             confirmButton = {
                 TextButton(onClick = { onReject(request, reason); rejectionTarget = null }, enabled = reason.trim().length >= 4) { Text("Reject request") }
             },

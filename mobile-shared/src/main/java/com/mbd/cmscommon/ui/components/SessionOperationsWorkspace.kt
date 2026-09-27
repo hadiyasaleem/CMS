@@ -175,9 +175,9 @@ fun SessionOperationsWorkspace(
         AlertDialog(
             onDismissRequest = { showPromoteConfirm = false },
             title = { Text(if (graduating) "Graduate this class" else "Promote to semester ${currentSemester + 1}", style = MaterialTheme.typography.headlineSmall) },
-            text = {
+            text = { DialogScrollBody {
                 Text(promotionConfirmText(session))
-            },
+            }},
             confirmButton = { TextButton(onClick = { onPromoteSession(); showPromoteConfirm = false }) { Text(if (graduating) "Graduate" else "Promote") } },
             dismissButton = { TextButton(onClick = { showPromoteConfirm = false }) { Text("Cancel") } },
         )
@@ -362,7 +362,7 @@ private fun EditSessionDetailsDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Academic session", style = MaterialTheme.typography.headlineSmall) },
-        text = {
+        text = { DialogScrollBody {
             Column {
                 OutlinedTextField(value = programName, onValueChange = { programName = it }, label = { Text("Program name (optional)") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 Spacer(Modifier.height(10.dp))
@@ -394,7 +394,7 @@ private fun EditSessionDetailsDialog(
                     Text("Tick Morning, Evening, or both.", color = SessionRed, style = MaterialTheme.typography.bodySmall)
                 }
             }
-        },
+        }},
         confirmButton = {
             TextButton(
                 onClick = { if (mode != null) maxStudents.toIntOrNull()?.let { onSave(programName.trim(), inchargeEmail.trim(), it, mode) } },

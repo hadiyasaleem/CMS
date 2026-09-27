@@ -217,7 +217,7 @@ private fun SubjectPaperDialog(
     AlertDialog(
         onDismissRequest = { if (!busy) onDismiss() },
         title = { Text(target.slot.subjectName) },
-        text = {
+        text = { DialogScrollBody {
             Column {
                 Text(target.slot.courseCode, color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.height(10.dp))
@@ -284,7 +284,7 @@ private fun SubjectPaperDialog(
                     }
                 }
             }
-        },
+        }},
         confirmButton = {
             if (stagedFile != null && stagedFile.sizeError == null) {
                 TextButton(

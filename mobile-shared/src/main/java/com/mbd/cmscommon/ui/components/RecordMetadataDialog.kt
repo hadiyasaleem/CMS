@@ -56,7 +56,7 @@ fun RecordMetadataDialog(
         onDismissRequest = onDismiss,
         confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } },
         title = { Text("$title information") },
-        text = {
+        text = { DialogScrollBody {
             Column(Modifier.fillMaxWidth()) {
                 MetadataValue("Created at", formatMetadataTime(createdAt))
                 MetadataValue("Created by", createdBy ?: "Unavailable")
@@ -64,7 +64,7 @@ fun RecordMetadataDialog(
                 MetadataValue("Updated at", formatMetadataTime(updatedAt))
                 MetadataValue("Updated by", updatedBy ?: "Unavailable")
             }
-        },
+        }},
     )
 }
 
