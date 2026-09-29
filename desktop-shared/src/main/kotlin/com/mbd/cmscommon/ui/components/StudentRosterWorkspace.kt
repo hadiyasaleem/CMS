@@ -118,7 +118,7 @@ fun StudentRosterWorkspace(
         .sortedBy { it.rollNumber }
 
     Box(modifier.fillMaxSize()) {
-    CardGrid(Modifier.fillMaxWidth()) {
+    CardGrid(Modifier.fillMaxWidth(), columns = 3) {
         fullSpanItem {
             RosterHero(
                 session = session,

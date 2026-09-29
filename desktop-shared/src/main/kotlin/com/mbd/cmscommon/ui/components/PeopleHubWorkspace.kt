@@ -66,7 +66,6 @@ enum class PeopleDestination { TEACHERS, STUDENTS, LINK_REQUESTS, MARK_EDIT_REQU
 private data class PeopleCard(
     val destination: PeopleDestination,
     val title: String,
-    val detail: String,
     val status: String,
     val icon: ImageVector,
     val tone: Color,
@@ -131,8 +130,6 @@ private fun PeopleHeader(heroPainter: Painter) {
                 Text("COLLEGE COMMUNITY", color = PeopleGold, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
                 Text("People", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                Spacer(Modifier.height(4.dp))
-                Text("Administrators, faculty, students, and account requests.", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
             }
         }
     }
@@ -165,31 +162,26 @@ private fun PeopleMetric(value: String, label: String, modifier: Modifier = Modi
 private fun peopleCards(snapshot: PeopleHubSnapshot): List<PeopleCard> = listOf(
     PeopleCard(
         PeopleDestination.TEACHERS, "Teachers",
-        "Manage faculty profiles, lifecycle status, and permissions.",
         "${snapshot.teacherCount} active · ${snapshot.delegatedTeacherCount} delegated",
         Icons.Outlined.Groups, PeopleBlue,
     ),
     PeopleCard(
         PeopleDestination.STUDENTS, "Student Rosters",
-        "Open departments, then choose a session to manage its students.",
         "${snapshot.studentCount} enrolled student(s)",
         Icons.Outlined.School, PeopleGreen,
     ),
     PeopleCard(
         PeopleDestination.LINK_REQUESTS, "Student Link Requests",
-        "Verify student claims before connecting app accounts to rosters.",
         "${snapshot.pendingLinkRequests} awaiting review" + if (snapshot.repeatLinkRequests > 0) " / ${snapshot.repeatLinkRequests} repeat" else "",
         Icons.Outlined.HowToReg, if (snapshot.pendingLinkRequests > 0) PeopleRed else PeopleGreen,
     ),
     PeopleCard(
-        PeopleDestination.MARK_EDIT_REQUESTS, "Mark Edit Requests",
-        "Review teacher requests to change locked assessment scores.",
+        PeopleDestination.MARK_EDIT_REQUESTS, "Mark & Attendance Edit Requests",
         "${snapshot.pendingMarkEdits} awaiting review",
         Icons.Outlined.EditNote, if (snapshot.pendingMarkEdits > 0) PeopleGold else PeopleGreen,
     ),
     PeopleCard(
         PeopleDestination.SUBMITTED_PAPERS, "Submitted Exam Papers",
-        "Browse and download exam papers submitted by teachers for printing.",
         "${snapshot.submittedPapers} submitted",
         Icons.Outlined.Assignment, PeopleNavy,
     ),
@@ -209,8 +201,6 @@ private fun PeopleActionCard(card: PeopleCard, onClick: () -> Unit) {
             }
             Spacer(Modifier.height(12.dp))
             Text(card.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            Spacer(Modifier.height(4.dp))
-            Text(card.detail, color = ModMuted, style = MaterialTheme.typography.bodySmall, maxLines = 3, overflow = TextOverflow.Ellipsis)
             Spacer(Modifier.height(8.dp))
             Text(card.status, color = card.tone, style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }

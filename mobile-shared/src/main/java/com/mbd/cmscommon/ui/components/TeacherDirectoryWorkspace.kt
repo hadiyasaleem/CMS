@@ -120,6 +120,7 @@ fun TeacherDirectoryWorkspace(
     onConsumeNotice: () -> Unit,
     onClearError: () -> Unit,
     onExport: ((ExportDocument, ExportFormat) -> Unit)? = null,
+    onOpenTeacher: (String) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var query by remember { mutableStateOf("") }
@@ -213,6 +214,7 @@ fun TeacherDirectoryWorkspace(
                         assignments = assignments[teacher.teacherId].orEmpty(),
                         completeness = completeness(teacher),
                         busy = busyTeacherId == teacher.teacherId,
+                        onOpen = { onOpenTeacher(teacher.teacherId) },
                         onEdit = { editingTeacher = teacher },
                         onRequestStatus = { status -> pendingStatus = teacher to status },
                         onRequestResetPassword = { pendingResetPassword = teacher },
@@ -381,6 +383,7 @@ private fun TeacherCard(
     assignments: List<ResolvedAssignment>,
     completeness: Int,
     busy: Boolean,
+    onOpen: () -> Unit,
     onEdit: () -> Unit,
     onRequestStatus: (TeacherStatus) -> Unit,
     onRequestResetPassword: () -> Unit,
@@ -389,7 +392,7 @@ private fun TeacherCard(
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
-    Surface(modifier = Modifier.clickable(onClick = onEdit), shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
+    Surface(modifier = Modifier.clickable(onClick = onOpen), shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 TeacherAvatar(
@@ -432,6 +435,7 @@ private fun TeacherCard(
                 Box {
                     IconButton(onClick = { menuExpanded = true }, enabled = !busy) { Icon(Icons.Filled.MoreVert, contentDescription = "More") }
                     DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                        DropdownMenuItem(text = { Text("Edit") }, onClick = { menuExpanded = false; onEdit() })
                         when (teacher.status) {
                             TeacherStatus.ACTIVE -> DropdownMenuItem(text = { Text("Disable") }, onClick = { menuExpanded = false; onRequestStatus(TeacherStatus.DISABLED) })
                             else -> DropdownMenuItem(text = { Text("Reactivate") }, onClick = { menuExpanded = false; onRequestStatus(TeacherStatus.ACTIVE) })

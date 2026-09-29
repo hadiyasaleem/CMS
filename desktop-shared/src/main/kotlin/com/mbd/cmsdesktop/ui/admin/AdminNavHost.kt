@@ -241,6 +241,16 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         createdBy = accountKey,
                         assignmentsProvider = teacherAssignmentsProvider,
                         window = window,
+                        onOpenTeacher = { teacherId -> push(AdminScreen.TeacherDetail(teacherId)) },
+                    )
+
+                    is AdminScreen.TeacherDetail -> TeacherDetailScreen(
+                        teacherId = current.teacherId,
+                        teacherRepository = component.teacherRepository(),
+                        departmentRepository = component.departmentRepository(),
+                        sessionRepository = component.academicSessionRepository(),
+                        timetableRepository = component.sessionTimetableRepository(),
+                        assignmentsProvider = teacherAssignmentsProvider,
                     )
 
                     AdminScreen.LinkRequests -> LinkRequestsScreen(
@@ -299,6 +309,10 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         departmentRepository = component.departmentRepository(),
                         sessionRepository = component.academicSessionRepository(),
                         timetableRepository = component.sessionTimetableRepository(),
+                        curriculumRepository = component.curriculumRepository(),
+                        teacherRepository = component.teacherRepository(),
+                        buildingRepository = component.buildingRepository(),
+                        roomRepository = component.roomRepository(),
                         onOpenSession = { sessionId -> push(AdminScreen.SessionDetail(sessionId)) },
                     )
 

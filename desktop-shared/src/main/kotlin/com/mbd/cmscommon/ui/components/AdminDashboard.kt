@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -28,6 +27,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Campaign
 import androidx.compose.material.icons.outlined.Groups
@@ -40,6 +41,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -75,7 +80,6 @@ data class DashboardMetric(
 
 data class DashboardActionUi(
     val label: String,
-    val description: String,
     val icon: ImageVector,
     val onClick: () -> Unit,
 )
@@ -142,6 +146,8 @@ fun AdminDashboardContent(
         ),
     )
 
+    var snapshotExpanded by remember { mutableStateOf(false) }
+
     BoxWithConstraints(modifier.fillMaxSize().background(ModGround)) {
         val wide = maxWidth >= 900.dp
         val contentPadding = if (wide) 32.dp else 16.dp
@@ -168,22 +174,28 @@ fun AdminDashboardContent(
                 }
             }
 
-            DashboardSectionHeading("College snapshot", "Live cached figures, updated whenever Admin data refreshes")
-            if (filterOptions != null) {
-                ShiftScopeSelector(filterScope, filterOptions.departments, filterOptions.sessions, onFilterScope)
+            FoldableDashboardSectionHeading(
+                "College snapshot",
+                expanded = snapshotExpanded,
+                onToggle = { snapshotExpanded = !snapshotExpanded },
+            )
+            if (snapshotExpanded) {
+                if (filterOptions != null) {
+                    ShiftScopeSelector(filterScope, filterOptions.departments, filterOptions.sessions, onFilterScope)
+                }
+                DashboardGrid(metrics, if (wide) 5 else 2) { metric, itemModifier -> DashboardMetricCard(metric, itemModifier) }
             }
-            DashboardGrid(metrics, if (wide) 5 else 2) { metric, itemModifier -> DashboardMetricCard(metric, itemModifier) }
 
-            DashboardSectionHeading("Needs attention", "The next useful actions, not another status list")
+            DashboardSectionHeading("Needs attention")
             if (wide) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    TimetableCard(state, onOpenMasterTimetable, Modifier.weight(1.35f))
+                    TimetableCard(onOpenMasterTimetable, Modifier.weight(1.35f))
                     ReviewQueueCard(state.pendingRequests, onOpenLinkRequests, Modifier.weight(1f))
                     BroadcastCard(onOpenNotifications, Modifier.weight(1f))
                 }
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    TimetableCard(state, onOpenMasterTimetable)
+                    TimetableCard(onOpenMasterTimetable, Modifier.fillMaxWidth())
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         ReviewQueueCard(state.pendingRequests, onOpenLinkRequests, Modifier.weight(1f))
                         BroadcastCard(onOpenNotifications, Modifier.weight(1f))
@@ -191,7 +203,7 @@ fun AdminDashboardContent(
                 }
             }
 
-            DashboardSectionHeading("Quick access", "Frequently used administration areas")
+            DashboardSectionHeading("Quick access")
             DashboardGrid(actions, if (wide) 3 else 2) { action, itemModifier -> DashboardActionCard(action, itemModifier) }
 
             Spacer(Modifier.height(72.dp))
@@ -242,26 +254,29 @@ private fun DashboardHero(heroPainter: Painter, wide: Boolean) {
                     fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold,
                     style = if (wide) MaterialTheme.typography.displayMedium else MaterialTheme.typography.headlineLarge,
                 )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    "A clear view of people, sessions, and the work that needs attention today.",
-                    color = ModInk.copy(alpha = 0.78f),
-                    maxLines = if (wide) 3 else 4,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
             }
         }
     }
 }
 
 @Composable
-private fun DashboardSectionHeading(title: String, subtitle: String? = null) {
-    Column {
-        Text(title, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-        if (subtitle != null) {
-            Text(subtitle, color = ModMuted, style = MaterialTheme.typography.bodyMedium)
-        }
+private fun DashboardSectionHeading(title: String) {
+    Text(title, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+}
+
+@Composable
+private fun FoldableDashboardSectionHeading(title: String, expanded: Boolean, onToggle: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onToggle),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        DashboardSectionHeading(title)
+        Icon(
+            imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+            contentDescription = if (expanded) "Collapse" else "Expand",
+            tint = ModMuted,
+        )
     }
 }
 
@@ -300,14 +315,9 @@ private fun DashboardMetricCard(metric: DashboardMetric, modifier: Modifier = Mo
 }
 
 @Composable
-private fun TimetableCard(state: DashboardState, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val body = if (state.activeSessions > 0) {
-        "${state.activeSessions} active sessions are contributing to the college-wide schedule."
-    } else {
-        "Create a session to start building the college-wide schedule."
-    }
+private fun TimetableCard(onClick: () -> Unit, modifier: Modifier = Modifier) {
     DashboardOperationCard(
-        "Master timetable", body, "Open schedule",
+        "Master timetable", null, "Open schedule",
         Icons.Outlined.CalendarMonth, ModInk, ModInk.copy(alpha = 0.08f), onClick, modifier,
     )
 }
@@ -315,16 +325,15 @@ private fun TimetableCard(state: DashboardState, onClick: () -> Unit, modifier: 
 @Composable
 private fun ReviewQueueCard(pendingRequests: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val title = if (pendingRequests > 0) "$pendingRequests requests" else "Queue clear"
-    val body = if (pendingRequests > 0) "Student accounts are waiting to be linked." else "No student link requests need review."
     val tint = if (pendingRequests > 0) CmsTheme.colors.accent else ModSuccess
     val container = if (pendingRequests > 0) ModRedTint else ModSuccess.copy(alpha = 0.12f)
-    DashboardOperationCard(title, body, "Review queue", Icons.Outlined.HowToReg, tint, container, onClick, modifier)
+    DashboardOperationCard(title, null, "Review queue", Icons.Outlined.HowToReg, tint, container, onClick, modifier)
 }
 
 @Composable
 private fun BroadcastCard(onClick: () -> Unit, modifier: Modifier = Modifier) {
     DashboardOperationCard(
-        "Broadcast", "Send an announcement to students or faculty.", "New notice",
+        "Broadcast", null, "New notice",
         Icons.Outlined.Campaign, ModWarn, ModWarn.copy(alpha = 0.14f), onClick, modifier,
     )
 }
@@ -332,7 +341,7 @@ private fun BroadcastCard(onClick: () -> Unit, modifier: Modifier = Modifier) {
 @Composable
 private fun DashboardOperationCard(
     title: String,
-    body: String,
+    body: String?,
     label: String,
     icon: ImageVector,
     tint: Color,
@@ -348,7 +357,9 @@ private fun DashboardOperationCard(
     ) {
         Column(Modifier.padding(18.dp)) {
             Text(title, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(body, color = ModMuted, style = MaterialTheme.typography.bodyMedium)
+            if (body != null) {
+                Text(body, color = ModMuted, style = MaterialTheme.typography.bodyMedium)
+            }
             Spacer(Modifier.height(12.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(label.uppercase(Locale.ROOT), color = tint, style = CmsTextStyles.eyebrow)
@@ -366,20 +377,12 @@ private fun DashboardActionCard(action: DashboardActionUi, modifier: Modifier = 
         color = ModSurface,
         border = BorderStroke(1.dp, ModTrack),
     ) {
-        Column(Modifier.padding(16.dp).heightIn(min = 140.dp)) {
+        Column(Modifier.padding(16.dp)) {
             Box(Modifier.size(42.dp).background(ModSurfaceAlt, RoundedCornerShape(13.dp)), contentAlignment = Alignment.Center) {
                 Icon(action.icon, contentDescription = null, tint = ModInk, modifier = Modifier.size(21.dp))
             }
             Spacer(Modifier.height(12.dp))
             Text(action.label, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            Spacer(Modifier.height(4.dp))
-            Text(
-                action.description,
-                color = ModMuted,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.bodySmall,
-            )
         }
     }
 }

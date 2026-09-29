@@ -90,6 +90,8 @@ fun SemesterResultsWorkspace(
     onFilterScope: (ShiftScope) -> Unit = {},
     /** The classes the picker lists (inside the filter); defaults to every class in [sessions]. */
     classOptions: List<Pair<String, String>> = sessions,
+    /** Valid semester numbers for the selected class's session (1-8 for BS, 5-8 for MA Replacement). */
+    semesterRange: IntRange = 1..8,
 ) {
     var editing by remember { mutableStateOf<SessionStudent?>(null) }
 
@@ -138,7 +140,7 @@ fun SemesterResultsWorkspace(
                 modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                (1..8).forEach { sem -> CmsChip("Sem $sem", selected = semester == sem, onClick = { onSemester(sem) }) }
+                semesterRange.forEach { sem -> CmsChip("Sem $sem", selected = semester == sem, onClick = { onSemester(sem) }) }
             }
         }
         item { ResultsMetrics(roster.size, recorded, missing, promoted, attention, supply) }

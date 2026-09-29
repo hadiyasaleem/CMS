@@ -304,7 +304,7 @@ fun AttendanceRecordsScreen(
                         modifier = Modifier.padding(top = 6.dp),
                     )
                     if (sessionId != null) {
-                        PickRow("SEMESTER", (1..8).map { it to "Sem $it" }, semester) {
+                        PickRow("SEMESTER", (selectedSession?.semesterRange ?: 1..8).map { it to "Sem $it" }, semester) {
                             semester = it
                             course = null
                             full = emptyMap()

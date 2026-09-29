@@ -47,12 +47,12 @@ fun DashboardScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val actions = listOf(
-        DashboardActionUi("Departments", "Programs, sessions and curricula", Icons.Outlined.School, onOpenAcademics),
-        DashboardActionUi("Teachers", "Faculty profiles and permissions", Icons.Outlined.Groups, onOpenTeachers),
-        DashboardActionUi("Calendar", "Events, holidays and deadlines", Icons.Outlined.CalendarMonth, onOpenCalendar),
-        DashboardActionUi("Link requests", "Connect student accounts", Icons.Outlined.HowToReg, onOpenLinkRequests),
-        DashboardActionUi("Insights", "Attendance and results overview", Icons.Outlined.Assessment, onOpenInsights),
-        DashboardActionUi("Notifications", "Publish targeted announcements", Icons.Outlined.Campaign, onOpenNotifications),
+        DashboardActionUi("Departments", Icons.Outlined.School, onOpenAcademics),
+        DashboardActionUi("Teachers", Icons.Outlined.Groups, onOpenTeachers),
+        DashboardActionUi("Calendar", Icons.Outlined.CalendarMonth, onOpenCalendar),
+        DashboardActionUi("Link requests", Icons.Outlined.HowToReg, onOpenLinkRequests),
+        DashboardActionUi("Insights", Icons.Outlined.Assessment, onOpenInsights),
+        DashboardActionUi("Notifications", Icons.Outlined.Campaign, onOpenNotifications),
     )
 
     AdminDashboardContent(

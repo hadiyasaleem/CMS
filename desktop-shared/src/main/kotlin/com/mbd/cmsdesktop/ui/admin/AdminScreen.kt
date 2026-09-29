@@ -35,4 +35,5 @@ sealed interface AdminScreen {
     data class SessionTimetableRoute(val sessionId: String) : AdminScreen
     data class SemesterSubjectsRoute(val sessionId: String, val semester: Int) : AdminScreen
     data class SessionFeesRoute(val sessionId: String) : AdminScreen
+    data class TeacherDetail(val teacherId: String) : AdminScreen
 }

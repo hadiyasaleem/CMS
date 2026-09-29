@@ -51,6 +51,7 @@ object AdminRoutes {
     const val SESSION_TIMETABLE = "session/{sessionId}/timetable"
     const val SESSION_FEES = "session/{sessionId}/fees"
     const val STUDENT_RECORD = "student_record/{sessionId}/{roll}"
+    const val TEACHER_DETAIL = "teacher/{teacherId}"
 
     fun deptDetail(deptId: String) = "dept/$deptId"
     fun semesterSubjects(sessionId: String, semester: Int) = "session/$sessionId/semester/$semester"
@@ -60,4 +61,5 @@ object AdminRoutes {
     fun sessionTimetable(sessionId: String) = "session/$sessionId/timetable"
     fun sessionFees(sessionId: String) = "session/$sessionId/fees"
     fun studentRecord(sessionId: String, roll: String) = "student_record/$sessionId/$roll"
+    fun teacherDetail(teacherId: String) = "teacher/$teacherId"
 }

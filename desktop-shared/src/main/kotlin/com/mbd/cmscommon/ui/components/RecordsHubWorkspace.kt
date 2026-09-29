@@ -71,7 +71,6 @@ enum class RecordsDestination { ATTENDANCE, CALENDAR, DATESHEETS, TIMETABLE, FEE
 private data class RecordsCard(
     val destination: RecordsDestination,
     val title: String,
-    val detail: String,
     val status: String,
     val icon: ImageVector,
     val tone: Color,
@@ -138,8 +137,6 @@ private fun RecordsHeader(heroPainter: Painter) {
                 Text("COLLEGE RECORDS", color = RecordsGold, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
                 Text("Records", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                Spacer(Modifier.height(4.dp))
-                Text("Attendance, calendar, datesheets, timetable, fees, and insights.", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
             }
         }
     }
@@ -167,49 +164,42 @@ private fun RecordsMetric(value: String, label: String, modifier: Modifier = Mod
 private fun recordsCards(snapshot: RecordsHubSnapshot): List<RecordsCard> = listOf(
     RecordsCard(
         RecordsDestination.ATTENDANCE, "Attendance Records",
-        "Semester summaries, monthly totals, and day-by-day registers.",
         "${snapshot.activeSessions} active session(s)",
         Icons.Outlined.HowToReg, RecordsBlue, RecordsSummarySource.SESSIONS,
         RecordsSummarySource.SESSIONS in snapshot.unavailableSources,
     ),
     RecordsCard(
         RecordsDestination.CALENDAR, "Calendar",
-        "College holidays, events, exams, and deadlines.",
         "${snapshot.upcomingEvents} upcoming",
         Icons.Outlined.EventAvailable, RecordsGreen, RecordsSummarySource.CALENDAR,
         RecordsSummarySource.CALENDAR in snapshot.unavailableSources,
     ),
     RecordsCard(
         RecordsDestination.DATESHEETS, "Datesheets",
-        "Build exam schedules, assign rooms, and publish to students.",
         "${snapshot.publishedDatesheets} published · ${snapshot.draftDatesheets} draft",
         Icons.Outlined.CalendarMonth, RecordsGold, RecordsSummarySource.DATESHEETS,
         RecordsSummarySource.DATESHEETS in snapshot.unavailableSources,
     ),
     RecordsCard(
         RecordsDestination.TIMETABLE, "Master Timetable",
-        "Review every active session by day and shift.",
         "${snapshot.activeSessions} session(s) in scope",
         Icons.Outlined.Schedule, RecordsBlue, RecordsSummarySource.SESSIONS,
         RecordsSummarySource.SESSIONS in snapshot.unavailableSources,
     ),
     RecordsCard(
         RecordsDestination.FEES, "Fee Structures",
-        "Open a department and manage each session's fee plan.",
         "${snapshot.activeSessions} session(s) in scope",
         Icons.Outlined.Payments, RecordsGold, RecordsSummarySource.SESSIONS,
         RecordsSummarySource.SESSIONS in snapshot.unavailableSources,
     ),
     RecordsCard(
         RecordsDestination.INSIGHTS, "Academic Insights",
-        "Review performance, assessment, and student-risk signals.",
         "${snapshot.atRiskStudents} student(s) flagged",
         Icons.Outlined.Assessment, if (snapshot.atRiskStudents > 0) RecordsRed else RecordsGreen, RecordsSummarySource.INSIGHTS,
         RecordsSummarySource.INSIGHTS in snapshot.unavailableSources,
     ),
     RecordsCard(
         RecordsDestination.SEMESTER_RESULTS, "Semester Results",
-        "Record GPA, CGPA, class position, and supply subjects for any session.",
         "${snapshot.activeSessions} session(s) in scope",
         Icons.Outlined.TrendingUp, RecordsGreen, RecordsSummarySource.SESSIONS,
         RecordsSummarySource.SESSIONS in snapshot.unavailableSources,
@@ -230,8 +220,6 @@ private fun RecordsActionCard(card: RecordsCard, onClick: () -> Unit) {
             }
             Spacer(Modifier.height(12.dp))
             Text(card.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            Spacer(Modifier.height(4.dp))
-            Text(card.detail, color = ModMuted, style = MaterialTheme.typography.bodySmall, maxLines = 3, overflow = TextOverflow.Ellipsis)
             Spacer(Modifier.height(8.dp))
             Text(
                 if (card.unavailable) "Data unavailable - tap to retry" else card.status,

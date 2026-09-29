@@ -84,7 +84,7 @@ enum class AdministratorSort(val label: String) {
 data class AdministratorSummary(
     val label: String,
     val value: String,
-    val detail: String,
+    val detail: String?,
     val icon: ImageVector,
 )
 
@@ -135,10 +135,10 @@ fun AdministratorDirectoryWorkspace(
     }
 
     val summaries = listOf(
-        AdministratorSummary("Total admins", directory.accounts.size.toString(), "Unique full-access accounts", Icons.Outlined.Groups),
+        AdministratorSummary("Total admins", directory.accounts.size.toString(), null, Icons.Outlined.Groups),
         AdministratorSummary("Active", directory.activeCount.toString(), "${directory.unavailableCount} unavailable", Icons.Outlined.CheckCircle),
-        AdministratorSummary("Recent", directory.recentlyActiveCount.toString(), "Signed in within 30 days", Icons.AutoMirrored.Outlined.Login),
-        AdministratorSummary("Pending use", directory.neverSignedInCount.toString(), "Have never signed in", Icons.Outlined.History),
+        AdministratorSummary("Recent", directory.recentlyActiveCount.toString(), null, Icons.AutoMirrored.Outlined.Login),
+        AdministratorSummary("Pending use", directory.neverSignedInCount.toString(), null, Icons.Outlined.History),
     )
 
     Scaffold(
@@ -288,7 +288,9 @@ private fun AdministratorSummaryCard(summary: AdministratorSummary, modifier: Mo
             Spacer(Modifier.height(10.dp))
             Text(summary.value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
             Text(summary.label.uppercase(Locale.ROOT), color = ModMuted, style = CmsTextStyles.eyebrow)
-            Text(summary.detail, color = ModMuted, style = MaterialTheme.typography.bodySmall)
+            if (summary.detail != null) {
+                Text(summary.detail, color = ModMuted, style = MaterialTheme.typography.bodySmall)
+            }
         }
     }
 }

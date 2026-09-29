@@ -86,7 +86,8 @@ fun AdminNavHost(navController: NavHostController, onSignedOut: () -> Unit, refr
 
         // ── Leaves ──
         composable(AdminLeaf.ADMINISTRATORS) { AdministratorsScreen() }
-        composable(AdminLeaf.TEACHERS) { TeachersScreen() }
+        composable(AdminLeaf.TEACHERS) { TeachersScreen(onOpenTeacher = { teacherId -> go(AdminRoutes.teacherDetail(teacherId)) }) }
+        composable(AdminRoutes.TEACHER_DETAIL) { com.mbd.cmsadmin.feature.teachers.TeacherDetailScreen() }
         composable(AdminLeaf.LINK_REQUESTS) { LinkRequestsScreen() }
         composable(AdminLeaf.MARK_EDIT_REQUESTS) {
             com.mbd.cmsadmin.feature.markrequests.MarkEditRequestsScreen(refreshVersion = refreshVersion)

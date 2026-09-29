@@ -340,7 +340,7 @@ fun AttendanceRecordsScreen(viewModel: AttendanceRecordsViewModel = hiltViewMode
                         },
                         modifier = Modifier.padding(top = 6.dp),
                     )
-                    if (sessionId != null) PickRow("SEMESTER", (1..8).map { it to "Sem $it" }, semester) { semester = it; course = null; viewModel.clearFull() }
+                    if (sessionId != null) PickRow("SEMESTER", (selectedSession?.semesterRange ?: 1..8).map { it to "Sem $it" }, semester) { semester = it; course = null; viewModel.clearFull() }
                     if (sessionId != null && semester != null) {
                         Text("REPORT", style = CmsTextStyles.eyebrow, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 10.dp, bottom = 6.dp))
                         ModeSegmented(mode) { selectedMode -> viewModel.clearFull(); mode = selectedMode }

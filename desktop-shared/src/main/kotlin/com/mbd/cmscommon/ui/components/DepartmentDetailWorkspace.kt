@@ -5,6 +5,7 @@ import com.mbd.cmscommon.controller.capacityError
 import com.mbd.cmscommon.controller.capacityForShiftSelection
 import com.mbd.cmscommon.controller.createSessionError
 import com.mbd.cmscommon.domain.model.ShiftMode
+import com.mbd.cmscommon.domain.model.ProgramType
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -15,11 +16,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -64,7 +63,7 @@ fun DepartmentDetailWorkspace(
     errorMessage: String?,
     actionMessage: String?,
     onOpenSession: (String) -> Unit,
-    onCreateSession: (Int, Set<Session>, Int) -> Unit,
+    onCreateSession: (Int, Set<Session>, Int, ProgramType) -> Unit,
     onUpdateDepartment: (String, String, String?, String?) -> Unit,
     onClearError: () -> Unit,
     onConsumeNotice: () -> Unit,
@@ -84,7 +83,7 @@ fun DepartmentDetailWorkspace(
     val graduatedSessions = sessions.filter { !it.isActive }.matchingQuery()
 
     Box(modifier.fillMaxSize()) {
-        CardGrid(Modifier.fillMaxWidth()) {
+        CardGrid(Modifier.fillMaxWidth(), columns = 3) {
             fullSpanItem {
                 DepartmentIdentityCard(
                     department = department,
@@ -193,7 +192,7 @@ fun DepartmentDetailWorkspace(
         AddDepartmentSessionDialog(
             existing = sessions,
             onDismiss = { showAddSession = false },
-            onConfirm = { year, shifts, capacity -> onCreateSession(year, shifts, capacity); showAddSession = false },
+            onConfirm = { year, shifts, capacity, programType -> onCreateSession(year, shifts, capacity, programType); showAddSession = false },
         )
     }
 
@@ -269,15 +268,19 @@ private fun SessionMetric(label: String, value: String, modifier: Modifier = Mod
 @Composable
 private fun DepartmentSessionCard(session: AcademicSession, studentCount: Int, onClick: () -> Unit) {
     Surface(
-        modifier = Modifier.fillMaxHeight().clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         color = ModSurface,
         border = BorderStroke(1.dp, ModTrack),
     ) {
-        Column(Modifier.padding(16.dp).heightIn(min = 184.dp)) {
+        Column(Modifier.padding(16.dp)) {
             Column {
                 Text("Session ${session.label}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                Text("${session.shiftMode.label} · Semester ${session.currentSemester}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                Text(
+                    "${session.programType.label} · ${session.shiftMode.label} · Semester ${session.currentSemester}",
+                    color = ModMuted,
+                    style = MaterialTheme.typography.bodySmall,
+                )
             }
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -332,23 +335,35 @@ private fun SessionEmptyState(filtered: Boolean, onAction: () -> Unit) {
 }
 
 @Composable
-private fun AddDepartmentSessionDialog(existing: List<AcademicSession>, onDismiss: () -> Unit, onConfirm: (Int, Set<Session>, Int) -> Unit) {
+private fun AddDepartmentSessionDialog(existing: List<AcademicSession>, onDismiss: () -> Unit, onConfirm: (Int, Set<Session>, Int, ProgramType) -> Unit) {
     var year by remember { mutableStateOf<Int?>(null) }
     var shifts by remember { mutableStateOf(setOf(Session.MORNING)) }
     var capacity by remember { mutableStateOf(AcademicSession.defaultMaxStudents(ShiftMode.MORNING).toString()) }
-    val takenYears = existing.map { it.startYear }.toSet()
-    val error = createSessionError(year, shifts, capacity, existing)
+    var programType by remember { mutableStateOf(ProgramType.BS) }
+    // Years already taken by a session of the SAME program type -- a BS and an MA-Replacement
+    // session can share an intake year in the same department.
+    val takenYears = existing.filter { it.programType == programType }.map { it.startYear }.toSet()
+    val error = createSessionError(year, shifts, capacity, existing, programType)
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Create session", style = MaterialTheme.typography.headlineSmall) },
         text = { DialogScrollBody {
             Column {
-                // One session per intake year: years that already have a session are not offered.
+                Text("PROGRAM", color = ModMuted, style = CmsTextStyles.eyebrow)
+                Spacer(Modifier.height(4.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ProgramType.entries.forEach { type ->
+                        CmsChip(type.label, selected = programType == type, onClick = { programType = type; year = null })
+                    }
+                }
+                Spacer(Modifier.height(10.dp))
+                // One session per intake year and program type: years already taken by this program
+                // type are not offered.
                 CmsEntityPicker(
                     label = "Intake year",
                     selectedId = year?.toString(),
-                    options = intakeYearOptions().filterNot { it in takenYears }.map { CmsEntityOption(it.toString(), "$it–${it + 4}") },
+                    options = intakeYearOptions().filterNot { it in takenYears }.map { CmsEntityOption(it.toString(), "$it–${programType.endYear(it)}") },
                     onSelected = { year = it?.toIntOrNull() },
                     emptyLabel = "Select intake year",
                 )
@@ -368,7 +383,7 @@ private fun AddDepartmentSessionDialog(existing: List<AcademicSession>, onDismis
         }},
         confirmButton = {
             TextButton(
-                onClick = { year?.let { y -> capacity.toIntOrNull()?.let { onConfirm(y, shifts, it) } } },
+                onClick = { year?.let { y -> capacity.toIntOrNull()?.let { onConfirm(y, shifts, it, programType) } } },
                 enabled = error == null,
             ) { Text("Create session") }
         },

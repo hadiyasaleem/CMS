@@ -68,7 +68,6 @@ enum class MoreDestination { ADMINISTRATORS, BUILDINGS_ROOMS, NOTIFICATIONS, PRO
 private data class MoreAction(
     val destination: MoreDestination,
     val title: String,
-    val detail: String,
     val icon: ImageVector,
     val tone: Color,
 )
@@ -84,26 +83,10 @@ fun MoreHubWorkspace(
     modifier: Modifier = Modifier,
 ) {
     val actions = listOf(
-        MoreAction(
-            MoreDestination.ADMINISTRATORS, "Administrators",
-            "Create and review full-access administrator accounts.",
-            Icons.Outlined.AdminPanelSettings, MoreNavy,
-        ),
-        MoreAction(
-            MoreDestination.NOTIFICATIONS, "Notifications",
-            "Publish notices, review delivery history, and keep urgent updates visible.",
-            Icons.Outlined.Campaign, MoreNavy,
-        ),
-        MoreAction(
-            MoreDestination.BUILDINGS_ROOMS, "Buildings & Rooms",
-            "Manage campus buildings and rooms, including teacher offices.",
-            Icons.Outlined.Apartment, MoreGold,
-        ),
-        MoreAction(
-            MoreDestination.PROFILE, "Profile & Security",
-            "Review your administrator account, request a password reset, or sign out securely.",
-            Icons.Outlined.ManageAccounts, MoreGreen,
-        ),
+        MoreAction(MoreDestination.ADMINISTRATORS, "Administrators", Icons.Outlined.AdminPanelSettings, MoreNavy),
+        MoreAction(MoreDestination.NOTIFICATIONS, "Notifications", Icons.Outlined.Campaign, MoreNavy),
+        MoreAction(MoreDestination.BUILDINGS_ROOMS, "Buildings & Rooms", Icons.Outlined.Apartment, MoreGold),
+        MoreAction(MoreDestination.PROFILE, "Profile & Security", Icons.Outlined.ManageAccounts, MoreGreen),
     )
 
     val listState = rememberLazyListState()
@@ -141,8 +124,6 @@ private fun MoreHeader(heroPainter: Painter) {
                 Text("ACCOUNT & COMMUNICATIONS", color = MoreGold, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
                 Text("More", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                Spacer(Modifier.height(4.dp))
-                Text("Your administrator identity, notice activity, and security controls.", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
             }
         }
     }
@@ -225,10 +206,7 @@ private fun MoreActionCard(action: MoreAction, onClick: () -> Unit) {
                 Icon(action.icon, contentDescription = null, tint = action.tone)
             }
             Spacer(Modifier.size(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(action.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                Text(action.detail, color = ModMuted, style = MaterialTheme.typography.bodySmall)
-            }
+            Text(action.title, modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
         }
     }
 }

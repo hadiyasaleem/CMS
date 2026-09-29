@@ -8,15 +8,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.items
@@ -66,7 +63,6 @@ enum class PeopleDestination { TEACHERS, STUDENTS, LINK_REQUESTS, MARK_EDIT_REQU
 private data class PeopleCard(
     val destination: PeopleDestination,
     val title: String,
-    val detail: String,
     val status: String,
     val icon: ImageVector,
     val tone: Color,
@@ -86,32 +82,25 @@ fun PeopleHubWorkspace(
     onOpen: (PeopleDestination) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    BoxWithConstraints(modifier.fillMaxWidth()) {
-        val columns = when {
-            maxWidth < 700.dp -> 2
-            maxWidth < 1100.dp -> 3
-            else -> 4
+    CardGrid(modifier.fillMaxWidth().background(PeopleCanvas)) {
+        fullSpanItem { PeopleHeader(heroPainter) }
+        if (!errorMessage.isNullOrBlank()) {
+            fullSpanItem { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         }
-        CardGrid(Modifier.fillMaxWidth().background(PeopleCanvas), columns = columns) {
-            fullSpanItem { PeopleHeader(heroPainter) }
-            if (!errorMessage.isNullOrBlank()) {
-                fullSpanItem { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
-            }
-            if (filterOptions != null) {
-                fullSpanItem { ShiftScopeSelector(filterScope, filterOptions.departments, filterOptions.sessions, onFilterScope) }
-            }
-            fullSpanItem { PeopleSummary(snapshot, loading) }
-
-            if (loading && snapshot == null) {
-                fullSpanItems(3) { PeopleSkeleton() }
-            } else if (snapshot != null) {
-                items(peopleCards(snapshot), key = { it.destination }) { card ->
-                    PeopleActionCard(card, onClick = { onOpen(card.destination) })
-                }
-            }
-
-            fullSpanItem { Spacer(Modifier.height(72.dp)) }
+        if (filterOptions != null) {
+            fullSpanItem { ShiftScopeSelector(filterScope, filterOptions.departments, filterOptions.sessions, onFilterScope) }
         }
+        fullSpanItem { PeopleSummary(snapshot, loading) }
+
+        if (loading && snapshot == null) {
+            fullSpanItems(3) { PeopleSkeleton() }
+        } else if (snapshot != null) {
+            items(peopleCards(snapshot), key = { it.destination }) { card ->
+                PeopleActionCard(card, onClick = { onOpen(card.destination) })
+            }
+        }
+
+        fullSpanItem { Spacer(Modifier.height(72.dp)) }
     }
 }
 
@@ -131,8 +120,6 @@ private fun PeopleHeader(heroPainter: Painter) {
                 Text("COLLEGE COMMUNITY", color = PeopleGold, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
                 Text("People", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                Spacer(Modifier.height(4.dp))
-                Text("Administrators, faculty, students, and account requests.", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
             }
         }
     }
@@ -165,31 +152,26 @@ private fun PeopleMetric(value: String, label: String, modifier: Modifier = Modi
 private fun peopleCards(snapshot: PeopleHubSnapshot): List<PeopleCard> = listOf(
     PeopleCard(
         PeopleDestination.TEACHERS, "Teachers",
-        "Manage faculty profiles, lifecycle status, and permissions.",
         "${snapshot.teacherCount} active · ${snapshot.delegatedTeacherCount} delegated",
         Icons.Outlined.Groups, PeopleBlue,
     ),
     PeopleCard(
         PeopleDestination.STUDENTS, "Student Rosters",
-        "Open departments, then choose a session to manage its students.",
         "${snapshot.studentCount} enrolled student(s)",
         Icons.Outlined.School, PeopleGreen,
     ),
     PeopleCard(
         PeopleDestination.LINK_REQUESTS, "Student Link Requests",
-        "Verify student claims before connecting app accounts to rosters.",
         "${snapshot.pendingLinkRequests} awaiting review" + if (snapshot.repeatLinkRequests > 0) " / ${snapshot.repeatLinkRequests} repeat" else "",
         Icons.Outlined.HowToReg, if (snapshot.pendingLinkRequests > 0) PeopleRed else PeopleGreen,
     ),
     PeopleCard(
-        PeopleDestination.MARK_EDIT_REQUESTS, "Mark Edit Requests",
-        "Review teacher requests to change locked assessment scores.",
+        PeopleDestination.MARK_EDIT_REQUESTS, "Mark & Attendance Edit Requests",
         "${snapshot.pendingMarkEdits} awaiting review",
         Icons.Outlined.EditNote, if (snapshot.pendingMarkEdits > 0) PeopleGold else PeopleGreen,
     ),
     PeopleCard(
         PeopleDestination.SUBMITTED_PAPERS, "Submitted Exam Papers",
-        "Browse and download exam papers submitted by teachers for printing.",
         "${snapshot.submittedPapers} submitted",
         Icons.Outlined.Assignment, PeopleNavy,
     ),
@@ -198,21 +180,20 @@ private fun peopleCards(snapshot: PeopleHubSnapshot): List<PeopleCard> = listOf(
 @Composable
 private fun PeopleActionCard(card: PeopleCard, onClick: () -> Unit) {
     Surface(
-        modifier = Modifier.fillMaxHeight().clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         color = ModSurface,
         border = BorderStroke(1.dp, card.tone.copy(alpha = 0.25f)),
     ) {
-        Column(Modifier.padding(16.dp).heightIn(min = 168.dp)) {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(44.dp).background(card.tone.copy(alpha = 0.12f), RoundedCornerShape(13.dp)), contentAlignment = Alignment.Center) {
                 Icon(card.icon, contentDescription = null, tint = card.tone)
             }
-            Spacer(Modifier.height(12.dp))
-            Text(card.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            Spacer(Modifier.height(4.dp))
-            Text(card.detail, color = ModMuted, style = MaterialTheme.typography.bodySmall, maxLines = 3, overflow = TextOverflow.Ellipsis)
-            Spacer(Modifier.height(8.dp))
-            Text(card.status, color = card.tone, style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.size(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(card.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(card.status, color = card.tone, style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
         }
     }
 }

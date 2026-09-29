@@ -8,7 +8,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -71,7 +69,6 @@ enum class RecordsDestination { ATTENDANCE, CALENDAR, DATESHEETS, TIMETABLE, FEE
 private data class RecordsCard(
     val destination: RecordsDestination,
     val title: String,
-    val detail: String,
     val status: String,
     val icon: ImageVector,
     val tone: Color,
@@ -93,32 +90,25 @@ fun RecordsHubWorkspace(
     onOpen: (RecordsDestination) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    BoxWithConstraints(modifier.fillMaxWidth()) {
-        val columns = when {
-            maxWidth < 700.dp -> 2
-            maxWidth < 1100.dp -> 3
-            else -> 4
+    CardGrid(modifier.fillMaxWidth().background(RecordsCanvas)) {
+        fullSpanItem { RecordsHeader(heroPainter) }
+        if (!errorMessage.isNullOrBlank()) {
+            fullSpanItem { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         }
-        CardGrid(Modifier.fillMaxWidth().background(RecordsCanvas), columns = columns) {
-            fullSpanItem { RecordsHeader(heroPainter) }
-            if (!errorMessage.isNullOrBlank()) {
-                fullSpanItem { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
-            }
-            if (filterOptions != null) {
-                fullSpanItem { ShiftScopeSelector(filterScope, filterOptions.departments, filterOptions.sessions, onFilterScope) }
-            }
-            if (snapshot != null) {
-                fullSpanItem { RecordsSummaryRow(snapshot) }
-            }
-
-            if (loading && snapshot == null) {
-                fullSpanItems(3) { SkeletonRow() }
-            } else if (snapshot != null) {
-                items(recordsCards(snapshot), key = { it.destination }) { card -> RecordsActionCard(card, onClick = { onOpen(card.destination) }) }
-            }
-
-            fullSpanItem { Spacer(Modifier.height(72.dp)) }
+        if (filterOptions != null) {
+            fullSpanItem { ShiftScopeSelector(filterScope, filterOptions.departments, filterOptions.sessions, onFilterScope) }
         }
+        if (snapshot != null) {
+            fullSpanItem { RecordsSummaryRow(snapshot) }
+        }
+
+        if (loading && snapshot == null) {
+            fullSpanItems(3) { SkeletonRow() }
+        } else if (snapshot != null) {
+            items(recordsCards(snapshot), key = { it.destination }) { card -> RecordsActionCard(card, onClick = { onOpen(card.destination) }) }
+        }
+
+        fullSpanItem { Spacer(Modifier.height(72.dp)) }
     }
 }
 
@@ -138,8 +128,6 @@ private fun RecordsHeader(heroPainter: Painter) {
                 Text("COLLEGE RECORDS", color = RecordsGold, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
                 Text("Records", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                Spacer(Modifier.height(4.dp))
-                Text("Attendance, calendar, datesheets, timetable, fees, and insights.", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
             }
         }
     }
@@ -167,49 +155,42 @@ private fun RecordsMetric(value: String, label: String, modifier: Modifier = Mod
 private fun recordsCards(snapshot: RecordsHubSnapshot): List<RecordsCard> = listOf(
     RecordsCard(
         RecordsDestination.ATTENDANCE, "Attendance Records",
-        "Semester summaries, monthly totals, and day-by-day registers.",
         "${snapshot.activeSessions} active session(s)",
         Icons.Outlined.HowToReg, RecordsBlue, RecordsSummarySource.SESSIONS,
         RecordsSummarySource.SESSIONS in snapshot.unavailableSources,
     ),
     RecordsCard(
         RecordsDestination.CALENDAR, "Calendar",
-        "College holidays, events, exams, and deadlines.",
         "${snapshot.upcomingEvents} upcoming",
         Icons.Outlined.EventAvailable, RecordsGreen, RecordsSummarySource.CALENDAR,
         RecordsSummarySource.CALENDAR in snapshot.unavailableSources,
     ),
     RecordsCard(
         RecordsDestination.DATESHEETS, "Datesheets",
-        "Build exam schedules, assign rooms, and publish to students.",
         "${snapshot.publishedDatesheets} published · ${snapshot.draftDatesheets} draft",
         Icons.Outlined.CalendarMonth, RecordsGold, RecordsSummarySource.DATESHEETS,
         RecordsSummarySource.DATESHEETS in snapshot.unavailableSources,
     ),
     RecordsCard(
         RecordsDestination.TIMETABLE, "Master Timetable",
-        "Review every active session by day and shift.",
         "${snapshot.activeSessions} session(s) in scope",
         Icons.Outlined.Schedule, RecordsBlue, RecordsSummarySource.SESSIONS,
         RecordsSummarySource.SESSIONS in snapshot.unavailableSources,
     ),
     RecordsCard(
         RecordsDestination.FEES, "Fee Structures",
-        "Open a department and manage each session's fee plan.",
         "${snapshot.activeSessions} session(s) in scope",
         Icons.Outlined.Payments, RecordsGold, RecordsSummarySource.SESSIONS,
         RecordsSummarySource.SESSIONS in snapshot.unavailableSources,
     ),
     RecordsCard(
         RecordsDestination.INSIGHTS, "Academic Insights",
-        "Review performance, assessment, and student-risk signals.",
         "${snapshot.atRiskStudents} student(s) flagged",
         Icons.Outlined.Assessment, if (snapshot.atRiskStudents > 0) RecordsRed else RecordsGreen, RecordsSummarySource.INSIGHTS,
         RecordsSummarySource.INSIGHTS in snapshot.unavailableSources,
     ),
     RecordsCard(
         RecordsDestination.SEMESTER_RESULTS, "Semester Results",
-        "Record GPA, CGPA, class position, and supply subjects for any session.",
         "${snapshot.activeSessions} session(s) in scope",
         Icons.Outlined.TrendingUp, RecordsGreen, RecordsSummarySource.SESSIONS,
         RecordsSummarySource.SESSIONS in snapshot.unavailableSources,
@@ -219,27 +200,26 @@ private fun recordsCards(snapshot: RecordsHubSnapshot): List<RecordsCard> = list
 @Composable
 private fun RecordsActionCard(card: RecordsCard, onClick: () -> Unit) {
     Surface(
-        modifier = Modifier.fillMaxHeight().clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         color = ModSurface,
         border = BorderStroke(1.dp, card.tone.copy(alpha = 0.25f)),
     ) {
-        Column(Modifier.padding(16.dp).heightIn(min = 168.dp)) {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(44.dp).background(card.tone.copy(alpha = 0.12f), RoundedCornerShape(13.dp)), contentAlignment = Alignment.Center) {
                 Icon(card.icon, contentDescription = null, tint = card.tone)
             }
-            Spacer(Modifier.height(12.dp))
-            Text(card.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            Spacer(Modifier.height(4.dp))
-            Text(card.detail, color = ModMuted, style = MaterialTheme.typography.bodySmall, maxLines = 3, overflow = TextOverflow.Ellipsis)
-            Spacer(Modifier.height(8.dp))
-            Text(
-                if (card.unavailable) "Data unavailable - tap to retry" else card.status,
-                color = if (card.unavailable) RecordsRed else card.tone,
-                style = MaterialTheme.typography.labelMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Spacer(Modifier.size(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(card.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(
+                    if (card.unavailable) "Data unavailable - tap to retry" else card.status,
+                    color = if (card.unavailable) RecordsRed else card.tone,
+                    style = MaterialTheme.typography.labelMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }

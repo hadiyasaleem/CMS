@@ -24,22 +24,22 @@ fun DashboardScreen(onOpen: (String) -> Unit, viewModel: DashboardViewModel = hi
     val filterScope by viewModel.filterScope.collectAsState()
     val filterOptions by viewModel.filterOptions.collectAsState()
     val actions = listOf(
-        DashboardActionUi("Departments", "Programs, sessions and curricula", Icons.Outlined.School) {
+        DashboardActionUi("Departments", Icons.Outlined.School) {
             onOpen(AdminTab.Academics.route)
         },
-        DashboardActionUi("Teachers", "Faculty profiles and permissions", Icons.Outlined.Groups) {
+        DashboardActionUi("Teachers", Icons.Outlined.Groups) {
             onOpen(AdminLeaf.TEACHERS)
         },
-        DashboardActionUi("Calendar", "Events, holidays and deadlines", Icons.Outlined.CalendarMonth) {
+        DashboardActionUi("Calendar", Icons.Outlined.CalendarMonth) {
             onOpen(AdminLeaf.CALENDAR)
         },
-        DashboardActionUi("Link requests", "Connect student accounts", Icons.Outlined.HowToReg) {
+        DashboardActionUi("Link requests", Icons.Outlined.HowToReg) {
             onOpen(AdminLeaf.LINK_REQUESTS)
         },
-        DashboardActionUi("Insights", "Attendance and results overview", Icons.Outlined.Assessment) {
+        DashboardActionUi("Insights", Icons.Outlined.Assessment) {
             onOpen(AdminLeaf.INSIGHTS)
         },
-        DashboardActionUi("Notifications", "Publish targeted announcements", Icons.Outlined.Campaign) {
+        DashboardActionUi("Notifications", Icons.Outlined.Campaign) {
             onOpen(AdminLeaf.NOTIFICATIONS)
         },
     )
