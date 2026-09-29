@@ -2,6 +2,7 @@ package com.mbd.cmsstudent.feature.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mbd.cmscommon.auth.RegisterCooldownStore
 import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.domain.repository.UserRepository
 import com.mbd.cmscommon.ui.components.StudentAuthUiState
@@ -18,15 +19,24 @@ import kotlinx.coroutines.launch
 class AuthViewModel @Inject constructor(
     private val sessionManager: SessionManager,
     private val userRepository: UserRepository,
+    private val registerCooldownStore: RegisterCooldownStore,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(StudentAuthUiState())
     val uiState: StateFlow<StudentAuthUiState> = _uiState.asStateFlow()
 
-    fun onEmailChange(value: String) { _uiState.value = _uiState.value.copy(email = value, errorMessage = null, infoMessage = null, resetMessage = null) }
+    fun onEmailChange(value: String) {
+        _uiState.value = _uiState.value.copy(email = value, errorMessage = null, infoMessage = null, resetMessage = null, registerCooldownActive = false)
+        viewModelScope.launch {
+            val normalized = FieldValidators.normalizeEmail(value)
+            if (registerCooldownStore.isOnCooldown(normalized) && _uiState.value.email == value) {
+                _uiState.value = _uiState.value.copy(registerCooldownActive = true)
+            }
+        }
+    }
     fun onPasswordChange(value: String) { _uiState.value = _uiState.value.copy(password = value, errorMessage = null) }
     fun onModeChange(registerMode: Boolean) {
-        _uiState.value = _uiState.value.copy(registerMode = registerMode, errorMessage = null, infoMessage = null, resetMessage = null)
+        _uiState.value = _uiState.value.copy(registerMode = registerMode, errorMessage = null, infoMessage = null, resetMessage = null, registerCooldownActive = false)
     }
 
     fun submit() {
@@ -40,6 +50,14 @@ class AuthViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
+            if (state.registerMode && registerCooldownStore.isOnCooldown(email)) {
+                _uiState.value = _uiState.value.copy(
+                    errorMessage = "We already sent a verification link to $email. Check your inbox (and spam/junk folder), or try again in an hour.",
+                    registerCooldownActive = true,
+                )
+                return@launch
+            }
+
             _uiState.value = _uiState.value.copy(loading = true, errorMessage = null, infoMessage = null)
             try {
                 if (state.registerMode) {
@@ -54,9 +72,12 @@ class AuthViewModel @Inject constructor(
                         // Normal case: Supabase requires email confirmation before a session exists.
                         // AppRootViewModel's newlyAuthenticatedAccountKey collector finishes the
                         // account setup once the student opens the verification link on this device.
+                        registerCooldownStore.recordAttempt(email)
                         _uiState.value = _uiState.value.copy(
                             loading = false,
-                            infoMessage = "We sent a verification link to $email. Open it on this device to finish creating your account.",
+                            infoMessage = "We sent a verification link to $email. Open it on this device to finish creating your account. " +
+                                "Don't see it? Check your spam or junk folder too.",
+                            registerCooldownActive = true,
                         )
                     }
                 } else {

@@ -42,6 +42,7 @@ data class StudentAuthUiState(
     val resetSending: Boolean = false,
     val resetMessage: String? = null,
     val resetError: Boolean = false,
+    val registerCooldownActive: Boolean = false,
 )
 
 data class StudentAuthActions(
@@ -119,10 +120,11 @@ fun StudentAuthWorkspace(state: StudentAuthUiState, actions: StudentAuthActions,
             )
 
             Spacer(Modifier.height(16.dp))
+            val registerBlocked = state.registerMode && state.registerCooldownActive
             CmsPrimaryButton(
-                text = if (state.loading) "Please wait…" else if (state.registerMode) "Create account" else "Sign in",
+                text = if (state.loading) "Please wait…" else if (registerBlocked) "Verification link already sent" else if (state.registerMode) "Create account" else "Sign in",
                 onClick = actions.onSubmit,
-                enabled = !state.loading && state.email.isNotBlank() && state.password.isNotBlank(),
+                enabled = !state.loading && !registerBlocked && state.email.isNotBlank() && state.password.isNotBlank(),
                 modifier = Modifier.fillMaxWidth(),
             )
             if (state.loading) {

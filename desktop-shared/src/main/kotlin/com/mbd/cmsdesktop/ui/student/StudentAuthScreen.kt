@@ -36,6 +36,7 @@ fun StudentAuthScreen(
         resetSending = controller.resetSending,
         resetMessage = controller.resetMessage,
         resetError = controller.resetError,
+        registerCooldownActive = controller.registerCooldownActive,
     )
     val actions = StudentAuthActions(
         onEmailChange = controller::updateEmail,

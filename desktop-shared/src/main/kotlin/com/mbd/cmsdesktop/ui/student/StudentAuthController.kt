@@ -10,8 +10,13 @@ import com.mbd.cmscommon.domain.repository.UserRepository
 import com.mbd.cmscommon.util.FieldValidators
 import com.mbd.cmscommon.util.userMessageLogged
 import com.mbd.cmsdesktop.auth.DesktopRoleResolver
+import java.util.prefs.Preferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+
+private const val REGISTER_COOLDOWN_MILLIS = 60L * 60L * 1000L
+private const val LAST_REGISTER_EMAIL_KEY = "last_register_email"
+private const val LAST_REGISTER_AT_MILLIS_KEY = "last_register_at_millis"
 
 /**
  * Student-only sign-in/registration state holder for [StudentAuthScreen]. Unlike [com.mbd.cmsdesktop.ui.login.LoginController]
@@ -42,12 +47,24 @@ class StudentAuthController(
         private set
     var resetError by mutableStateOf(false)
         private set
+    var registerCooldownActive by mutableStateOf(false)
+        private set
+
+    private val prefs: Preferences = Preferences.userRoot().node("com/mbd/cms/studentauth")
+
+    /** True if [email] already has a pending, unexpired verification email on file. */
+    private fun isOnRegisterCooldown(email: String): Boolean {
+        val lastEmail = prefs.get(LAST_REGISTER_EMAIL_KEY, null)
+        val lastAt = prefs.getLong(LAST_REGISTER_AT_MILLIS_KEY, 0L)
+        return lastEmail == email && lastAt > 0L && System.currentTimeMillis() - lastAt < REGISTER_COOLDOWN_MILLIS
+    }
 
     fun toggleMode() {
         isRegisterMode = !isRegisterMode
         errorMessage = null
         infoMessage = null
         resetMessage = null
+        registerCooldownActive = isOnRegisterCooldown(email.normalizeEmail())
     }
 
     fun updateRegisterMode(value: Boolean) {
@@ -59,6 +76,7 @@ class StudentAuthController(
         errorMessage = null
         infoMessage = null
         resetMessage = null
+        registerCooldownActive = isOnRegisterCooldown(value.normalizeEmail())
     }
 
     fun updatePassword(value: String) {
@@ -73,13 +91,18 @@ class StudentAuthController(
             errorMessage = validation
             return
         }
+        val normalizedEmail = email.normalizeEmail()
+        if (isRegisterMode && isOnRegisterCooldown(normalizedEmail)) {
+            errorMessage = "We already sent a verification link to $normalizedEmail. Check your inbox (and spam/junk folder), or try again in an hour."
+            registerCooldownActive = true
+            return
+        }
         scope.launch {
             loading = true
             errorMessage = null
             infoMessage = null
             try {
                 if (isRegisterMode) {
-                    val normalizedEmail = email.normalizeEmail()
                     sessionManager.registerStudent(normalizedEmail, password)
                     val accountKey = sessionManager.accountKey
                     if (accountKey != null) {
@@ -92,7 +115,11 @@ class StudentAuthController(
                         // desktop yet, so on desktop the student must complete registration on mobile
                         // (or come back and sign in here once the link is opened on the same device
                         // where the confirmation redirect can be handled).
-                        infoMessage = "We sent a verification link to $normalizedEmail. Open it, then come back and sign in."
+                        prefs.put(LAST_REGISTER_EMAIL_KEY, normalizedEmail)
+                        prefs.putLong(LAST_REGISTER_AT_MILLIS_KEY, System.currentTimeMillis())
+                        registerCooldownActive = true
+                        infoMessage = "We sent a verification link to $normalizedEmail. Open it, then come back and sign in. " +
+                            "Don't see it? Check your spam or junk folder too."
                     }
                 } else {
                     sessionManager.signIn(email.normalizeEmail(), password)
