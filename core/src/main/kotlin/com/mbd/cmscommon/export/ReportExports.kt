@@ -8,11 +8,10 @@ import com.mbd.cmscommon.domain.model.AttendanceExportPayload
 import com.mbd.cmscommon.domain.model.AttendanceStatus
 import com.mbd.cmscommon.domain.model.AttendanceTally
 import com.mbd.cmscommon.domain.model.DailyAttendanceMark
-import com.mbd.cmscommon.domain.model.Datesheet
-import com.mbd.cmscommon.domain.model.DatesheetSlot
 import com.mbd.cmscommon.domain.model.Department
 import com.mbd.cmscommon.domain.model.ExamStat
 import com.mbd.cmscommon.domain.model.ExamType
+import com.mbd.cmscommon.domain.model.PeriodType
 import com.mbd.cmscommon.domain.model.SemesterGpa
 import com.mbd.cmscommon.domain.model.SemesterTerm
 import com.mbd.cmscommon.domain.model.SessionFeeStructure
@@ -245,6 +244,32 @@ fun sessionFeesExport(session: AcademicSession?, departmentName: String?, struct
     )
 }
 
+private val StudentGridDays = listOf(
+    DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
+    DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY,
+)
+
+/** Same day-rows x time-slot-columns grid the student app shows on screen, rather than a flat
+ * per-period list: only lectures (matching the on-screen filter) are placed, one row per weekday. */
+fun studentGridTimetableExport(periods: List<SessionPeriod>): ExportDocument {
+    val lectures = periods.filter { it.periodType == PeriodType.LECTURE && it.courseCode.isNotBlank() }
+    val timeSlots = lectures.map { clockDisplay(it.startTime) to clockDisplay(it.endTime) }.distinct().sortedBy { it.first }
+    val header = listOf("Day") + timeSlots.map { "${it.first}-${it.second}" }
+    val byDayAndSlot = lectures.associateBy { it.day to (clockDisplay(it.startTime) to clockDisplay(it.endTime)) }
+    val rows = StudentGridDays.map { day ->
+        listOf(titleCase(day.name)) + timeSlots.map { slot ->
+            byDayAndSlot[day to slot]?.let { p ->
+                listOfNotNull(p.subjectName, p.teacherName.ifBlank { null }, listOfNotNull(p.building, p.roomNo).joinToString(" ").ifBlank { null }).joinToString(" - ")
+            } ?: ""
+        }
+    }
+    return ExportDocument(
+        fileBase = "my_timetable_${LocalDate.now()}",
+        title = listOf("My Timetable"),
+        sections = listOf(ExportSection("Timetable", header, rows)),
+    )
+}
+
 fun timetableExport(session: AcademicSession?, periods: List<SessionPeriod>, shift: Session? = null): ExportDocument {
     val dayOrder = DayOfWeek.entries
     val header = listOf("Day", "Start", "End", "Course", "Subject", "Type", "Teacher", "Room", "Effective")
@@ -259,21 +284,6 @@ fun timetableExport(session: AcademicSession?, periods: List<SessionPeriod>, shi
         fileBase = listOfNotNull("timetable", session?.sessionId ?: "session", shift?.name?.lowercase(Locale.ROOT)).joinToString("_"),
         title = listOfNotNull("Class Timetable", sessionTitle(session, shift).ifBlank { null }),
         sections = listOf(ExportSection("Timetable", header, rows)),
-    )
-}
-
-fun datesheetExport(sheetLabel: String, sheet: Datesheet, slots: List<DatesheetSlot>): ExportDocument {
-    val header = listOf("Date", "Start", "End", "Course", "Subject", "Venue", "Invigilator")
-    val rows = slots.sortedWith(compareBy({ it.examDate ?: "9999" }, { it.startTime ?: "" })).map { s ->
-        listOf(
-            s.examDate ?: "Not scheduled", clockDisplay(s.startTime ?: sheet.defaultStartTime), clockDisplay(s.endTime ?: sheet.defaultEndTime),
-            s.courseCode, s.subjectName, listOfNotNull(s.building, s.roomNo).joinToString(" "), s.invigilatorEmail.orEmpty(),
-        )
-    }
-    return ExportDocument(
-        fileBase = "datesheet_${sheet.sessionId}_${sheet.shift.name.lowercase(Locale.ROOT)}_sem${sheet.semester}",
-        title = listOfNotNull("Datesheet", sheetLabel, "${sheet.shift.label} shift".takeIf { !sheetLabel.contains(sheet.shift.label) }, if (sheet.published) "Published" else "Draft", sheet.instructions?.takeIf { it.isNotBlank() }),
-        sections = listOf(ExportSection("Papers", header, rows)),
     )
 }
 

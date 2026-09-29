@@ -15,6 +15,9 @@ data class ExportSection(
     val rows: List<List<String>>,
     /** Column indexes drawn solid black (e.g. Sundays in the attendance register). */
     val blackColumns: Set<Int> = emptySet(),
+    /** When set, both PDF writers and the Excel writer draw this as a merged-cell printed
+     * timetable grid instead of the flat [header]/[rows] table. */
+    val grid: TimetableGridLayout? = null,
 )
 
 fun singleSectionDocument(fileBase: String, title: List<String>, header: List<String>, rows: List<List<String>>) =

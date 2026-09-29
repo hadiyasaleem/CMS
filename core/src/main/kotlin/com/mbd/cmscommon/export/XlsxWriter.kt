@@ -13,6 +13,10 @@ object XlsxWriter {
     private const val STYLE_TITLE = 1
     private const val STYLE_HEADER = 2
     private const val STYLE_BLACK = 3
+    private const val STYLE_GRID_TITLE = 4
+    private const val STYLE_GRID_HEADER = 5
+    private const val STYLE_GRID_CELL = 6
+    private const val STYLE_GRID_DEPT = 7
     private val NUMBER = Regex("^-?(0|[1-9]\\d{0,13})(\\.\\d+)?$")
 
     fun write(doc: ExportDocument, out: OutputStream) {
@@ -51,6 +55,7 @@ object XlsxWriter {
     }
 
     private fun sheet(title: List<String>, section: ExportSection): String {
+        section.grid?.let { return gridSheet(it) }
         val black = section.blackColumns
         val rows = mutableListOf<Pair<List<String>, Int>>()
         title.forEach { rows += listOf(it) to STYLE_TITLE }
@@ -86,6 +91,96 @@ object XlsxWriter {
                 append("</row>")
             }
             append("</sheetData></worksheet>")
+        }
+    }
+
+    /** A cell whose text is one or more (text, bold) lines, joined with a literal newline so the
+     * cell's wrap-text style breaks the display the same way -- Excel's multi-run inline strings are
+     * the only way to bold just part of a cell's text. */
+    private fun richCell(ref: String, lines: List<Pair<String, Boolean>>, style: Int, size: Int = 11, white: Boolean = false): String {
+        if (lines.isEmpty()) return """<c r="$ref" s="$style"/>"""
+        val runs = buildString {
+            lines.forEachIndexed { i, (text, bold) ->
+                val body = escape(text) + if (i < lines.lastIndex) "\n" else ""
+                append("<r><rPr>")
+                if (bold) append("<b/>")
+                append("""<sz val="$size"/>""")
+                if (white) append("""<color rgb="FFFFFFFF"/>""")
+                append("""<name val="Calibri"/>""")
+                append("</rPr><t xml:space=\"preserve\">$body</t></r>")
+            }
+        }
+        return """<c r="$ref" s="$style" t="inlineStr"><is>$runs</is></c>"""
+    }
+
+    /** A printed-timetable-style sheet: a centered title, a two-row period header, and one merged
+     * department cell per block spanning all of its day-split sub-rows -- mirroring the PDF layout. */
+    private fun gridSheet(layout: TimetableGridLayout): String {
+        val hasDaysCol = layout.secondColumnHeader != null
+        val slotColOffset = if (hasDaysCol) 2 else 1
+        val colCount = slotColOffset + layout.columns.size
+        val lastCol = columnName(colCount - 1)
+        val merges = mutableListOf<String>()
+        val body = StringBuilder()
+        var r = 0
+
+        fun openRow(height: Float) {
+            r++
+            body.append("""<row r="$r" ht="$height" customHeight="1">""")
+        }
+        fun closeRow() = body.append("</row>")
+
+        layout.titleLines.forEach { line ->
+            openRow(20f)
+            body.append(cell(columnName(0) + r, line, STYLE_GRID_TITLE))
+            closeRow()
+            merges += "${columnName(0)}$r:$lastCol$r"
+        }
+
+        openRow(20f)
+        val headerRow1 = r
+        body.append(richCell(columnName(0) + r, listOf("Departments" to true), STYLE_GRID_HEADER, size = 12, white = true))
+        if (hasDaysCol) body.append(richCell(columnName(1) + r, listOf(layout.secondColumnHeader!! to true), STYLE_GRID_HEADER, size = 12, white = true))
+        layout.columns.forEachIndexed { i, col -> body.append(richCell(columnName(slotColOffset + i) + r, listOf(col.index to true), STYLE_GRID_HEADER, size = 12, white = true)) }
+        closeRow()
+        openRow(18f)
+        val headerRow2 = r
+        layout.columns.forEachIndexed { i, col -> body.append(richCell(columnName(slotColOffset + i) + r, listOf(col.timeLabel to false), STYLE_GRID_HEADER, size = 12, white = true)) }
+        closeRow()
+        merges += "${columnName(0)}$headerRow1:${columnName(0)}$headerRow2"
+        if (hasDaysCol) merges += "${columnName(1)}$headerRow1:${columnName(1)}$headerRow2"
+
+        layout.blocks.forEach { block ->
+            val deptLines = block.deptLines.mapIndexed { i, v -> v to (i == 0) }
+            val blockStartRow = r + 1
+            block.subRows.forEachIndexed { subIdx, subRow ->
+                val cellLinesPerCol = layout.columns.indices.map { i -> timetableGridCellLines(subRow.cells[i]) }
+                val maxLines = (listOf(1) + cellLinesPerCol.map { it.size.coerceAtLeast(1) }).max()
+                openRow((maxLines * 16f + 8f).coerceAtLeast(24f))
+                if (subIdx == 0) body.append(richCell(columnName(0) + r, deptLines, STYLE_GRID_DEPT, size = 12))
+                if (hasDaysCol) body.append(richCell(columnName(1) + r, listOf(subRow.daysLabel to false), STYLE_GRID_CELL, size = 11))
+                cellLinesPerCol.forEachIndexed { i, lines -> body.append(richCell(columnName(slotColOffset + i) + r, lines, STYLE_GRID_CELL, size = 11)) }
+                closeRow()
+            }
+            if (r > blockStartRow) merges += "${columnName(0)}$blockStartRow:${columnName(0)}$r"
+        }
+
+        val widths = (if (hasDaysCol) listOf(16, 14) else listOf(16)) + List(layout.columns.size) { 28 }
+        return buildString {
+            append("""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>""")
+            append("""<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">""")
+            append("<cols>")
+            widths.forEachIndexed { i, w -> append("""<col min="${i + 1}" max="${i + 1}" width="$w" customWidth="1"/>""") }
+            append("</cols>")
+            append("<sheetData>")
+            append(body)
+            append("</sheetData>")
+            if (merges.isNotEmpty()) {
+                append("""<mergeCells count="${merges.size}">""")
+                merges.forEach { append("""<mergeCell ref="$it"/>""") }
+                append("</mergeCells>")
+            }
+            append("</worksheet>")
         }
     }
 
@@ -154,6 +249,8 @@ object XlsxWriter {
 
     private const val ROOT_RELS = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>"""
 
-    // xf 0 = default, 1 = title (bold 13pt), 2 = header (bold, light grey fill, thin border), 3 = solid black cell.
-    private const val STYLES = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="13"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE7E6E6"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FF000000"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"/><right style="thin"/><top style="thin"/><bottom style="thin"/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="4"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="0" fontId="2" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/><xf numFmtId="0" fontId="0" fillId="3" borderId="1" xfId="0" applyFill="1" applyBorder="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>"""
+    // xf 0 = default, 1 = title (bold 13pt), 2 = header (bold, light grey fill, thin border), 3 = solid black cell,
+    // 4 = grid title (bold 13pt, centered), 5 = grid header (bold, thin border, centered+wrap), 6 = grid cell
+    // (thin border, centered+wrap), 7 = grid department cell (bold, medium border, centered+wrap).
+    private const val STYLES = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="13"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE7E6E6"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FF000000"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="3"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"/><right style="thin"/><top style="thin"/><bottom style="thin"/><diagonal/></border><border><left style="medium"/><right style="medium"/><top style="medium"/><bottom style="medium"/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="8"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="0" fontId="2" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/><xf numFmtId="0" fontId="0" fillId="3" borderId="1" xfId="0" applyFill="1" applyBorder="1"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="2" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="2" fillId="0" borderId="2" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>"""
 }
