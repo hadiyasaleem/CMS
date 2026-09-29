@@ -37,7 +37,7 @@ node supabase/tests/local/scenarios.mjs
 - `supabase/tests/local/shim.sql` stands in for the Supabase-managed objects the migrations depend on (`auth.*`,
   `storage.*`, `cron.schedule`, the `anon` / `authenticated` / `service_role` roles).
 - `apply.mjs` stops at the first failing migration unless `CONTINUE=1` is set.
-- **Replay is clean.** All 40 migrations apply from scratch with no failures. Two backfilled copies of
+- **Replay is clean.** All 41 migrations apply from scratch with no failures. Two backfilled copies of
   live-applied migrations used to fail and were made replayable with statements that are no-ops on the live
   database: `20260715070000_guard_profile_exempt_service_role.sql` (`drop trigger if exists` before creating
   `trg_guard_profile`) and `20260729180000_mark_edit_requests_baseline.sql` (`add column if not exists updated_at`,
@@ -69,6 +69,32 @@ To also run the Kotlin parser (`EdgeFunctionErrors`) over the real bodies:
 EDGE_CAPTURE="$PWD/.testtools/run/edge-captures.jsonl" deno test --allow-net --allow-env --allow-read --allow-write supabase/functions/_tests/
 ./gradlew :core:test --tests "*DatabaseScenarioMessagesTest"
 ```
+
+## Known drift from production
+
+`supabase/tests/local/drift.sql` fingerprints every public function, trigger, policy, index, table (columns and
+constraints), enum, view and RLS flag. Run it on a scratch replay and on production and diff the outputs.
+
+Last comparison (read-only queries against project `ygmvyvjhdkxddkqxtrdw`, after the humanize-errors migration): the
+repo replay matched production for all columns, constraints, enums, views and RLS flags, and for every function,
+trigger, policy and index **except** the four items below, which existed only on production and are backfilled by
+`20260930010000_backfill_live_only_drift.sql` (a no-op on production):
+
+| Object | Production | Repo replay (before the backfill) |
+|---|---|---|
+| `roll_block_error` | live migration `fix_single_shift_roll_block`: single-shift sessions only need serial 1..max; the Morning/Evening ranges apply to `BOTH` only | older body that applied the shift ranges to every session |
+| policy `session_marks.upd_marks` | **admin only** (locked marks; teachers correct through a mark edit request) | admin **or** the class's teacher — a fresh database let teachers overwrite saved marks |
+| policy `mark_edit_requests.adm_mark_edit_requests` | not limited to `authenticated` (same effect) | `to authenticated` |
+| indexes `idx_session_attendance_updated_entity`, `ux_session_attendance_entity_id` | present (pagination tie-breaker on `entity_id`) | missing |
+
+Not comparable here, so not checked: grants/ACLs (the scratch shim lacks Supabase's default privileges), storage
+buckets and policies, `pg_cron` jobs, triggers on `auth.users`, extension versions, and data. Production also has a
+data-only migration, `bump_english_session_capacity` (`update academic_sessions set max_students = 100 where session_id
+in ('eng_2023','eng_2024')`), which is deliberately not replayed.
+
+**Migration versions.** Repo file names and the versions recorded on production differ for every migration (production
+uses the time it was applied, e.g. the humanize-errors migration is `20260929…` there and `20260930000000` here). Do not
+run `supabase db push` blindly: it would treat the repo files as unapplied. Apply reviewed SQL deliberately instead.
 
 ## What this does NOT cover
 
