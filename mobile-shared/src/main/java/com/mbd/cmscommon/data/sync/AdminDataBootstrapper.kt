@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.sync
 
+import com.mbd.cmscommon.util.rethrowCancellation
 import com.mbd.cmscommon.domain.model.NotificationTargetRole
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.AdministratorRepository
@@ -127,6 +128,8 @@ class AdminDataBootstrapper @Inject constructor(
     /** Runs one sync task; a failure is logged (CRITICAL ones) under [tag] and returned, named [label], for the report. */
     private suspend fun step(label: String, tag: String, onTaskDone: () -> Unit, block: suspend () -> Unit): LoadFailure? {
         val result = runCatching { block() }
+        // A cancelled refresh is not a failed table: let the cancellation propagate rather than reporting it.
+        result.rethrowCancellation()
         result.isSuccessLogged(tag)
         onTaskDone()
         return result.exceptionOrNull()?.let { LoadFailure(label, it) }

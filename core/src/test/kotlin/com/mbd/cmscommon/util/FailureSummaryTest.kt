@@ -85,4 +85,42 @@ class FailureSummaryTest {
         assertFalse(report.successful)
         assertEquals("Couldn't refresh fees and marks (no connection).", report.message)
     }
+
+    @Test
+    fun describeIgnoresCancellationsInAHandBuiltList() {
+        val cancelled = LoadFailure("fees", CancellationException("left the screen"))
+        assertNull(FailureSummary.describe(listOf(cancelled)))
+        assertEquals(
+            "Couldn't load marks (no connection).",
+            FailureSummary.describe(listOf(cancelled, LoadFailure("marks", offline))),
+        )
+    }
+
+    @Test
+    fun aSyncReportNeverCountsACancellationAsAFailure() {
+        val onlyCancelled = SyncReport(listOf(LoadFailure("fees", CancellationException("cancelled"))))
+        assertTrue(onlyCancelled.successful)
+        assertNull(onlyCancelled.message)
+
+        val mixed = SyncReport(listOf(LoadFailure("fees", CancellationException("cancelled")), LoadFailure("marks", offline)))
+        assertFalse(mixed.successful)
+        assertEquals(1, mixed.failures.size)
+        assertEquals("Couldn't refresh marks (no connection).", mixed.message)
+    }
+
+    @Test
+    fun rethrowCancellationPassesCancellationsButKeepsOrdinaryResults() {
+        val ok = Result.success(1)
+        assertTrue(ok.rethrowCancellation().isSuccess)
+        val failed = Result.failure<Int>(offline)
+        assertTrue(failed.rethrowCancellation().isFailure)
+
+        val cancelled = CancellationException("cancelled")
+        try {
+            runCatching { throw cancelled }.rethrowCancellation()
+            org.junit.Assert.fail("cancellation should have been rethrown")
+        } catch (e: CancellationException) {
+            assertEquals(cancelled, e)
+        }
+    }
 }

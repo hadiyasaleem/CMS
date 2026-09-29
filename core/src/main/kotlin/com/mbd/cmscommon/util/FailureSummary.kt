@@ -5,10 +5,25 @@ import java.util.concurrent.CancellationException
 /** One named part of a screen or sync that failed, and the exception behind it. */
 data class LoadFailure(val what: String, val cause: Throwable)
 
-/** What a full data refresh did: empty [failures] means everything synced; otherwise [message] says which parts failed and why. */
-class SyncReport(val failures: List<LoadFailure>) {
+/**
+ * Hands a coroutine cancellation back to the caller instead of letting it be recorded as a failure. `runCatching` catches
+ * [CancellationException] like any other throwable; a cancelled sync step is not "unexpected error, Ref XXXX", and swallowing
+ * it would also break structured concurrency. Use it between `runCatching { }` and `.onFailure { }` / result inspection.
+ */
+fun <T> Result<T>.rethrowCancellation(): Result<T> {
+    val error = exceptionOrNull()
+    if (error is CancellationException) throw error
+    return this
+}
+
+/**
+ * What a full data refresh did: empty [failures] means everything synced; otherwise [message] says which parts failed and why.
+ * Cancellations are never failures, even if one is passed in.
+ */
+class SyncReport(failures: List<LoadFailure>) {
+    val failures: List<LoadFailure> = failures.filterNot { it.cause is CancellationException }
     val successful: Boolean get() = failures.isEmpty()
-    val message: String? by lazy { FailureSummary.describe(failures, prefix = "Couldn't refresh") }
+    val message: String? by lazy { FailureSummary.describe(this.failures, prefix = "Couldn't refresh") }
 }
 
 /**
@@ -29,7 +44,8 @@ object FailureSummary {
         }
 
     /** [prefix] is the opening of the sentence: "Couldn't load", "Couldn't refresh". Null when nothing failed. */
-    fun describe(failures: List<LoadFailure>, tag: String? = null, prefix: String = "Couldn't load"): String? {
+    fun describe(allFailures: List<LoadFailure>, tag: String? = null, prefix: String = "Couldn't load"): String? {
+        val failures = allFailures.filterNot { it.cause is CancellationException }
         if (failures.isEmpty()) return null
 
         val groups = LinkedHashMap<String, MutableList<String>>()

@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.util.rethrowCancellation
 import com.mbd.cmscommon.util.LoadFailure
 import com.mbd.cmscommon.util.FailureSummary
 import com.mbd.cmscommon.domain.model.AcademicSession
@@ -73,18 +74,20 @@ class TeacherScheduleController(
         _refreshState.value = Outcome.Loading
         val failures = mutableListOf<LoadFailure>()
 
-        runCatching { departmentRepository.sync() }.onFailure { failures += LoadFailure("departments", it) }
+        runCatching { departmentRepository.sync() }.rethrowCancellation().onFailure { failures += LoadFailure("departments", it) }
         val depts = runCatching { departmentRepository.observeActiveDepartments().first() }
+            .rethrowCancellation()
             .onFailure { failures += LoadFailure("the department list", it) }
             .getOrDefault(emptyList())
         depts.forEach { dept ->
-            runCatching { sessionRepository.syncSessionsForDept(dept.deptId) }.onFailure { failures += LoadFailure("sessions", it) }
+            runCatching { sessionRepository.syncSessionsForDept(dept.deptId) }.rethrowCancellation().onFailure { failures += LoadFailure("sessions", it) }
         }
         val sessionIds = runCatching { sessionRepository.observeAllSessions().first().map { it.sessionId }.distinct() }
+            .rethrowCancellation()
             .onFailure { failures += LoadFailure("the session list", it) }
             .getOrDefault(emptyList())
         sessionIds.forEach { sessionId ->
-            runCatching { timetableRepository.syncSession(sessionId) }.onFailure { failures += LoadFailure("timetables", it) }
+            runCatching { timetableRepository.syncSession(sessionId) }.rethrowCancellation().onFailure { failures += LoadFailure("timetables", it) }
         }
 
         _refreshState.value = FailureSummary.describe(failures, "TeacherScheduleController", prefix = "Couldn't refresh")
