@@ -32,6 +32,7 @@ import com.mbd.cmscommon.domain.repository.AvailableRollNumber
 import com.mbd.cmscommon.domain.model.profilePhotoExtension
 import com.mbd.cmscommon.domain.model.profilePhotoUploadError
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
+import com.mbd.cmscommon.util.EdgeFunctionErrors
 import com.mbd.cmscommon.util.FieldValidators
 import io.github.jan.supabase.functions.Functions
 import io.github.jan.supabase.postgrest.Postgrest
@@ -200,8 +201,9 @@ class AcademicSessionRepositoryImpl @Inject constructor(
     }
 
     override suspend fun promoteSession(sessionId: String): SessionPromotionResult {
-        val response = functions.invoke("promote-session", PromoteSessionRequest(sessionId))
-        val result = response.body<SessionPromotionResult>()
+        val result = EdgeFunctionErrors.translate {
+            functions.invoke("promote-session", PromoteSessionRequest(sessionId)).body<SessionPromotionResult>()
+        }
         val promotedTo = result.promotedTo
         if (result.graduated) {
             sessionDao.setActive(sessionId, false)

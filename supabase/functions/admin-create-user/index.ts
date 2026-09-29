@@ -5,15 +5,15 @@
 //
 // POST { email, password, role: "TEACHER" | "ADMIN",
 //        name?, deptId?, designation?, phone? }
-import { handle, httpError, ok, requireAdmin, serviceClient } from "../_shared/auth.ts";
+import { authError, dbError, handle, httpError, ok, readJson, requireAdmin, serviceClient } from "../_shared/auth.ts";
 
 Deno.serve(handle(async (req) => {
   const svc = serviceClient();
   const caller = await requireAdmin(req, svc);
 
-  const { email, password, role, name, deptId, designation, phone } = await req.json();
-  if (!email || !password) throw httpError(400, "email and password are required");
-  if (role !== "TEACHER" && role !== "ADMIN") throw httpError(400, "role must be TEACHER or ADMIN");
+  const { email, password, role, name, deptId, designation, phone } = await readJson(req) as Record<string, string | undefined>;
+  if (!email || !password) throw httpError(400, "Enter an email address and a password.");
+  if (role !== "TEACHER" && role !== "ADMIN") throw httpError(400, "The account type must be Teacher or Admin.");
   const normalized = String(email).trim().toLowerCase();
 
   // Create the auth account. If it already exists (e.g. a previous attempt failed midway),
@@ -28,7 +28,7 @@ Deno.serve(handle(async (req) => {
   if (createErr) {
     const { data: existing } = await svc.from("profiles")
       .select("id").eq("email", normalized).maybeSingle();
-    if (!existing) throw httpError(409, createErr.message);
+    if (!existing) throw authError(createErr, "Couldn't create the login for this account. Try again.");
     uid = existing.id;
     await svc.auth.admin.updateUserById(uid, { password, email_confirm: true });
   } else {
@@ -48,7 +48,7 @@ Deno.serve(handle(async (req) => {
       created_by: caller.email,
       updated_by: caller.email,
     });
-    if (teacherErr) throw httpError(500, teacherErr.message);
+    if (teacherErr) throw dbError(teacherErr, "The login was created but the teacher record couldn't be saved. Try again; it is safe to retry.");
   }
 
   // trg_on_auth_user_created already inserted a STUDENT profile — upgrade it.
@@ -59,7 +59,7 @@ Deno.serve(handle(async (req) => {
     teacher_email: role === "TEACHER" ? normalized : null,
     status: "ACTIVE",
   });
-  if (profileErr) throw httpError(500, profileErr.message);
+  if (profileErr) throw dbError(profileErr, `The login was created but couldn't be set up as ${role === "ADMIN" ? "an admin" : "a teacher"}. Try again; it is safe to retry.`);
 
   return ok({ uid, email: normalized, role });
 }));

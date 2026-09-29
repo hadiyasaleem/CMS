@@ -9,26 +9,26 @@
 // always leaves the teacher with working credentials.
 //
 // POST { email, newPassword }
-import { handle, httpError, ok, requireAdmin, serviceClient } from "../_shared/auth.ts";
+import { authError, dbError, handle, httpError, ok, readJson, requireAdmin, serviceClient } from "../_shared/auth.ts";
 
 Deno.serve(handle(async (req) => {
   const svc = serviceClient();
   const caller = await requireAdmin(req, svc);
 
-  const body = await req.json();
+  const body = await readJson(req) as Record<string, string | undefined>;
   // Accept both casings -- the Kotlin client's global JSON naming strategy can rewrite
   // camelCase fields to snake_case depending on which call path serializes the request,
   // so don't assume a single casing.
   const email = body.email;
   const newPassword = body.newPassword ?? body.new_password;
   if (!email || !newPassword) {
-    throw httpError(400, `email and newPassword are required (got keys: ${Object.keys(body).join(", ")})`);
+    throw httpError(400, "Enter the teacher's email and a new password.");
   }
   const normalized = String(email).trim().toLowerCase();
 
   const { data: teacher } = await svc.from("teachers")
     .select("auth_uid").eq("email", normalized).maybeSingle();
-  if (!teacher) throw httpError(404, "Teacher not found");
+  if (!teacher) throw httpError(404, "No teacher account exists for that email.");
 
   let uid = teacher.auth_uid as string | null;
   if (!uid) {
@@ -37,14 +37,16 @@ Deno.serve(handle(async (req) => {
       password: newPassword,
       email_confirm: true,
     });
-    if (createErr) throw httpError(500, createErr.message);
+    if (createErr) throw authError(createErr, "Couldn't create a login for this teacher. Try again.");
     uid = created.user!.id;
 
-    await svc.from("teachers").update({ auth_uid: uid, updated_by: caller.email }).eq("email", normalized);
-    await svc.from("profiles").upsert({ id: uid, email: normalized, role: "TEACHER", teacher_email: normalized, status: "ACTIVE" });
+    const { error: linkErr } = await svc.from("teachers").update({ auth_uid: uid, updated_by: caller.email }).eq("email", normalized);
+    if (linkErr) throw dbError(linkErr, "The login was created but couldn't be linked to the teacher record. Try again.");
+    const { error: profileErr } = await svc.from("profiles").upsert({ id: uid, email: normalized, role: "TEACHER", teacher_email: normalized, status: "ACTIVE" });
+    if (profileErr) throw dbError(profileErr, "The login was created but the teacher's account couldn't be set up. Try again.");
   } else {
     const { error } = await svc.auth.admin.updateUserById(uid, { password: newPassword });
-    if (error) throw httpError(500, error.message);
+    if (error) throw authError(error, "Couldn't change the password. Try again.");
   }
 
   return ok({ email: normalized });
