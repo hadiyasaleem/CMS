@@ -90,6 +90,11 @@ fun StudentProfileWorkspace(
     var showFineDialog by remember { mutableStateOf(false) }
     var pendingFineDelete by remember { mutableStateOf<Fine?>(null) }
     var pendingCrop by remember { mutableStateOf<ImageBitmap?>(null) }
+    // Tracks whether the last save-in-flight was a delink, so its success/failure shows right next
+    // to the Delink button (which sits below the fold) instead of only in the generic notice at the
+    // top of this list -- the local `profile` edit buffer also needs to be told about the delink
+    // directly, since it isn't resynced from `loadedProfile` (that would clobber in-progress edits).
+    var delinkAttempted by remember { mutableStateOf(false) }
 
     val dirty = profile != loadedProfile
     val nameError = FieldValidators.nameError(profile.name, "Full name")
@@ -174,9 +179,18 @@ fun StudentProfileWorkspace(
             AcademicAndRolesCard(
                 profile = profile,
                 session = session,
+                delinkOutcome = if (delinkAttempted) saveOutcome else null,
                 onToggleCr = { profile = profile.copy(isCr = !profile.isCr) },
                 onToggleGr = { profile = profile.copy(isGr = !profile.isGr) },
-                onDelink = onDelink,
+                onDelink = {
+                    // Optimistic local update: the controller's own StateFlow already clears
+                    // linkedEmail, but this screen edits a local copy so in-progress field edits
+                    // aren't clobbered by every upstream emission -- so the delink has to be applied
+                    // to that local copy directly, or the card keeps showing the old linked email.
+                    profile = profile.copy(linkedEmail = "")
+                    delinkAttempted = true
+                    onDelink()
+                },
             )
         }
 
@@ -187,7 +201,7 @@ fun StudentProfileWorkspace(
                 dirty = dirty,
                 saving = saveOutcome is Outcome.Loading,
                 errors = validationErrors,
-                onSave = { onSave(profile) },
+                onSave = { delinkAttempted = false; onSave(profile) },
                 onReset = { profile = loadedProfile },
             )
         }
@@ -311,7 +325,14 @@ private fun ProfileChipPicker(label: String, options: List<String>, selected: St
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun AcademicAndRolesCard(profile: StudentProfile, session: AcademicSession?, onToggleCr: () -> Unit, onToggleGr: () -> Unit, onDelink: () -> Unit) {
+private fun AcademicAndRolesCard(
+    profile: StudentProfile,
+    session: AcademicSession?,
+    delinkOutcome: Outcome<Unit>?,
+    onToggleCr: () -> Unit,
+    onToggleGr: () -> Unit,
+    onDelink: () -> Unit,
+) {
     var confirmDelink by remember { mutableStateOf(false) }
 
     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
@@ -336,6 +357,17 @@ private fun AcademicAndRolesCard(profile: StudentProfile, session: AcademicSessi
                     Text(profile.linkedEmail, modifier = Modifier.weight(1f), color = ModMuted, style = MaterialTheme.typography.bodySmall)
                     TextButton(onClick = { confirmDelink = true }) { Text("Delink account", color = CmsTheme.colors.accent) }
                 }
+            }
+            when (delinkOutcome) {
+                is Outcome.Success -> {
+                    Spacer(Modifier.height(6.dp))
+                    CmsNotice("Account delinked.", tone = NoticeTone.Success)
+                }
+                is Outcome.Error -> {
+                    Spacer(Modifier.height(6.dp))
+                    CmsNotice(delinkOutcome.message, tone = NoticeTone.Error)
+                }
+                else -> {}
             }
             Spacer(Modifier.height(10.dp))
             Text("CLASS REPRESENTATIVE ROLES", color = ModMuted, style = CmsTextStyles.eyebrow)

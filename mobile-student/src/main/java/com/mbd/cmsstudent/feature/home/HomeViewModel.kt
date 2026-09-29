@@ -12,10 +12,10 @@ import com.mbd.cmsstudent.feature.common.CurrentStudentProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -38,7 +38,7 @@ class HomeViewModel @Inject constructor(
             } else {
                 val c = StudentHomeController(context.sessionId, context.rollNumber, sessionRepository, attendanceRepository, timetableRepository, viewModelScope)
                 controller = c
-                c.ui.map { ui ->
+                combine(c.ui, c.me) { ui, student ->
                     studentHomeSnapshot(
                         name = context.name,
                         rollNumber = context.rollNumber,
@@ -47,9 +47,10 @@ class HomeViewModel @Inject constructor(
                         cgpa = context.cgpa,
                         overallAttendance = ui.overallPercent,
                         subjectCount = ui.subjectCount,
-                        lecturesToday = ui.lecturesToday,
-                        nextClass = ui.nextClass,
+                        todaysClasses = ui.todaysClasses,
+                        nextClassId = ui.nextClassId,
                         weakestSubject = ui.weakestSubject,
+                        shift = student?.shift,
                     )
                 }
             }

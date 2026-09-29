@@ -49,11 +49,13 @@ fun SemesterResultsScreen(
     val subjects by controller.subjects.collectAsState()
     val loadState by controller.loadState.collectAsState()
     val saveState by controller.saveState.collectAsState()
+    val semesterRange by controller.semesterRange.collectAsState()
 
     SemesterResultsWorkspace(
 
         onExport = rememberDocumentExport(),
         sessions = sessions,
+        semesterRange = semesterRange,
         classOptions = visibleClasses,
         filterScope = filterScope,
         filterOptions = filterOptions,

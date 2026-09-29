@@ -56,7 +56,7 @@ enum class StudentExamsDestination { MARKS, RESULTS, DATESHEETS }
 
 private data class StudentExamCard(
     val title: String,
-    val subtitle: String,
+    val subtitle: String?,
     val value: String,
     val valueLabel: String,
     val status: String,
@@ -101,10 +101,8 @@ fun StudentExamsHubWorkspace(
 }
 
 private fun buildStudentExamCards(snapshot: StudentExamsHubSnapshot): List<StudentExamCard> {
-    val marksSubtitle = "Midterm and sessional scores entered for ${snapshot.subjectsWithScores} ${if (snapshot.subjectsWithScores == 1) "subject" else "subjects"}"
     val marksStatus = if (snapshot.absentAssessments == 0) "No absences" else "${snapshot.absentAssessments} absent"
 
-    val resultsSubtitle = if (snapshot.recordedSemesters == 0) "Semester GPA and CGPA progression will appear after publication" else "Academic progression across recorded semesters"
     val resultsValue = snapshot.currentCgpa?.let { "%.2f".format(it) } ?: "--"
     val resultsStatus = when {
         snapshot.activeSupplyCourses > 0 -> "${snapshot.activeSupplyCourses} supply"
@@ -117,13 +115,13 @@ private fun buildStudentExamCards(snapshot: StudentExamsHubSnapshot): List<Stude
         else -> BadgeTone.Neutral
     }
 
-    val datesheetSubtitle = snapshot.nextExamDate?.let { "Next exam on ${it.format(ExamDateFormat)}" } ?: "Published exam schedules and paper venues"
+    val datesheetSubtitle = snapshot.nextExamDate?.let { "Next exam on ${it.format(ExamDateFormat)}" }
     val datesheetStatus = if (snapshot.publishedDatesheets == 0) "No schedule" else "${snapshot.publishedDatesheets} published"
     val datesheetTone = if (snapshot.publishedDatesheets == 0) BadgeTone.Neutral else BadgeTone.Success
 
     return listOf(
-        StudentExamCard("Marks", marksSubtitle, snapshot.enteredAssessments.toString(), "assessments entered", marksStatus, if (snapshot.absentAssessments == 0) BadgeTone.Success else BadgeTone.Warning, Icons.Outlined.Grading, StudentExamsDestination.MARKS),
-        StudentExamCard("Results", resultsSubtitle, resultsValue, "current CGPA", resultsStatus, resultsTone, Icons.Outlined.TrendingUp, StudentExamsDestination.RESULTS),
+        StudentExamCard("Marks", null, snapshot.enteredAssessments.toString(), "assessments entered", marksStatus, if (snapshot.absentAssessments == 0) BadgeTone.Success else BadgeTone.Warning, Icons.Outlined.Grading, StudentExamsDestination.MARKS),
+        StudentExamCard("Results", null, resultsValue, "current CGPA", resultsStatus, resultsTone, Icons.Outlined.TrendingUp, StudentExamsDestination.RESULTS),
         StudentExamCard("Datesheets", datesheetSubtitle, snapshot.upcomingPapers.toString(), "upcoming papers", datesheetStatus, datesheetTone, Icons.Outlined.EventNote, StudentExamsDestination.DATESHEETS),
     )
 }
@@ -144,8 +142,6 @@ private fun StudentExamsHeader(heroPainter: Painter) {
                 Text("ASSESSMENT WORKSPACE", color = StudentExamsGold, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
                 Text("Exams", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                Spacer(Modifier.height(4.dp))
-                Text("Marks, results, and exam schedules in one place.", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
             }
         }
     }
@@ -164,7 +160,9 @@ private fun StudentExamNavigationCard(card: StudentExamCard, onClick: () -> Unit
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(card.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                Text(card.subtitle, color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                if (card.subtitle != null) {
+                    Text(card.subtitle, color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                }
                 Spacer(Modifier.height(6.dp))
                 ExamSummaryMetric(card.value, card.valueLabel)
             }

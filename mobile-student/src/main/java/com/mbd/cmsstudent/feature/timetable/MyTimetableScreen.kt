@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.painterResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mbd.cmscommon.ui.components.StudentTimetableWorkspace
+import com.mbd.cmscommon.util.rememberDocumentExport
 import com.mbd.cmsstudent.R
 
 @Composable
@@ -20,5 +21,6 @@ fun MyTimetableScreen(viewModel: MyTimetableViewModel = hiltViewModel()) {
         errorMessage = errorMessage,
         onRetry = viewModel::refresh,
         onClearError = viewModel::clearError,
+        onExport = rememberDocumentExport(),
     )
 }

@@ -65,7 +65,6 @@ enum class ExamsDestination { MARKS, EXAM_PAPER, RESULTS, DATESHEETS }
 data class ExamAction(
     val destination: ExamsDestination,
     val title: String,
-    val detail: String,
     val status: String,
     val icon: ImageVector,
     val tone: Color,
@@ -84,25 +83,21 @@ fun ExamsHubWorkspace(
     val actions = listOf(
         ExamAction(
             ExamsDestination.MARKS, "Marks Entry",
-            "Record midterm and sessional scores for assigned classes.",
             "${snapshot.assignedClasses} assigned class(es)",
             Icons.Outlined.Assignment, ExamBlue,
         ),
         ExamAction(
             ExamsDestination.EXAM_PAPER, "Submit Exam Paper",
-            "Upload and manage PDF or DOCX papers for each subject.",
             "${snapshot.classesWithPapers}/${snapshot.assignedClasses} covered · ${snapshot.paperSubmissions} file(s)",
             Icons.Outlined.UploadFile, if (snapshot.paperCoveragePercent >= 100) ExamGreen else ExamGold,
         ),
         ExamAction(
             ExamsDestination.RESULTS, "Semester Results",
-            "Record GPA, CGPA, class position, and supply subjects.",
             "${snapshot.assignedSessions} assigned session(s)",
             Icons.Outlined.TrendingUp, ExamGreen,
         ),
         ExamAction(
             ExamsDestination.DATESHEETS, "Datesheets",
-            "Review published schedules and your invigilation duties.",
             "${snapshot.publishedDatesheets} published · ${snapshot.upcomingInvigilationSlots} duty",
             Icons.Outlined.EventNote, if (snapshot.upcomingInvigilationSlots > 0) ExamRed else ExamBlue,
         ),
@@ -195,8 +190,6 @@ private fun ExamActionCard(action: ExamAction, onClick: () -> Unit) {
             Spacer(Modifier.size(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(action.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                Text(action.detail, color = ModMuted, style = MaterialTheme.typography.bodySmall)
-                Spacer(Modifier.height(4.dp))
                 Text(action.status, color = action.tone, style = MaterialTheme.typography.labelMedium)
             }
         }

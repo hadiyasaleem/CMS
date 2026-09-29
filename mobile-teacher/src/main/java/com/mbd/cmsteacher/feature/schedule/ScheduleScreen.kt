@@ -6,20 +6,24 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.painterResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mbd.cmscommon.ui.components.TeacherScheduleWorkspace
+import com.mbd.cmscommon.util.rememberDocumentExport
 import com.mbd.cmsteacher.R
 
 @Composable
 fun ScheduleScreen(viewModel: ScheduleViewModel = hiltViewModel()) {
     val periods by viewModel.periods.collectAsState()
     val sessions by viewModel.sessions.collectAsState()
+    val grids by viewModel.grids.collectAsState()
     val outcome by viewModel.outcome.collectAsState()
 
     TeacherScheduleWorkspace(
         heroPainter = painterResource(R.drawable.teacher_schedule_hero),
         periods = periods,
         sessions = sessions,
+        grids = grids,
         outcome = outcome,
         onRefresh = viewModel::refresh,
         onClearError = viewModel::clearOutcome,
+        onExport = rememberDocumentExport(),
     )
 }

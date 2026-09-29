@@ -43,9 +43,10 @@ fun StudentHomeWorkspaceScreen(
                 cgpa = it.cgpa,
                 overallAttendance = ui.overallPercent,
                 subjectCount = ui.subjectCount,
-                lecturesToday = ui.lecturesToday,
-                nextClass = ui.nextClass,
+                todaysClasses = ui.todaysClasses,
+                nextClassId = ui.nextClassId,
                 weakestSubject = ui.weakestSubject,
+                shift = it.shift,
             )
         },
         loading = me == null,

@@ -215,16 +215,6 @@ private fun InsightsHeader(viewer: InsightsViewer) {
             Text(if (viewer == InsightsViewer.ADMIN) "INSTITUTIONAL INTELLIGENCE" else "MY CLASS INTELLIGENCE", color = InsightsGold, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
             Text("Academic Insights", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(4.dp))
-            Text(
-                if (viewer == InsightsViewer.ADMIN) {
-                    "College-wide performance, risk and assessment signals."
-                } else {
-                    "Performance and risk signals scoped to the classes you teach."
-                },
-                color = CmsTheme.colors.onInkMuted,
-                style = MaterialTheme.typography.bodyMedium,
-            )
         }
     }
 }

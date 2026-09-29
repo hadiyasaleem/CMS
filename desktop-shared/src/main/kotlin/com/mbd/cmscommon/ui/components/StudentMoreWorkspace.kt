@@ -68,7 +68,7 @@ private data class StudentPortalCard(
     val title: String,
     val metric: String,
     val metricLabel: String,
-    val subtitle: String,
+    val subtitle: String?,
     val badge: String,
     val badgeTone: BadgeTone,
     val icon: ImageVector,
@@ -121,15 +121,15 @@ fun StudentMoreWorkspace(
 }
 
 private fun studentMoreCards(snapshot: StudentMoreSnapshot): List<StudentPortalCard> {
-    val calendarSubtitle = snapshot.nextEvent?.let { "Next: ${it.title} on ${it.startDate}" } ?: "Holidays, events, exams and deadlines"
+    val calendarSubtitle = snapshot.nextEvent?.let { "Next: ${it.title} on ${it.startDate}" }
     val calendarBadge = snapshot.nextEvent?.let { startDateOrNull(it)?.format(MoreDateFormat) } ?: "No upcoming item"
 
     val feeMetric = snapshot.feeTotal?.let { "Rs %,.0f".format(it) } ?: "-"
-    val feeSubtitle = snapshot.feeDueDate?.let { "Due ${it.format(MoreDateFormat)}; informational fee structure" } ?: "Your session's published fee structure"
+    val feeSubtitle = snapshot.feeDueDate?.let { "Due ${it.format(MoreDateFormat)}" }
 
     val missing = snapshot.missingProfileFields
     val profileSubtitle = if (missing.isEmpty()) {
-        "Your essential identity and contact details are complete"
+        null
     } else {
         "Add " + missing.take(2).joinToString(" and ").lowercase() + (if (missing.size > 2) " and ${missing.size - 2} more" else "")
     }
@@ -137,7 +137,7 @@ private fun studentMoreCards(snapshot: StudentMoreSnapshot): List<StudentPortalC
     return listOf(
         StudentPortalCard(StudentMoreDestination.CALENDAR, "Calendar", snapshot.upcomingEvents.toString(), "upcoming items", calendarSubtitle, calendarBadge, if (snapshot.nextEvent == null) BadgeTone.Neutral else BadgeTone.Success, Icons.Outlined.CalendarMonth),
         StudentPortalCard(StudentMoreDestination.FEES, "Fee challan", feeMetric, "configured total", feeSubtitle, if (snapshot.feeConfigured) "Configured" else "Not configured", if (snapshot.feeConfigured) BadgeTone.Success else BadgeTone.Neutral, Icons.Outlined.Payments),
-        StudentPortalCard(StudentMoreDestination.NOTIFICATIONS, "Notifications", snapshot.unreadNotifications.toString(), "unread notices", "College, department and session notices relevant to you", if (snapshot.unreadNotifications == 0) "All caught up" else "Needs attention", if (snapshot.unreadNotifications == 0) BadgeTone.Success else BadgeTone.Warning, Icons.Outlined.Notifications),
+        StudentPortalCard(StudentMoreDestination.NOTIFICATIONS, "Notifications", snapshot.unreadNotifications.toString(), "unread notices", null, if (snapshot.unreadNotifications == 0) "All caught up" else "Needs attention", if (snapshot.unreadNotifications == 0) BadgeTone.Success else BadgeTone.Warning, Icons.Outlined.Notifications),
         StudentPortalCard(StudentMoreDestination.PROFILE, "Profile", "${snapshot.profileCompletion}%", "essential details", profileSubtitle, if (snapshot.profileCompletion == 100) "Complete" else "${missing.size} missing", if (snapshot.profileCompletion == 100) BadgeTone.Success else BadgeTone.Warning, Icons.Outlined.Person),
     )
 }
@@ -158,8 +158,6 @@ private fun StudentMoreHeader(heroPainter: Painter) {
                 Text("ACCOUNT", color = StudentMoreGold, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
                 Text("More", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                Spacer(Modifier.height(4.dp))
-                Text("Student portal", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
             }
         }
     }
@@ -193,7 +191,9 @@ private fun MoreNavigationCard(card: StudentPortalCard, onClick: () -> Unit) {
                     Text(card.title, modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                     StatusBadge(card.badge, card.badgeTone)
                 }
-                Text(card.subtitle, color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                if (card.subtitle != null) {
+                    Text(card.subtitle, color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                }
                 Spacer(Modifier.height(4.dp))
                 MoreSummaryMetric(card.metric, card.metricLabel)
             }

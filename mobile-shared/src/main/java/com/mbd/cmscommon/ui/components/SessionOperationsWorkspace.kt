@@ -67,7 +67,7 @@ private val SessionGold = ModWarn
 private val SessionRed = ModAccent
 private val SessionBlue = ModInk
 
-private data class SessionAction(val title: String, val subtitle: String, val detail: String, val icon: ImageVector, val onClick: () -> Unit)
+private data class SessionAction(val title: String, val detail: String, val icon: ImageVector, val onClick: () -> Unit)
 
 @Composable
 fun SessionOperationsWorkspace(
@@ -103,9 +103,9 @@ fun SessionOperationsWorkspace(
     val configuredSemesters = subjectCounts.count { it.value > 0 }
 
     val actions = listOf(
-        SessionAction("Students", "Roster, profiles, imports, and account links", shiftEnrolmentLine(session, students.size, shiftCounts), Icons.Outlined.School, onOpenStudents),
-        SessionAction("Timetable", "Weekly periods, subjects, rooms, and teachers", "${periods.size} period(s) configured", Icons.Outlined.CalendarMonth, onOpenTimetable),
-        SessionAction("Fee structure", "Fee heads and payment instructions for this intake", feeSummaryLine(session, fees), Icons.Outlined.Payments, onOpenFees),
+        SessionAction("Students", shiftEnrolmentLine(session, students.size, shiftCounts), Icons.Outlined.School, onOpenStudents),
+        SessionAction("Timetable", "${periods.size} period(s) configured", Icons.Outlined.CalendarMonth, onOpenTimetable),
+        SessionAction("Fee structure", feeSummaryLine(session, fees), Icons.Outlined.Payments, onOpenFees),
     )
 
     LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -131,13 +131,13 @@ fun SessionOperationsWorkspace(
             )
         }
 
-        item { WorkspaceSection("Operational areas", "Roster, timetable, and fee tools for this intake") }
+        item { WorkspaceSection("Operational areas") }
         items(actions) { action -> SessionActionCard(action) }
 
-        item { WorkspaceSection("Eight-semester curriculum", "Curriculum coverage across the eight-semester program") }
+        item { WorkspaceSection("Curriculum") }
         item {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                (1..8).chunked(2).forEach { pair ->
+                (session?.semesterRange ?: 1..8).toList().chunked(2).forEach { pair ->
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         pair.forEach { sem ->
                             CurriculumSemesterCard(
@@ -153,7 +153,7 @@ fun SessionOperationsWorkspace(
             }
         }
 
-        item { WorkspaceSection("Danger zone", "Irreversible changes to this session") }
+        item { WorkspaceSection("Danger zone") }
         item { DangerZoneCard(students.size, onDelete = { confirmDelete = true }) }
 
         item { Spacer(Modifier.height(72.dp)) }
@@ -283,11 +283,8 @@ private fun ProgressLine(label: String, percent: Float, detail: String) {
 }
 
 @Composable
-private fun WorkspaceSection(title: String, subtitle: String) {
-    Column {
-        Text(title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-        Text(subtitle, color = ModMuted, style = MaterialTheme.typography.bodySmall)
-    }
+private fun WorkspaceSection(title: String) {
+    Text(title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
 }
 
 @Composable
@@ -303,7 +300,6 @@ private fun SessionActionCard(action: SessionAction) {
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(action.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                Text(action.subtitle, color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 Text(action.detail, color = SessionBlue, style = MaterialTheme.typography.labelMedium)
             }
         }

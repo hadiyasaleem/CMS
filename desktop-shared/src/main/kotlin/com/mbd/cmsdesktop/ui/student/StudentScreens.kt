@@ -84,7 +84,8 @@ fun StudentHomeScreen(
             CmsCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp)) {
                     Text("NEXT CLASS", color = CmsTheme.colors.accent, style = MaterialTheme.typography.labelMedium)
-                    Text(ui.nextClass?.let { "${it.courseCode} - ${it.timeRange}" } ?: "No more classes today", style = MaterialTheme.typography.bodyMedium)
+                    val next = ui.todaysClasses.firstOrNull { it.id == ui.nextClassId }
+                    Text(next?.let { "${it.courseCode} - ${it.timeRange}" } ?: "No more classes today", style = MaterialTheme.typography.bodyMedium)
                 }
             }
         }

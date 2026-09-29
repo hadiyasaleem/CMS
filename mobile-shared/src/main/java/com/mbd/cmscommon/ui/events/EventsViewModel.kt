@@ -43,33 +43,38 @@ class EventsViewModel @Inject constructor(
 
     val accountKey: String = sessionManager.accountKey ?: ""
 
-    val resolvedViewer: StateFlow<CalendarViewerContext?> = combine(
-        userRepository.observeCurrentUserRole(),
-        teacherRepository.observeTeacher(accountKey),
-        assignmentsProvider.observeMyAssignments(),
-    ) { role, teacher, teaching -> Triple(role, teacher, teaching) }.flatMapLatest { (role, teacher, teaching) ->
-        when (role) {
-            null -> flowOf(null)
-            is UserRole.Admin -> flowOf(CalendarViewerContext(CalendarViewerRole.ADMIN))
-            // A teacher sees events for their department and the sessions/shifts they teach.
-            is UserRole.Teacher -> flowOf(
-                CalendarViewerContext(
-                    CalendarViewerRole.TEACHER,
-                    teacher?.deptId,
-                    teaching.map { it.sessionId }.toSet(),
-                    taughtClasses = teaching.taughtClasses(),
-                ),
-            )
-            // A student sees their department, session and own shift's events.
-            is UserRole.LinkedStudent -> {
-                val sessionId = StudentIdCodec.sessionIdOf(role.studentId)
-                sessionRepository.observeShiftOf(sessionId, StudentIdCodec.rollOf(role.studentId)).map { shift ->
-                    CalendarViewerContext(CalendarViewerRole.STUDENT, StudentIdCodec.deptIdOf(sessionId), setOf(sessionId), shift)
+    // flatMapLatest on the role FIRST: teacherRepository.observeTeacher()/assignmentsProvider's flow
+    // are only subscribed to for an actual teacher account. observeTeacher withholds emission until a
+    // row exists for that id (see its own doc comment) -- for a student account no such row ever
+    // exists, so combining it unconditionally with every role left students stuck on a permanently
+    // unresolved viewer (infinite "loading" on the Calendar/Events screen).
+    val resolvedViewer: StateFlow<CalendarViewerContext?> = userRepository.observeCurrentUserRole()
+        .flatMapLatest { role ->
+            when (role) {
+                null -> flowOf(null)
+                is UserRole.Admin -> flowOf(CalendarViewerContext(CalendarViewerRole.ADMIN))
+                // A teacher sees events for their department and the sessions/shifts they teach.
+                is UserRole.Teacher -> combine(
+                    teacherRepository.observeTeacher(accountKey),
+                    assignmentsProvider.observeMyAssignments(),
+                ) { teacher, teaching ->
+                    CalendarViewerContext(
+                        CalendarViewerRole.TEACHER,
+                        teacher?.deptId,
+                        teaching.map { it.sessionId }.toSet(),
+                        taughtClasses = teaching.taughtClasses(),
+                    )
                 }
+                // A student sees their department, session and own shift's events.
+                is UserRole.LinkedStudent -> {
+                    val sessionId = StudentIdCodec.sessionIdOf(role.studentId)
+                    sessionRepository.observeShiftOf(sessionId, StudentIdCodec.rollOf(role.studentId)).map { shift ->
+                        CalendarViewerContext(CalendarViewerRole.STUDENT, StudentIdCodec.deptIdOf(sessionId), setOf(sessionId), shift)
+                    }
+                }
+                is UserRole.UnlinkedStudent -> flowOf(CalendarViewerContext(CalendarViewerRole.STUDENT))
             }
-            is UserRole.UnlinkedStudent -> flowOf(CalendarViewerContext(CalendarViewerRole.STUDENT))
-        }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     val departments: StateFlow<List<Department>> = departmentRepository.observeActiveDepartments()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())

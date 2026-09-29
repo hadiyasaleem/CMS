@@ -12,6 +12,7 @@ import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.studentTimetableSnapshot
 import com.mbd.cmscommon.domain.repository.SessionTimetableRepository
 import com.mbd.cmscommon.ui.components.StudentTimetableWorkspace
+import com.mbd.cmsdesktop.platform.rememberDocumentExport
 import java.time.LocalDate
 import java.time.LocalTime
 import kotlinx.coroutines.flow.Flow
@@ -37,5 +38,6 @@ fun StudentTimetableScreen(
         errorMessage = errorMessage,
         onRetry = controller::refresh,
         onClearError = controller::clearError,
+        onExport = rememberDocumentExport(),
     )
 }

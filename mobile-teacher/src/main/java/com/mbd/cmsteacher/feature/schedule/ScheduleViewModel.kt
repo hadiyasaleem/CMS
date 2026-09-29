@@ -3,63 +3,33 @@ package com.mbd.cmsteacher.feature.schedule
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.auth.SessionManager
+import com.mbd.cmscommon.controller.TeacherScheduleController
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
+import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.SessionTimetableRepository
-import com.mbd.cmscommon.util.Outcome
-import com.mbd.cmscommon.util.userMessageLogged
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 
 @HiltViewModel
 class ScheduleViewModel @Inject constructor(
     sessionManager: SessionManager,
-    private val timetableRepository: SessionTimetableRepository,
+    departmentRepository: DepartmentRepository,
     sessionRepository: AcademicSessionRepository,
+    timetableRepository: SessionTimetableRepository,
 ) : ViewModel() {
+    private val controller = TeacherScheduleController(
+        sessionManager.accountKey.orEmpty(),
+        departmentRepository,
+        sessionRepository,
+        timetableRepository,
+        viewModelScope,
+    )
 
-    private val teacherId = sessionManager.accountKey.orEmpty()
+    val periods = controller.periods
+    val sessions = controller.sessions
+    val grids = controller.myGrids
+    val outcome = controller.refreshState
 
-    val periods = timetableRepository.observeMyPeriods(teacherId)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-
-    val sessions = sessionRepository.observeAllSessions()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-
-    private val _outcome = MutableStateFlow<Outcome<Unit>?>(null)
-    val outcome: StateFlow<Outcome<Unit>?> = _outcome.asStateFlow()
-
-    fun refresh() {
-        viewModelScope.launch {
-            _outcome.value = Outcome.Loading
-            _outcome.value = try {
-                // Read a fresh period list rather than periods.value: the WhileSubscribed StateFlow
-                // may still hold its emptyList() seed (unsubscribed / first launch), which would make
-                // refresh a silent no-op.
-                val sessionIds = timetableRepository.observeMyPeriods(teacherId).first()
-                    .map { it.sessionId }.distinct()
-                // Aggregate per-session failures so a total sync failure surfaces as an error
-                // instead of always reporting success.
-                var lastFailure: Throwable? = null
-                for (sessionId in sessionIds) {
-                    runCatching { timetableRepository.syncSession(sessionId) }
-                        .onFailure { lastFailure = it }
-                }
-                lastFailure?.let { throw it }
-                Outcome.Success(Unit)
-            } catch (t: Throwable) {
-                Outcome.Error(t.userMessageLogged("ScheduleViewModel.refresh", "Refresh failed. Please try again."), t)
-            }
-        }
-    }
-
-    fun clearOutcome() {
-        _outcome.value = null
-    }
+    fun refresh() = controller.refresh()
+    fun clearOutcome() = controller.clearRefreshState()
 }

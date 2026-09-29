@@ -56,15 +56,15 @@ private fun HomeTone.color(): Color = when (this) {
 
 enum class TeacherHomeDestination { ATTENDANCE, MARKS, EXAM_PAPER, STUDENTS, SCHEDULE, NOTIFICATIONS }
 
-private data class HomeAction(val destination: TeacherHomeDestination, val title: String, val detail: String, val icon: ImageVector, val tone: HomeTone)
+private data class HomeAction(val destination: TeacherHomeDestination, val title: String, val icon: ImageVector, val tone: HomeTone)
 
 private val TEACHER_HOME_ACTIONS = listOf(
-    HomeAction(TeacherHomeDestination.ATTENDANCE, "Mark Attendance", "Record today's class", Icons.Outlined.FactCheck, HomeTone.SUCCESS),
-    HomeAction(TeacherHomeDestination.MARKS, "Marks Entry", "Assessments and scores", Icons.Outlined.RateReview, HomeTone.NAVY),
-    HomeAction(TeacherHomeDestination.EXAM_PAPER, "Exam Paper", "Submit a paper", Icons.Outlined.UploadFile, HomeTone.WARN),
-    HomeAction(TeacherHomeDestination.STUDENTS, "My Students", "Rosters and progress", Icons.Outlined.Groups, HomeTone.NAVY),
-    HomeAction(TeacherHomeDestination.SCHEDULE, "My Schedule", "Full teaching week", Icons.Outlined.CalendarMonth, HomeTone.SUCCESS),
-    HomeAction(TeacherHomeDestination.NOTIFICATIONS, "Notifications", "Faculty updates", Icons.Outlined.Notifications, HomeTone.ACCENT),
+    HomeAction(TeacherHomeDestination.ATTENDANCE, "Mark Attendance", Icons.Outlined.FactCheck, HomeTone.SUCCESS),
+    HomeAction(TeacherHomeDestination.MARKS, "Marks Entry", Icons.Outlined.RateReview, HomeTone.NAVY),
+    HomeAction(TeacherHomeDestination.EXAM_PAPER, "Exam Paper", Icons.Outlined.UploadFile, HomeTone.WARN),
+    HomeAction(TeacherHomeDestination.STUDENTS, "My Students", Icons.Outlined.Groups, HomeTone.NAVY),
+    HomeAction(TeacherHomeDestination.SCHEDULE, "My Schedule", Icons.Outlined.CalendarMonth, HomeTone.SUCCESS),
+    HomeAction(TeacherHomeDestination.NOTIFICATIONS, "Notifications", Icons.Outlined.Notifications, HomeTone.ACCENT),
 )
 
 @Composable
@@ -136,7 +136,6 @@ private fun TodayCard(snapshot: TeacherHomeSnapshot) {
             Spacer(Modifier.height(6.dp))
             if (snapshot.todaysClasses.isEmpty()) {
                 Text("No lectures scheduled today.", color = CmsTheme.colors.muted, style = MaterialTheme.typography.bodyMedium)
-                Text("Your teaching overview is clear for the rest of today.", color = CmsTheme.colors.muted, style = MaterialTheme.typography.bodySmall)
             } else {
                 snapshot.todaysClasses.forEach { period -> ClassRow(period, isNext = period.id == snapshot.nextClass?.id) }
             }
@@ -200,10 +199,7 @@ private fun HomeActionCard(action: HomeAction, onClick: () -> Unit) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(action.icon, contentDescription = null, tint = tone)
             Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(action.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                Text(action.detail, color = CmsTheme.colors.muted, style = MaterialTheme.typography.bodySmall)
-            }
+            Text(action.title, modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
         }
     }
 }

@@ -43,6 +43,9 @@ import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.domain.model.PeriodType
 import com.mbd.cmscommon.domain.model.StudentScheduledPeriod
 import com.mbd.cmscommon.domain.model.StudentTimetableSnapshot
+import com.mbd.cmscommon.export.ExportDocument
+import com.mbd.cmscommon.export.ExportFormat
+import com.mbd.cmscommon.export.studentGridTimetableExport
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
 import com.mbd.cmscommon.ui.theme.ModInk
@@ -74,6 +77,7 @@ fun StudentTimetableWorkspace(
     errorMessage: String?,
     onRetry: () -> Unit,
     onClearError: () -> Unit,
+    onExport: (ExportDocument, ExportFormat) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var detailItem by remember { mutableStateOf<StudentScheduledPeriod?>(null) }
@@ -89,6 +93,13 @@ fun StudentTimetableWorkspace(
             loading && snapshot == null -> items(3) { SkeletonRow() }
             snapshot != null -> {
                 item { TimetableOverview(snapshot) }
+                item {
+                    ExportBar(
+                        onExport = onExport,
+                        build = { studentGridTimetableExport(snapshot.periods.map { it.period }) },
+                        enabled = snapshot.periods.isNotEmpty(),
+                    )
+                }
                 val nextLecture = snapshot.nextLecture
                 if (nextLecture != null) {
                     item { NextLectureCard(nextLecture) }
@@ -156,8 +167,6 @@ private fun StudentTimetableHeader(heroPainter: Painter) {
                 Text("MY WEEK", color = ModWarn, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
                 Text("Timetable", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                Spacer(Modifier.height(4.dp))
-                Text("Student timetable and campus schedule", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
             }
         }
     }

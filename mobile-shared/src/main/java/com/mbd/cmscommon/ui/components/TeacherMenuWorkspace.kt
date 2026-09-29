@@ -59,7 +59,7 @@ private val MenuBlue = ModInk
 
 private data class TeacherMenuItem(
     val label: String,
-    val detail: String,
+    val detail: String?,
     val icon: ImageVector,
     val badge: String?,
     val badgeTone: BadgeTone?,
@@ -81,11 +81,9 @@ fun TeacherMenuWorkspace(
 ) {
     var confirmSignOut by remember { mutableStateOf(false) }
 
-    val linkDetail = if (snapshot.canApproveLinkRequests) "Review students waiting to link their accounts" else "Ask an administrator to grant approval access"
     val linkBadge = if (snapshot.canApproveLinkRequests) "${snapshot.pendingLinkRequests} pending" else "Restricted"
     val linkTone = if (snapshot.pendingLinkRequests > 0) BadgeTone.Warning else if (snapshot.canApproveLinkRequests) BadgeTone.Success else BadgeTone.Neutral
 
-    val notificationDetail = if (snapshot.canSendNotifications) "Read faculty notices or notify assigned sessions" else "Read faculty notices and college alerts"
     val notificationBadge = if (snapshot.unreadNotifications > 0) "${snapshot.unreadNotifications} new" else "Up to date"
 
     val items = listOf(
@@ -94,12 +92,12 @@ fun TeacherMenuWorkspace(
             "${snapshot.assignmentCount} assigned ${if (snapshot.assignmentCount == 1) "class" else "classes"} across ${snapshot.sessionCount} ${if (snapshot.sessionCount == 1) "session" else "sessions"}",
             Icons.Outlined.School, null, null, onOpenMyStudents,
         ),
-        TeacherMenuItem("Calendar", "College events, holidays, exams and deadlines", Icons.Outlined.CalendarMonth, null, null, onOpenCalendar),
-        TeacherMenuItem("Insights", "Exam coverage and at-risk trends for your classes", Icons.Outlined.Assessment, null, null, onOpenInsights),
-        TeacherMenuItem("Link Requests", linkDetail, Icons.Outlined.HowToReg, linkBadge, linkTone, onOpenLinkRequests),
-        TeacherMenuItem("Notifications", notificationDetail, Icons.Outlined.Notifications, notificationBadge, if (snapshot.unreadNotifications > 0) BadgeTone.Warning else BadgeTone.Success, onOpenNotifications),
+        TeacherMenuItem("Calendar", null, Icons.Outlined.CalendarMonth, null, null, onOpenCalendar),
+        TeacherMenuItem("Insights", null, Icons.Outlined.Assessment, null, null, onOpenInsights),
+        TeacherMenuItem("Link Requests", null, Icons.Outlined.HowToReg, linkBadge, linkTone, onOpenLinkRequests),
+        TeacherMenuItem("Notifications", null, Icons.Outlined.Notifications, notificationBadge, if (snapshot.unreadNotifications > 0) BadgeTone.Warning else BadgeTone.Success, onOpenNotifications),
         TeacherMenuItem(
-            "Profile", "Contact details, permissions, assignments and security", Icons.Outlined.Person,
+            "Profile", null, Icons.Outlined.Person,
             "${snapshot.profileCompleteness}% complete", if (snapshot.profileCompleteness == 100) BadgeTone.Success else BadgeTone.Neutral, onOpenProfile,
         ),
     )
@@ -161,7 +159,9 @@ private fun TeacherMenuCard(item: TeacherMenuItem) {
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Text(item.label, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                Text(item.detail, color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                if (item.detail != null) {
+                    Text(item.detail, color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                }
             }
             if (item.badge != null && item.badgeTone != null) {
                 StatusBadge(item.badge, item.badgeTone)

@@ -58,13 +58,13 @@ private val StudentHomeRed = ModAccent
 
 enum class StudentHomeDestination { ATTENDANCE, MARKS, TIMETABLE, FEES }
 
-private data class StudentHomeAction(val title: String, val detail: String, val icon: ImageVector, val destination: StudentHomeDestination)
+private data class StudentHomeAction(val title: String, val icon: ImageVector, val destination: StudentHomeDestination)
 
 private val STUDENT_HOME_ACTIONS = listOf(
-    StudentHomeAction("Attendance", "Subject-wise presence and shortage", Icons.Filled.FactCheck, StudentHomeDestination.ATTENDANCE),
-    StudentHomeAction("Marks", "Midterm and sessional scores", Icons.Filled.Grading, StudentHomeDestination.MARKS),
-    StudentHomeAction("Timetable", "Weekly classes, rooms and teachers", Icons.Filled.CalendarMonth, StudentHomeDestination.TIMETABLE),
-    StudentHomeAction("Fee Challan", "Current session fee information", Icons.Filled.Payments, StudentHomeDestination.FEES),
+    StudentHomeAction("Attendance", Icons.Filled.FactCheck, StudentHomeDestination.ATTENDANCE),
+    StudentHomeAction("Marks", Icons.Filled.Grading, StudentHomeDestination.MARKS),
+    StudentHomeAction("Timetable", Icons.Filled.CalendarMonth, StudentHomeDestination.TIMETABLE),
+    StudentHomeAction("Fee Challan", Icons.Filled.Payments, StudentHomeDestination.FEES),
 )
 
 @Composable
@@ -87,14 +87,14 @@ fun StudentHomeWorkspace(
         if (loading && snapshot == null) {
             items(3) { SkeletonRow() }
         } else if (snapshot != null) {
-            item { NextStudentClassCard(snapshot) }
+            item { TodaysScheduleCard(snapshot) }
             item {
                 Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
                     Column(Modifier.padding(16.dp)) {
                         StudentStandingRow("CGPA / GPA", snapshot.gpaLabel, last = false)
                         StudentStandingRow("Semester", snapshot.semesterLabel, last = false)
                         StudentStandingRow("Subjects recorded", snapshot.subjectCount.toString(), last = false)
-                        StudentStandingRow("Lectures today", snapshot.lecturesToday.toString(), last = true)
+                        StudentStandingRow("Lectures today", snapshot.todaysClasses.size.toString(), last = true)
                     }
                 }
             }
@@ -150,36 +150,36 @@ private fun studentAttendanceColor(percent: Float): Color = when {
     else -> StudentHomeRed
 }
 
+/** Mirrors the teacher app's own "Today's classes" card: every lecture still scheduled today, in
+ * order, instead of just a single "next class" lookahead. */
 @Composable
-private fun NextStudentClassCard(snapshot: StudentHomeSnapshot) {
+private fun TodaysScheduleCard(snapshot: StudentHomeSnapshot) {
     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
-            Text("NEXT CLASS", color = ModMuted, style = CmsTextStyles.eyebrow)
+            Text("TODAY'S CLASSES", color = ModMuted, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
-            val next = snapshot.nextClass
-            if (next == null) {
-                Text("No upcoming lecture scheduled", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                Text("Your active timetable has no later lecture this week.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+            if (snapshot.todaysClasses.isEmpty()) {
+                Text("No lectures scheduled today", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             } else {
-                Text(next.subjectName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                Spacer(Modifier.height(6.dp))
-                StudentClassMeta(Icons.Filled.CalendarMonth, "${next.dayLabel} · ${next.timeRange}")
-                StudentClassMeta(Icons.Filled.FactCheck, next.teacherName.ifBlank { "Teacher not assigned" })
-                val location = next.location
-                if (!location.isNullOrBlank()) {
-                    StudentClassMeta(Icons.Filled.Payments, location)
-                }
+                snapshot.todaysClasses.forEach { period -> StudentClassRow(period, isNext = period.id == snapshot.nextClassId) }
             }
         }
     }
 }
 
 @Composable
-private fun StudentClassMeta(icon: ImageVector, value: String) {
-    Row(Modifier.padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-        Icon(icon, contentDescription = null, tint = StudentHomeBlue, modifier = Modifier.height(16.dp))
-        Spacer(Modifier.width(8.dp))
-        Text(value, color = ModMuted, style = MaterialTheme.typography.bodySmall)
+private fun StudentClassRow(period: com.mbd.cmscommon.domain.model.SessionPeriod, isNext: Boolean) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(period.timeRange, modifier = Modifier.width(90.dp), color = StudentHomeBlue, style = MaterialTheme.typography.bodySmall)
+        Column(Modifier.weight(1f)) {
+            Text(period.subjectName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+            val meta = listOfNotNull(
+                period.teacherName.ifBlank { null },
+                listOfNotNull(period.building?.ifBlank { null }, period.roomNo?.ifBlank { null }).joinToString(" / ").ifBlank { null },
+            ).joinToString(" · ")
+            if (meta.isNotBlank()) Text(meta, color = ModMuted, style = MaterialTheme.typography.bodySmall)
+        }
+        if (isNext) StatusBadge("NEXT", BadgeTone.Navy)
     }
 }
 
@@ -194,10 +194,7 @@ private fun StudentHomeActionCard(action: StudentHomeAction, onClick: () -> Unit
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(action.icon, contentDescription = null, tint = StudentHomeBlue)
             Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(action.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                Text(action.detail, color = ModMuted, style = MaterialTheme.typography.bodySmall)
-            }
+            Text(action.title, modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
         }
     }
 }

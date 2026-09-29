@@ -8,7 +8,8 @@ import com.mbd.cmscommon.util.clockDisplay
 import com.mbd.cmscommon.util.isTimeRangeInvalid
 import com.mbd.cmscommon.export.ExportDocument
 import com.mbd.cmscommon.export.ExportFormat
-import com.mbd.cmscommon.export.datesheetExport
+import com.mbd.cmscommon.export.DatesheetGridEntry
+import com.mbd.cmscommon.export.datesheetGridsExport
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -190,6 +191,7 @@ fun DatesheetWorkspace(
                             departments = departments,
                             slotsByDatesheet = slotsByDatesheet,
                             onOpenDatesheet = { onOpenDatesheet(it) },
+                            onExport = onExport,
                         )
                         DatesheetViewMode.SEMESTER -> SemesterDatesheetView(
                             allSessions = sessions,
@@ -206,6 +208,7 @@ fun DatesheetWorkspace(
                             onSelectStartYear = onSelectStartYear,
                             onSelectShift = onSelectShift,
                             onOpenDatesheet = { onOpenDatesheet(it) },
+                            onExport = onExport,
                         )
                     }
                 }
@@ -281,8 +284,6 @@ private fun DatesheetHeader() {
             Text("EXAM DATESHEETS", color = DatesheetGold, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
             Text("Datesheets", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(4.dp))
-            Text("Mid Term schedules by department, session, and semester.", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
@@ -483,6 +484,7 @@ private fun CalendarDatesheetView(
     departments: List<Department>,
     slotsByDatesheet: Map<String, List<DatesheetSlot>>,
     onOpenDatesheet: (String) -> Unit,
+    onExport: ((ExportDocument, ExportFormat) -> Unit)?,
 ) {
     data class Entry(val rawDate: String, val column: String, val cell: GridCell, val datesheetId: String)
 
@@ -494,7 +496,7 @@ private fun CalendarDatesheetView(
             .ifBlank { sheet.sessionId }
         slotsByDatesheet[sheet.id].orEmpty().mapNotNull { slot ->
             val date = slot.examDate ?: return@mapNotNull null
-            Entry(date, column, GridCell(title = slot.subjectName, subtitle = paperLocationLabel(slot, sheet), meta = paperTimeLabel(slot, sheet)), sheet.id)
+            Entry(date, column, GridCell(title = "${slot.courseCode} · ${slot.subjectName}", subtitle = paperLocationLabel(slot, sheet), meta = paperTimeLabel(slot, sheet)), sheet.id)
         }
     }
     if (entries.isEmpty()) {
@@ -514,6 +516,19 @@ private fun CalendarDatesheetView(
     val rawToFormatted = rawDates.zip(dateColumns).toMap()
     val byKey = entries.associateBy { it.column to rawToFormatted[it.rawDate] }
     val rows = sessionLabels.map { session -> GridRow(key = session, label = session, cells = dateColumns.associateWith { col -> byKey[session to col]?.cell }) }
+
+    if (onExport != null) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            ExportMenuButton(onExport = { format ->
+                val gridEntries = datesheets.map { sheet ->
+                    val session = sessionsById[sheet.sessionId]
+                    val deptCode = session?.let { departmentsById[it.deptId]?.code }
+                    DatesheetGridEntry(listOfNotNull(deptCode, "Semester ${sheet.semester}"), sheet, slotsByDatesheet[sheet.id].orEmpty())
+                }.filter { it.slots.isNotEmpty() }
+                onExport(datesheetGridsExport("datesheets_calendar_${LocalDate.now()}", listOf("Datesheets", "All departments"), gridEntries), format)
+            })
+        }
+    }
 
     TimetableGrid(
         timeSlots = dateColumns,
@@ -539,6 +554,7 @@ private fun SemesterDatesheetView(
     onSelectStartYear: (Int?) -> Unit,
     onSelectShift: (Session?) -> Unit,
     onOpenDatesheet: (String) -> Unit,
+    onExport: ((ExportDocument, ExportFormat) -> Unit)?,
 ) {
     Column {
         DatesheetFilterRow(departments, allSessions, selectedDeptId, selectedStartYear, selectedShift, onSelectDepartment, onSelectStartYear, onSelectShift)
@@ -562,7 +578,7 @@ private fun SemesterDatesheetView(
             Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
                 candidateSessions.forEach { session ->
                     session.shifts.filter { selectedShift == null || it == selectedShift }.forEach { shift ->
-                        SessionCurrentSemesterSection(session, shift, departments, datesheets, slotsByDatesheet, onOpenDatesheet)
+                        SessionCurrentSemesterSection(session, shift, departments, datesheets, slotsByDatesheet, onOpenDatesheet, onExport)
                     }
                 }
             }
@@ -576,7 +592,7 @@ private fun SemesterDatesheetView(
         val entries = sessionSheets.flatMap { sheet ->
             slotsByDatesheet[sheet.id].orEmpty().mapNotNull { slot ->
                 val date = slot.examDate ?: return@mapNotNull null
-                Entry(sheet.semester, date, GridCell(title = slot.subjectName, subtitle = paperLocationLabel(slot, sheet), meta = paperTimeLabel(slot, sheet)), sheet.id)
+                Entry(sheet.semester, date, GridCell(title = "${slot.courseCode} · ${slot.subjectName}", subtitle = paperLocationLabel(slot, sheet), meta = paperTimeLabel(slot, sheet)), sheet.id)
             }
         }
         if (entries.isEmpty()) {
@@ -593,9 +609,20 @@ private fun SemesterDatesheetView(
         val dateColumns = rawDates.map { formatExamDate(it) }
         val rawToFormatted = rawDates.zip(dateColumns).toMap()
         val byKey = entries.associateBy { it.semester.toString() to rawToFormatted[it.rawDate] }
-        val rows = (1..8).mapNotNull { semester ->
+        val rows = resolvedSession.semesterRange.mapNotNull { semester ->
             if (entries.none { it.semester == semester }) return@mapNotNull null
             GridRow(key = semester.toString(), label = "Semester $semester", cells = dateColumns.associateWith { col -> byKey[semester.toString() to col]?.cell })
+        }
+
+        if (onExport != null) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                ExportMenuButton(onExport = { format ->
+                    val gridEntries = sessionSheets.map { sheet -> DatesheetGridEntry(listOf("Semester ${sheet.semester}"), sheet, slotsByDatesheet[sheet.id].orEmpty()) }
+                        .filter { it.slots.isNotEmpty() }
+                    val scope = listOfNotNull(departments.firstOrNull { it.deptId == resolvedSession.deptId }?.name, resolvedSession.label)
+                    onExport(datesheetGridsExport("datesheets_${resolvedSession.sessionId}", listOf("Datesheets") + scope, gridEntries), format)
+                })
+            }
         }
 
         TimetableGrid(
@@ -616,6 +643,7 @@ private fun SessionCurrentSemesterSection(
     datesheets: List<Datesheet>,
     slotsByDatesheet: Map<String, List<DatesheetSlot>>,
     onOpenDatesheet: (String) -> Unit,
+    onExport: ((ExportDocument, ExportFormat) -> Unit)?,
 ) {
     val semester = session.currentSemester
     val sheet = datesheets.firstOrNull { it.sessionId == session.sessionId && it.semester == semester && it.shift == shift }
@@ -645,7 +673,7 @@ private fun SessionCurrentSemesterSection(
         val slots = slotsByDatesheet[sheet.id].orEmpty()
         val entries = slots.mapNotNull { slot ->
             val date = slot.examDate ?: return@mapNotNull null
-            Entry(date, GridCell(title = slot.subjectName, subtitle = paperLocationLabel(slot, sheet), meta = paperTimeLabel(slot, sheet)))
+            Entry(date, GridCell(title = "${slot.courseCode} · ${slot.subjectName}", subtitle = paperLocationLabel(slot, sheet), meta = paperTimeLabel(slot, sheet)))
         }
         if (entries.isEmpty()) {
             val message = if (slots.isEmpty()) {
@@ -667,6 +695,15 @@ private fun SessionCurrentSemesterSection(
         val rawToFormatted = rawDates.zip(dateColumns).toMap()
         val byColumn = entries.associateBy { rawToFormatted[it.rawDate] }
         val rows = listOf(GridRow(key = sheet.id, label = "Semester $semester", cells = dateColumns.associateWith { col -> byColumn[col]?.cell }))
+
+        if (onExport != null) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                ExportMenuButton(onExport = { format ->
+                    val entry = DatesheetGridEntry(listOfNotNull(deptCode, "Semester $semester"), sheet, slots)
+                    onExport(datesheetGridsExport("datesheet_${sheet.sessionId}_sem$semester", listOf(datesheetLabel(sheet, session, departments.firstOrNull { it.deptId == session.deptId })), listOf(entry)), format)
+                })
+            }
+        }
 
         TimetableGrid(
             timeSlots = dateColumns,
@@ -705,7 +742,11 @@ private fun DatesheetDetailDialog(
                     Spacer(Modifier.weight(1f))
                     if (onExport != null) {
                         ExportMenuButton(onExport = { format ->
-                            onExport(datesheetExport(datesheetLabel(sheet, detail.session, detail.department), sheet, detail.slots), format)
+                            val label = datesheetLabel(sheet, detail.session, detail.department)
+                            val rowLabel = listOfNotNull(detail.department?.code ?: detail.session?.deptId, "Semester ${sheet.semester}")
+                            val entry = DatesheetGridEntry(rowLabel, sheet, detail.slots)
+                            val teacherNames = detail.teachers.associate { it.email to it.name }
+                            onExport(datesheetGridsExport("datesheet_${sheet.sessionId}_${sheet.shift.name.lowercase()}_sem${sheet.semester}", listOf(label), listOf(entry), teacherNames), format)
                         })
                     }
                 }

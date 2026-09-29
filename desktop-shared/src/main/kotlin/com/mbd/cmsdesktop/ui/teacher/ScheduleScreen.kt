@@ -11,6 +11,7 @@ import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.SessionTimetableRepository
 import com.mbd.cmscommon.ui.components.TeacherScheduleWorkspace
+import com.mbd.cmsdesktop.platform.rememberDocumentExport
 
 /** Weekly timetable tab, backed by [TeacherScheduleController]. */
 @Composable
@@ -26,14 +27,17 @@ fun ScheduleScreen(
     }
     val periods by controller.periods.collectAsState()
     val sessions by controller.sessions.collectAsState()
+    val grids by controller.myGrids.collectAsState()
     val refreshState by controller.refreshState.collectAsState()
 
     TeacherScheduleWorkspace(
         heroPainter = painterResource("teacher-schedule-hero.jpg"),
         periods = periods,
         sessions = sessions,
+        grids = grids,
         outcome = refreshState,
         onRefresh = controller::refresh,
         onClearError = controller::clearRefreshState,
+        onExport = rememberDocumentExport(),
     )
 }

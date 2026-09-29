@@ -2,86 +2,59 @@ package com.mbd.cmsstudent.feature.exams
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mbd.cmscommon.controller.StudentExamsHubController
 import com.mbd.cmscommon.domain.model.StudentExamsHubSnapshot
-import com.mbd.cmscommon.domain.model.studentExamsHubSnapshot
+import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.DatesheetRepository
 import com.mbd.cmscommon.domain.repository.SessionMarksRepository
-import com.mbd.cmscommon.util.orLogCritical
 import com.mbd.cmsstudent.feature.common.CurrentStudentProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.time.LocalDate
 import javax.inject.Inject
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChangedBy
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.stateIn
+
+private data class ExamsHubState(
+    val snapshot: StudentExamsHubSnapshot?,
+    val loading: Boolean,
+    val error: String?,
+)
 
 @HiltViewModel
 class StudentExamsHubViewModel @Inject constructor(
     currentStudentProvider: CurrentStudentProvider,
     private val marksRepository: SessionMarksRepository,
     private val datesheetRepository: DatesheetRepository,
+    private val sessionRepository: AcademicSessionRepository,
 ) : ViewModel() {
 
-    private val _refreshTrigger = MutableStateFlow(0)
-    private val _loading = MutableStateFlow(true)
-    val loading: StateFlow<Boolean> = _loading.asStateFlow()
-    private val _error = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = _error.asStateFlow()
+    private var controller: StudentExamsHubController? = null
 
-    val snapshot: StateFlow<StudentExamsHubSnapshot?> = currentStudentProvider.observeContext()
+    // Single flatMapLatest is the one source of truth: snapshot/loading/error below are all
+    // projections of this same state, so there is no race over which context's controller they read.
+    private val state = currentStudentProvider.observeContext()
         .distinctUntilChangedBy { it?.studentId }
         .flatMapLatest { context ->
             if (context == null) {
-                _loading.value = false // unlinked/no student: resolve loading so the UI can show an empty state
-                flowOf<StudentExamsHubSnapshot?>(null)
+                controller = null
+                flowOf(ExamsHubState(null, loading = false, error = null))
             } else {
-                _refreshTrigger.map {
-                    _loading.value = true
-                    try {
-                        // Pull remote marks before reading local cache (mirrors StudentExamsHubController.refresh),
-                        // otherwise the hub only ever shows stale/empty cached data.
-                        val syncResult = runCatching { marksRepository.syncSession(context.sessionId) }
-                        syncResult.orLogCritical("StudentExamsHubViewModel.syncSession")
-                        val datesheetSyncResult = runCatching { datesheetRepository.sync(); datesheetRepository.syncAllSlots() }
-                        val scoresResult = runCatching { marksRepository.observeStudentMarks(context.sessionId, context.rollNumber).first() }
-                        val resultsResult = runCatching { marksRepository.getSemesterGpa(context.sessionId, context.rollNumber) }
-                        val datesheetsResult = runCatching { datesheetRepository.observeDatesheets().first() }
-                        val slotsResult = runCatching { datesheetRepository.observeAllSlots().first() }
-                        val scores = scoresResult.orLogCritical("StudentExamsHubViewModel.observeStudentMarks", emptyList())
-                        val results = resultsResult.orLogCritical("StudentExamsHubViewModel.getSemesterGpa", emptyList())
-                        val datesheets = datesheetsResult.orLogCritical("StudentExamsHubViewModel.observeDatesheets", emptyList())
-                        val slots = slotsResult.orLogCritical("StudentExamsHubViewModel.observeAllSlots", emptyList())
-                        _error.value = if (syncResult.isFailure || datesheetSyncResult.isFailure || scoresResult.isFailure || resultsResult.isFailure || datesheetsResult.isFailure) {
-                            "Some exam data could not be loaded. Pull to refresh to try again."
-                        } else {
-                            null
-                        }
-                        studentExamsHubSnapshot(
-                            sessionId = context.sessionId,
-                            semester = context.session?.currentSemester ?: 0,
-                            scores = scores,
-                            results = results,
-                            datesheets = datesheets,
-                            slots = slots,
-                            today = LocalDate.now(),
-                        )
-                    } finally {
-                        _loading.value = false
-                    }
-                }
+                val c = StudentExamsHubController(context.sessionId, context.rollNumber, marksRepository, datesheetRepository, sessionRepository, viewModelScope)
+                controller = c
+                combine(c.snapshot, c.loading, c.loadError) { snap, loading, error -> ExamsHubState(snap, loading, error) }
             }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ExamsHubState(null, loading = true, error = null))
+
+    val snapshot = state.map { it.snapshot }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+    val loading = state.map { it.loading }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
+    val error = state.map { it.error }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     fun refresh() {
-        viewModelScope.launch { _refreshTrigger.value += 1 }
+        controller?.refresh()
     }
 }

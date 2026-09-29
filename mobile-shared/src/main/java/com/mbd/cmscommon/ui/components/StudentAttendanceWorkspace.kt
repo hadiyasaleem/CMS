@@ -110,8 +110,6 @@ private fun AttendanceHero(heroPainter: Painter, snapshot: StudentAttendanceSnap
                     Text("MY RECORD", color = AttendanceGold, style = CmsTextStyles.eyebrow)
                     Spacer(Modifier.height(6.dp))
                     Text("Attendance", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                    Spacer(Modifier.height(4.dp))
-                    Text("Subject-wise presence and the 75% eligibility threshold", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
                 }
                 if (snapshot != null) {
                     Text("${percent.toInt()}%", color = tone, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.displaySmall)

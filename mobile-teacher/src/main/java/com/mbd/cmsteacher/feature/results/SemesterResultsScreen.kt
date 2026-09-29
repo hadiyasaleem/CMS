@@ -52,11 +52,13 @@ fun SemesterResultsScreen(viewModel: SemesterResultsViewModel = hiltViewModel())
     val subjects by controller.subjects.collectAsState()
     val saveState by controller.saveState.collectAsState()
     val loadState by controller.loadState.collectAsState()
+    val semesterRange by controller.semesterRange.collectAsState()
 
     SemesterResultsWorkspace(
 
         onExport = rememberDocumentExport(),
         sessions = sessions,
+        semesterRange = semesterRange,
         classOptions = visibleClasses,
         filterScope = filterScope,
         filterOptions = filterOptions,
