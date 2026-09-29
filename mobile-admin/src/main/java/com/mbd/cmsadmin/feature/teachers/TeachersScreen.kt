@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-fun TeachersScreen(viewModel: TeachersViewModel = hiltViewModel()) {
+fun TeachersScreen(onOpenTeacher: (String) -> Unit, viewModel: TeachersViewModel = hiltViewModel()) {
     val teachers by viewModel.teachers.collectAsState()
     val departments by viewModel.departments.collectAsState()
     val rooms by viewModel.rooms.collectAsState()
@@ -94,6 +94,7 @@ fun TeachersScreen(viewModel: TeachersViewModel = hiltViewModel()) {
         onLoadPhoto = { path -> loadPhotoCached(photoCacheDir, path, viewModel::downloadPhotoBytes) },
         onConsumeNotice = viewModel::consumeNotice,
         onClearError = viewModel::clearError,
+        onOpenTeacher = onOpenTeacher,
     )
 }
 

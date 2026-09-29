@@ -34,6 +34,7 @@ fun TeachersScreen(
     createdBy: String?,
     assignmentsProvider: TeacherAssignmentsProvider,
     window: ComposeWindow,
+    onOpenTeacher: (String) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val controller = remember(repository, departmentRepository, roomRepository, assignmentsProvider, createdBy) {
@@ -95,6 +96,7 @@ fun TeachersScreen(
         onLoadPhoto = { path -> loadPhotoCached(photoCacheDir, path, repository) },
         onConsumeNotice = controller::consumeNotice,
         onClearError = controller::clearError,
+        onOpenTeacher = onOpenTeacher,
     )
 }
 
