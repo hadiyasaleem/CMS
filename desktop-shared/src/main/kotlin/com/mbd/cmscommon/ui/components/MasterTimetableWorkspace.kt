@@ -86,6 +86,7 @@ fun MasterTimetableWorkspace(
     periodConflicts: Map<String, List<PeriodConflict>> = emptyMap(),
     loading: Boolean,
     errorMessage: String?,
+    errorTitle: String = "Couldn't load timetable",
     onSelectSemester: (Int?) -> Unit,
     onSelectShift: (Session?) -> Unit,
     onSelectDepartment: (String?) -> Unit,
@@ -216,7 +217,7 @@ fun MasterTimetableWorkspace(
     if (!errorMessage.isNullOrBlank() && errorMessage != dismissedError) {
         CmsErrorDialog(
             message = errorMessage,
-            title = "Couldn't load timetable",
+            title = errorTitle,
             onDismiss = { dismissedError = errorMessage },
             onRetry = { dismissedError = null; onRetry() },
         )

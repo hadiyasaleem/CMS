@@ -77,6 +77,8 @@ object ErrorClassifier {
                 ErrorKind.CONFLICT to "This record already exists. Check the details and try again."
             normalized.contains("23503") || normalized.contains("foreign key") || normalized.contains("still referenced") ->
                 ErrorKind.CONFLICT to "This action cannot be completed because related records still exist."
+            normalized.contains("already booked overlapping") || normalized.contains("already has an overlapping") || normalized.contains("already booked for an overlapping") ->
+                ErrorKind.CONFLICT to raw.trim().lineSequence().first().take(180)
             hasStatus(normalized, 404) || normalized.contains("pgrst116") ->
                 ErrorKind.NOT_FOUND to "The requested information could not be found."
             hasStatus(normalized, 409) ->

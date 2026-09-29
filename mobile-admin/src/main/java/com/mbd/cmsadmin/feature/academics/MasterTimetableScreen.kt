@@ -108,6 +108,7 @@ fun MasterTimetableScreen(
     val refreshError by viewModel.refreshError.collectAsState()
     val actionError by viewModel.actionError.collectAsState()
     val error = actionError ?: refreshError
+    val errorTitle = if (actionError != null) "Couldn't save this change" else "Couldn't load timetable"
     val teachers by viewModel.teachers.collectAsState()
     val buildings by viewModel.buildings.collectAsState()
     val rooms by viewModel.rooms.collectAsState()
@@ -123,6 +124,7 @@ fun MasterTimetableScreen(
         periodConflicts = periodConflicts,
         loading = loading,
         errorMessage = error,
+        errorTitle = errorTitle,
         onSelectSemester = viewModel::selectSemester,
         onSelectShift = viewModel::selectShift,
         onSelectDepartment = viewModel::selectDepartment,
