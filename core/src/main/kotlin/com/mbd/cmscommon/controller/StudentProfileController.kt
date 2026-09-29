@@ -44,7 +44,7 @@ class StudentProfileController(
 
     fun refresh(fetchRemote: Boolean = true) {
         clearError()
-        launch {
+        launch("load your profile") {
             _loading.value = true
             try {
                 val rosterSync = if (fetchRemote) runCatching { sessionRepository.syncStudents(sessionId) } else Result.success(Unit)

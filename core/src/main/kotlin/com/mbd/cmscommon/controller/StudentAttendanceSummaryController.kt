@@ -54,7 +54,7 @@ class StudentAttendanceSummaryController(
         termSummaryExport(courseCode, rollNumber, _student.value, _session.value, _term.value, it)
     }
 
-    fun refresh() = launch {
+    fun refresh() = launch("load the attendance summary") {
         _loading.value = true
         try {
             _student.value = sessionRepository.observeStudents(sessionId).first()

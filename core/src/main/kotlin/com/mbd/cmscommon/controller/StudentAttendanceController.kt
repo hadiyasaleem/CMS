@@ -47,7 +47,7 @@ class StudentAttendanceController(
         }
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), 0f)
 
-    fun refresh() = launch {
+    fun refresh() = launch("refresh your attendance") {
         runCatching { attendanceRepository.syncSession(sessionId) }.orLogCritical("StudentAttendanceController.refresh.attendance")
         runCatching { curriculumRepository.syncSession(sessionId) }.orLogCritical("StudentAttendanceController.refresh.curriculum")
     }

@@ -92,7 +92,7 @@ class SubmittedPapersController(
         refresh()
     }
 
-    fun refresh() = launch {
+    fun refresh() = launch("refresh the submitted papers") {
         _loading.value = true
         try {
             repo.syncAll()
@@ -110,11 +110,11 @@ class SubmittedPapersController(
     }
     fun clearFilters() { _filters.value = SubmittedPapersFilters() }
 
-    fun downloadAndOpen(submission: ExamPaperSubmission, targetDir: File, opener: (File) -> Unit) = launch {
+    fun downloadAndOpen(submission: ExamPaperSubmission, targetDir: File, opener: (File) -> Unit) = launch("open the file") {
         runCatching {
             val file = repo.downloadTo(submission, targetDir)
             opener(file)
-        }.onFailure { _notice.value = it.userMessageLogged("Could not open the file.") }
+        }.onFailure { _notice.value = it.userMessageLogged("Couldn't open ${submission.fileName}.") }
     }
 
     fun consumeNotice() {

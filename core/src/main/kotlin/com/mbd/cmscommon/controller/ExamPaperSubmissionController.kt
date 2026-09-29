@@ -9,6 +9,7 @@ import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.DatesheetRepository
 import com.mbd.cmscommon.domain.repository.ExamPaperSubmissionRepository
 import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider
+import com.mbd.cmscommon.util.CmsException
 import com.mbd.cmscommon.util.Outcome
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
@@ -99,7 +100,7 @@ class ExamPaperSubmissionController(
 
     /** For the platform file-picker's own read step failing, before [stageFile] ever gets called. */
     fun reportPickFailure(t: Throwable) {
-        _uploadState.value = Outcome.Error(t.userMessageLogged("Could not read the selected file."), t)
+        _uploadState.value = Outcome.Error(t.userMessageLogged("Couldn't read the selected file."), t)
     }
 
     fun confirmUpload(fileName: String, description: String?) {
@@ -107,8 +108,15 @@ class ExamPaperSubmissionController(
         val staged = _stagedFile.value ?: return
         if (staged.sizeError != null) return
         if (_uploadState.value is Outcome.Loading) return // single-flight: block a double-tap duplicate upload
+        target.submission?.let { existing ->
+            _uploadState.value = Outcome.Error(
+                "A paper is already uploaded for ${target.slot.subjectName} (${existing.fileName}). Delete it before uploading a new one.",
+                CmsException.Conflict("paper already uploaded"),
+            )
+            return
+        }
         _uploadState.value = Outcome.Loading
-        launch {
+        launch("upload the paper") {
             val result = runCatching {
                 examPaperRepository.uploadSubmission(
                     datesheetSlotId = target.slot.id,
@@ -122,7 +130,7 @@ class ExamPaperSubmissionController(
                 )
             }.fold(
                 onSuccess = { Outcome.Success(Unit) },
-                onFailure = { Outcome.Error(it.userMessageLogged("Upload failed."), it) },
+                onFailure = { Outcome.Error(it.userMessageLogged("Couldn't upload $fileName for ${target.slot.subjectName}."), it) },
             )
             // Deliberately NOT clearing stagedFile here: it and uploadState are set in the same
             // recomposition pass, so clearing it alongside a Success result would drop the "staged
@@ -132,15 +140,15 @@ class ExamPaperSubmissionController(
         }
     }
 
-    fun deleteSubmission(submissionId: String) = launch {
+    fun deleteSubmission(submissionId: String) = launch("delete the submitted paper") {
         runCatching { examPaperRepository.deleteSubmission(submissionId) }
-            .onFailure { _uploadState.value = Outcome.Error(it.userMessageLogged("Could not delete the submission."), it) }
+            .onFailure { _uploadState.value = Outcome.Error(it.userMessageLogged("Couldn't delete the submitted paper."), it) }
     }
 
-    fun downloadAndOpen(submission: ExamPaperSubmission, targetDir: File, opener: (File) -> Unit) = launch {
+    fun downloadAndOpen(submission: ExamPaperSubmission, targetDir: File, opener: (File) -> Unit) = launch("open the file") {
         runCatching {
             val file = examPaperRepository.downloadTo(submission, targetDir)
             opener(file)
-        }.onFailure { _uploadState.value = Outcome.Error(it.userMessageLogged("Could not open the file."), it) }
+        }.onFailure { _uploadState.value = Outcome.Error(it.userMessageLogged("Couldn't open ${submission.fileName}."), it) }
     }
 }

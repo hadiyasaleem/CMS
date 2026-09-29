@@ -116,10 +116,14 @@ class MarksEntryController(
             raw.isNotEmpty() && raw.toIntOrNull()?.let { it !in 0..type.maxMarks } != false
         }
         if (invalidScore != null) {
-            _saveState.value = Outcome.Error(
-                "Enter a whole-number score between 0 and ${type.maxMarks} for ${invalidScore.rollNumber}.",
-                IllegalArgumentException("score out of range"),
-            )
+            val raw = display[invalidScore.rollNumber]?.trim().orEmpty()
+            val entered = raw.toIntOrNull()
+            val message = when {
+                entered == null -> "'$raw' isn't a whole number for ${invalidScore.rollNumber}. Enter a score from 0 to ${type.maxMarks}."
+                entered > type.maxMarks -> "${invalidScore.rollNumber}'s score of $entered is above the ${examLabel(type)} maximum of ${type.maxMarks}."
+                else -> "${invalidScore.rollNumber}'s score can't be negative. Enter a score from 0 to ${type.maxMarks}."
+            }
+            _saveState.value = Outcome.Error(message, IllegalArgumentException("score out of range"))
             return
         }
         val parsed = roster.value.mapNotNull { student ->
@@ -133,7 +137,7 @@ class MarksEntryController(
         }.toMap()
 
         _saveState.value = Outcome.Loading // set before launch so the guard above sees it synchronously
-        launch {
+        launch("save the marks") {
             try {
                 val absentToSave = absent.filter { parsed.containsKey(it) }.toSet()
                 marksRepository.saveScores(assignment.sessionId, assignment.courseCode, type, teacherId, parsed, absentToSave)
@@ -141,7 +145,7 @@ class MarksEntryController(
                 _edits.value = emptyMap()
                 _absentRolls.value = emptySet()
             } catch (t: Throwable) {
-                _saveState.value = Outcome.Error(t.userMessageLogged("Could not save marks."), t)
+                _saveState.value = Outcome.Error(t.userMessageLogged("Couldn't save the ${examLabel(type)} marks for ${assignment.subjectLabel}."), t)
             }
         }
     }
@@ -153,7 +157,7 @@ class MarksEntryController(
     private fun loadPendingRequests() {
         val assignment = _selected.value ?: return
         val type = _examType.value
-        launch {
+        launch("load pending edit requests") {
             val pending = runCatching { markEditRequestRepository.getPendingForAssignment(assignment.sessionId, assignment.courseCode, type) }
                 .getOrDefault(emptyList())
             _pendingByRoll.value = pending.associateBy { it.rollNumber }
@@ -166,16 +170,29 @@ class MarksEntryController(
         val semester = session.value?.currentSemester ?: 1
         val currentScore = savedScores.value[rollNumber]
 
-        if (requestedScore !in 0..type.maxMarks) {
-            _requestState.value = Outcome.Error("Score must be between 0 and ${type.maxMarks}.", IllegalArgumentException("score out of range"))
+        if (currentScore == null) {
+            _requestState.value = Outcome.Error("$rollNumber has no saved ${examLabel(type)} score yet, so there is nothing to change. Enter the score directly.", IllegalStateException("no saved score"))
             return
         }
-        if ((reason ?: "").trim().length > 500) {
-            _requestState.value = Outcome.Error("Reason must not exceed 500 characters.", IllegalArgumentException("reason length"))
+        if (requestedScore !in 0..type.maxMarks) {
+            _requestState.value = Outcome.Error("$requestedScore is outside the ${examLabel(type)} range of 0 to ${type.maxMarks}.", IllegalArgumentException("score out of range"))
+            return
+        }
+        if (requestedScore == currentScore) {
+            _requestState.value = Outcome.Error("$rollNumber's ${examLabel(type)} score is already $currentScore, so there is nothing to change.", IllegalArgumentException("same score"))
+            return
+        }
+        _pendingByRoll.value[rollNumber]?.let { pending ->
+            _requestState.value = Outcome.Error("A change of $rollNumber's ${examLabel(type)} score to ${pending.requestedScore} is already waiting for the admin's review.", IllegalStateException("pending request"))
+            return
+        }
+        val reasonLength = (reason ?: "").trim().length
+        if (reasonLength > 500) {
+            _requestState.value = Outcome.Error("The reason is $reasonLength characters; the limit is 500.", IllegalArgumentException("reason length"))
             return
         }
 
-        launch {
+        launch("submit the edit request") {
             try {
                 _requestState.value = Outcome.Loading
                 markEditRequestRepository.submitRequest(
@@ -192,8 +209,11 @@ class MarksEntryController(
                 _requestState.value = Outcome.Success(Unit)
                 loadPendingRequests()
             } catch (t: Throwable) {
-                _requestState.value = Outcome.Error(t.userMessageLogged("Could not submit the edit request."), t)
+                _requestState.value = Outcome.Error(t.userMessageLogged("Couldn't submit the edit request for $rollNumber."), t)
             }
         }
     }
 }
+
+/** "Midterm" / "Sessional", for messages. */
+private fun examLabel(type: ExamType): String = type.name.lowercase().replaceFirstChar { it.uppercase() }

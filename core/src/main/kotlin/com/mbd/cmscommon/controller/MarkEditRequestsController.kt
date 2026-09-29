@@ -74,14 +74,14 @@ class MarkEditRequestsController(
         refresh(fetchRemote = false)
     }
 
-    fun refresh(fetchRemote: Boolean = true) = launch {
+    fun refresh(fetchRemote: Boolean = true) = launch("load the edit requests") {
         _loading.value = true
         try {
             if (fetchRemote) repository.sync()
             val requests = markEditQueueSnapshot(repository.getPendingRequests()).requests
             _requests.value = requests
             val attendance = runCatching { attendanceRepository.getPendingRequests() }
-                .onFailure { _rowErrors.value = _rowErrors.value + (ATTENDANCE_LOAD_KEY to it.userMessageLogged("Could not load attendance edit requests.")) }
+                .onFailure { _rowErrors.value = _rowErrors.value + (ATTENDANCE_LOAD_KEY to it.userMessageLogged("Couldn't load the attendance edit requests.")) }
                 .getOrDefault(emptyList())
             _attendanceRequests.value = attendance
             _details.value = loadDetails(requests) + loadAttendanceDetails(attendance)
@@ -90,7 +90,7 @@ class MarkEditRequestsController(
         }
     }
 
-    fun approve(request: MarkEditRequest) = launch {
+    fun approve(request: MarkEditRequest) = launch("approve the score change") {
         val requestKey = markEditReviewKey(request)
         try {
             _busyRequestId.value = requestKey
@@ -99,73 +99,73 @@ class MarkEditRequestsController(
 
             val quality = markEditReviewQuality(request)
             requireValid(!quality.blocksApproval) { quality.blockingIssues.joinToString(" ") }
-            requireValid(_requests.value.any { it.id == request.id }) { "This request is no longer pending. Refresh the queue." }
+            requireValid(_requests.value.any { it.id == request.id }) { "The score change for ${displayStudent(request)} in ${request.courseCode} is no longer pending. Refresh the queue." }
 
             repository.approveRequest(request.id, reviewedBy)
             val notice = "${displayStudent(request)} now has ${request.requestedScore} marks for ${request.courseCode}."
             removeResolvedRequest(request)
             _notice.value = notice
         } catch (t: Throwable) {
-            _rowErrors.value = _rowErrors.value + (requestKey to t.userMessageLogged("Could not approve this score change."))
+            _rowErrors.value = _rowErrors.value + (requestKey to t.userMessageLogged("Couldn't approve the score change for ${displayStudent(request)} in ${request.courseCode}."))
         } finally {
             _busyRequestId.value = null
         }
     }
 
-    fun reject(request: MarkEditRequest) = launch {
+    fun reject(request: MarkEditRequest) = launch("reject the score change") {
         val requestKey = markEditReviewKey(request)
         try {
             _busyRequestId.value = requestKey
             _notice.value = null
             requireValid(reviewedBy.isNotBlank()) { "Your signed-in account could not be identified." }
             requireValid(request.id.isNotBlank()) { "This request has no database ID and cannot be rejected safely." }
-            requireValid(_requests.value.any { it.id == request.id }) { "This request is no longer pending. Refresh the queue." }
+            requireValid(_requests.value.any { it.id == request.id }) { "The score change for ${displayStudent(request)} in ${request.courseCode} is no longer pending. Refresh the queue." }
 
             repository.rejectRequest(request.id, reviewedBy)
             val notice = "The score change for ${displayStudent(request)} was rejected."
             removeResolvedRequest(request)
             _notice.value = notice
         } catch (t: Throwable) {
-            _rowErrors.value = _rowErrors.value + (requestKey to t.userMessageLogged("Could not reject this score change."))
+            _rowErrors.value = _rowErrors.value + (requestKey to t.userMessageLogged("Couldn't reject the score change for ${displayStudent(request)} in ${request.courseCode}."))
         } finally {
             _busyRequestId.value = null
         }
     }
 
-    fun approveAttendance(request: AttendanceEditRequest) = launch {
+    fun approveAttendance(request: AttendanceEditRequest) = launch("approve the attendance change") {
         try {
             _busyRequestId.value = request.id
             _notice.value = null
             requireValid(reviewedBy.isNotBlank()) { "Your signed-in account could not be identified." }
             val issues = attendanceEditReviewIssues(request)
             requireValid(issues.isEmpty()) { issues.joinToString(" ") }
-            requireValid(_attendanceRequests.value.any { it.id == request.id }) { "This request is no longer pending. Refresh the queue." }
+            requireValid(_attendanceRequests.value.any { it.id == request.id }) { "The attendance change for ${displayStudent(request.id, request.rollNumber)} on ${request.date} is no longer pending. Refresh the queue." }
 
             attendanceRepository.approveRequest(request.id, reviewedBy)
             val notice = "${displayStudent(request.id, request.rollNumber)} is now marked ${request.requestedStatus.name.lowercase()} on ${request.date} for ${request.courseCode}."
             removeResolvedAttendance(request)
             _notice.value = notice
         } catch (t: Throwable) {
-            _rowErrors.value = _rowErrors.value + (request.id to t.userMessageLogged("Could not approve this attendance change."))
+            _rowErrors.value = _rowErrors.value + (request.id to t.userMessageLogged("Couldn't approve the attendance change for ${displayStudent(request.id, request.rollNumber)} on ${request.date}."))
         } finally {
             _busyRequestId.value = null
         }
     }
 
-    fun rejectAttendance(request: AttendanceEditRequest) = launch {
+    fun rejectAttendance(request: AttendanceEditRequest) = launch("reject the attendance change") {
         try {
             _busyRequestId.value = request.id
             _notice.value = null
             requireValid(reviewedBy.isNotBlank()) { "Your signed-in account could not be identified." }
             requireValid(request.id.isNotBlank()) { "This request has no database ID and cannot be rejected safely." }
-            requireValid(_attendanceRequests.value.any { it.id == request.id }) { "This request is no longer pending. Refresh the queue." }
+            requireValid(_attendanceRequests.value.any { it.id == request.id }) { "The attendance change for ${displayStudent(request.id, request.rollNumber)} on ${request.date} is no longer pending. Refresh the queue." }
 
             attendanceRepository.rejectRequest(request.id, reviewedBy)
             val notice = "The attendance change for ${displayStudent(request.id, request.rollNumber)} was rejected."
             removeResolvedAttendance(request)
             _notice.value = notice
         } catch (t: Throwable) {
-            _rowErrors.value = _rowErrors.value + (request.id to t.userMessageLogged("Could not reject this attendance change."))
+            _rowErrors.value = _rowErrors.value + (request.id to t.userMessageLogged("Couldn't reject the attendance change for ${displayStudent(request.id, request.rollNumber)} on ${request.date}."))
         } finally {
             _busyRequestId.value = null
         }

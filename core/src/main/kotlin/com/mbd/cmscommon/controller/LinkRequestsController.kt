@@ -69,7 +69,7 @@ class LinkRequestsController(
         if (permissionCheck == null) {
             _loading.value = false
         } else {
-            launch {
+            launch("check your permission to review link requests") {
                 try {
                     _access.value = if (permissionCheck()) LinkRequestAccess.GRANTED else LinkRequestAccess.DENIED
                     _loading.value = false
@@ -81,7 +81,7 @@ class LinkRequestsController(
         }
     }
 
-    fun refresh() = launch {
+    fun refresh() = launch("refresh the link requests") {
         if (_access.value != LinkRequestAccess.GRANTED) return@launch
         _loading.value = true
         try {
@@ -97,8 +97,9 @@ class LinkRequestsController(
      * legitimate (e.g. a nickname on the claim vs. the full legal name on file). Either way,
      * [com.mbd.cmscommon.domain.repository.StudentLinkRequestRepository.approveRequest] delinks
      * whatever account the roll number is currently linked to before linking the new one. */
-    fun approve(request: StudentLinkRequest, override: Boolean = false) = launch {
+    fun approve(request: StudentLinkRequest, override: Boolean = false) = launch("approve the link request") {
         val requestKey = linkRequestVerificationKey(request)
+        val who = linkRequestWho(request)
         try {
             _busyRequestId.value = requestKey
             _notice.value = null
@@ -107,18 +108,11 @@ class LinkRequestsController(
             val quality = linkRequestClaimQuality(request)
             requireValid(quality.isReviewable) { quality.summary ?: "This request cannot be reviewed safely." }
             requireValid(requests.value.any { it.requestId == request.requestId }) {
-                "This request is no longer pending. Refresh the queue."
+                "$who's request is no longer pending. Refresh the queue."
             }
 
             val verification = verifications.value[requestKey]
-            val approvableStates = if (override) {
-                setOf(RosterVerificationState.MATCHED, RosterVerificationState.RELINK, RosterVerificationState.IDENTITY_MISMATCH)
-            } else {
-                setOf(RosterVerificationState.MATCHED, RosterVerificationState.RELINK)
-            }
-            requireValid(verification?.state in approvableStates) {
-                "Verify that this student exists in the selected session before approval."
-            }
+            linkApprovalBlockedMessage(request, verification, override)?.let { throw CmsException.Validation(it) }
 
             val sessionId = request.sessionIdClaimed?.trim().orEmpty()
             val currentProfile = sessionRepository.getStudentProfile(sessionId, request.rollNumberClaimed.trim())
@@ -136,13 +130,13 @@ class LinkRequestsController(
             _rowErrors.value = _rowErrors.value - requestKey
             _notice.value = "${request.nameClaimed ?: request.rollNumberClaimed} was linked successfully."
         } catch (t: Throwable) {
-            _rowErrors.value = _rowErrors.value + (requestKey to t.userMessageLogged("Could not approve the request."))
+            _rowErrors.value = _rowErrors.value + (requestKey to t.userMessageLogged("Couldn't approve ${linkRequestWho(request)}'s link request."))
         } finally {
             _busyRequestId.value = null
         }
     }
 
-    fun reject(request: StudentLinkRequest, reason: String) = launch {
+    fun reject(request: StudentLinkRequest, reason: String) = launch("reject the link request") {
         val requestKey = linkRequestVerificationKey(request)
         try {
             _busyRequestId.value = requestKey
@@ -150,7 +144,7 @@ class LinkRequestsController(
             requireValid(reviewerId.isNotBlank()) { "Your signed-in account could not be identified." }
             requireValid(request.requestId.isNotBlank()) { "This request has no database ID and cannot be rejected safely." }
             requireValid(requests.value.any { it.requestId == request.requestId }) {
-                "This request is no longer pending. Refresh the queue."
+                "${linkRequestWho(request)}'s request is no longer pending. Refresh the queue."
             }
             val normalizedReason = reason.trim()
             requireValid(normalizedReason.length >= 4) { "Add a short reason so the student knows what to correct." }
@@ -160,7 +154,7 @@ class LinkRequestsController(
             _rowErrors.value = _rowErrors.value - requestKey
             _notice.value = "${request.nameClaimed ?: request.rollNumberClaimed}'s request was rejected with guidance."
         } catch (t: Throwable) {
-            _rowErrors.value = _rowErrors.value + (requestKey to t.userMessageLogged("Could not reject the request."))
+            _rowErrors.value = _rowErrors.value + (requestKey to t.userMessageLogged("Couldn't reject ${linkRequestWho(request)}'s link request."))
         } finally {
             _busyRequestId.value = null
         }
@@ -206,7 +200,31 @@ class LinkRequestsController(
             }
             key to verification
         } catch (t: Throwable) {
-            key to LinkRequestVerification(RosterVerificationState.FAILED, message = t.userMessageLogged("Could not verify the roster record."))
+            key to LinkRequestVerification(RosterVerificationState.FAILED, message = t.userMessageLogged("Couldn't verify roll number ${request.rollNumberClaimed} on the roster."))
         }
+    }
+}
+
+/** Who a link request is about, for messages: the claimed name, else the claimed roll number. */
+fun linkRequestWho(request: StudentLinkRequest): String =
+    request.nameClaimed?.takeIf { it.isNotBlank() } ?: request.rollNumberClaimed
+
+/**
+ * Why [request] can't be approved given its roster [verification], or null when it can. [override] is the
+ * reviewer's "I've checked this by hand" escape hatch, which also allows an identity mismatch.
+ */
+fun linkApprovalBlockedMessage(request: StudentLinkRequest, verification: LinkRequestVerification?, override: Boolean): String? {
+    val who = linkRequestWho(request)
+    val roll = request.rollNumberClaimed
+    return when (verification?.state) {
+        RosterVerificationState.MATCHED, RosterVerificationState.RELINK -> null
+        RosterVerificationState.IDENTITY_MISMATCH ->
+            if (override) null else "The details $who gave don't match the official record for roll number $roll. Check them, or choose Link anyway if you've confirmed by hand."
+        RosterVerificationState.MISSING ->
+            "Roll number $roll isn't on the selected session's roster, so $who can't be linked yet. Add that student to the roster first."
+        RosterVerificationState.FAILED ->
+            verification.message?.let { "Couldn't verify $who: $it" } ?: "Couldn't verify roll number $roll on the roster. Refresh and try again."
+        RosterVerificationState.CHECKING, null ->
+            "$who's request is still being checked against the roster. Wait a moment and try again."
     }
 }

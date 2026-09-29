@@ -27,7 +27,7 @@ class StudentResultsController(
     fun refresh(fetchRemote: Boolean = true) {
         clearError()
         _loading.value = true
-        launch {
+        launch("load your results") {
             try {
                 if (fetchRemote) marksRepository.syncSession(sessionId)
                 _results.value = marksRepository.getSemesterGpa(sessionId, rollNumber)

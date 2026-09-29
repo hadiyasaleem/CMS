@@ -102,7 +102,7 @@ class SemesterResultsController(
         _results.value = emptyMap()
         _subjects.value = emptyList()
         val sid = parseShiftClassKey(id).first
-        launch {
+        launch("load the session") {
             val range = sessionRepository.observeSession(sid).first()?.semesterRange ?: ProgramType.BS.semesterRange
             if (_semester.value !in range) _semester.value = range.first
             reload(fetchRemote = false)
@@ -122,7 +122,7 @@ class SemesterResultsController(
 
     private fun reload(fetchRemote: Boolean) {
         val sid = selectedSessionId ?: return
-        launch {
+        launch("load the semester results") {
             try {
                 _loadState.value = Outcome.Loading
                 if (fetchRemote) {
@@ -135,7 +135,7 @@ class SemesterResultsController(
                 _results.value = marksRepository.getSemesterResults(sid, _semester.value).associateBy { it.rollNumber }
                 _loadState.value = Outcome.Success(Unit)
             } catch (t: Throwable) {
-                _loadState.value = Outcome.Error(t.userMessageLogged("Could not load semester results."), t)
+                _loadState.value = Outcome.Error(t.userMessageLogged("Couldn't load the Semester ${_semester.value} results."), t)
             }
         }
     }
@@ -151,24 +151,26 @@ class SemesterResultsController(
         supply: List<String>,
     ) {
         val sid = selectedSessionId ?: return
-        launch {
+        launch("save the result") {
             try {
                 _saveState.value = Outcome.Loading
-                requireValid(gpa in 0.0..4.0) { "GPA must be between 0 and 4." }
-                requireValid(cgpa in 0.0..4.0) { "CGPA must be between 0 and 4." }
+                requireValid(gpa in 0.0..4.0) { "GPA must be between 0 and 4 (you entered $gpa)." }
+                requireValid(cgpa in 0.0..4.0) { "CGPA must be between 0 and 4 (you entered $cgpa)." }
                 requireValid((termLabel ?: "").trim().length <= 40) { "Term label must not exceed 40 characters." }
                 requireValid(result.uppercase(Locale.ROOT) in setOf("PENDING", "PROMOTED", "PROBATION", "REPEATED")) {
                     "Choose a valid result status."
                 }
                 requireValid(position == null || position > 0) { "Class position must be a positive whole number." }
                 requireValid((remarks ?: "").trim().length <= 500) { "Remarks must not exceed 500 characters." }
-                requireValid(supply.all { _subjects.value.contains(it) }) { "Choose supply subjects from this semester's curriculum." }
+                requireValid(supply.all { _subjects.value.contains(it) }) {
+                    "${supply.filterNot { _subjects.value.contains(it) }.joinToString()} isn't in Semester ${_semester.value}'s curriculum. Choose supply subjects from that list."
+                }
 
                 marksRepository.recordSemesterResult(sid, roll, _semester.value, gpa, cgpa, termLabel, result.trim().uppercase(Locale.ROOT), position, remarks, supply)
                 _saveState.value = Outcome.Success(Unit)
                 _results.value = _results.value + (roll to SemesterGpa(sid, roll, _semester.value, gpa, cgpa, termLabel, result.trim().uppercase(Locale.ROOT), position, remarks, supply))
             } catch (t: Throwable) {
-                _saveState.value = Outcome.Error(t.userMessageLogged("Could not save the result."), t)
+                _saveState.value = Outcome.Error(t.userMessageLogged("Couldn't save the result for $roll (Semester ${_semester.value})."), t)
             }
         }
     }

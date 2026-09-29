@@ -62,7 +62,7 @@ class StudentRecordController(
         refresh()
     }
 
-    fun refresh() = launch {
+    fun refresh() = launch("load the student record") {
         _loading.value = true
         try {
             val profile = sessionRepository.getStudentProfile(sessionId, rollNumber)

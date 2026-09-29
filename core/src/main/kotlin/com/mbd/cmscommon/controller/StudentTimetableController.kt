@@ -31,7 +31,7 @@ class StudentTimetableController(
     fun refresh() {
         clearError()
         _refreshing.value = true
-        launch {
+        launch("refresh your timetable") {
             try {
                 timetableRepository.syncSession(sessionId)
             } finally {

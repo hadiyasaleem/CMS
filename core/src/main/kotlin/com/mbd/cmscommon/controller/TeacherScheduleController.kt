@@ -67,7 +67,7 @@ class TeacherScheduleController(
     private val _refreshState = MutableStateFlow<Outcome<Unit>?>(null)
     val refreshState: StateFlow<Outcome<Unit>?> = _refreshState.asStateFlow()
 
-    fun refresh() = launch {
+    fun refresh() = launch("refresh your schedule") {
         _refreshState.value = Outcome.Loading
         val failures = mutableListOf<Throwable>()
 

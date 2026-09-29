@@ -68,7 +68,7 @@ class StudentHomeController(
         )
     }.stateIn(scope, SharingStarted.WhileSubscribed(5000), StudentHomeUi())
 
-    fun refresh() = launch {
+    fun refresh() = launch("refresh your home screen") {
         runCatching { attendanceRepository.syncSession(sessionId) }.orLogCritical("StudentHomeController.refresh.attendance")
         runCatching { timetableRepository.syncSession(sessionId) }.orLogCritical("StudentHomeController.refresh.timetable")
     }

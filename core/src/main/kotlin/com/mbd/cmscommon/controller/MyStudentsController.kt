@@ -48,7 +48,7 @@ class MyStudentsController(
 
     fun refresh() {
         val assignment = _selected.value ?: return
-        launch {
+        launch("refresh the class list") {
             runCatching { sessionRepository.syncStudents(assignment.sessionId) }.orLogCritical("MyStudentsController.syncStudents")
             runCatching { attendanceRepository.syncSummary(assignment.sessionId, assignment.courseCode) }.orLogCritical("MyStudentsController.syncSummary")
         }

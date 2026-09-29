@@ -10,7 +10,9 @@ import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.NotificationRepository
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
 import com.mbd.cmscommon.teacher.ResolvedAssignment
+import com.mbd.cmscommon.util.CmsException
 import com.mbd.cmscommon.util.Outcome
+import com.mbd.cmscommon.util.previewText
 import java.time.LocalDate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -58,7 +60,7 @@ class MarkAttendanceController(
         _lectureTopic.value = ""
         _alreadyMarked.value = false
         _submitState.value = null
-        launch {
+        launch("load the register") {
             val classRolls = runCatching { studentsForTab(sessionRepository.observeStudents(assignment.sessionId).first(), assignment.classShift) }
                 .getOrDefault(emptyList()).map { it.rollNumber }.toSet()
             // Attendance rows carry no shift, so keep this class's students only: the other shift's register
@@ -158,18 +160,27 @@ class MarkAttendanceController(
 
         val statuses = _statuses.value
         val students = roster.value
-        if (students.isEmpty() || !students.all { statuses.containsKey(it.rollNumber) }) {
-            _submitState.value = Outcome.Error("Mark every student before submitting.", IllegalStateException("incomplete"))
+        if (students.isEmpty()) {
+            _submitState.value = Outcome.Error("This class has no students on its register, so there is nothing to submit.", IllegalStateException("empty roster"))
+            return
+        }
+        val unmarked = students.filter { !statuses.containsKey(it.rollNumber) }
+        if (unmarked.isNotEmpty()) {
+            _submitState.value = Outcome.Error(
+                "${unmarked.size} of ${students.size} students still need a status: ${unmarked.map { it.rollNumber }.previewText()}.",
+                IllegalStateException("incomplete"),
+            )
             return
         }
 
-        if (_lectureTopic.value.trim().length > TOPIC_MAX) {
-            _submitState.value = Outcome.Error("Attendance notes are too long.", IllegalArgumentException("attendance text length"))
+        val topicLength = _lectureTopic.value.trim().length
+        if (topicLength > TOPIC_MAX) {
+            _submitState.value = Outcome.Error("The lecture topic is $topicLength characters; the limit is $TOPIC_MAX.", IllegalArgumentException("topic length"))
             return
         }
         val remarks = _remarks.value
-        if (remarks.values.any { it.trim().length > 500 }) {
-            _submitState.value = Outcome.Error("Attendance notes are too long.", IllegalArgumentException("attendance text length"))
+        remarks.entries.firstOrNull { it.value.trim().length > 500 }?.let { (roll, text) ->
+            _submitState.value = Outcome.Error("The remark for $roll is ${text.trim().length} characters; the limit is 500.", IllegalArgumentException("remark length"))
             return
         }
 
@@ -185,9 +196,18 @@ class MarkAttendanceController(
         submitRecords(assignment, records)
     }
 
-    private fun submitRecords(assignment: ResolvedAssignment, records: Map<String, AttendanceEntry>) = launch {
+    private fun submitRecords(assignment: ResolvedAssignment, records: Map<String, AttendanceEntry>) = launch("submit attendance") {
         try {
             _submitState.value = Outcome.Loading
+            // Another device (or the other shift's teacher) may have marked this register since it was opened; the insert would
+            // then fail on a duplicate key. Say so plainly and reload what was saved.
+            val day = _date.value
+            val alreadySaved = attendanceRepository.marksBetween(assignment.sessionId, assignment.courseCode, day, day)
+                .filter { it.rollNumber in records.keys }
+            if (alreadySaved.isNotEmpty()) {
+                loadDay(assignment)
+                throw CmsException.Conflict("Attendance for ${assignment.subjectLabel} on $day was already marked for ${alreadySaved.size} of ${records.size} students. It has been reloaded; nothing was overwritten.")
+            }
             attendanceRepository.markAttendance(
                 sessionId = assignment.sessionId,
                 courseCode = assignment.courseCode,
@@ -211,7 +231,7 @@ class MarkAttendanceController(
             _alreadyMarked.value = true
             _submitState.value = Outcome.Success(Unit)
         } catch (t: Throwable) {
-            _submitState.value = Outcome.Error(t.userMessageLogged("Could not submit attendance."), t)
+            _submitState.value = Outcome.Error(t.userMessageLogged("Couldn't submit attendance for ${assignment.subjectLabel} on ${_date.value}."), t)
         }
     }
 }

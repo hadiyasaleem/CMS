@@ -57,7 +57,7 @@ class StudentMarksController(
 
     fun refresh() {
         _refreshing.value = true
-        launch {
+        launch("refresh your marks") {
             try {
                 val failures = listOfNotNull(
                     runCatching { marksRepository.syncSession(sessionId) }.exceptionOrNull(),

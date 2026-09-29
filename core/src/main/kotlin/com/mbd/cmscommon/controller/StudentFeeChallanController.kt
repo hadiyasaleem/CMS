@@ -38,7 +38,7 @@ class StudentFeeChallanController(
 
     private fun load(fetchRemote: Boolean) {
         clearError()
-        launch {
+        launch("load your fee challan") {
             _loading.value = true
             try {
                 if (fetchRemote) feeRepository.syncSession(sessionId)
