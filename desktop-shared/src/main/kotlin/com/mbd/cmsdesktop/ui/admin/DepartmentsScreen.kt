@@ -85,8 +85,8 @@ fun DepartmentsScreen(
     var editingDepartment by remember { mutableStateOf<Department?>(null) }
     var pendingDelete by remember { mutableStateOf<Department?>(null) }
 
-    val actionController = remember(repository, createdBy) {
-        DepartmentsActionController(repository, createdBy.orEmpty(), scope)
+    val actionController = remember(repository, createdBy, sessionRepository) {
+        DepartmentsActionController(repository, createdBy.orEmpty(), scope, sessionRepository)
     }
     val actionError by actionController.error.collectAsState()
 

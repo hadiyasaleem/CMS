@@ -30,7 +30,7 @@ class EventsController(
 
     fun refresh(fetchRemote: Boolean = true) {
         clearError()
-        launch {
+        launch("load the calendar") {
             _loading.value = true
             try {
                 if (fetchRemote) repo.sync()
@@ -44,7 +44,7 @@ class EventsController(
     fun createEvent(event: CalendarEvent, createdBy: String) {
         if (_busy.value) return
         _busy.value = true // set synchronously before launch so the guard actually blocks a double-tap
-        launch {
+        launch("add the event") {
             clearError()
             _actionMessage.value = null
             try {
@@ -60,7 +60,7 @@ class EventsController(
     fun deleteEvent(id: String) {
         if (_busy.value) return
         _busy.value = true // set synchronously before launch so the guard actually blocks a double-tap
-        launch {
+        launch("remove the event") {
             clearError()
             _actionMessage.value = null
             try {

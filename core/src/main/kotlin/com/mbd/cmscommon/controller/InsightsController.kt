@@ -33,7 +33,7 @@ class InsightsController(
         refresh(fetchRemote = false)
     }
 
-    fun refresh(fetchRemote: Boolean = true) = launch {
+    fun refresh(fetchRemote: Boolean = true) = launch("load the insights") {
         clearError()
         try {
             _refreshing.value = true

@@ -62,25 +62,21 @@ class SessionStudentsController(
         currentSession?.deptId?.let { departmentRepo.getDepartment(it)?.code }
 
     /** Adds a student to exactly one [shift]; the roll number must sit in that shift's block. */
-    fun addStudent(rollNumber: String, name: String, shift: Session, gpa: Double? = null, cgpa: Double? = null) = launch {
-        try {
-            val normalizedRoll = FieldValidators.normalizeRollNumber(rollNumber)
-            val normalizedName = name.trim()
-            val currentSession = session.value
+    fun addStudent(rollNumber: String, name: String, shift: Session, gpa: Double? = null, cgpa: Double? = null) = launch("add the student") {
+        val normalizedRoll = FieldValidators.normalizeRollNumber(rollNumber)
+        val normalizedName = name.trim()
+        val currentSession = session.value
 
-            FieldValidators.rollNumberError(normalizedRoll, resolveDepartmentCode(currentSession), currentSession?.startYear).orThrowValidation()
-            FieldValidators.nameError(normalizedName, "Student name").orThrowValidation()
-            requireValid(gpa == null || gpa in 0.0..4.0) { "GPA must be between 0 and 4." }
-            requireValid(cgpa == null || cgpa in 0.0..4.0) { "CGPA must be between 0 and 4." }
-            addStudentError(currentSession, shift, normalizedRoll, students.value).orThrowValidation()
+        FieldValidators.rollNumberError(normalizedRoll, resolveDepartmentCode(currentSession), currentSession?.startYear).orThrowValidation()
+        FieldValidators.nameError(normalizedName, "Student name").orThrowValidation()
+        requireValid(gpa == null || gpa in 0.0..4.0) { "GPA must be between 0 and 4." }
+        requireValid(cgpa == null || cgpa in 0.0..4.0) { "CGPA must be between 0 and 4." }
+        addStudentError(currentSession, shift, normalizedRoll, students.value).orThrowValidation()
 
-            repo.addStudent(sessionId, normalizedRoll, normalizedName, shift, gpa, cgpa)
-        } catch (t: Throwable) {
-            throw IllegalStateException(t.userMessageLogged("Could not add the student."), t)
-        }
+        repo.addStudent(sessionId, normalizedRoll, normalizedName, shift, gpa, cgpa)
     }
 
-    fun importStudents(rows: List<ImportedStudentRow>) = launch {
+    fun importStudents(rows: List<ImportedStudentRow>) = launch("import the students") {
         _importing.value = true
         try {
             val knownRolls = students.value.map { it.rollNumber.uppercase() }.toMutableSet()
@@ -122,7 +118,7 @@ class SessionStudentsController(
         _importResult.value = null
     }
 
-    fun deleteStudent(studentId: String) = launch {
+    fun deleteStudent(studentId: String) = launch("remove the student") {
         repo.deleteStudent(studentId)
     }
 }

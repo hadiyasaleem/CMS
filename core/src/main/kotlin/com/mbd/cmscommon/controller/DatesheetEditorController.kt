@@ -86,7 +86,7 @@ class DatesheetEditorController(
     init {
         // A freshly created datesheet has no papers yet -- once its session's curriculum for this
         // semester is available, prefill one unscheduled paper per subject.
-        launch {
+        launch("load the datesheet papers") {
             val current = sheet.filterNotNull().first()
             runCatching { curriculumRepository.syncSession(current.sessionId) }.orLogCritical("DatesheetEditorController.syncCurriculum")
             val currentSubjects = curriculumRepository.observeSemesterSubjects(current.sessionId, current.semester).first()
@@ -101,7 +101,7 @@ class DatesheetEditorController(
         _actionMessage.value = null
     }
 
-    fun updateDefaults(defaultStartTime: String?, defaultEndTime: String?, defaultBuildingId: String?, instructions: String?) = mutate {
+    fun updateDefaults(defaultStartTime: String?, defaultEndTime: String?, defaultBuildingId: String?, instructions: String?) = mutate("update the datesheet defaults") {
         val current = requireCurrentSheet()
         val draft = DatesheetDraft(
             sessionId = current.sessionId,
@@ -118,7 +118,7 @@ class DatesheetEditorController(
         _actionMessage.value = "Datesheet updated."
     }
 
-    fun setPublished(published: Boolean) = mutate {
+    fun setPublished(published: Boolean) = mutate(if (published) "publish the datesheet" else "move the datesheet to drafts") {
         val current = requireCurrentSheet()
         if (published) {
             val currentQuality = datesheetScheduleQuality(current, slots.value)
@@ -128,14 +128,14 @@ class DatesheetEditorController(
         _actionMessage.value = if (published) "Datesheet published." else "Datesheet moved to drafts."
     }
 
-    fun deleteDatesheet() = mutate {
+    fun deleteDatesheet() = mutate("delete the datesheet") {
         requireCurrentSheet()
         datesheetRepository.deleteDatesheet(datesheetId)
         _actionMessage.value = "Datesheet deleted."
     }
 
     /** Adds a paper for every curriculum subject the drift banner reports as missing. */
-    fun syncMissingSubjects() = mutate {
+    fun syncMissingSubjects() = mutate("add the missing subjects") {
         val missing = curriculumDrift.value?.missingSubjects.orEmpty()
         requireValid(missing.isNotEmpty()) { "There are no missing subjects to add." }
         datesheetRepository.prefillPapers(datesheetId, missing)
@@ -143,7 +143,7 @@ class DatesheetEditorController(
     }
 
     /** Removes a paper -- typically one the curriculum-drift banner flagged as stale. */
-    fun removePaper(slotId: String) = mutate {
+    fun removePaper(slotId: String) = mutate("remove the paper") {
         requireValid(slotId.isNotBlank()) { "This paper has no database ID and cannot be removed safely." }
         val current = requireCurrentSheet()
         val existing = slots.value
@@ -155,7 +155,7 @@ class DatesheetEditorController(
         _actionMessage.value = "Exam paper removed."
     }
 
-    fun updatePaper(slot: DatesheetSlot) = mutate {
+    fun updatePaper(slot: DatesheetSlot) = mutate("update the paper") {
         val current = requireCurrentSheet()
         requireValid(slot.id.isNotBlank()) { "This paper has no database ID and cannot be updated safely." }
         val normalizedSlot = normalized(slot)
@@ -193,9 +193,9 @@ class DatesheetEditorController(
         _actionMessage.value = "Exam paper updated."
     }
 
-    private fun mutate(block: suspend () -> Unit) {
+    private fun mutate(action: String, block: suspend () -> Unit) {
         if (_busy.value) return
-        launch {
+        launch(action) {
             clearError()
             _actionMessage.value = null
             _busy.value = true

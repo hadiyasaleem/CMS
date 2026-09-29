@@ -44,7 +44,7 @@ class StudentProfileEditController(
     val photoBusy: StateFlow<Boolean> = _photoBusy.asStateFlow()
 
     init {
-        launch {
+        launch("load the student's profile") {
             _profile.value = sessionRepository.getStudentProfile(sessionId, rollNumber)
                 ?: StudentProfile(
                     sessionId = sessionId,
@@ -57,11 +57,11 @@ class StudentProfileEditController(
         loadFines()
     }
 
-    private fun loadFines() = launch {
+    private fun loadFines() = launch("load the student's fines") {
         _fines.value = fineRepository.getFines(sessionId, rollNumber)
     }
 
-    fun issueFine(category: String, amount: Double, reason: String) = launch {
+    fun issueFine(category: String, amount: Double, reason: String) = launch("issue the fine") {
         val normalizedCategory = category.trim().uppercase(Locale.ROOT).ifBlank { "OTHER" }
         val normalizedReason = reason.trim()
         requireValid(normalizedCategory in setOf("LIBRARY", "ATTENDANCE", "EXAM", "DISCIPLINARY", "OTHER")) {
@@ -75,23 +75,23 @@ class StudentProfileEditController(
         loadFines()
     }
 
-    fun deleteFine(id: String) = launch {
+    fun deleteFine(id: String) = launch("delete the fine") {
         fineRepository.deleteFine(id)
         loadFines()
     }
 
-    fun delinkAccount() = launch {
+    fun delinkAccount() = launch("unlink the account") {
         try {
             _saveState.value = Outcome.Loading
             sessionRepository.delinkStudent(sessionId, rollNumber, reviewedBy = issuedBy)
             _profile.value = _profile.value?.copy(linkedEmail = "")
             _saveState.value = Outcome.Success(Unit)
         } catch (t: Throwable) {
-            _saveState.value = Outcome.Error(t.userMessageLogged("Could not delink the account."), t)
+            _saveState.value = Outcome.Error(t.userMessageLogged("Couldn't unlink the account."), t)
         }
     }
 
-    fun save(edited: StudentProfile) = launch {
+    fun save(edited: StudentProfile) = launch("save the student's profile") {
         try {
             _saveState.value = Outcome.Loading
             requireValid(edited.sessionId == sessionId && edited.rollNumber == rollNumber) {
@@ -119,11 +119,11 @@ class StudentProfileEditController(
             _saveState.value = Outcome.Success(Unit)
             _profile.value = normalized
         } catch (t: Throwable) {
-            _saveState.value = Outcome.Error(t.userMessageLogged("Could not save the student profile."), t)
+            _saveState.value = Outcome.Error(t.userMessageLogged("Couldn't save the student's profile."), t)
         }
     }
 
-    fun uploadPhoto(imageBytes: ByteArray, mimeType: String) = launch {
+    fun uploadPhoto(imageBytes: ByteArray, mimeType: String) = launch("upload the photo") {
         try {
             _photoBusy.value = true
             sessionRepository.uploadStudentPhoto(sessionId, rollNumber, imageBytes, mimeType)
@@ -134,5 +134,5 @@ class StudentProfileEditController(
     }
 
     /** For a picked photo failing to read/decode before [uploadPhoto] ever gets called. */
-    fun reportPhotoPickFailure(t: Throwable) = launch { throw t }
+    fun reportPhotoPickFailure(t: Throwable) = launch("read the selected photo") { throw t }
 }

@@ -46,37 +46,53 @@ class SemesterSubjectsController(
         _notice.value = null
     }
 
+    private val _termError = MutableStateFlow<String?>(null)
+    /** Why the last [saveTerm] did not save (bad date, start after end, or the server's reason). */
+    val termError: StateFlow<String?> = _termError.asStateFlow()
+
+    fun clearTermError() {
+        _termError.value = null
+    }
+
     init {
-        launch {
+        launch("load the semester") {
             try {
             } finally {
                 _loading.value = false
             }
         }
-        launch {
+        launch("load the class term dates") {
             _term.value = repo.getSemesterTerm(sessionId, semester)
         }
     }
 
     fun saveTerm(startText: String, endText: String, onDone: (Boolean) -> Unit) {
+        _termError.value = null
         val (start, startInvalid) = parseDate(startText)
         val (end, endInvalid) = parseDate(endText)
-        if (startInvalid || endInvalid) {
+        if (startInvalid) {
+            _termError.value = "Enter the start date as YYYY-MM-DD (for example 2026-09-01)."
+            onDone(false)
+            return
+        }
+        if (endInvalid) {
+            _termError.value = "Enter the end date as YYYY-MM-DD (for example 2027-01-15)."
             onDone(false)
             return
         }
         if (start != null && end != null && start.isAfter(end)) {
+            _termError.value = "The term can't end ($end) before it starts ($start)."
             onDone(false)
             return
         }
-        launch {
+        launch("save the term dates") {
             try {
                 repo.saveSemesterTerm(sessionId, semester, start, end)
                 _term.value = SemesterTerm(sessionId, semester, start, end)
                 _notice.value = "Class term dates saved."
                 onDone(true)
             } catch (t: Throwable) {
-                t.userMessageLogged("Could not save the class term.")
+                _termError.value = t.userMessageLogged("Couldn't save the term dates.")
                 onDone(false)
             }
         }
@@ -90,7 +106,7 @@ class SemesterSubjectsController(
         subjectType: SubjectType,
         isElective: Boolean,
         outline: String?,
-    ) = launch {
+    ) = launch("save the subject") {
         val normalizedCode = courseCode.trim().uppercase(Locale.ROOT)
         FieldValidators.courseCodeError(normalizedCode).orThrowValidation()
         FieldValidators.textError(name, "Subject name", maxLength = 120).orThrowValidation()
@@ -131,7 +147,7 @@ class SemesterSubjectsController(
         saveSubject(null, courseCode, name, creditHours, subjectType, isElective, outline)
     }
 
-    fun removeSubject(courseCode: String) = launch {
+    fun removeSubject(courseCode: String) = launch("remove the subject") {
         repo.deleteSemesterSubject(sessionId, semester, courseCode)
         _notice.value = "$courseCode removed."
     }

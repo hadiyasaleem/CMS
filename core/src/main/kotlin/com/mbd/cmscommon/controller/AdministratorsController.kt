@@ -34,7 +34,7 @@ class AdministratorsController(
         _loading.value = false
     }
 
-    fun refresh() = launch {
+    fun refresh() = launch("refresh the administrators") {
         try {
             _loading.value = true
             repository.sync()
@@ -43,7 +43,7 @@ class AdministratorsController(
         }
     }
 
-    fun create(email: String, password: String) = launch {
+    fun create(email: String, password: String) = launch("create the administrator") {
         try {
             _creating.value = true
             _createdEmail.value = null
@@ -53,7 +53,7 @@ class AdministratorsController(
                 "Enter a valid administrator email address."
             }
             requireValid(administrators.value.none { it.email.trim().equals(normalizedEmail, ignoreCase = true) }) {
-                "An administrator with this email already exists."
+                "An administrator with the email $normalizedEmail already exists."
             }
             FieldValidators.passwordError(password).orThrowValidation()
 

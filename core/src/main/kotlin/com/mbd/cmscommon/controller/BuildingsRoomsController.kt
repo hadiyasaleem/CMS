@@ -4,8 +4,10 @@ import com.mbd.cmscommon.domain.model.Building
 import com.mbd.cmscommon.domain.model.Room
 import com.mbd.cmscommon.domain.repository.BuildingRepository
 import com.mbd.cmscommon.domain.repository.RoomRepository
+import com.mbd.cmscommon.util.CmsException
 import com.mbd.cmscommon.util.FieldValidators
 import com.mbd.cmscommon.util.orThrowValidation
+import com.mbd.cmscommon.util.previewText
 import com.mbd.cmscommon.util.requireValid
 import java.time.Instant
 import java.util.Locale
@@ -28,17 +30,19 @@ class BuildingsRoomsController(
     val rooms: StateFlow<List<Room>> =
         roomRepository.observeActiveRooms().stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    fun refresh() = launch {
+    fun refresh() = launch("refresh buildings and rooms") {
         buildingRepository.sync()
         roomRepository.sync()
     }
 
-    fun createBuilding(name: String, code: String?) = launch {
+    fun createBuilding(name: String, code: String?) = launch("add the building") {
         FieldValidators.nameError(name, "Building name").orThrowValidation()
         val cleanCode = code?.trim()?.uppercase(Locale.ROOT)?.takeIf { it.isNotBlank() }
         val slugSource = cleanCode ?: name
         val buildingId = slugify(slugSource)
-        requireValid(buildings.value.none { it.buildingId == buildingId }) { "A building with that name already exists." }
+        buildings.value.firstOrNull { it.buildingId == buildingId || it.name.trim().equals(name.trim(), ignoreCase = true) }?.let {
+            throw CmsException.Conflict("A building called \"${it.name}\" already exists.")
+        }
 
         val now = Instant.now()
         buildingRepository.createBuilding(
@@ -54,8 +58,11 @@ class BuildingsRoomsController(
         )
     }
 
-    fun updateBuilding(existing: Building, name: String, code: String?) = launch {
+    fun updateBuilding(existing: Building, name: String, code: String?) = launch("update the building") {
         FieldValidators.nameError(name, "Building name").orThrowValidation()
+        buildings.value.firstOrNull { it.buildingId != existing.buildingId && it.name.trim().equals(name.trim(), ignoreCase = true) }?.let {
+            throw CmsException.Conflict("Another building is already called \"${it.name}\".")
+        }
         buildingRepository.updateBuilding(
             existing.copy(
                 name = name.trim(),
@@ -66,17 +73,25 @@ class BuildingsRoomsController(
         )
     }
 
-    fun deleteBuilding(buildingId: String) = launch {
-        requireValid(rooms.value.none { it.buildingId == buildingId }) { "Remove this building's rooms first." }
+    fun deleteBuilding(buildingId: String) = launch("delete the building") {
+        val dependents = rooms.value.filter { it.buildingId == buildingId }
+        if (dependents.isNotEmpty()) {
+            val name = buildings.value.firstOrNull { it.buildingId == buildingId }?.name ?: "This building"
+            throw CmsException.Conflict("$name still has ${dependents.size} room(s): ${dependents.map { it.roomNo }.previewText()}. Delete those rooms first.")
+        }
         buildingRepository.deleteBuilding(buildingId)
     }
 
-    fun createRoom(buildingId: String, roomNo: String, name: String?, capacity: Int?, isOffice: Boolean) = launch {
+    fun createRoom(buildingId: String, roomNo: String, name: String?, capacity: Int?, isOffice: Boolean) = launch("add the room") {
         requireValid(buildingId.isNotBlank()) { "Choose a building." }
+        val building = buildings.value.firstOrNull { it.buildingId == buildingId }
+        requireValid(building != null) { "That building no longer exists. Refresh and choose again." }
         FieldValidators.textError(roomNo, "Room number", maxLength = 30).orThrowValidation()
         requireValid(capacity == null || capacity > 0) { "Capacity must be greater than zero." }
         val roomId = "$buildingId--${slugify(roomNo)}"
-        requireValid(rooms.value.none { it.roomId == roomId }) { "This building already has a room with that number." }
+        if (rooms.value.any { it.roomId == roomId || (it.buildingId == buildingId && it.roomNo.trim().equals(roomNo.trim(), ignoreCase = true)) }) {
+            throw CmsException.Conflict("${building!!.name} already has a room ${roomNo.trim()}.")
+        }
 
         val now = Instant.now()
         roomRepository.createRoom(
@@ -95,8 +110,12 @@ class BuildingsRoomsController(
         )
     }
 
-    fun updateRoom(existing: Room, roomNo: String, name: String?, capacity: Int?, isOffice: Boolean) = launch {
+    fun updateRoom(existing: Room, roomNo: String, name: String?, capacity: Int?, isOffice: Boolean) = launch("update the room") {
         FieldValidators.textError(roomNo, "Room number", maxLength = 30).orThrowValidation()
+        rooms.value.firstOrNull { it.buildingId == existing.buildingId && it.roomId != existing.roomId && it.roomNo.trim().equals(roomNo.trim(), ignoreCase = true) }?.let {
+            val buildingName = buildings.value.firstOrNull { b -> b.buildingId == existing.buildingId }?.name ?: "This building"
+            throw CmsException.Conflict("$buildingName already has a room ${it.roomNo}.")
+        }
         requireValid(capacity == null || capacity > 0) { "Capacity must be greater than zero." }
         roomRepository.updateRoom(
             existing.copy(
@@ -110,7 +129,7 @@ class BuildingsRoomsController(
         )
     }
 
-    fun deleteRoom(roomId: String) = launch {
+    fun deleteRoom(roomId: String) = launch("delete the room") {
         roomRepository.deleteRoom(roomId)
     }
 

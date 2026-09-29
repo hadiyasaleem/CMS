@@ -36,7 +36,7 @@ class CalendarController(
 
     fun refresh(fetchRemote: Boolean = true) {
         clearError()
-        launch {
+        launch("load the calendar") {
             _loading.value = true
             try {
                 if (fetchRemote) repo.sync()
@@ -51,7 +51,7 @@ class CalendarController(
         // Single-flight: set _busy synchronously before launch so a double-tap can't fire two inserts.
         if (_busy.value) return
         _busy.value = true
-        launch {
+        launch("add the event") {
             clearError()
             _actionMessage.value = null
             try {
@@ -68,7 +68,7 @@ class CalendarController(
     fun delete(id: String) {
         if (_busy.value) return
         _busy.value = true
-        launch {
+        launch("remove the event") {
             clearError()
             _actionMessage.value = null
             try {

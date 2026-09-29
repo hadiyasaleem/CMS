@@ -14,6 +14,7 @@ import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.SessionFeeRepository
 import com.mbd.cmscommon.domain.repository.SessionTimetableRepository
+import com.mbd.cmscommon.util.CmsException
 import com.mbd.cmscommon.util.FieldValidators
 import com.mbd.cmscommon.util.requireValid
 import java.time.LocalDate
@@ -85,7 +86,7 @@ class SessionDetailController(
     }
 
     init {
-        launch {
+        launch("load the fee structures") {
             try {
                 val fees = feeRepository.getSessionFees(sessionId)
                 _fees.value = fees
@@ -94,16 +95,26 @@ class SessionDetailController(
                 _feeLoading.value = false
             }
         }
-        launch {
+        launch("load the semester term dates") {
             session.map { it?.currentSemester }.distinctUntilChanged().collect { semester ->
                 _currentSemesterTerm.value = semester?.let { curriculumRepository.getSemesterTerm(sessionId, it) }
             }
         }
     }
 
-    fun promoteSession() = launch {
-        requireValid(canPromote.value) { "This can only be done after the current semester's term end date." }
+    fun promoteSession() = launch("promote the session") {
         val currentSemester = session.value?.currentSemester ?: 1
+        requireValid(session.value?.isActive != false) { "This session has already graduated, so it can't be promoted again." }
+        if (!canPromote.value) {
+            val termEnd = _currentSemesterTerm.value?.endDate
+            throw CmsException.Validation(
+                if (termEnd == null) {
+                    "Set Semester $currentSemester's term dates before promoting this session."
+                } else {
+                    "Semester $currentSemester's term runs until $termEnd, so this session can't be promoted yet."
+                },
+            )
+        }
         val graduating = currentSemester >= 8
         sessionRepository.promoteSession(sessionId)
         _notice.value = if (graduating) "Class marked as graduated." else "Promoted to semester ${currentSemester + 1}."
@@ -114,7 +125,7 @@ class SessionDetailController(
      * differs. Adding a shift is always allowed; dropping one is refused while it still has students,
      * fees, periods or a datesheet (see [shiftModeChangeError]; the database enforces the same rule).
      */
-    fun updateDetails(programName: String?, inchargeEmail: String?, maxStudents: Int, shiftMode: ShiftMode? = null) = launch {
+    fun updateDetails(programName: String?, inchargeEmail: String?, maxStudents: Int, shiftMode: ShiftMode? = null) = launch("save the session details") {
         requireValid((programName ?: "").trim().length <= 120) { "Program name must not exceed 120 characters." }
         requireValid(FieldValidators.emailError(inchargeEmail ?: "", required = false) == null) { "Choose a valid session in-charge." }
         val current = session.value ?: return@launch
@@ -131,7 +142,7 @@ class SessionDetailController(
         _notice.value = if (modeChanged) "Session now runs ${target.label}." else "Session details updated."
     }
 
-    fun deleteSession(onDone: () -> Unit) = launch {
+    fun deleteSession(onDone: () -> Unit) = launch("delete the session") {
         sessionRepository.deleteSession(sessionId)
         onDone()
     }

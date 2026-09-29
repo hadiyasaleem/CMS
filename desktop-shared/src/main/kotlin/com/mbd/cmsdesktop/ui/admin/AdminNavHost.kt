@@ -434,6 +434,7 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         timetableRepository = component.sessionTimetableRepository(),
                         buildingRepository = component.buildingRepository(),
                         roomRepository = component.roomRepository(),
+                        departmentRepository = component.departmentRepository(),
                     )
 
                     is AdminScreen.SemesterSubjectsRoute -> SemesterSubjectsScreen(

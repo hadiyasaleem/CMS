@@ -91,7 +91,7 @@ class DatesheetBrowseController(
         _selectedShift.value = shift
     }
 
-    fun refresh() = launch {
+    fun refresh() = launch("refresh the datesheets") {
         clearError()
         datesheetRepository.sync()
         datesheetRepository.syncAllSlots()

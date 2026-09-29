@@ -16,6 +16,7 @@ import com.mbd.cmscommon.domain.model.Teacher
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.BuildingRepository
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
+import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.RoomRepository
 import com.mbd.cmscommon.domain.repository.SessionTimetableRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
@@ -34,6 +35,7 @@ class SessionTimetableViewModel @Inject constructor(
     teacherRepository: TeacherRepository,
     buildingRepository: BuildingRepository,
     roomRepository: RoomRepository,
+    departmentRepository: DepartmentRepository,
 ) : ViewModel() {
     private val controller = SessionTimetableController(
         sessionId = checkNotNull(savedStateHandle["sessionId"]),
@@ -44,6 +46,7 @@ class SessionTimetableViewModel @Inject constructor(
         buildingRepository = buildingRepository,
         roomRepository = roomRepository,
         scope = viewModelScope,
+        departmentRepository = departmentRepository,
     )
 
     val session = controller.session

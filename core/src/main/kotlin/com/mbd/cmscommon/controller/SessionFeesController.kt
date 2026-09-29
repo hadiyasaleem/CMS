@@ -83,7 +83,7 @@ class SessionFeesController(
 
     private fun load() {
         val loadVersion = structureVersion
-        launch {
+        launch("load the fee structure") {
             try {
                 val loaded = repo.getSessionFees(sessionId).associateBy { it.shift }
                 if (loadVersion == structureVersion) _structures.value = loaded
@@ -93,7 +93,7 @@ class SessionFeesController(
         }
     }
 
-    fun save(cadence: FeeType, heads: List<FeeHead>, academicYear: String, dueDate: String, lateFineNote: String, paymentNote: String) = launch {
+    fun save(cadence: FeeType, heads: List<FeeHead>, academicYear: String, dueDate: String, lateFineNote: String, paymentNote: String) = launch("save the fee structure") {
         try {
             _saving.value = true
             val normalizedHeads = heads.map { it.copy(label = it.label.trim()) }

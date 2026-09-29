@@ -54,7 +54,7 @@ class TeacherProfileController(
     private val _refreshError = MutableStateFlow<String?>(null)
     val refreshError: StateFlow<String?> = _refreshError.asStateFlow()
 
-    fun refresh() = launch {
+    fun refresh() = launch("refresh this teacher's profile") {
         _refreshError.value = runCatching { teacherRepository.sync() }
             .exceptionOrNull()?.userMessageLogged("TeacherProfileController.refresh", "Could not refresh this teacher's profile.")
     }

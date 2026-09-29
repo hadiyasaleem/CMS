@@ -9,8 +9,10 @@ import com.mbd.cmscommon.domain.repository.RoomRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
 import com.mbd.cmscommon.teacher.ResolvedAssignment
 import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider
+import com.mbd.cmscommon.util.CmsException
 import com.mbd.cmscommon.util.FieldValidators
 import com.mbd.cmscommon.util.orThrowValidation
+import com.mbd.cmscommon.util.previewText
 import com.mbd.cmscommon.util.requireValid
 import java.time.Instant
 import java.util.Locale
@@ -23,6 +25,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -72,7 +75,7 @@ class TeachersController(
         _loading.value = false
     }
 
-    fun refresh() = launch {
+    fun refresh() = launch("refresh the faculty directory") {
         _loading.value = true
         try {
             coroutineScope {
@@ -87,13 +90,13 @@ class TeachersController(
         }
     }
 
-    fun createTeacher(draft: TeacherAccountDraft) = launch {
+    fun createTeacher(draft: TeacherAccountDraft) = launch("add the teacher") {
         try {
             _creating.value = true
             _notice.value = null
             val normalized = validateDraft(draft, creatingAccount = true)
-            requireValid(teachers.value.none { it.email.trim().equals(normalized.email, ignoreCase = true) }) {
-                "A teacher account with this email already exists."
+            teachers.value.firstOrNull { it.email.trim().equals(normalized.email, ignoreCase = true) }?.let {
+                throw CmsException.Conflict("A teacher account for ${it.email} already exists (${it.name}).")
             }
 
             val now = Instant.now()
@@ -127,7 +130,7 @@ class TeachersController(
         }
     }
 
-    fun updateTeacher(original: Teacher, draft: TeacherAccountDraft) = launch {
+    fun updateTeacher(original: Teacher, draft: TeacherAccountDraft) = launch("update the teacher") {
         try {
             _busyTeacherId.value = original.teacherId
             _notice.value = null
@@ -154,10 +157,19 @@ class TeachersController(
         }
     }
 
-    fun setStatus(teacher: Teacher, status: TeacherStatus) = launch {
+    fun setStatus(teacher: Teacher, status: TeacherStatus) = launch(
+        when (status) {
+            TeacherStatus.ACTIVE -> "reactivate the account"
+            TeacherStatus.DISABLED -> "disable the account"
+            TeacherStatus.BANNED -> "ban the account"
+        },
+    ) {
         try {
             _busyTeacherId.value = teacher.teacherId
             _notice.value = null
+            if (status != TeacherStatus.ACTIVE && teacher.email.trim().equals(editedBy.trim(), ignoreCase = true)) {
+                throw CmsException.Validation("You can't ${if (status == TeacherStatus.BANNED) "ban" else "disable"} your own account while you're signed in with it.")
+            }
             teacherRepository.setStatus(teacher.teacherId, status)
             _notice.value = when (status) {
                 TeacherStatus.ACTIVE -> "${teacher.name}'s account was reactivated."
@@ -169,7 +181,7 @@ class TeachersController(
         }
     }
 
-    fun resetPassword(teacher: Teacher, newPassword: String) = launch {
+    fun resetPassword(teacher: Teacher, newPassword: String) = launch("reset the password") {
         try {
             _busyTeacherId.value = teacher.teacherId
             _notice.value = null
@@ -181,10 +193,18 @@ class TeachersController(
         }
     }
 
-    fun deleteTeacher(teacher: Teacher) = launch {
+    fun deleteTeacher(teacher: Teacher) = launch("remove the teacher") {
         try {
             _busyTeacherId.value = teacher.teacherId
             _notice.value = null
+            if (teacher.email.trim().equals(editedBy.trim(), ignoreCase = true)) {
+                throw CmsException.Validation("You can't remove your own account while you're signed in with it.")
+            }
+            val classes = assignmentsProvider.observeAssignmentsFor(teacher.teacherId).first()
+            if (classes.isNotEmpty()) {
+                val labels = classes.map { "${it.sessionLabel} · ${it.courseCode}" }.previewText()
+                throw CmsException.Conflict("${teacher.name} still teaches ${classes.size} class(es): $labels. Reassign those timetable periods first.")
+            }
             teacherRepository.deleteTeacher(teacher.teacherId)
             _notice.value = "${teacher.name} was removed from the active faculty directory."
         } finally {
@@ -192,7 +212,7 @@ class TeachersController(
         }
     }
 
-    fun uploadPhoto(teacher: Teacher, imageBytes: ByteArray, mimeType: String) = launch {
+    fun uploadPhoto(teacher: Teacher, imageBytes: ByteArray, mimeType: String) = launch("upload the photo") {
         try {
             _busyTeacherId.value = teacher.teacherId
             _notice.value = null
@@ -208,7 +228,7 @@ class TeachersController(
     }
 
     /** For a picked photo failing to read/decode before [uploadPhoto] ever gets called. */
-    fun reportPhotoPickFailure(t: Throwable) = launch { throw t }
+    fun reportPhotoPickFailure(t: Throwable) = launch("read the selected photo") { throw t }
 
     private fun validateDraft(draft: TeacherAccountDraft, creatingAccount: Boolean): TeacherAccountDraft {
         val normalized = draft.copy(

@@ -141,6 +141,36 @@ fun detectBreakSlot(gridPeriods: List<SessionPeriod>): Pair<String, String>? {
     return null
 }
 
+/** Every period in [grid] that the column re-timing [shifts] moves, paired with its re-timed copy. */
+fun columnMoves(
+    grid: MasterGrid,
+    shifts: Map<Pair<String, String>, Pair<String, String>>,
+): List<Pair<SessionPeriod, SessionPeriod>> = grid.rows.flatMap { it.periods }.mapNotNull { period ->
+    shifts[clockDisplay(period.startTime) to clockDisplay(period.endTime)]?.let { (newStart, newEnd) ->
+        period to period.copy(
+            id = SessionPeriod.buildId(period.sessionId, period.shift, period.day, newStart),
+            startTime = newStart,
+            endTime = newEnd,
+        )
+    }
+}
+
+/**
+ * The first teacher/room double-booking the [moves] would create, described with the other class and
+ * subject -- or null. Judged against the timetable AFTER the move (moved periods at their new times), so
+ * two columns swapping places don't flag each other.
+ */
+fun columnMoveConflict(
+    moves: List<Pair<SessionPeriod, SessionPeriod>>,
+    allPeriods: List<SessionPeriod>,
+    sessions: List<AcademicSession>,
+    departments: List<Department>,
+): String? {
+    val movedIds = moves.map { it.first.id }.toSet()
+    val resulting = allPeriods.filterNot { it.id in movedIds } + moves.map { it.second }
+    return moves.firstNotNullOfOrNull { (_, moved) -> describeTimetableConflict(moved, resulting, sessions, departments) }
+}
+
 class MasterTimetableController(
     private val departmentRepository: DepartmentRepository,
     private val sessionRepository: AcademicSessionRepository,
@@ -275,8 +305,13 @@ class MasterTimetableController(
      * target time is never one still occupied by a column that hasn't moved yet — so an edit that
      * cascaded through several columns never trips the no-double-booking check on its own account.
      */
-    fun applyShifts(grid: MasterGrid, shifts: Map<Pair<String, String>, Pair<String, String>>) = launch {
+    fun applyShifts(grid: MasterGrid, shifts: Map<Pair<String, String>, Pair<String, String>>) = launch("save the column times") {
         requireValid(shifts.isNotEmpty()) { "Nothing to save." }
+        // A cascade re-times whole columns, so it can put a teacher or room on top of a lecture somewhere else in the
+        // college. Check the RESULTING timetable before writing anything and name the class it would clash with.
+        columnMoveConflict(columnMoves(grid, shifts), allPeriods.value, sessions.value, departments.value)?.let {
+            throw CmsException.Conflict("These new times would create a clash, so nothing was changed. $it")
+        }
         for ((oldKey, newKeyPair) in shifts.entries.sortedByDescending { parseClock(it.value.first) }) {
             val (newS, newE) = newKeyPair
             for (row in grid.rows) {
@@ -319,7 +354,7 @@ class MasterTimetableController(
         notes: String?,
         effectiveFrom: LocalDate?,
         effectiveTo: LocalDate?,
-    ) = launch {
+    ) = launch("save the period") {
         requireValid(days.isNotEmpty()) { "Choose at least one day." }
         requireValid(periodType == PeriodType.BREAK || subject != null) { "Choose a subject for this period." }
 

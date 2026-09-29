@@ -1,6 +1,7 @@
 package com.mbd.cmscommon.controller
 
 import com.mbd.cmscommon.domain.model.Session
+import com.mbd.cmscommon.util.CmsException
 import com.mbd.cmscommon.util.clockDisplay
 import com.mbd.cmscommon.util.orThrowValidation
 import com.mbd.cmscommon.util.requireValid
@@ -16,6 +17,7 @@ import com.mbd.cmscommon.domain.model.Teacher
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.BuildingRepository
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
+import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.RoomRepository
 import com.mbd.cmscommon.domain.repository.SessionTimetableRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
@@ -26,6 +28,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -35,13 +38,15 @@ import kotlinx.coroutines.flow.stateIn
 class SessionTimetableController(
     val sessionId: String,
     private val timetableRepository: SessionTimetableRepository,
-    sessionRepository: AcademicSessionRepository,
+    private val sessionRepository: AcademicSessionRepository,
     curriculumRepository: CurriculumRepository,
     teacherRepository: TeacherRepository,
     buildingRepository: BuildingRepository,
     roomRepository: RoomRepository,
     scope: CoroutineScope,
     initialShift: Session? = null,
+    /** When given, a teacher/room clash names the department of the other class; without it the department id is shown. */
+    private val departmentRepository: DepartmentRepository? = null,
 ) : ScreenController(scope) {
 
     val session: StateFlow<AcademicSession?> =
@@ -99,7 +104,7 @@ class SessionTimetableController(
         replaces: SessionPeriod?,
         // A new period goes on the open tab; an edit keeps the period's own shift.
         shift: Session = replaces?.shift ?: this.shift.value,
-    ) = launch {
+    ) = launch("save the period") {
         requireValid(periodType == PeriodType.BREAK || subject != null) { "Choose a subject for this period." }
 
         val normalizedStart = start.trim()
@@ -125,6 +130,14 @@ class SessionTimetableController(
         )
 
         validateTimetablePeriod(period, replaces, periods.value).orThrowValidation()
+        // Teachers and rooms are shared across every session and shift, so look college-wide for the clash and name it.
+        describeTimetableConflict(
+            period,
+            timetableRepository.observeAll().first(),
+            sessionRepository.observeAllSessions().first(),
+            departmentRepository?.observeActiveDepartments()?.first().orEmpty(),
+            excludedId = replaces?.id,
+        )?.let { throw CmsException.Conflict(it) }
 
         timetableRepository.savePeriod(period)
         // Compare as HH:mm: a stored "09:00:00" and a re-picked "09:00" are the same slot, and treating
@@ -134,7 +147,7 @@ class SessionTimetableController(
         }
     }
 
-    fun removePeriod(period: SessionPeriod) = launch {
+    fun removePeriod(period: SessionPeriod) = launch("remove the period") {
         timetableRepository.removePeriod(period)
     }
 }

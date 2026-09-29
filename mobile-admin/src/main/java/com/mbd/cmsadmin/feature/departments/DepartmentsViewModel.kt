@@ -70,6 +70,7 @@ class DepartmentsViewModel @Inject constructor(
         repo = repository,
         createdBy = sessionManager.accountKey.orEmpty(),
         scope = viewModelScope,
+        sessionRepository = sessionRepository,
     )
 
     fun createDepartment(name: String, code: String, hodEmail: String? = null, description: String? = null) =

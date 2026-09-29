@@ -12,6 +12,7 @@ import com.mbd.cmscommon.domain.repository.BuildingRepository
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.RoomRepository
 import com.mbd.cmscommon.domain.repository.SessionTimetableRepository
+import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
 import com.mbd.cmscommon.ui.components.SessionTimetableWorkspace
 
@@ -24,10 +25,11 @@ fun SessionTimetableScreen(
     timetableRepository: SessionTimetableRepository,
     buildingRepository: BuildingRepository,
     roomRepository: RoomRepository,
+    departmentRepository: DepartmentRepository,
 ) {
     val scope = rememberCoroutineScope()
-    val controller = remember(sessionId, timetableRepository, sessionRepository, curriculumRepository, teacherRepository, buildingRepository, roomRepository) {
-        SessionTimetableController(sessionId, timetableRepository, sessionRepository, curriculumRepository, teacherRepository, buildingRepository, roomRepository, scope)
+    val controller = remember(sessionId, timetableRepository, sessionRepository, curriculumRepository, teacherRepository, buildingRepository, roomRepository, departmentRepository) {
+        SessionTimetableController(sessionId, timetableRepository, sessionRepository, curriculumRepository, teacherRepository, buildingRepository, roomRepository, scope, departmentRepository = departmentRepository)
     }
     val session by controller.session.collectAsState()
     val periods by controller.periods.collectAsState()

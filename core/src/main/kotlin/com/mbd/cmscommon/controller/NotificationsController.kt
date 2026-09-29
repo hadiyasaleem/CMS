@@ -110,7 +110,7 @@ class NotificationsController(
 
     init {
         if (permissionCheck != null) {
-            launch {
+            launch("check your permission to send notifications") {
                 try {
                     _publishAccess.value = if (permissionCheck()) NotificationPublishAccess.ALLOWED else NotificationPublishAccess.DENIED
                 } finally {
@@ -123,9 +123,9 @@ class NotificationsController(
         _loading.value = false
     }
 
-    fun refresh() = launch { refreshNow(context.value) }
+    fun refresh() = launch("refresh notifications") { refreshNow(context.value) }
 
-    fun send(draft: NotificationDraft) = launch {
+    fun send(draft: NotificationDraft) = launch("send the notification") {
         try {
             _busyActionId.value = SEND_ACTION
             _composeError.value = null
@@ -186,7 +186,7 @@ class NotificationsController(
         }
     }
 
-    fun delete(notification: Notification) = launch {
+    fun delete(notification: Notification) = launch("delete the notification") {
         try {
             _busyActionId.value = notification.notificationId
             _notice.value = null
