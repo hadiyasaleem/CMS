@@ -19,5 +19,19 @@ local.properties
 *firebase-adminsdk*.json
 serviceAccountKey.json
 
+# Secrets / private keys
+Documentation/key
+
 # Node (seed scripts)
 node_modules/
+
+# Kotlin compiler daemon cache
+.kotlin/
+
+# Signed release build artifacts
+mobile-admin/release/
+mobile-student/release/
+
+# Office lock/temp files
+~$*
+*.tmp
