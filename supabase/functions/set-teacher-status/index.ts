@@ -18,8 +18,9 @@ Deno.serve(handle(async (req) => {
   if (!email) throw httpError(400, "Choose a teacher.");
   const normalized = String(email).trim().toLowerCase();
 
-  const { data: teacher } = await svc.from("teachers")
+  const { data: teacher, error: lookupErr } = await svc.from("teachers")
     .select("auth_uid").eq("email", normalized).maybeSingle();
+  if (lookupErr) throw dbError(lookupErr, "Couldn't look up the teacher, so nothing was changed. Try again.");
   if (!teacher) throw httpError(404, "No teacher account exists for that email.");
 
   const update: Record<string, unknown> = { updated_by: caller.email };

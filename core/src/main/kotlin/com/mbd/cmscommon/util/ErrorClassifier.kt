@@ -152,7 +152,12 @@ object ErrorClassifier {
 
     private fun postgresMessage(pg: PostgresError): Pair<ErrorKind, String>? = when (pg.code) {
         "P0001" -> safeRaisedMessage(pg.message)?.let { text ->
-            val kind = if (CONFLICT_HINTS.any { text.contains(it, ignoreCase = true) }) ErrorKind.CONFLICT else ErrorKind.VALIDATION
+            val kind = when {
+                PERMISSION_HINTS.any { text.contains(it, ignoreCase = true) } -> ErrorKind.PERMISSION
+                text.contains("no longer exists", ignoreCase = true) -> ErrorKind.NOT_FOUND
+                CONFLICT_HINTS.any { text.contains(it, ignoreCase = true) } -> ErrorKind.CONFLICT
+                else -> ErrorKind.VALIDATION
+            }
             kind to text
         }
         "23505" -> ErrorKind.CONFLICT to ConstraintMessages.uniqueViolation(pg)
@@ -176,6 +181,7 @@ object ErrorClassifier {
         return if (UNSAFE_MARKERS.none { line.contains(it, ignoreCase = true) }) line else null
     }
 
+    private val PERMISSION_HINTS = listOf("don't have permission", "only an admin", "set by an admin", "ask an admin")
     private val CONFLICT_HINTS = listOf("already", "overlapping", "is full", "no longer", "still has", "still have")
     private val UNSAFE_MARKERS = listOf(
         "http://", "https://", "supabase", "postgrest", "exception", "request url",

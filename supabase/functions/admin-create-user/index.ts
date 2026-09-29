@@ -26,8 +26,9 @@ Deno.serve(handle(async (req) => {
     email_confirm: true, // no confirmation email → immune to free-tier SMTP limits
   });
   if (createErr) {
-    const { data: existing } = await svc.from("profiles")
+    const { data: existing, error: existingErr } = await svc.from("profiles")
       .select("id").eq("email", normalized).maybeSingle();
+    if (existingErr) throw dbError(existingErr, "Couldn't check whether this account already exists. Try again.");
     if (!existing) throw authError(createErr, "Couldn't create the login for this account. Try again.");
     uid = existing.id;
     await svc.auth.admin.updateUserById(uid, { password, email_confirm: true });

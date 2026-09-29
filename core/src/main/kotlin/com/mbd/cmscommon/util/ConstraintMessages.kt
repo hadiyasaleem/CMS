@@ -117,14 +117,10 @@ internal object ConstraintMessages {
 
     private val UNIQUE_BY_CONSTRAINT = mapOf(
         "academic_sessions_dept_id_start_year_program_key" to "A session for this department, intake year and program type already exists.",
-        "academic_sessions_dept_id_start_year_key" to "A session for this department and intake year already exists.",
         "academic_sessions_pkey" to "A session for this department and intake year already exists.",
-        "one_cr_per_session" to "This class already has a class representative (CR). Remove that role from the other student first.",
         "one_cr_per_session_shift" to "This class already has a class representative (CR) for this shift. Remove that role from the other student first.",
-        "one_gr_per_session" to "This class already has a girls' representative (GR). Remove that role from the other student first.",
         "one_gr_per_session_shift" to "This class already has a girls' representative (GR) for this shift. Remove that role from the other student first.",
         "uq_session_slot" to "This class already has a period at that day and time.",
-        "uq_datesheet_session_semester" to "A datesheet for this class and semester already exists.",
         "uq_datesheet_session_semester_shift" to "A datesheet for this class, semester and shift already exists.",
         "uq_datesheet_slot_course" to "This subject already has a paper in this datesheet.",
         "uq_datesheet_slot_date" to "Another paper is already scheduled on that date in this datesheet.",
@@ -224,7 +220,7 @@ internal object ConstraintMessages {
         "academic_sessions_session_id_format" to "The session id doesn't match its department, intake year and program type.",
         "academic_sessions_current_semester_check" to "That semester isn't valid for this program (BS runs 1-8, MA Replacement runs 5-8).",
         "academic_sessions_end_year_check" to "The end year doesn't match the program length (BS is 4 years, MA Replacement is 2).",
-        "academic_sessions_max_students_check" to "The student limit must be between 1 and 200.",
+        "academic_sessions_max_students_range" to "The student limit must be between 1 and 200.",
         "session_marks_check" to "The score must be between 0 and the maximum marks for this exam.",
         "session_marks_check1" to "The maximum marks don't match the exam type (midterm 25, sessional 15).",
         "timetable_periods_check" to "The period must end after it starts.",
@@ -233,6 +229,9 @@ internal object ConstraintMessages {
         "student_semester_gpa_gpa_check" to "GPA must be between 0 and 4.",
         "student_semester_gpa_cgpa_check" to "CGPA must be between 0 and 4.",
     )
+
+    /** Every constraint/index name this object words specially -- checked against a real migrated database by DatabaseScenarioMessagesTest. */
+    val namedConstraints: Set<String> get() = UNIQUE_BY_CONSTRAINT.keys + NAMED_CHECKS.keys
 
     private val REFERENCED_TABLE = Regex("""is not present in table "([^"]+)"""")
     private val TOO_LONG = Regex("""\((\d+)\)""")

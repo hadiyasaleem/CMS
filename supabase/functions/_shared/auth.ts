@@ -28,22 +28,35 @@ export async function requireAdmin(
   if (!jwt) throw httpError(401, "You're not signed in. Sign in again.", "UNAUTHORIZED");
 
   const { data: { user }, error } = await svc.auth.getUser(jwt);
+  // A rejected token is the caller's problem (401); an auth service that could not answer is ours (500) -- otherwise an
+  // outage would tell every admin their session had expired.
+  if (error && (error.status === undefined || error.status === 0 || error.status >= 500)) {
+    console.error("auth lookup failed:", error);
+    throw permissionCheckFailed();
+  }
   if (error || !user?.email) throw httpError(401, "Your session has expired. Sign in again.", "UNAUTHORIZED");
   const email = user.email.trim().toLowerCase();
 
   if (email === BOOTSTRAP_ADMIN_EMAIL) return { email, uid: user.id };
 
-  const { data: profile } = await svc.from("profiles")
+  // A lookup that fails is not "not an admin": report it as a server problem so a database hiccup doesn't read as a permission error.
+  const { data: profile, error: profileErr } = await svc.from("profiles")
     .select("role,status").eq("id", user.id).maybeSingle();
+  if (profileErr) { console.error("admin check (profile):", profileErr); throw permissionCheckFailed(); }
   if (profile?.role === "ADMIN" && profile?.status === "ACTIVE") {
     return { email, uid: user.id };
   }
-  const { data: teacher } = await svc.from("teachers")
+  const { data: teacher, error: teacherErr } = await svc.from("teachers")
     .select("is_admin,status,is_active").eq("email", email).maybeSingle();
+  if (teacherErr) { console.error("admin check (teacher):", teacherErr); throw permissionCheckFailed(); }
   if (teacher?.is_admin && teacher?.status === "ACTIVE" && teacher?.is_active) {
     return { email, uid: user.id };
   }
   throw httpError(403, "Only an admin can do this.", "FORBIDDEN");
+}
+
+function permissionCheckFailed(): Response {
+  return httpError(500, "Couldn't check your permissions right now. Try again in a moment.", "PERMISSION_CHECK_FAILED");
 }
 
 const DEFAULT_CODES: Record<number, string> = {

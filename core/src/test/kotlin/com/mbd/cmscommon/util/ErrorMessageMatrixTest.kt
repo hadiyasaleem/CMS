@@ -63,6 +63,11 @@ class ErrorMessageMatrixTest {
         Case("value too long", pg("22001", "value too long for type character varying(40)"), ErrorKind.VALIDATION, contains = listOf("too long")),
         Case("row level security", pg("42501", "new row violates row-level security policy for table \"teachers\""), ErrorKind.PERMISSION, contains = listOf("permission")),
         Case("raised exception", pg("P0001", "Session ISL 2026 is full (50 students max)"), ErrorKind.CONFLICT, "Session ISL 2026 is full (50 students max)"),
+        Case("raised permission text", pg("P0001", "You don't have permission to approve link requests. Ask an admin."), ErrorKind.PERMISSION,
+            "You don't have permission to approve link requests. Ask an admin."),
+        Case("raised admin-only text", pg("P0001", "Only an admin can approve attendance edit requests."), ErrorKind.PERMISSION),
+        Case("raised no-longer-exists text", pg("P0001", "This link request no longer exists. Refresh the list."), ErrorKind.NOT_FOUND,
+            "This link request no longer exists. Refresh the list."),
         Case("no rows for single()", pg("PGRST116", "JSON object requested, multiple (or no) rows returned"), ErrorKind.NOT_FOUND),
 
         // ---- edge functions ----

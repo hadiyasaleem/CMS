@@ -35,3 +35,6 @@ mobile-student/release/
 # Office lock/temp files
 ~$*
 *.tmp
+
+# Local throwaway test tooling (embedded Postgres, Deno) -- see Documentation/local-test-tools.md
+.testtools/

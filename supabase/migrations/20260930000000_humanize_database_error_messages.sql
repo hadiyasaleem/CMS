@@ -347,7 +347,7 @@ end $$;
 
 -- ── Shifts ────────────────────────────────────────────────────────────────────────────────────────────
 -- Old: "This session does not run a Morning shift."
--- New: "ENG 2023–2027 does not run a Morning shift. Choose one of the shifts it runs."
+-- New: "ENG 2023–2027 does not run the Morning shift. Choose one of the shifts it runs."
 create or replace function fn_check_student_shift() returns trigger
 language plpgsql set search_path = public as $$
 declare
@@ -360,7 +360,7 @@ begin
     return new;  -- the FK reports the missing session
   end if;
   if not (v_mode = 'BOTH' or v_mode::text = new.shift::text) then
-    raise exception '%', format('%s does not run a %s shift. Choose one of the shifts it runs.',
+    raise exception '%', format('%s does not run the %s shift. Choose one of the shifts it runs.',
       coalesce(msg_session_label(new.session_id), 'This session'), initcap(new.shift::text));
   end if;
   v_error := roll_block_error(v_mode, v_max, new.shift, new.roll_number);
@@ -418,7 +418,7 @@ begin
 end $$;
 
 -- Old: "This session does not run a Morning shift."
--- New: "ENG 2023–2027 does not run a Morning shift, so this timetable period can't be saved for it."
+-- New: "ENG 2023–2027 does not run the Morning shift, so this timetable period can't be saved for it."
 create or replace function fn_check_row_shift_allowed() returns trigger
 language plpgsql set search_path = public as $$
 declare
@@ -433,21 +433,21 @@ declare
     else 'record' end;
 begin
   if not session_allows_shift(v_session, v_shift) then
-    raise exception '%', format('%s does not run a %s shift, so this %s can''t be saved for it.',
+    raise exception '%', format('%s does not run the %s shift, so this %s can''t be saved for it.',
       coalesce(msg_session_label(v_session), 'This session'), initcap(v_shift::text), v_what);
   end if;
   return new;
 end $$;
 
 -- Old: "Session isl_2026 does not run a Morning shift, so it cannot share this lecture."
--- New: "ENG 2023–2027 does not run a Morning shift, so it can't share this lecture."
+-- New: "ENG 2023–2027 does not run the Morning shift, so it can't share this lecture."
 create or replace function fn_check_period_link_shift() returns trigger
 language plpgsql set search_path = public as $$
 declare v_shift shift;
 begin
   select shift into v_shift from timetable_periods where id = new.period_id;
   if v_shift is not null and not session_allows_shift(new.session_id, v_shift) then
-    raise exception '%', format('%s does not run a %s shift, so it can''t share this lecture.',
+    raise exception '%', format('%s does not run the %s shift, so it can''t share this lecture.',
       coalesce(msg_session_label(new.session_id), 'This session'), initcap(v_shift::text));
   end if;
   return new;
