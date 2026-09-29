@@ -5,7 +5,6 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.ScrollbarStyle
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.runtime.Composable
@@ -17,6 +16,13 @@ import com.mbd.cmscommon.ui.theme.CmsTheme
  * Wraps [content] with a themed, always-mounted vertical scrollbar bound to [state]. Use around a
  * screen's single top-level `LazyColumn`; put layout modifiers (fillMaxSize/weight/etc.) that used
  * to live on that LazyColumn onto [modifier] here instead.
+ *
+ * The scrollbar uses `matchParentSize()`, not `fillMaxHeight()`: the latter asks to fill whatever
+ * max height the *incoming* constraints allow, which -- when [modifier] carries no size of its own
+ * (e.g. inside an `AlertDialog`'s unbounded text slot) -- can be the whole window, stretching this
+ * Box (and the dialog around it) far past [content]'s own bounded height. `matchParentSize()` only
+ * ever matches the size this Box actually resolves to from [content], so a height-capped [content]
+ * keeps this wrapper capped too instead of ballooning to fill the dialog.
  */
 @Composable
 fun WithVerticalScrollbar(
@@ -27,7 +33,7 @@ fun WithVerticalScrollbar(
     Box(modifier) {
         content()
         VerticalScrollbar(
-            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+            modifier = Modifier.align(Alignment.CenterEnd).matchParentSize(),
             adapter = rememberScrollbarAdapter(state),
             style = cmsScrollbarStyle(),
         )
@@ -44,7 +50,7 @@ fun WithVerticalScrollbar(
     Box(modifier) {
         content()
         VerticalScrollbar(
-            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+            modifier = Modifier.align(Alignment.CenterEnd).matchParentSize(),
             adapter = rememberScrollbarAdapter(state),
             style = cmsScrollbarStyle(),
         )
