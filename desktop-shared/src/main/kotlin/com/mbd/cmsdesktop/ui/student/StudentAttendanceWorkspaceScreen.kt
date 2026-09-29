@@ -12,6 +12,7 @@ import com.mbd.cmscommon.controller.studentAttendanceSnapshot
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
 import com.mbd.cmscommon.ui.components.StudentAttendanceWorkspace
+import kotlinx.coroutines.flow.map
 
 @Composable
 fun StudentAttendanceWorkspaceScreen(
@@ -24,11 +25,15 @@ fun StudentAttendanceWorkspaceScreen(
     val controller = remember(sessionId, rollNumber) {
         StudentAttendanceController(sessionId, rollNumber, attendanceRepository, curriculumRepository, scope)
     }
-    val rows by controller.rows.collectAsState()
+    // Distinguish "flow hasn't emitted yet" (loading) from "emitted an empty list" (nothing
+    // marked yet) -- controller.rows itself defaults to emptyList() so isEmpty() can't tell
+    // those apart; mapping through a nullable StateFlow with no initial value can.
+    val snapshot by remember(controller) { controller.rows.map { studentAttendanceSnapshot(it) } }
+        .collectAsState(initial = null)
 
     StudentAttendanceWorkspace(
         heroPainter = painterResource("splash_postgraduate_block.jpg"),
-        snapshot = if (rows.isEmpty()) null else studentAttendanceSnapshot(rows),
-        loading = rows.isEmpty(),
+        snapshot = snapshot,
+        loading = snapshot == null,
     )
 }
