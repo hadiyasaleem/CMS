@@ -17,7 +17,7 @@ fun ConfirmDestructiveActionDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
-        text = { Text(if (showUndoWarning) "$dependentSummary\n\nThis cannot be undone." else dependentSummary) },
+        text = { DialogScrollBody { Text(if (showUndoWarning) "$dependentSummary\n\nThis cannot be undone." else dependentSummary) } },
         confirmButton = {
             TextButton(onClick = onConfirm) { Text(confirmLabel) }
         },

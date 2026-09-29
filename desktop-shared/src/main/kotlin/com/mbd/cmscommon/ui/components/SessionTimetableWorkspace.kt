@@ -20,12 +20,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
@@ -390,9 +388,7 @@ fun PeriodEditorDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (existing == null) "Timetable period" else "Edit period", style = MaterialTheme.typography.headlineSmall) },
         text = {
-            val scrollState = rememberScrollState()
-            WithVerticalScrollbar(scrollState, Modifier.heightIn(max = 460.dp)) {
-            Column(Modifier.fillMaxWidth().verticalScroll(scrollState)) {
+            DialogScrollBody(maxHeight = 460.dp) {
                 Text("DAYS", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
                 Row(
@@ -484,7 +480,6 @@ fun PeriodEditorDialog(
                     Spacer(Modifier.height(8.dp))
                     Text("Time conflict: enter a valid start and end time.", color = TimetableRed, style = MaterialTheme.typography.bodySmall)
                 }
-            }
             }
         },
         confirmButton = {

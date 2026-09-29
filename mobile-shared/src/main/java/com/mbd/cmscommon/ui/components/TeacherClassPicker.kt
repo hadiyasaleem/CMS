@@ -5,10 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
@@ -58,7 +56,7 @@ fun TeacherClassPicker(
                 Text(selected?.let { "${it.subjectLabel} · ${it.sessionLabel}" } ?: "Select a class", modifier = Modifier.weight(1f))
                 Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
             }
-            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.heightIn(max = 240.dp)) {
+            CmsDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                 if (visible.isEmpty()) DropdownMenuItem(text = { Text("No classes match these filters") }, onClick = { expanded = false }, enabled = false)
                 visible.forEach { assignment ->
                     DropdownMenuItem(

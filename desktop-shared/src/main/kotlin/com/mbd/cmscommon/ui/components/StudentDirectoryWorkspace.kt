@@ -1,6 +1,5 @@
 package com.mbd.cmscommon.ui.components
 
-import androidx.compose.foundation.layout.heightIn
 import com.mbd.cmscommon.controller.departmentScopeOptions
 import com.mbd.cmscommon.domain.model.ShiftScope
 import androidx.compose.foundation.BorderStroke
@@ -24,7 +23,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -179,7 +177,7 @@ private fun <T> FilterDropdown(label: String, selected: T?, options: List<Pair<T
     val active = selected != null && options.firstOrNull()?.first != selected
     Box {
         CmsChip(if (active) current ?: label else label, selected = active, onClick = { open = true })
-        DropdownMenu(expanded = open, onDismissRequest = { open = false }, modifier = Modifier.heightIn(max = 320.dp)) {
+        CmsDropdownMenu(expanded = open, onDismissRequest = { open = false }, maxHeight = 320.dp) {
             options.forEach { (value, text) ->
                 DropdownMenuItem(text = { Text(text) }, onClick = { open = false; onSelect(value) })
             }

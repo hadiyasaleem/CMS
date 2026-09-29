@@ -23,14 +23,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.AlertDialog
@@ -736,7 +734,7 @@ private fun DatesheetDetailDialog(
         onDismissRequest = onDismiss,
         title = { Text(datesheetLabel(sheet, detail.session, detail.department)) },
         text = {
-            Column(Modifier.heightIn(max = 520.dp).verticalScroll(rememberScrollState())) {
+            DialogScrollBody(maxHeight = 520.dp) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     StatusBadge(if (sheet.published) "PUBLISHED" else "DRAFT", if (sheet.published) BadgeTone.Success else BadgeTone.Neutral)
                     Spacer(Modifier.weight(1f))
@@ -889,7 +887,7 @@ private fun CreateDatesheetDialog(
         onDismissRequest = onDismiss,
         title = { Text("New Mid Term datesheet") },
         text = {
-            Column(Modifier.verticalScroll(rememberScrollState())) {
+            DialogScrollBody {
                 Text("${session.label} · ${shift?.label ?: session.shiftMode.label} · Semester $semester", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.height(10.dp))
                 Text("Papers will be prefilled for every subject in this semester's curriculum.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
@@ -975,7 +973,7 @@ private fun PaperEditorDialog(
         onDismissRequest = onDismiss,
         title = { Text(slot.subjectName) },
         text = {
-            Column(Modifier.heightIn(max = 460.dp).verticalScroll(rememberScrollState())) {
+            DialogScrollBody(maxHeight = 460.dp) {
                 Text(slot.courseCode, color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 displayedError?.let { message ->
                     Spacer(Modifier.height(10.dp))

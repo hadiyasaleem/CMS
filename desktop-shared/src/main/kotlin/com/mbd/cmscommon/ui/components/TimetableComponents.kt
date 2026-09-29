@@ -272,7 +272,7 @@ fun DropdownChip(
                 Icon(Icons.Filled.ArrowDropDown, contentDescription = null, modifier = Modifier.size(16.dp))
             }
         }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.heightIn(max = 240.dp)) {
+        CmsDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             DropdownMenuItem(text = { Text(emptyLabel) }, onClick = { onSelected(null); expanded = false })
             options.forEach { option ->
                 DropdownMenuItem(text = { Text(option.label) }, onClick = { onSelected(option.id); expanded = false })

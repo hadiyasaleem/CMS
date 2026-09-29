@@ -5,6 +5,7 @@ import com.mbd.cmscommon.ui.theme.CmsTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
@@ -65,13 +66,16 @@ fun StudentImportPreviewDialog(
                     if (result.errors.isNotEmpty()) {
                         Spacer(Modifier.height(10.dp))
                         Text("Skipped (${result.errors.size}):", style = MaterialTheme.typography.labelMedium)
-                        LazyColumn {
-                            items(result.errors) { msg ->
-                                Text(
-                                    msg,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    style = MaterialTheme.typography.bodySmall,
-                                )
+                        val errorListState = rememberLazyListState()
+                        WithVerticalScrollbar(errorListState, Modifier.heightIn(max = 160.dp)) {
+                            LazyColumn(state = errorListState) {
+                                items(result.errors) { msg ->
+                                    Text(
+                                        msg,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
+                                }
                             }
                         }
                     }
@@ -99,13 +103,16 @@ fun StudentImportResultDialog(summary: BulkImportSummary, onDismiss: () -> Unit)
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.labelMedium,
                     )
-                    LazyColumn {
-                        items(summary.failures) { msg ->
-                            Text(
-                                msg,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                style = MaterialTheme.typography.bodySmall,
-                            )
+                    val failureListState = rememberLazyListState()
+                    WithVerticalScrollbar(failureListState, Modifier.heightIn(max = 160.dp)) {
+                        LazyColumn(state = failureListState) {
+                            items(summary.failures) { msg ->
+                                Text(
+                                    msg,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    style = MaterialTheme.typography.bodySmall,
+                                )
+                            }
                         }
                     }
                 }

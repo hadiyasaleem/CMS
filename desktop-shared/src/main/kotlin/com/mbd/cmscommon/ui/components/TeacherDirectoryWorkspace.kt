@@ -19,13 +19,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -36,7 +34,6 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -434,7 +431,7 @@ private fun TeacherCard(
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 Box {
                     IconButton(onClick = { menuExpanded = true }, enabled = !busy) { Icon(Icons.Filled.MoreVert, contentDescription = "More") }
-                    DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                    CmsDropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                         DropdownMenuItem(text = { Text("Edit") }, onClick = { menuExpanded = false; onEdit() })
                         when (teacher.status) {
                             TeacherStatus.ACTIVE -> DropdownMenuItem(text = { Text("Disable") }, onClick = { menuExpanded = false; onRequestStatus(TeacherStatus.DISABLED) })
@@ -524,9 +521,7 @@ private fun TeacherActionDialog(
         onDismissRequest = onDismiss,
         title = { Text(title, style = MaterialTheme.typography.headlineSmall) },
         text = {
-            val scrollState = rememberScrollState()
-            WithVerticalScrollbar(scrollState, Modifier.heightIn(max = 460.dp)) {
-            Column(Modifier.fillMaxWidth().verticalScroll(scrollState)) {
+            DialogScrollBody(maxHeight = 460.dp) {
                 if (existing == null) {
                     Text("Create the sign-in account and complete the initial faculty profile in one step.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(10.dp))
@@ -635,7 +630,6 @@ private fun TeacherActionDialog(
                 Text("ACCOUNT ACCESS", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
                 PermissionRow("Admin access (grants full admin rights)", isAdmin) { isAdmin = it }
-            }
             }
         },
         confirmButton = {

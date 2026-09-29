@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.FileDownload
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -36,7 +35,7 @@ fun ExportMenuButton(
             Icon(Icons.Outlined.FileDownload, contentDescription = null, tint = tint)
             Text(" Export", color = tint)
         }
-        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+        CmsDropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             ExportFormat.entries.forEach { format ->
                 DropdownMenuItem(text = { Text("Export as ${format.label}") }, onClick = { open = false; onExport(format) })
             }

@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -25,7 +24,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -193,7 +191,7 @@ private fun SessionPicker(sessions: List<Pair<String, String>>, selected: String
             Text(selectedLabel ?: sessions.firstOrNull { it.first == selected }?.second ?: "Select a class", modifier = Modifier.weight(1f))
             Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
         }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.heightIn(max = 240.dp)) {
+        CmsDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             if (sessions.isEmpty()) DropdownMenuItem(text = { Text("No classes match these filters") }, onClick = { expanded = false }, enabled = false)
             sessions.forEach { (id, label) ->
                 DropdownMenuItem(text = { Text(label) }, onClick = { onSelect(id); expanded = false })

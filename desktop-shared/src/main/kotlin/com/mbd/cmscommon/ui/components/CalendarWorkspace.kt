@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,12 +26,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -352,9 +349,7 @@ private fun DayDetailDialog(
         onDismissRequest = onDismiss,
         title = { Text(date.format(dayFormat)) },
         text = {
-            val scrollState = rememberScrollState()
-            WithVerticalScrollbar(scrollState, Modifier.heightIn(max = 420.dp)) {
-            Column(Modifier.fillMaxWidth().verticalScroll(scrollState), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            DialogScrollBody(maxHeight = 420.dp, verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 if (events.isEmpty()) {
                     Text("No events on this day.", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
                 } else {
@@ -366,7 +361,6 @@ private fun DayDetailDialog(
                     Spacer(Modifier.height(4.dp))
                     TextButton(onClick = onAddEvent) { Text("+ Add event") }
                 }
-            }
             }
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } },
@@ -507,7 +501,7 @@ private fun DropdownField(label: String, value: String, options: List<String>, o
         Spacer(Modifier.height(6.dp))
         Box {
             OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) { Text(value) }
-            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.heightIn(max = 240.dp)) {
+            CmsDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                 options.forEach { option ->
                     DropdownMenuItem(text = { Text(option) }, onClick = { onSelect(option); expanded = false })
                 }
