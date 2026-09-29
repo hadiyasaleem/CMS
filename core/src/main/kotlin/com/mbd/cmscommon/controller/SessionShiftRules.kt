@@ -7,6 +7,7 @@ import com.mbd.cmscommon.domain.model.SessionFeeStructure
 import com.mbd.cmscommon.domain.model.SessionPeriod
 import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.domain.model.ShiftMode
+import com.mbd.cmscommon.domain.model.ProgramType
 import com.mbd.cmscommon.domain.model.rollBlockError
 
 /*
@@ -32,11 +33,18 @@ fun capacityError(raw: String, enrolled: Int = 0): String? {
     }
 }
 
-/** Why a new session can't be created, or null. One session per department and intake year. */
-fun createSessionError(startYear: Int?, shifts: Set<Session>, capacityText: String, existing: List<AcademicSession>): String? = when {
+/** Why a new session can't be created, or null. One session per department, intake year and program type. */
+fun createSessionError(
+    startYear: Int?,
+    shifts: Set<Session>,
+    capacityText: String,
+    existing: List<AcademicSession>,
+    programType: ProgramType = ProgramType.BS,
+): String? = when {
     startYear == null -> "Select the intake year."
     ShiftMode.of(shifts) == null -> "Tick Morning, Evening, or both."
-    existing.any { it.startYear == startYear } -> "A $startYear–${startYear + 4} session already exists in this department."
+    existing.any { it.startYear == startYear && it.programType == programType } ->
+        "A $startYear–${programType.endYear(startYear)} ${programType.label} session already exists in this department."
     else -> capacityError(capacityText)
 }
 

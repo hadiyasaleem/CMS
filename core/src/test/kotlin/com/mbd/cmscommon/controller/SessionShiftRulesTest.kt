@@ -8,6 +8,7 @@ import com.mbd.cmscommon.domain.model.SessionFeeStructure
 import com.mbd.cmscommon.domain.model.SessionPeriod
 import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.domain.model.ShiftMode
+import com.mbd.cmscommon.domain.model.ProgramType
 import java.time.DayOfWeek
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -50,10 +51,12 @@ class SessionShiftRulesTest {
     fun oneSessionPerIntakeYear() {
         val existing = listOf(both)
         assertNull(createSessionError(2023, setOf(Session.EVENING), "50", existing))
-        assertEquals("A 2022–2026 session already exists in this department.", createSessionError(2022, setOf(Session.MORNING), "50", existing))
+        assertEquals("A 2022–2026 BS session already exists in this department.", createSessionError(2022, setOf(Session.MORNING), "50", existing))
         assertEquals("Tick Morning, Evening, or both.", createSessionError(2023, emptySet(), "50", existing))
         assertEquals("Select the intake year.", createSessionError(null, setOf(Session.MORNING), "50", existing))
         assertEquals("Student capacity must be between 1 and 200.", createSessionError(2023, setOf(Session.MORNING), "500", existing))
+        // A 2022 MA-Replacement session isn't blocked by the existing 2022 BS session.
+        assertNull(createSessionError(2022, setOf(Session.MORNING), "50", existing, programType = ProgramType.MA_REPLACEMENT))
     }
 
     @Test

@@ -23,6 +23,7 @@ import java.time.Instant
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 
 class TeacherRepositoryImpl @Inject constructor(
     private val postgrest: Postgrest,
@@ -36,7 +37,9 @@ class TeacherRepositoryImpl @Inject constructor(
     private fun syncOwnerKey(): String = sessionManager.accountKey ?: SyncCheckpointDefaults.ownerKey("anonymous-local")
 
     override fun observeTeacher(teacherId: String): Flow<Teacher> =
-        teacherDao.observe(teacherId).map { TeacherMapper.entityToDomain(it) }
+        // No row yet (e.g. before the initial sync lands) means "not found" rather than a crash — the
+        // flow simply withholds emission until the teacher's row exists locally.
+        teacherDao.observe(teacherId).mapNotNull { it?.let(TeacherMapper::entityToDomain) }
 
     override fun observeActiveTeachers(): Flow<List<Teacher>> =
         teacherDao.observeActive().map { rows -> rows.map { TeacherMapper.entityToDomain(it) } }

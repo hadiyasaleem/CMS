@@ -66,6 +66,9 @@ class SessionTimetableRepositoryImpl @Inject constructor(
         deletedBy = deletedBy,
     )
 
+    override fun observeAll(): Flow<List<SessionPeriod>> =
+        periodDao.observeAll().map { rows -> rows.map { AcademicStructureMapper.periodEntityToDomain(it) } }
+
     override fun observeDay(sessionId: String, day: DayOfWeek): Flow<List<SessionPeriod>> =
         periodDao.observeForSessionDay(sessionId, day.name).map { rows -> rows.map { AcademicStructureMapper.periodEntityToDomain(it) } }
 

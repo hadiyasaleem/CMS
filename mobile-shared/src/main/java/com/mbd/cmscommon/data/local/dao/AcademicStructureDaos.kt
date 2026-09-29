@@ -157,6 +157,9 @@ interface SessionStudentDao {
 
 @Dao
 interface SessionPeriodDao {
+    @Query("SELECT * FROM session_periods WHERE isDeleted = 0")
+    fun observeAll(): Flow<List<SessionPeriodEntity>>
+
     @Query("SELECT * FROM session_periods WHERE sessionId = :sessionId AND day = :day AND isDeleted = 0")
     fun observeForSessionDay(sessionId: String, day: String): Flow<List<SessionPeriodEntity>>
 

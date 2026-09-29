@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.controller.DepartmentDetailController
 import com.mbd.cmscommon.domain.model.Session
+import com.mbd.cmscommon.domain.model.ProgramType
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
@@ -40,7 +41,8 @@ class DepartmentDetailViewModel @Inject constructor(
     val teachers = teacherRepository.observeActiveTeachers()
         .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    fun createSession(startYear: Int, shifts: Set<Session>, maxStudents: Int) = controller.createSession(startYear, shifts, maxStudents)
+    fun createSession(startYear: Int, shifts: Set<Session>, maxStudents: Int, programType: ProgramType) =
+        controller.createSession(startYear, shifts, maxStudents, programType)
     fun observeStudentCount(sessionId: String) =
         sessionRepository.observeStudents(sessionId).map { it.size }
 

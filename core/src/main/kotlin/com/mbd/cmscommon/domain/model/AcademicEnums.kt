@@ -49,6 +49,28 @@ fun parseShift(raw: String?): Session? = Session.entries.firstOrNull { it.name =
 /** Parses a stored shift mode; null for blank/unknown values. */
 fun parseShiftMode(raw: String?): ShiftMode? = ShiftMode.entries.firstOrNull { it.name == raw?.trim()?.uppercase() }
 
+/** The shape of an intake: a 4-year BS (semesters 1-8) or a 2-year MA-Replacement (semesters 5-8 only). */
+enum class ProgramType {
+    BS,
+    MA_REPLACEMENT;
+
+    val semesterRange: IntRange
+        get() = when (this) {
+            BS -> 1..8
+            MA_REPLACEMENT -> 5..8
+        }
+
+    val durationYears: Int get() = if (this == MA_REPLACEMENT) 2 else 4
+
+    fun endYear(startYear: Int): Int = startYear + durationYears
+
+    /** "BS" / "MA Replacement". */
+    val label: String get() = if (this == MA_REPLACEMENT) "MA Replacement" else "BS"
+}
+
+/** Parses a stored program type; null for blank/unknown values. */
+fun parseProgramType(raw: String?): ProgramType? = ProgramType.entries.firstOrNull { it.name == raw?.trim()?.uppercase() }
+
 enum class AttendanceStatus {
     PRESENT,
     ABSENT,

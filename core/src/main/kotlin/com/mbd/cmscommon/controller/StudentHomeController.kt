@@ -8,10 +8,9 @@ import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
 import com.mbd.cmscommon.domain.repository.SessionTimetableRepository
 import com.mbd.cmscommon.util.orLogCritical
+import com.mbd.cmscommon.util.parseClock
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -43,7 +42,14 @@ class StudentHomeController(
         // Only the student's own shift's grid: Morning and Evening periods can share slot times.
         val periods = periodsForShift(allPeriods, student?.shift)
         val today = LocalDate.now()
-        val activeToday = activeLectures(periods, today)
+        val todaysClasses = activeLectures(periods, today)
+            .filter { it.day == today.dayOfWeek }
+            .sortedBy { parseClock(it.startTime) ?: LocalTime.MAX }
+        val now = LocalTime.now()
+        val nextClassId = todaysClasses.firstOrNull { period ->
+            val start = parseClock(period.startTime)
+            start != null && !start.isBefore(now)
+        }?.id
 
         val total = tallies.sumOf { it.total }
         val present = tallies.sumOf { it.present }
@@ -56,8 +62,8 @@ class StudentHomeController(
         StudentHomeUi(
             overallPercent = overall,
             subjectCount = tallies.count { it.total > 0 },
-            lecturesToday = activeToday.count { it.day == today.dayOfWeek },
-            nextClass = nextClassFrom(periods, today),
+            todaysClasses = todaysClasses,
+            nextClassId = nextClassId,
             weakestSubject = weakest,
         )
     }.stateIn(scope, SharingStarted.WhileSubscribed(5000), StudentHomeUi())
@@ -74,35 +80,3 @@ fun activeLectures(periods: List<SessionPeriod>, date: LocalDate): List<SessionP
             (it.effectiveFrom == null || !date.isBefore(it.effectiveFrom)) &&
             (it.effectiveTo == null || !date.isAfter(it.effectiveTo))
     }
-
-fun nextClassFrom(periods: List<SessionPeriod>, date: LocalDate = LocalDate.now(), time: LocalTime = LocalTime.now()): NextClass? {
-    if (periods.isEmpty()) return null
-    for (offset in 0 until 7) {
-        val day = date.plusDays(offset.toLong())
-        val dayOfWeek = date.dayOfWeek.plus(offset.toLong())
-        val candidate = activeLectures(periods, day)
-            .filter { it.day == dayOfWeek }
-            .sortedBy { parseScheduleTime(it.startTime) ?: LocalTime.MAX }
-            .firstOrNull { period ->
-                val start = parseScheduleTime(period.startTime) ?: return@firstOrNull false
-                offset != 0 || start.isAfter(time)
-            } ?: continue
-
-        val dayLabel = if (offset == 0) {
-            "Today"
-        } else {
-            dayOfWeek.name.lowercase(Locale.ROOT).replaceFirstChar { it.uppercase(Locale.ROOT) }
-        }
-        val location = listOfNotNull(
-            candidate.roomNo?.takeIf { it.isNotBlank() },
-            candidate.building?.takeIf { it.isNotBlank() },
-        ).joinToString(" / ").takeIf { it.isNotBlank() }
-
-        return NextClass(candidate.courseCode, candidate.subjectName, candidate.timeRange, candidate.teacherName, dayLabel, location)
-    }
-    return null
-}
-private val scheduleTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("H:mm")
-
-private fun parseScheduleTime(value: String?): LocalTime? =
-    value?.trim()?.let { runCatching { LocalTime.parse(it, scheduleTimeFormatter) }.getOrNull() }

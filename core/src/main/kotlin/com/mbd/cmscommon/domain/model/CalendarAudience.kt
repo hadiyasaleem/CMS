@@ -29,7 +29,7 @@ data class CalendarViewerContext(
             CalendarViewerRole.TEACHER -> AudienceViewer.Teacher(
                 departmentId,
                 taughtClasses ?: sessionIds.flatMap { id ->
-                    Session.entries.map { TaughtClass(id, id.substringBeforeLast('_'), it) }
+                    Session.entries.map { TaughtClass(id, id.substringBefore('_'), it) }
                 }.toSet(),
             )
         }

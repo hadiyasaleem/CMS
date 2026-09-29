@@ -14,8 +14,10 @@ import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.SessionPeriod
 import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.domain.model.ShiftMode
+import com.mbd.cmscommon.domain.model.ProgramType
 import com.mbd.cmscommon.domain.model.parseShift
 import com.mbd.cmscommon.domain.model.parseShiftMode
+import com.mbd.cmscommon.domain.model.parseProgramType
 import com.mbd.cmscommon.domain.model.SubjectType
 import java.time.DayOfWeek
 import java.time.Instant
@@ -34,6 +36,7 @@ object AcademicStructureMapper {
         shiftMode = parseShiftMode(e.shiftMode) ?: ShiftMode.MORNING,
         currentSemester = e.currentSemester,
         isActive = e.isActive,
+        programType = parseProgramType(e.programType) ?: ProgramType.BS,
         programName = e.programName,
         inchargeEmail = e.inchargeEmail,
         maxStudents = e.maxStudents,
@@ -51,6 +54,7 @@ object AcademicStructureMapper {
         shiftMode = s.shiftMode.name,
         currentSemester = s.currentSemester,
         isActive = s.isActive,
+        programType = s.programType.name,
         programName = s.programName,
         inchargeEmail = s.inchargeEmail,
         maxStudents = s.maxStudents,

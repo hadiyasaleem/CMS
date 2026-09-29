@@ -31,12 +31,13 @@ fun sessionOperationsSnapshot(
         .filter { it.periodType == PeriodType.LECTURE && it.courseCode.isNotBlank() }
         .distinctBy { it.id }
 
-    val configuredSemesters = (1..8).count { (subjectCounts[it] ?: 0) > 0 }
+    val semesterRange = session.semesterRange
+    val configuredSemesters = semesterRange.count { (subjectCounts[it] ?: 0) > 0 }
 
     val setupTasks = listOf(
         session.programName.isNullOrBlank(),
         session.inchargeEmail.isNullOrBlank(),
-        configuredSemesters < 8,
+        configuredSemesters < semesterRange.count(),
         uniqueLectures.isEmpty(),
         fee == null || fee.heads.isEmpty(),
     ).count { it }
@@ -44,7 +45,7 @@ fun sessionOperationsSnapshot(
     val availableSeats = (session.maxStudents - students.size).coerceAtLeast(0)
     val linkedStudents = students.count { it.linkedEmail.isNotBlank() }
     val gradeRecords = students.count { it.gpa != null || it.cgpa != null }
-    val totalSubjects = subjectCounts.filterKeys { it in 1..8 }.values.sumOf { it.coerceAtLeast(0) }
+    val totalSubjects = subjectCounts.filterKeys { it in semesterRange }.values.sumOf { it.coerceAtLeast(0) }
     val teachingDays = uniqueLectures.map { it.day }.distinct().size
 
     return SessionOperationsSnapshot(

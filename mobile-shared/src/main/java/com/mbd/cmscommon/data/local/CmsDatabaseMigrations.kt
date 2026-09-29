@@ -1763,6 +1763,16 @@ val MIGRATION_46_47: Migration = object : Migration(46, 47) {
     }
 }
 
+/**
+ * 47 -> 48: academic_sessions gains programType (BS / MA_REPLACEMENT) so a department can run a
+ * 2-year MA-Replacement intake alongside its 4-year BS intake. Existing rows backfill to 'BS'.
+ */
+val MIGRATION_47_48: Migration = object : Migration(47, 48) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `academic_sessions` ADD COLUMN `programType` TEXT NOT NULL DEFAULT 'BS'")
+    }
+}
+
 val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_18_19,
     MIGRATION_19_20,
@@ -1793,4 +1803,5 @@ val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_44_45,
     MIGRATION_45_46,
     MIGRATION_46_47,
+    MIGRATION_47_48,
 )

@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface TeacherDao {
     @Query("SELECT * FROM teachers WHERE teacherId = :teacherId LIMIT 1")
-    fun observe(teacherId: String): Flow<TeacherEntity>
+    fun observe(teacherId: String): Flow<TeacherEntity?>
 
     @Query("SELECT * FROM teachers WHERE isActive = 1 AND isDeleted = 0 ORDER BY name")
     fun observeActive(): Flow<List<TeacherEntity>>

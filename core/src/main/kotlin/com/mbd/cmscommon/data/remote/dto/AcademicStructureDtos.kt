@@ -11,6 +11,8 @@ data class AcademicSessionDto(
     val endYear: Int = 0,
     /** MORNING / EVENING / BOTH (academic_sessions.shift_mode). */
     val shiftMode: String? = null,
+    /** BS / MA_REPLACEMENT (academic_sessions.program_type). */
+    val programType: String? = null,
     val programName: String? = null,
     val inchargeEmail: String? = null,
     val maxStudents: Int = 0,

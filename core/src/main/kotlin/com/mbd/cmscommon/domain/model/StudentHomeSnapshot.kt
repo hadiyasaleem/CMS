@@ -1,6 +1,5 @@
 package com.mbd.cmscommon.domain.model
 
-import com.mbd.cmscommon.controller.NextClass
 import com.mbd.cmscommon.controller.WeakSubject
 import java.util.Locale
 
@@ -12,8 +11,10 @@ data class StudentHomeSnapshot(
     val gpaLabel: String,
     val overallAttendance: Float,
     val subjectCount: Int,
-    val lecturesToday: Int,
-    val nextClass: NextClass?,
+    /** Today's lectures, sorted by start time -- mirrors the teacher app's own "Today's classes" list. */
+    val todaysClasses: List<SessionPeriod>,
+    /** The id of whichever entry in [todaysClasses] is current/next, or null once today's schedule is done. */
+    val nextClassId: String?,
     val weakestSubject: WeakSubject?,
 )
 
@@ -25,8 +26,8 @@ fun studentHomeSnapshot(
     cgpa: Double?,
     overallAttendance: Float,
     subjectCount: Int,
-    lecturesToday: Int,
-    nextClass: NextClass?,
+    todaysClasses: List<SessionPeriod>,
+    nextClassId: String?,
     weakestSubject: WeakSubject?,
     shift: Session? = null,
 ): StudentHomeSnapshot {
@@ -59,8 +60,8 @@ fun studentHomeSnapshot(
         gpaLabel = gpaLabel,
         overallAttendance = overallAttendance.coerceIn(0f, 100f),
         subjectCount = subjectCount.coerceAtLeast(0),
-        lecturesToday = lecturesToday.coerceAtLeast(0),
-        nextClass = nextClass,
+        todaysClasses = todaysClasses,
+        nextClassId = nextClassId,
         weakestSubject = weakestSubject,
     )
 }

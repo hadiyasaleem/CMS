@@ -13,6 +13,7 @@ import com.mbd.cmscommon.domain.model.SessionPeriod
 import com.mbd.cmscommon.domain.model.SessionPromotionResult
 import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.domain.model.ShiftMode
+import com.mbd.cmscommon.domain.model.ProgramType
 import com.mbd.cmscommon.domain.model.StudentProfile
 import com.mbd.cmscommon.domain.model.SubjectExamScore
 import java.time.DayOfWeek
@@ -30,12 +31,13 @@ interface AcademicSessionRepository {
     /** Students enrolled in a currently-active session -- excludes graduated/inactive intakes. */
     fun observeActiveSessionStudentCount(): Flow<Int>
 
-    /** One session per department + intake year; [maxStudents] defaults to 50 for one shift, 100 for both. */
+    /** One session per department + intake year + program type; [maxStudents] defaults to 50 for one shift, 100 for both. */
     suspend fun createSession(
         deptId: String,
         startYear: Int,
         shiftMode: ShiftMode,
         maxStudents: Int = AcademicSession.defaultMaxStudents(shiftMode),
+        programType: ProgramType = ProgramType.BS,
     ): AcademicSession
     /** Changes which shifts the session runs (and optionally its capacity). The database refuses to drop a
      * shift that still has students, fees, periods or a datesheet, or to strand a roll number outside its block. */
@@ -142,6 +144,8 @@ interface SessionMarksRepository {
 }
 
 interface SessionTimetableRepository {
+    /** Every period across every session, for the master timetable's cross-session grids. */
+    fun observeAll(): Flow<List<SessionPeriod>>
     fun observeAllForDay(day: DayOfWeek): Flow<List<SessionPeriod>>
     fun observeDay(sessionId: String, day: DayOfWeek): Flow<List<SessionPeriod>>
     fun observeMyPeriods(teacherId: String): Flow<List<SessionPeriod>>

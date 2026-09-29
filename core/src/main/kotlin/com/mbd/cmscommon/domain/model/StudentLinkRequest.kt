@@ -29,6 +29,6 @@ data class StudentLinkRequest(
     override val updatedAt: Instant = Instant.EPOCH,
     override val updatedBy: String? = null,
 ) : BaseEntity() {
-    /** Session ids are "{deptId}_{startYear}"; the shift is not part of the id any more. */
-    val deptIdClaimed: String? get() = sessionIdClaimed?.substringBeforeLast('_')
+    /** Session ids are "{deptId}_{startYear}" (BS) or "{deptId}_{startYear}_ma" (MA Replacement). */
+    val deptIdClaimed: String? get() = sessionIdClaimed?.substringBefore('_')
 }

@@ -55,7 +55,7 @@ class AudienceRulesTest {
     @Test
     fun notificationsCheckRoleThenScope() {
         fun notice(role: NotificationTargetRole, session: String? = null, shift: Session? = null, dept: String? = null) =
-            Notification("n", "t", "b", role, session, "admin@x", targetDeptId = dept ?: session?.substringBeforeLast('_'), targetShift = shift, createdAt = Instant.EPOCH)
+            Notification("n", "t", "b", role, session, "admin@x", targetDeptId = dept ?: session?.substringBefore('_'), targetShift = shift, createdAt = Instant.EPOCH)
         val student = NotificationAudienceContext("IT_2022", "IT", Session.EVENING)
         assertTrue(notificationReaches(notice(NotificationTargetRole.STUDENT, "IT_2022", Session.EVENING), NotificationTargetRole.STUDENT, student))
         assertFalse(notificationReaches(notice(NotificationTargetRole.STUDENT, "IT_2022", Session.MORNING), NotificationTargetRole.STUDENT, student))

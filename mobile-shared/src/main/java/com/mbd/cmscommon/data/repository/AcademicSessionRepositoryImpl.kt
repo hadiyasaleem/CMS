@@ -22,9 +22,11 @@ import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.SessionPromotionResult
 import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.domain.model.ShiftMode
+import com.mbd.cmscommon.domain.model.ProgramType
 import com.mbd.cmscommon.domain.model.StudentProfile
 import com.mbd.cmscommon.domain.model.parseShift
 import com.mbd.cmscommon.domain.model.parseShiftMode
+import com.mbd.cmscommon.domain.model.parseProgramType
 import com.mbd.cmscommon.domain.model.rollBlockError
 import com.mbd.cmscommon.domain.repository.AvailableRollNumber
 import com.mbd.cmscommon.domain.model.profilePhotoExtension
@@ -75,6 +77,7 @@ class AcademicSessionRepositoryImpl @Inject constructor(
     private suspend fun deptOf(sessionId: String): String = sessionDao.getById(sessionId)?.deptId ?: ""
 
     private fun AcademicSessionDto.toEntity(fallbackDeptId: String): AcademicSessionEntity {
+        val resolvedProgramType = parseProgramType(programType) ?: ProgramType.BS
         return AcademicStructureMapper.sessionDomainToEntity(
             AcademicSession(
                 sessionId = sessionId ?: "",
@@ -82,8 +85,9 @@ class AcademicSessionRepositoryImpl @Inject constructor(
                 startYear = startYear,
                 endYear = endYear,
                 shiftMode = parseShiftMode(shiftMode) ?: ShiftMode.MORNING,
-                currentSemester = currentSemester.coerceIn(1, 8),
+                currentSemester = currentSemester.coerceIn(resolvedProgramType.semesterRange),
                 isActive = isActive,
+                programType = resolvedProgramType,
                 programName = programName,
                 inchargeEmail = inchargeEmail,
                 maxStudents = maxStudents,
@@ -142,16 +146,24 @@ class AcademicSessionRepositoryImpl @Inject constructor(
 
     override fun observeActiveSessionStudentCount(): Flow<Int> = studentDao.observeActiveSessionStudentCount()
 
-    override suspend fun createSession(deptId: String, startYear: Int, shiftMode: ShiftMode, maxStudents: Int): AcademicSession {
+    override suspend fun createSession(
+        deptId: String,
+        startYear: Int,
+        shiftMode: ShiftMode,
+        maxStudents: Int,
+        programType: ProgramType,
+    ): AcademicSession {
         require(maxStudents in 1..AcademicSession.MAX_CAPACITY) { "Student capacity must be between 1 and ${AcademicSession.MAX_CAPACITY}." }
+        val startSemester = programType.semesterRange.first
         val session = AcademicSession(
-            sessionId = AcademicSession.buildId(deptId, startYear),
+            sessionId = AcademicSession.buildId(deptId, startYear, programType),
             deptId = deptId,
             startYear = startYear,
-            endYear = startYear + 4,
+            endYear = programType.endYear(startYear),
             shiftMode = shiftMode,
-            currentSemester = 1,
+            currentSemester = startSemester,
             maxStudents = maxStudents,
+            programType = programType,
         )
         val dto = AcademicSessionDto(
             sessionId = session.sessionId,
@@ -160,7 +172,8 @@ class AcademicSessionRepositoryImpl @Inject constructor(
             endYear = session.endYear,
             shiftMode = shiftMode.name,
             maxStudents = maxStudents,
-            currentSemester = 1,
+            currentSemester = startSemester,
+            programType = programType.name,
             isActive = true,
         )
         postgrest.from(SupabaseTables.ACADEMIC_SESSIONS).upsert(dto) { onConflict = "session_id" }

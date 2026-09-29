@@ -13,6 +13,7 @@ data class AcademicSessionEntity(
     val shiftMode: String,
     val currentSemester: Int,
     val isActive: Boolean = true,
+    val programType: String = "BS",
     val programName: String?,
     val inchargeEmail: String?,
     val maxStudents: Int,

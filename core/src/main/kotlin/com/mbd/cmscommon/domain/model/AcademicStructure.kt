@@ -18,6 +18,7 @@ data class AcademicSession(
     val programName: String? = null,
     val inchargeEmail: String? = null,
     val maxStudents: Int = MAX_STUDENTS,
+    val programType: ProgramType = ProgramType.BS,
     override val createdAt: Instant = Instant.EPOCH,
     override val createdBy: String? = null,
     override val updatedAt: Instant = Instant.EPOCH,
@@ -28,6 +29,9 @@ data class AcademicSession(
     /** The shifts this session runs, Morning first. */
     val shifts: List<Session> get() = shiftMode.shifts
 
+    /** The valid semester numbers for this session's program type: 1-8 for BS, 5-8 for MA Replacement. */
+    val semesterRange: IntRange get() = programType.semesterRange
+
     fun runs(shift: Session): Boolean = shiftMode.allows(shift)
 
     companion object {
@@ -37,8 +41,10 @@ data class AcademicSession(
         const val MAX_CAPACITY = 200
         const val TOTAL_SEMESTERS = 8
 
-        /** One session per department and intake year: "{deptId}_{startYear}" (enforced by the database). */
-        fun buildId(deptId: String, startYear: Int): String = "${deptId}_$startYear"
+        /** One session per department, intake year and program type: "{deptId}_{startYear}" for BS,
+         * "{deptId}_{startYear}_ma" for MA Replacement (enforced by the database). */
+        fun buildId(deptId: String, startYear: Int, programType: ProgramType = ProgramType.BS): String =
+            if (programType == ProgramType.MA_REPLACEMENT) "${deptId}_${startYear}_ma" else "${deptId}_$startYear"
 
         /** The max-students value the create form fills in for [mode]: 50 for one shift, 100 for both. */
         fun defaultMaxStudents(mode: ShiftMode): Int = if (mode == ShiftMode.BOTH) MAX_STUDENTS * 2 else MAX_STUDENTS
