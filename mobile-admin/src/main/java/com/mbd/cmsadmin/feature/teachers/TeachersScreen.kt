@@ -1,5 +1,6 @@
 package com.mbd.cmsadmin.feature.teachers
 
+import com.mbd.cmscommon.util.FileReadErrors
 import com.mbd.cmscommon.util.rememberDocumentExport
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -54,7 +55,7 @@ fun TeachersScreen(onOpenTeacher: (String) -> Unit, viewModel: TeachersViewModel
                         ?: throw IllegalStateException("Couldn't decode the selected photo.")
                     onPicked(bitmap)
                 } catch (t: Throwable) {
-                    viewModel.reportPhotoPickFailure(t)
+                    viewModel.reportPhotoPickFailure(FileReadErrors.asCmsException(t, "photo"))
                 }
             }
         }

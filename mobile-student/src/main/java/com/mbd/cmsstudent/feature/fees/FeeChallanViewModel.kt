@@ -1,5 +1,6 @@
 package com.mbd.cmsstudent.feature.fees
 
+import com.mbd.cmscommon.util.userMessageLogged
 import com.mbd.cmscommon.domain.model.Session
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -57,7 +58,7 @@ class FeeChallanViewModel @Inject constructor(
                     val shift = context.shift ?: profile?.shift ?: context.session?.shifts?.firstOrNull() ?: Session.MORNING
                     val structureResult = runCatching { feeRepository.getSessionFee(context.sessionId, shift) }
                     val structure = structureResult.orLogCritical("FeeChallanViewModel.getSessionFee")
-                    _error.value = if (structureResult.isFailure) "Could not load fee details. Pull to refresh to try again." else null
+                    _error.value = structureResult.exceptionOrNull()?.userMessageLogged("FeeChallanViewModel.load", "Couldn't load your fee details. Pull down to try again.")
 
                     val department = context.deptId.let { runCatching { departmentRepository.getDepartment(it) }.getOrNull() }
                     _header.value = FeeChallanHeader(

@@ -219,7 +219,7 @@ fun AdministratorDirectoryWorkspace(
     }
 
     if (!errorMessage.isNullOrBlank()) {
-        CmsErrorDialog(message = errorMessage, onDismiss = onClearError)
+        CmsErrorDialog(message = errorMessage, title = "Couldn't update administrators", onDismiss = onClearError)
     }
 }
 

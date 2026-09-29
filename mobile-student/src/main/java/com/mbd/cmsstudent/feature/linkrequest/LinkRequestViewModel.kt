@@ -110,7 +110,7 @@ class LinkRequestViewModel @Inject constructor(
                 }
                 _refreshError.value = null
             } catch (t: Throwable) {
-                _refreshError.value = t.userMessageLogged("LinkRequestViewModel.refresh", "Refresh failed. Please try again.")
+                _refreshError.value = t.userMessageLogged("LinkRequestViewModel.refresh", "Couldn't check your link request status. Showing the saved information.")
             } finally {
                 _refreshing.value = false
             }
@@ -134,7 +134,7 @@ class LinkRequestViewModel @Inject constructor(
                 )
                 _submitState.value = Outcome.Success(Unit)
             } catch (t: Throwable) {
-                _submitState.value = Outcome.Error(t.userMessageLogged("LinkRequestViewModel.submit", "Could not submit your request."), t)
+                _submitState.value = Outcome.Error(t.userMessageLogged("LinkRequestViewModel.submit", "Couldn't submit your link request for roll number ${rollNumber.trim()}."), t)
             }
         }
     }

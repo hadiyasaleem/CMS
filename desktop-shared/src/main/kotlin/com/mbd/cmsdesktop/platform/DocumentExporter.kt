@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.platform
 
+import com.mbd.cmscommon.util.FileReadErrors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -351,11 +352,11 @@ val LocalAppWindow = staticCompositionLocalOf<ComposeWindow> { error("LocalAppWi
 @Composable
 fun rememberDocumentExport(window: ComposeWindow = LocalAppWindow.current): (ExportDocument, ExportFormat) -> Unit {
     var error by remember { mutableStateOf<String?>(null) }
-    error?.let { CmsErrorDialog(message = it, onDismiss = { error = null }) }
+    error?.let { CmsErrorDialog(message = it, title = "Couldn't export the report", onDismiss = { error = null }) }
     return remember(window) {
         { doc, format ->
             runCatching { DocumentExporter.export(window, doc, format) }
-                .onFailure { error = it.userMessageLogged("DocumentExporter", "Could not export this report.") }
+                .onFailure { error = FileReadErrors.describeWrite(it, format.label) }
         }
     }
 }

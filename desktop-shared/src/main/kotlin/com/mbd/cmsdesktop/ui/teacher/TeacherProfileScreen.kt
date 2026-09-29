@@ -54,7 +54,7 @@ fun TeacherProfileScreen(
                 actionMessage = null
                 runCatching { sessionManager.sendPasswordReset(accountKey) }
                     .onSuccess { actionMessage = "Password reset link sent to $accountKey." }
-                    .onFailure { error = it.userMessageLogged("TeacherProfileScreen.resetPassword", "Could not send the reset email.") }
+                    .onFailure { error = it.userMessageLogged("TeacherProfileScreen.resetPassword", "Couldn't send the password reset email to $accountKey.") }
             }
         },
         onSignOut = onSignOut,

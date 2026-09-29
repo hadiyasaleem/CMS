@@ -27,6 +27,7 @@ fun SemesterSubjectsScreen(
     val loading by controller.loading.collectAsState()
     val errorMessage by controller.error.collectAsState()
     val notice by controller.notice.collectAsState()
+    val termError by controller.termError.collectAsState()
 
     SemesterCurriculumWorkspace(
         sessionId = sessionId,
@@ -42,5 +43,7 @@ fun SemesterSubjectsScreen(
         onSaveTerm = controller::saveTerm,
         onClearError = controller::clearError,
         onConsumeNotice = controller::consumeNotice,
+        termError = termError,
+        onClearTermError = controller::clearTermError,
     )
 }

@@ -205,7 +205,7 @@ fun AttendanceHistoryWorkspace(
     }
 
     if (!errorMessage.isNullOrBlank()) {
-        CmsErrorDialog(message = errorMessage, onDismiss = onClearError)
+        CmsErrorDialog(message = errorMessage, title = "Couldn't complete that attendance action", onDismiss = onClearError)
     }
 }
 

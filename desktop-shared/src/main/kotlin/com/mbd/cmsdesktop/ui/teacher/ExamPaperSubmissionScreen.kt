@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.ui.teacher
 
+import com.mbd.cmscommon.util.FileReadErrors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -48,7 +49,7 @@ fun ExamPaperSubmissionScreen(
                 try {
                     controller.stageFile(file.readBytes(), file.name)
                 } catch (t: Throwable) {
-                    controller.reportPickFailure(t)
+                    controller.reportPickFailure(FileReadErrors.asCmsException(t, "PDF"))
                 }
             }
         },

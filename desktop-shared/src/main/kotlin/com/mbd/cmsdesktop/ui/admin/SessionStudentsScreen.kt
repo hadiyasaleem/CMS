@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.ui.admin
 
+import com.mbd.cmscommon.util.FileReadErrors
 import com.mbd.cmsdesktop.platform.rememberDocumentExport
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -72,7 +73,7 @@ fun SessionStudentsScreen(
                         StudentImportParser.parseCsv(String(bytes, Charsets.UTF_8))
                     }
                 } catch (t: Throwable) {
-                    fileError = t.userMessageLogged("SessionStudentsScreen.importFile", "Couldn't read this file.")
+                    fileError = FileReadErrors.describe(t, "spreadsheet")
                 }
             }
         },

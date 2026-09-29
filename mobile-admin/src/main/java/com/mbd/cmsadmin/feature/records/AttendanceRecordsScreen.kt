@@ -1,5 +1,7 @@
 package com.mbd.cmsadmin.feature.records
 
+import com.mbd.cmscommon.util.userMessageLogged
+import com.mbd.cmscommon.util.FileReadErrors
 import com.mbd.cmscommon.ui.components.DialogScrollBody
 import com.mbd.cmscommon.controller.departmentScopeOptions
 import com.mbd.cmscommon.controller.studentsForTab
@@ -188,7 +190,7 @@ class AttendanceRecordsViewModel @Inject constructor(
                     _subjects.value = subjects
                 }
             }.onFailure { if (version == reportLoadVersion) {
-                _error.value = it.userMessage("Could not load attendance records.")
+                _error.value = it.userMessageLogged("AttendanceRecords.loadReport", "Couldn't load the Semester $semester attendance records.")
             } }
             if (version == reportLoadVersion) {
                 _loading.value = false
@@ -206,7 +208,7 @@ class AttendanceRecordsViewModel @Inject constructor(
                     .groupBy { it.rollNumber }.mapValues { (_, l) -> l.associate { it.date to it } }
             }.onSuccess { if (version == fullLoadVersion) _full.value = it }
                 .onFailure { if (version == fullLoadVersion) {
-                    _error.value = it.userMessage("Could not load the daily attendance register.")
+                    _error.value = it.userMessageLogged("AttendanceRecords.loadFull", "Couldn't load the daily $course attendance register for ${month.month.name.lowercase().replaceFirstChar { c -> c.uppercase() }} ${month.year}.")
                 } }
             if (version == fullLoadVersion) _fullLoading.value = false
         }
@@ -318,7 +320,7 @@ fun AttendanceRecordsScreen(viewModel: AttendanceRecordsViewModel = hiltViewMode
                         ExportMenuButton(onExport = { format ->
                             exportScope.launch {
                                 runCatching { DocumentExporter.export(context, payload.toExportDocument(), format) }
-                                    .onFailure { actionError = it.userMessage("Could not export the attendance report.") }
+                                    .onFailure { actionError = FileReadErrors.describeWrite(it, format.label) }
                             }
                         })
                     }

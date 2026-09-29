@@ -1,5 +1,8 @@
 package com.mbd.cmsdesktop.ui.login
 
+import com.mbd.cmscommon.util.userMessageLogged
+import com.mbd.cmscommon.util.ErrorClassifier
+import com.mbd.cmscommon.util.CmsException
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -43,9 +46,12 @@ class LoginController(
         scope.launch {
             loading = true
             errorMessage = null
+            var step = "sign in"
             try {
                 sessionManager.signIn(email.normalizeEmail(), password)
-                val accountKey = sessionManager.accountKey ?: error("Signed in but no email on account")
+                step = "load your account details after signing in"
+                val accountKey = sessionManager.accountKey
+                    ?: throw CmsException.Auth("You signed in, but this account has no email address on record. Contact the college administrator.")
                 val role = userRepository.resolveRole(accountKey)
                 if (isAccepted(role)) {
                     userRepository.touchLastLogin(accountKey)
@@ -55,7 +61,7 @@ class LoginController(
                     errorMessage = wrongRoleMessage
                 }
             } catch (t: Throwable) {
-                errorMessage = t.userMessage("Sign-in failed. Please try again.")
+                errorMessage = t.userMessageLogged("LoginController.submit", ErrorClassifier.fallbackFor(step))
             } finally {
                 loading = false
             }
@@ -76,7 +82,7 @@ class LoginController(
                 sessionManager.sendPasswordReset(email.trim())
                 resetMessage = "Password reset email sent."
             } catch (t: Throwable) {
-                errorMessage = t.userMessage("Could not send the reset email.")
+                errorMessage = t.userMessageLogged("LoginController.sendPasswordReset", "Couldn't send the password reset email to ${email.trim()}.")
             } finally {
                 resetLoading = false
             }

@@ -1,5 +1,6 @@
 package com.mbd.cmsadmin.feature.academics
 
+import com.mbd.cmscommon.util.FileReadErrors
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -105,7 +106,7 @@ fun StudentProfileScreen(viewModel: StudentProfileViewModel = hiltViewModel()) {
                         ?: throw IllegalStateException("Couldn't decode the selected photo.")
                     onPicked(bitmap)
                 } catch (t: Throwable) {
-                    viewModel.reportPhotoPickFailure(t)
+                    viewModel.reportPhotoPickFailure(FileReadErrors.asCmsException(t, "photo"))
                 }
             }
         }

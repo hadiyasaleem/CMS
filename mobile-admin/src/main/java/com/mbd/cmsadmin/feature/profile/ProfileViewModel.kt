@@ -48,7 +48,7 @@ class ProfileViewModel @Inject constructor(
         _loading.value = true
         _error.value = null
         runCatching { administratorRepository.sync() }
-            .onFailure { _error.value = it.userMessageLogged("AdminProfileViewModel.refresh", "Could not refresh the administrator directory.") }
+            .onFailure { _error.value = it.userMessageLogged("AdminProfileViewModel.refresh", "Couldn't refresh the administrator directory.") }
         _loading.value = false
     }
 
@@ -57,7 +57,7 @@ class ProfileViewModel @Inject constructor(
         _actionMessage.value = null
         runCatching { sessionManager.sendPasswordReset(accountKey) }
             .onSuccess { _actionMessage.value = "Password reset link sent to $accountKey." }
-            .onFailure { _error.value = it.userMessageLogged("AdminProfileViewModel.resetPassword", "Could not send the reset email.") }
+            .onFailure { _error.value = it.userMessageLogged("AdminProfileViewModel.resetPassword", "Couldn't send the password reset email to $accountKey.") }
     }
 
     fun signOut() = sessionManager.signOut()

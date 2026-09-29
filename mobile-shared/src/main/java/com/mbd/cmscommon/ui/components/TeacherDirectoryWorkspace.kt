@@ -296,7 +296,7 @@ fun TeacherDirectoryWorkspace(
     }
 
     if (!errorMessage.isNullOrBlank()) {
-        CmsErrorDialog(message = errorMessage, onDismiss = onClearError)
+        CmsErrorDialog(message = errorMessage, title = "Couldn't update the faculty directory", onDismiss = onClearError)
     }
 
     if (!notice.isNullOrBlank()) {

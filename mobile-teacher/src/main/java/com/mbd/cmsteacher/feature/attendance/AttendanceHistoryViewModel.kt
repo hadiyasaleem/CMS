@@ -1,5 +1,6 @@
 package com.mbd.cmsteacher.feature.attendance
 
+import com.mbd.cmscommon.util.FileReadErrors
 import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -102,7 +103,7 @@ class AttendanceHistoryViewModel @Inject constructor(
             loadPending(from, to)
         } catch (t: Throwable) {
             // Keep the previously loaded marks on screen (offline-first) but still surface and log it.
-            _error.value = t.userMessageLogged("AttendanceHistoryViewModel.loadMonth", "Could not load attendance history.")
+            _error.value = t.userMessageLogged("AttendanceHistoryViewModel.loadMonth", "Couldn't load the $courseCode attendance history for ${_month.value.month.name.lowercase().replaceFirstChar { it.uppercase() }} ${_month.value.year}.")
         } finally {
             _loading.value = false
         }
@@ -111,7 +112,7 @@ class AttendanceHistoryViewModel @Inject constructor(
     private suspend fun loadPending(from: LocalDate, to: LocalDate) {
         _pendingCells.value = runCatching { editRequestRepository.getPendingFor(sessionId, courseCode, from, to) }
             .getOrElse {
-                _error.value = it.userMessageLogged("AttendanceHistoryViewModel.loadPending", "Could not load pending edit requests.")
+                _error.value = it.userMessageLogged("AttendanceHistoryViewModel.loadPending", "Couldn't load the pending attendance edit requests for $courseCode.")
                 emptyList()
             }
             .map { it.rollNumber to it.date }
@@ -147,7 +148,7 @@ class AttendanceHistoryViewModel @Inject constructor(
                 _pendingCells.value = _pendingCells.value + (rollNumber to date)
                 _requestState.value = Outcome.Success(Unit)
             } catch (t: Throwable) {
-                _requestState.value = Outcome.Error(t.userMessageLogged("AttendanceHistoryViewModel.submitEditRequest", "Could not send the edit request."), t)
+                _requestState.value = Outcome.Error(t.userMessageLogged("AttendanceHistoryViewModel.submitEditRequest", "Couldn't send the attendance edit request for $rollNumber on $date."), t)
             }
         }
     }
@@ -174,7 +175,7 @@ class AttendanceHistoryViewModel @Inject constructor(
                 val doc = attendanceRegisterExport(courseCode, academicSession, YearMonth.from(_month.value), roster.value, marks.value,
                     resolveRegisterContext(academicSession, courseCode, departmentRepository, curriculumRepository, timetableRepository, shift), shift)
                 DocumentExporter.export(context, doc, format)
-            }.onFailure { _error.value = it.userMessageLogged("AttendanceHistoryViewModel.export", "Could not export the attendance register.") }
+            }.onFailure { _error.value = FileReadErrors.describeWrite(it, format.label) }
         }
     }
 

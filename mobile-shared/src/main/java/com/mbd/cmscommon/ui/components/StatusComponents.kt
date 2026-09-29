@@ -231,15 +231,16 @@ fun CmsNotice(
 }
 
 /**
- * The single modal error dialog meant to replace this app's several ad-hoc `AlertDialog`s (all
- * previously titled "Something went wrong", one with a hard-coded custom color).
+ * The single modal error dialog meant to replace this app's several ad-hoc `AlertDialog`s. [title] is
+ * required on purpose: it must say what the user was doing ("Couldn't save period"), not a bare
+ * "Something went wrong" -- the [message] then gives the specific reason.
  */
 @Composable
 fun CmsErrorDialog(
     message: String,
+    title: String,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
-    title: String = "Something went wrong",
     onRetry: (() -> Unit)? = null,
 ) {
     AlertDialog(

@@ -1,5 +1,6 @@
 package com.mbd.cmsstudent.feature.results
 
+import com.mbd.cmscommon.util.userMessageLogged
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -48,7 +49,7 @@ class ResultsViewModel @Inject constructor(
                 _refreshTrigger.map {
                     val result = runCatching { marksRepository.getSemesterGpa(context.sessionId, context.rollNumber) }
                     val results = result.orLogCritical("ResultsViewModel.getSemesterGpa")
-                    val error = if (result.isFailure) "Could not load your results. Pull to refresh to try again." else null
+                    val error = result.exceptionOrNull()?.userMessageLogged("ResultsViewModel.load", "Couldn't load your results. Pull down to try again.")
                     ResultsState(results?.let { studentResultsSnapshot(it) }, error)
                 }
             }

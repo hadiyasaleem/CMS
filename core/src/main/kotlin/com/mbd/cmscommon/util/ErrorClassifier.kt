@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.util
 
+import io.github.jan.supabase.auth.exception.AuthRestException
 import java.util.Locale
 import java.util.concurrent.CancellationException
 
@@ -68,6 +69,12 @@ object ErrorClassifier {
             }
         }
 
+        causes.filterIsInstance<AuthRestException>().firstOrNull()?.let { auth ->
+            AuthErrorMessages.forException(auth)?.let { (kind, message) ->
+                return ClassifiedError(kind, Severity.EXPECTED, message, error)
+            }
+        }
+
         PostgresErrorParser.parse(error)?.let { pg ->
             postgresMessage(pg)?.let { (kind, message) ->
                 return ClassifiedError(kind, Severity.EXPECTED, message, error)
@@ -76,6 +83,10 @@ object ErrorClassifier {
 
         val raw = causes.mapNotNull { it.message }.joinToString(" ")
         val normalized = (causes.joinToString(" ") { it::class.qualifiedName ?: "" } + " " + raw).lowercase(Locale.ROOT)
+
+        AuthErrorMessages.messageFor(code = null, text = normalized)?.let { (kind, message) ->
+            return ClassifiedError(kind, Severity.EXPECTED, message, error)
+        }
 
         val (kind, message) = when {
             normalized.contains("invalid login credentials") || normalized.contains("invalid credentials") ->

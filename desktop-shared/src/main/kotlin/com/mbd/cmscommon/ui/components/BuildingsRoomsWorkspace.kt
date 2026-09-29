@@ -172,7 +172,7 @@ fun BuildingsRoomsWorkspace(
     }
 
     if (!errorMessage.isNullOrBlank()) {
-        CmsErrorDialog(message = errorMessage, onDismiss = onClearError)
+        CmsErrorDialog(message = errorMessage, title = "Couldn't update buildings and rooms", onDismiss = onClearError)
     }
 }
 

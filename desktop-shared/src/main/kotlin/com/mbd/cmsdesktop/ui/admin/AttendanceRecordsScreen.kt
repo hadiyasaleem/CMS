@@ -1,5 +1,7 @@
 package com.mbd.cmsdesktop.ui.admin
 
+import com.mbd.cmscommon.util.userMessageLogged
+import com.mbd.cmscommon.util.FileReadErrors
 import com.mbd.cmscommon.ui.components.DialogScrollBody
 import com.mbd.cmscommon.controller.departmentScopeOptions
 import com.mbd.cmscommon.controller.studentsForTab
@@ -179,7 +181,7 @@ fun AttendanceRecordsScreen(
             term = loadedTerm
             subjects = loadedSubjects
         } catch (t: Throwable) {
-            errorMessage = t.userMessage("Could not load attendance records.")
+            errorMessage = t.userMessageLogged("AttendanceRecords.loadReport", "Couldn't load the Semester $sem attendance records.")
         } finally {
             loading = false
         }
@@ -208,7 +210,7 @@ fun AttendanceRecordsScreen(
             val monthMarks = attendanceRepository.marksBetween(sid, code, m.atDay(1), m.atEndOfMonth())
             full = monthMarks.groupBy { it.rollNumber }.mapValues { (_, marks) -> marks.associateBy { it.date } }
         } catch (t: Throwable) {
-            errorMessage = t.userMessage("Could not load the daily attendance register.")
+            errorMessage = t.userMessageLogged("AttendanceRecords.loadFull", "Couldn't load the daily $code attendance register for ${m.month.name.lowercase().replaceFirstChar { c -> c.uppercase() }} ${m.year}.")
         } finally {
             fullLoading = false
         }
@@ -278,7 +280,7 @@ fun AttendanceRecordsScreen(
                     if (ready && payload != null) {
                         ExportMenuButton(onExport = { format ->
                             runCatching { DocumentExporter.export(window, payload.toExportDocument(), format) }
-                                .onFailure { actionError = it.userMessage("Could not export the attendance report.") }
+                                .onFailure { actionError = FileReadErrors.describeWrite(it, format.label) }
                         })
                     }
                     IconButton(onClick = { expanded = !expanded }) {

@@ -1,5 +1,7 @@
 package com.mbd.cmsdesktop.ui.teacher
 
+import com.mbd.cmscommon.util.FileReadErrors
+import com.mbd.cmscommon.util.CmsException
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -50,7 +52,7 @@ fun StudentAttendanceSummaryScreen(
         onExport = { format ->
             controller.exportDocument()?.let { doc ->
                 runCatching { DocumentExporter.export(window, doc, format) }
-                    .onFailure { controller.reportFailure(it, "Could not export the attendance summary.") }
+                    .onFailure { controller.reportFailure(CmsException.Validation(FileReadErrors.describeWrite(it, format.label), cause = it), "Couldn't export the attendance summary.") }
             }
         },
     )

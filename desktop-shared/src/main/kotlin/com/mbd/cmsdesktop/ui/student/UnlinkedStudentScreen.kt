@@ -69,7 +69,7 @@ fun StudentLinkRequestScreen(component: DesktopAppComponent, onLinked: (UserRole
                 return
             }
         } catch (t: Throwable) {
-            refreshError = t.userMessageLogged("StudentLinkRequestScreen.refresh", "Could not check your request status. Cached information is still shown.")
+            refreshError = t.userMessageLogged("StudentLinkRequestScreen.refresh", "Couldn't check your link request status. Showing the saved information.")
         } finally {
             refreshing = false
         }
@@ -109,7 +109,7 @@ fun StudentLinkRequestScreen(component: DesktopAppComponent, onLinked: (UserRole
                     submitState = Outcome.Success(Unit)
                     refresh()
                 } catch (t: Throwable) {
-                    submitState = Outcome.Error(t.userMessageLogged("StudentLinkRequestScreen.submit", "Could not submit your request. Please try again."), t)
+                    submitState = Outcome.Error(t.userMessageLogged("StudentLinkRequestScreen.submit", "Couldn't submit your link request for roll number ${roll.trim()}."), t)
                 }
             }
         },

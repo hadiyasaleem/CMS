@@ -1,5 +1,7 @@
 package com.mbd.cmsteacher.feature.attendance
 
+import com.mbd.cmscommon.util.FileReadErrors
+import com.mbd.cmscommon.util.CmsException
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -68,7 +70,7 @@ fun StudentAttendanceSummaryScreen(
             controller.exportDocument()?.let { doc ->
                 scope.launch {
                     runCatching { DocumentExporter.export(context, doc, format) }
-                        .onFailure { controller.reportFailure(it, "Could not export the attendance summary.") }
+                        .onFailure { controller.reportFailure(CmsException.Validation(FileReadErrors.describeWrite(it, format.label), cause = it), "Couldn't export the attendance summary.") }
                 }
             }
         },

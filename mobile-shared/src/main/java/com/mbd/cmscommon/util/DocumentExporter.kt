@@ -328,12 +328,12 @@ fun rememberDocumentExport(): (ExportDocument, ExportFormat) -> Unit {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var error by remember { mutableStateOf<String?>(null) }
-    error?.let { CmsErrorDialog(message = it, onDismiss = { error = null }) }
+    error?.let { CmsErrorDialog(message = it, title = "Couldn't export the report", onDismiss = { error = null }) }
     return remember(context, scope) {
         { doc, format ->
             scope.launch {
                 runCatching { DocumentExporter.export(context, doc, format) }
-                    .onFailure { error = it.userMessageLogged("DocumentExporter", "Could not export this report.") }
+                    .onFailure { error = FileReadErrors.describeWrite(it, format.label) }
             }
         }
     }

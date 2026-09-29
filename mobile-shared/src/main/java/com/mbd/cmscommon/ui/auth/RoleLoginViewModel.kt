@@ -1,5 +1,8 @@
 package com.mbd.cmscommon.ui.auth
 
+import com.mbd.cmscommon.util.userMessageLogged
+import com.mbd.cmscommon.util.ErrorClassifier
+import com.mbd.cmscommon.util.CmsException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.auth.SessionManager
@@ -54,9 +57,12 @@ abstract class RoleLoginViewModel(
 
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(submitState = Outcome.Loading)
+            var step = "sign in"
             try {
                 sessionManager.signIn(state.email.normalizeEmail(), state.password)
-                val accountKey = sessionManager.accountKey ?: error("Signed in but no email on account")
+                step = "load your account details after signing in"
+                val accountKey = sessionManager.accountKey
+                    ?: throw CmsException.Auth("You signed in, but this account has no email address on record. Contact the college administrator.")
                 val role = afterRoleResolved(accountKey, userRepository.resolveRole(accountKey))
                 if (!isAccepted(role)) {
                     sessionManager.signOut()
@@ -66,7 +72,7 @@ abstract class RoleLoginViewModel(
                 userRepository.touchLastLogin(accountKey)
                 _uiState.value = _uiState.value.copy(submitState = Outcome.Success(Unit))
             } catch (t: Throwable) {
-                _uiState.value = _uiState.value.copy(submitState = Outcome.Error(t.userMessage("Sign-in failed. Please try again."), t))
+                _uiState.value = _uiState.value.copy(submitState = Outcome.Error(t.userMessageLogged("RoleLoginViewModel.submit", ErrorClassifier.fallbackFor(step)), t))
             }
         }
     }
@@ -86,7 +92,7 @@ abstract class RoleLoginViewModel(
                 sessionManager.sendPasswordReset(email)
                 Outcome.Success(Unit)
             } catch (t: Throwable) {
-                Outcome.Error(t.userMessage("Could not send the reset email."), t)
+                Outcome.Error(t.userMessageLogged("RoleLoginViewModel.sendPasswordReset", "Couldn't send the password reset email to ${email.trim()}."), t)
             }
             _uiState.value = _uiState.value.copy(resetState = outcome)
             onDone(outcome)

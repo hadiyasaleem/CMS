@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.state
 
+import com.mbd.cmscommon.util.userMessageLogged
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.util.Outcome
@@ -27,7 +28,7 @@ class SyncedListState<T>(
 
     val items: StateFlow<Outcome<List<T>>> = roomFlow
         .map<List<T>, Outcome<List<T>>> { Outcome.Success(it) }
-        .catch { throwable -> emit(Outcome.Error(throwable.userMessage("Could not load this information."), throwable)) }
+        .catch { throwable -> emit(Outcome.Error(throwable.userMessageLogged("SyncedListState.load", "Couldn't load the saved list from this device."), throwable)) }
         .stateIn(scope, SharingStarted.WhileSubscribed(5_000), Outcome.Loading)
 
     fun refresh(scope: CoroutineScope) {
@@ -38,7 +39,7 @@ class SyncedListState<T>(
                 onRefresh()
                 _refreshError.value = null
             } catch (t: Throwable) {
-                _refreshError.value = t.userMessage("Refresh failed. Please try again.")
+                _refreshError.value = t.userMessageLogged("SyncedListState.refresh", "Couldn't refresh the list from the server. Showing the saved list.")
             } finally {
                 _isRefreshing.value = false
             }

@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.ui.admin
 
+import com.mbd.cmscommon.util.userMessageLogged
 import com.mbd.cmscommon.ui.components.DialogScrollBody
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -95,16 +96,19 @@ fun DepartmentsScreen(
     suspend fun refresh() {
         loading = true
         errorMessage = null
+        var step = "departments"
         try {
             repository.sync()
+            step = "sessions"
             repository.observeActiveDepartments().first().forEach { dept ->
                 sessionRepository.syncSessionsForDept(dept.deptId)
             }
+            step = "student counts"
             sessionRepository.observeAllSessions().first().forEach { session ->
                 sessionRepository.syncStudents(session.sessionId)
             }
         } catch (t: Throwable) {
-            errorMessage = t.userMessage("Could not load departments.")
+            errorMessage = t.userMessageLogged("DepartmentsScreen.refresh", "Couldn't refresh the $step.")
         } finally {
             loading = false
         }

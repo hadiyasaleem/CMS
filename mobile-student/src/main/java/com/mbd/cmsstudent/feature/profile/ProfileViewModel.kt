@@ -85,7 +85,7 @@ class ProfileViewModel @Inject constructor(
                 sessionManager.sendPasswordReset(email)
                 _actionMessage.value = "Password reset email sent."
             } catch (t: Throwable) {
-                _error.value = t.userMessageLogged("StudentProfileViewModel.resetPassword", "Could not send the reset email.")
+                _error.value = t.userMessageLogged("StudentProfileViewModel.resetPassword", "Couldn't send the password reset email to $email.")
             }
         }
     }

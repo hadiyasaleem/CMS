@@ -53,7 +53,7 @@ class MyTimetableViewModel @Inject constructor(
         _error.value = null
         viewModelScope.launch {
             val result = runCatching { timetableRepository.syncSession(sessionId) }
-            _error.value = result.exceptionOrNull()?.userMessageLogged("MyTimetableViewModel.refresh", "Could not refresh your timetable.")
+            _error.value = result.exceptionOrNull()?.userMessageLogged("MyTimetableViewModel.refresh", "Couldn't refresh your timetable.")
         }
     }
 

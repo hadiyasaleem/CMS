@@ -1,5 +1,6 @@
 package com.mbd.cmsadmin.feature.academics
 
+import com.mbd.cmscommon.util.FileReadErrors
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.util.rememberDocumentExport
 import android.graphics.BitmapFactory
@@ -97,7 +98,7 @@ fun SessionStudentsScreen(
                 StudentImportParser.parseCsv(String(bytes, Charsets.UTF_8))
             }
         } catch (t: Throwable) {
-            fileError = t.userMessageLogged("SessionStudentsScreen.importFile", "Couldn't read this file.")
+            fileError = FileReadErrors.describe(t, "spreadsheet")
         }
     }
 

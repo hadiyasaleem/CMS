@@ -70,6 +70,9 @@ fun SemesterCurriculumWorkspace(
     onSaveTerm: (String, String, (Boolean) -> Unit) -> Unit,
     onClearError: () -> Unit,
     onConsumeNotice: () -> Unit,
+    /** Why the last term-date save failed, from the controller (bad date, end before start, or the server's reason). */
+    termError: String? = null,
+    onClearTermError: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var query by remember { mutableStateOf("") }
@@ -143,8 +146,9 @@ fun SemesterCurriculumWorkspace(
         TermDatesEditorDialog(
             initialStart = term?.startDate,
             initialEnd = term?.endDate,
-            onDismiss = { showTermEditor = false },
+            onDismiss = { onClearTermError(); showTermEditor = false },
             onSave = { start, end, onResult -> onSaveTerm(start, end) { done -> onResult(done); if (done) showTermEditor = false } },
+            serverError = termError,
         )
     }
 
@@ -332,6 +336,7 @@ private fun TermDatesEditorDialog(
     initialEnd: LocalDate?,
     onDismiss: () -> Unit,
     onSave: (String, String, (Boolean) -> Unit) -> Unit,
+    serverError: String? = null,
 ) {
     var start by remember { mutableStateOf(initialStart?.toString() ?: "") }
     var end by remember { mutableStateOf(initialEnd?.toString() ?: "") }
@@ -351,15 +356,16 @@ private fun TermDatesEditorDialog(
                 CmsDateField(value = start, onValueChange = { start = it }, label = "Start date", optional = true)
                 Spacer(Modifier.height(10.dp))
                 CmsDateField(value = end, onValueChange = { end = it }, label = "End date", optional = true, minDate = start.ifBlank { null })
-                if (error != null) {
+                (error ?: serverError)?.let { shown ->
                     Spacer(Modifier.height(8.dp))
-                    Text(error ?: "", color = CurriculumRed, style = MaterialTheme.typography.bodySmall)
+                    Text(shown, color = CurriculumRed, style = MaterialTheme.typography.bodySmall)
                 }
             }
         }},
         confirmButton = {
             TextButton(
                 onClick = {
+                    error = null
                     if (parsedStart.isFailure) {
                         error = "Use a valid YYYY-MM-DD start date."
                     } else if (parsedEnd.isFailure) {
@@ -370,7 +376,7 @@ private fun TermDatesEditorDialog(
                         saving = true
                         onSave(start.trim(), end.trim()) { done ->
                             saving = false
-                            if (!done) error = "The term dates could not be saved. Please try again."
+                            // A failure's reason is shown from the controller's own message (serverError), not a generic line.
                         }
                     }
                 },

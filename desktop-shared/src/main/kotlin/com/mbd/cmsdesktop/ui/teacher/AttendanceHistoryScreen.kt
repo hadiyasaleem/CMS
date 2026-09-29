@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.ui.teacher
 
+import com.mbd.cmscommon.util.FileReadErrors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -75,13 +76,13 @@ fun AttendanceHistoryScreen(
             marks = dailyMarks.groupBy { it.rollNumber }.mapValues { (_, ms) -> ms.associateBy { it.date } }
             pendingCells = runCatching { editRequestRepository.getPendingFor(sessionId, courseCode, from, to) }
                 .getOrElse {
-                    error = it.userMessageLogged("AttendanceHistoryScreen.loadPending", "Could not load pending edit requests.")
+                    error = it.userMessageLogged("AttendanceHistoryScreen.loadPending", "Couldn't load the pending attendance edit requests for $courseCode.")
                     emptyList()
                 }
                 .map { it.rollNumber to it.date }
                 .toSet()
         } catch (t: Throwable) {
-            error = t.userMessageLogged("AttendanceHistoryScreen.load", "Could not load attendance history.")
+            error = t.userMessageLogged("AttendanceHistoryScreen.load", "Couldn't load the $courseCode attendance history for ${month.month.name.lowercase().replaceFirstChar { it.uppercase() }} ${month.year}.")
         } finally {
             loading = false
         }
@@ -119,7 +120,7 @@ fun AttendanceHistoryScreen(
                         pendingCells = pendingCells + (roll to date)
                         Outcome.Success(Unit)
                     } catch (t: Throwable) {
-                        Outcome.Error(t.userMessageLogged("AttendanceHistoryScreen.submitEditRequest", "Could not send the edit request."), t)
+                        Outcome.Error(t.userMessageLogged("AttendanceHistoryScreen.submitEditRequest", "Couldn't send the attendance edit request for $roll on $date."), t)
                     }
                 }
             }
@@ -133,7 +134,7 @@ fun AttendanceHistoryScreen(
                 val context = resolveRegisterContext(session, courseCode, departmentRepository, curriculumRepository, timetableRepository, shift)
                 DocumentExporter.export(window, attendanceRegisterExport(courseCode, session, month, roster, marks, context, shift), format)
               } catch (t: Throwable) {
-                error = t.userMessageLogged("AttendanceHistoryScreen.export", "Could not export the attendance register.")
+                error = FileReadErrors.describeWrite(t, format.label)
               }
             }
         },

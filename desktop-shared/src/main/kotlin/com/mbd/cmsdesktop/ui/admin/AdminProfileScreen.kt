@@ -42,7 +42,7 @@ fun AdminProfileScreen(
         try {
             repository.sync()
         } catch (t: Throwable) {
-            error = t.userMessageLogged("AdminProfileScreen.refresh", "Could not refresh the administrator directory.")
+            error = t.userMessageLogged("AdminProfileScreen.refresh", "Couldn't refresh the administrator directory.")
         } finally {
             loading = false
         }
@@ -64,7 +64,7 @@ fun AdminProfileScreen(
                     sessionManager.sendPasswordReset(accountKey)
                     actionMessage = "Password reset email sent to $accountKey."
                 } catch (t: Throwable) {
-                    error = t.userMessageLogged("AdminProfileScreen.resetPassword", "Could not send the password reset email.")
+                    error = t.userMessageLogged("AdminProfileScreen.resetPassword", "Couldn't send the password reset email to $accountKey.")
                 }
             }
         },

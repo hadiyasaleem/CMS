@@ -1,5 +1,7 @@
 package com.mbd.cmsdesktop.ui.student
 
+import com.mbd.cmscommon.util.ErrorClassifier
+import com.mbd.cmscommon.util.CmsException
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -101,9 +103,11 @@ class StudentAuthController(
             loading = true
             errorMessage = null
             infoMessage = null
+            var step = if (isRegisterMode) "create your account" else "sign in"
             try {
                 if (isRegisterMode) {
                     sessionManager.registerStudent(normalizedEmail, password)
+                    step = "finish setting up your account"
                     val accountKey = sessionManager.accountKey
                     if (accountKey != null) {
                         // Email confirmation is disabled on this project -- a session exists immediately.
@@ -123,7 +127,9 @@ class StudentAuthController(
                     }
                 } else {
                     sessionManager.signIn(email.normalizeEmail(), password)
-                    val accountKey = sessionManager.accountKey ?: error("Signed in but no email on account")
+                    step = "finish setting up your account"
+                    val accountKey = sessionManager.accountKey
+                        ?: throw CmsException.Auth("You signed in, but this account has no email address on record. Contact the college administrator.")
                     val role = userRepository.resolveRole(accountKey)
                     if (role !is UserRole.LinkedStudent && role !is UserRole.UnlinkedStudent) {
                         sessionManager.signOut()
@@ -133,7 +139,7 @@ class StudentAuthController(
                     onResolved(role)
                 }
             } catch (t: Throwable) {
-                errorMessage = t.userMessageLogged("StudentAuthController.submit")
+                errorMessage = t.userMessageLogged("StudentAuthController.submit", ErrorClassifier.fallbackFor(step))
             } finally {
                 loading = false
             }
@@ -154,7 +160,7 @@ class StudentAuthController(
                 resetMessage = "Password reset email sent."
                 resetError = false
             } catch (t: Throwable) {
-                resetMessage = t.userMessageLogged("StudentAuthController.sendPasswordReset", "Could not send the reset email.")
+                resetMessage = t.userMessageLogged("StudentAuthController.sendPasswordReset", "Couldn't send the password reset email to ${email.trim()}.")
                 resetError = true
             } finally {
                 resetSending = false

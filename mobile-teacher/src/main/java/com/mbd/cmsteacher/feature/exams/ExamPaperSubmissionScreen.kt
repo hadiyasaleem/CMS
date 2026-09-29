@@ -1,5 +1,6 @@
 package com.mbd.cmsteacher.feature.exams
 
+import com.mbd.cmscommon.util.FileReadErrors
 import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -45,12 +46,12 @@ fun ExamPaperSubmissionScreen(viewModel: ExamPaperSubmissionViewModel = hiltView
                     read to displayName
                 }
                 if (bytes == null) {
-                    controller.reportPickFailure(IllegalStateException("Could not read the selected file."))
+                    controller.reportPickFailure(IllegalStateException("Couldn't read the selected PDF. Choose it again."))
                     return@launch
                 }
                 controller.stageFile(bytes, name)
             } catch (t: Throwable) {
-                controller.reportPickFailure(t)
+                controller.reportPickFailure(FileReadErrors.asCmsException(t, "PDF"))
             }
         }
     }

@@ -1,5 +1,7 @@
 package com.mbd.cmsstudent.feature.auth
 
+import com.mbd.cmscommon.util.ErrorClassifier
+import com.mbd.cmscommon.util.CmsException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.auth.RegisterCooldownStore
@@ -59,9 +61,11 @@ class AuthViewModel @Inject constructor(
             }
 
             _uiState.value = _uiState.value.copy(loading = true, errorMessage = null, infoMessage = null)
+            var step = if (state.registerMode) "create your account" else "sign in"
             try {
                 if (state.registerMode) {
                     sessionManager.registerStudent(email, state.password)
+                    step = "finish setting up your account"
                     val accountKey = sessionManager.accountKey
                     if (accountKey != null) {
                         // Email confirmation is disabled on this project -- a session exists immediately.
@@ -82,13 +86,15 @@ class AuthViewModel @Inject constructor(
                     }
                 } else {
                     sessionManager.signIn(email, state.password)
-                    val accountKey = sessionManager.accountKey ?: error("Signed in but no email on account")
+                    step = "finish setting up your account"
+                    val accountKey = sessionManager.accountKey
+                        ?: throw CmsException.Auth("You signed in, but this account has no email address on record. Contact the college administrator.")
                     userRepository.provisionUnlinkedStudent(accountKey)
                     userRepository.touchLastLogin(accountKey)
                     _uiState.value = _uiState.value.copy(loading = false)
                 }
             } catch (t: Throwable) {
-                _uiState.value = _uiState.value.copy(loading = false, errorMessage = t.userMessageLogged("AuthViewModel.submit", "Sign-in failed. Please try again."))
+                _uiState.value = _uiState.value.copy(loading = false, errorMessage = t.userMessageLogged("AuthViewModel.submit", ErrorClassifier.fallbackFor(step)))
             }
         }
     }
@@ -105,7 +111,7 @@ class AuthViewModel @Inject constructor(
                 sessionManager.sendPasswordReset(FieldValidators.normalizeEmail(email))
                 _uiState.value = _uiState.value.copy(resetSending = false, resetMessage = "Password reset email sent.", resetError = false)
             } catch (t: Throwable) {
-                _uiState.value = _uiState.value.copy(resetSending = false, resetMessage = t.userMessageLogged("AuthViewModel.sendPasswordReset", "Could not send the reset email."), resetError = true)
+                _uiState.value = _uiState.value.copy(resetSending = false, resetMessage = t.userMessageLogged("AuthViewModel.sendPasswordReset", "Couldn't send the password reset email to ${FieldValidators.normalizeEmail(email)}."), resetError = true)
             }
         }
     }
