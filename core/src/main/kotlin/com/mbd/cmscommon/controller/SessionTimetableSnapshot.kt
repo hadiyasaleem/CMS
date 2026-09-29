@@ -1,11 +1,15 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.domain.model.AcademicSession
+import com.mbd.cmscommon.domain.model.Department
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.PeriodType
 import com.mbd.cmscommon.domain.model.SessionPeriod
+import com.mbd.cmscommon.util.clockDisplay
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.format.TextStyle
 import java.util.Locale
 
 data class SessionTimetableSnapshot(
@@ -76,6 +80,56 @@ fun masterTimetableConflicts(periods: List<SessionPeriod>): Map<String, List<Per
         }
     }
     return result
+}
+
+/** A human-readable "which class is this" label for [period], for explaining a conflict -- department
+ * code + semester + shift + subject, e.g. "ENG Semester 5 Morning — World Literatures in Translation". */
+private fun describePeriodForConflict(period: SessionPeriod, sessions: List<AcademicSession>, departments: List<Department>): String {
+    val session = sessions.firstOrNull { it.sessionId == period.sessionId }
+    val department = session?.let { s -> departments.firstOrNull { it.deptId == s.deptId } }
+    val classLabel = listOfNotNull(
+        department?.code ?: session?.deptId ?: period.sessionId,
+        session?.let { "Semester ${it.currentSemester}" },
+        period.shift.label,
+    ).joinToString(" ")
+    return "$classLabel — ${period.subjectName} (${period.courseCode})"
+}
+
+/**
+ * If [candidate] would double-book a teacher or room already scheduled somewhere in [allPeriods]
+ * (any session, any department -- [excludedId] is the period being edited in place, so it doesn't
+ * conflict with its own prior self), returns a message naming exactly which other class/subject it
+ * clashes with. Mirrors the database's own no-double-booking trigger (same day, overlapping time and
+ * effective-date range, same teacher or same room, LECTURE periods only) but -- unlike the trigger's
+ * own raw error -- names the other class so an admin can tell a real clash from a false alarm (e.g.
+ * two shifts that happen to share a teacher by mistake) without leaving this dialog.
+ */
+fun describeTimetableConflict(
+    candidate: SessionPeriod,
+    allPeriods: List<SessionPeriod>,
+    sessions: List<AcademicSession>,
+    departments: List<Department>,
+    excludedId: String? = null,
+): String? {
+    if (candidate.periodType != PeriodType.LECTURE) return null
+    val other = allPeriods.firstOrNull { other ->
+        other.id != candidate.id && other.id != excludedId && other.periodType == PeriodType.LECTURE &&
+            periodsOverlap(candidate, other) &&
+            (
+                (candidate.teacherId.isNotBlank() && candidate.teacherId == other.teacherId) ||
+                    (!candidate.roomNo.isNullOrBlank() && candidate.roomNo == other.roomNo)
+                )
+    } ?: return null
+
+    val who = if (candidate.teacherId.isNotBlank() && candidate.teacherId == other.teacherId) {
+        "Teacher ${candidate.teacherName.ifBlank { candidate.teacherId }}"
+    } else {
+        "Room ${candidate.roomNo}"
+    }
+    val dayLabel = candidate.day.getDisplayName(TextStyle.FULL, Locale.ENGLISH)
+    val timeLabel = "${clockDisplay(candidate.startTime)}-${clockDisplay(candidate.endTime)}"
+    val otherClass = describePeriodForConflict(other, sessions, departments)
+    return "$who already has a lecture with $otherClass on $dayLabel at $timeLabel."
 }
 
 fun validateTimetableDraft(

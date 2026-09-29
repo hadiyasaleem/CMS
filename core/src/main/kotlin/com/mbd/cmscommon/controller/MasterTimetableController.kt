@@ -17,6 +17,7 @@ import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.RoomRepository
 import com.mbd.cmscommon.domain.repository.SessionTimetableRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
+import com.mbd.cmscommon.util.CmsException
 import com.mbd.cmscommon.util.clockDisplay
 import com.mbd.cmscommon.util.orThrowValidation
 import com.mbd.cmscommon.util.parseClock
@@ -325,6 +326,13 @@ class MasterTimetableController(
         val normalizedStart = start.trim()
         val normalizedEnd = end.trim()
         val sessionPeriods = timetableRepository.observeWeek(replaces.sessionId).first()
+        // Snapshotted once up front: the database's own trigger is still the source of truth for a
+        // conflict newly introduced by this same multi-day save, but for the common case this lets us
+        // name exactly which other class/subject a teacher or room double-books, instead of the
+        // trigger's own bare "already booked" message.
+        val collegeWidePeriods = allPeriods.value
+        val sessionList = sessions.value
+        val deptList = departments.value
 
         days.forEach { day ->
             val dayReplaces = if (day == replaces.day) replaces else null
@@ -348,6 +356,9 @@ class MasterTimetableController(
                 effectiveTo = effectiveTo,
             )
             validateTimetablePeriod(period, dayReplaces, sessionPeriods).orThrowValidation()
+            describeTimetableConflict(period, collegeWidePeriods, sessionList, deptList, excludedId = dayReplaces?.id)?.let {
+                throw CmsException.Conflict(it)
+            }
             timetableRepository.savePeriod(period)
             if (dayReplaces != null && (dayReplaces.shift != period.shift || dayReplaces.day != period.day || clockDisplay(dayReplaces.startTime) != clockDisplay(period.startTime))) {
                 timetableRepository.removePeriod(dayReplaces)
