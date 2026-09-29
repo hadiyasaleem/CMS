@@ -436,6 +436,7 @@ suspend fun resolveRegisterContext(
     shift: Session? = null,
 ): RegisterContext {
     if (session == null) return RegisterContext()
+    // Best-effort enrichment: the report is still complete without the department/subject/period names, which fall back to codes.
     val department = runCatching { departments.getDepartment(session.deptId)?.name }.getOrNull()
     val subject = runCatching {
         curriculum.observeSemesterSubjects(session.sessionId, session.currentSemester).first().firstOrNull { it.courseCode == courseCode }?.name

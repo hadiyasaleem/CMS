@@ -158,8 +158,7 @@ class MarksEntryController(
         val assignment = _selected.value ?: return
         val type = _examType.value
         launch("load pending edit requests") {
-            val pending = runCatching { markEditRequestRepository.getPendingForAssignment(assignment.sessionId, assignment.courseCode, type) }
-                .getOrDefault(emptyList())
+            val pending = markEditRequestRepository.getPendingForAssignment(assignment.sessionId, assignment.courseCode, type)
             _pendingByRoll.value = pending.associateBy { it.rollNumber }
         }
     }

@@ -1,5 +1,6 @@
 package com.mbd.cmsteacher.feature.students
 
+import com.mbd.cmscommon.util.FailureSummary
 import com.mbd.cmscommon.controller.studentsForTab
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -32,6 +33,9 @@ class MyStudentsViewModel @Inject constructor(
     val assignments: StateFlow<List<ResolvedAssignment>> = assignmentsProvider.observeMyAssignments()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    private val _syncError = MutableStateFlow<String?>(null)
+    val syncError: StateFlow<String?> = _syncError.asStateFlow()
+
     private val _selected = MutableStateFlow<ResolvedAssignment?>(null)
     val selected: StateFlow<ResolvedAssignment?> = _selected.asStateFlow()
 
@@ -56,9 +60,15 @@ class MyStudentsViewModel @Inject constructor(
         _selected.value = assignment
         // observeStudents/observeTallies are local-cache flows; pull remote data on selection
         // (mirrors MyStudentsController.select) so the roster/tallies populate on a cold cache.
+        _syncError.value = null
         viewModelScope.launch {
-            runCatching { sessionRepository.syncStudents(assignment.sessionId) }.orLogCritical("MyStudentsViewModel.syncStudents")
-            runCatching { attendanceRepository.syncSummary(assignment.sessionId, assignment.courseCode) }.orLogCritical("MyStudentsViewModel.syncSummary")
+            val failures = FailureSummary.of(
+                listOf(
+                    "the student list" to runCatching { sessionRepository.syncStudents(assignment.sessionId) },
+                    "attendance summary" to runCatching { attendanceRepository.syncSummary(assignment.sessionId, assignment.courseCode) },
+                ),
+            )
+            if (_selected.value == assignment) _syncError.value = FailureSummary.describe(failures, "MyStudentsViewModel", prefix = "Couldn't refresh")
         }
     }
 }

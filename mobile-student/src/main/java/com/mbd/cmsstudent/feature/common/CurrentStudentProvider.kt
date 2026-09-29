@@ -80,6 +80,7 @@ class CurrentStudentProvider @Inject constructor(
     suspend fun hasCachedSession(studentId: String): Boolean {
         val sessionId = StudentIdCodec.sessionIdOf(studentId)
         val rollNumber = StudentIdCodec.rollOf(studentId)
+        // A failed cache read just means "not cached": the caller then fetches the session from the server and reports that failure.
         val session = runCatching { sessionRepository.observeSession(sessionId).first() }.getOrNull()
         val students = runCatching { sessionRepository.observeStudents(sessionId).first() }.getOrDefault(emptyList())
         return session != null && students.any { it.rollNumber == rollNumber }

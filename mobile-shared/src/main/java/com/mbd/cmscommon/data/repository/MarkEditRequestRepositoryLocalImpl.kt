@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.repository
 
+import com.mbd.cmscommon.util.CmsException
 import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.local.dao.MarkEditRequestDao
 import com.mbd.cmscommon.data.local.dao.SessionMarkDao
@@ -79,7 +80,7 @@ class MarkEditRequestRepositoryLocalImpl @Inject constructor(
 
     override suspend fun approveRequest(requestId: String, reviewedBy: String) {
         val request = requestDao.getById(requestId)
-            ?: error("Mark edit request is not available in the local cache. Refresh and try again.")
+            ?: throw CmsException.NotFound("This mark edit request is not available on this device yet. Refresh and try again.")
 
         // request.semester was captured from the session's current semester when the request was
         // submitted, but session_marks.semester is part of that table's primary key and the session
@@ -96,7 +97,7 @@ class MarkEditRequestRepositoryLocalImpl @Inject constructor(
         }.decodeList<MarkRowDto>()
         val targetSemester = candidates.singleOrNull()?.semester
             ?: candidates.firstOrNull { it.semester == request.semester }?.semester
-            ?: error("Could not find the marks record for this request. It may have been removed.")
+            ?: throw CmsException.NotFound("The marks record this request refers to could not be found. It may have been removed.")
 
         postgrest.from(SupabaseTables.SESSION_MARKS).update({ set("score", request.requestedScore) }) {
             filter {

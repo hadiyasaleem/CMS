@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.util.FailureSummary
 import com.mbd.cmscommon.domain.model.Datesheet
 import com.mbd.cmscommon.domain.model.DatesheetSlot
 import com.mbd.cmscommon.domain.model.SemesterGpa
@@ -80,9 +81,12 @@ class StudentExamsHubController(
                 resultLoadResult.getOrNull()?.let { results.value = it }
                 val datesheetSyncResult = datesheetSync.await()
 
-                _loadError.value = listOf(marksSyncResult, resultLoadResult, datesheetSyncResult)
-                    .firstNotNullOfOrNull { it.exceptionOrNull() }
-                    ?.userMessageLogged("Some exam data could not be loaded.")
+                _loadError.value = FailureSummary.describe(
+                    FailureSummary.of(
+                        listOf("marks" to marksSyncResult, "results" to resultLoadResult, "datesheets" to datesheetSyncResult),
+                    ),
+                    "StudentExamsHubController",
+                )
             }
         } finally {
             _loading.value = false

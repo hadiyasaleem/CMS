@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.util.FailureSummary
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.ExamPaperSubmission
 import com.mbd.cmscommon.domain.model.ShiftScope
@@ -139,9 +140,18 @@ class PeopleHubController(
                     }
 
                     publish()
-                    _loadError.value = listOf(teachersResult, studentsResult, linksResult, editsResult, submittedPapersResult)
-                        .firstNotNullOfOrNull { it.exceptionOrNull() }
-                        ?.userMessageLogged("Some people summaries could not be loaded.")
+                    _loadError.value = FailureSummary.describe(
+                        FailureSummary.of(
+                            listOf(
+                                "teachers" to teachersResult,
+                                "student counts" to studentsResult,
+                                "link requests" to linksResult,
+                                "edit requests" to editsResult,
+                                "submitted papers" to submittedPapersResult,
+                            ),
+                        ),
+                        "PeopleHubController",
+                    )
                     _loading.value = false
                 }
             }

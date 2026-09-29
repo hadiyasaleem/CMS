@@ -1,5 +1,8 @@
 package com.mbd.cmsdesktop.ui.teacher
 
+import kotlinx.coroutines.CancellationException
+import com.mbd.cmscommon.util.userMessageLogged
+import com.mbd.cmscommon.ui.components.RefreshErrorDialog
 import com.mbd.cmscommon.controller.teacherNotificationAudience
 import com.mbd.cmscommon.controller.taughtClasses
 import kotlinx.coroutines.flow.combine
@@ -67,6 +70,7 @@ fun TeacherNavHost(role: UserRole.Teacher, component: DesktopAppComponent, windo
     var screen by remember { mutableStateOf<TeacherScreen>(TeacherTab.Home.root) }
     val refreshScope = rememberCoroutineScope()
     var shellRefreshing by remember { mutableStateOf(false) }
+    var refreshError by remember { mutableStateOf<String?>(null) }
     var refreshVersion by remember { mutableIntStateOf(0) }
     val tasksCompleted = remember { MutableStateFlow(0) }
     val tasksCompletedCount by tasksCompleted.collectAsState()
@@ -99,7 +103,14 @@ fun TeacherNavHost(role: UserRole.Teacher, component: DesktopAppComponent, windo
         refreshScope.launch {
             tasksCompleted.value = 0
             shellRefreshing = true
-            runCatching { component.adminDataBootstrapper().refreshAll(onTaskDone = { tasksCompleted.update { it + 1 } }) }
+            refreshError = null
+            try {
+                refreshError = component.adminDataBootstrapper().refreshAllReport(onTaskDone = { tasksCompleted.update { it + 1 } }).message
+            } catch (c: CancellationException) {
+                throw c
+            } catch (t: Throwable) {
+                refreshError = t.userMessageLogged("TeacherNavHost.refresh", "Couldn't refresh your data.")
+            }
             refreshVersion++
             shellRefreshing = false
         }
@@ -108,6 +119,7 @@ fun TeacherNavHost(role: UserRole.Teacher, component: DesktopAppComponent, windo
     if (shellRefreshing) {
         SyncProgressDialog(completed = tasksCompletedCount, total = AdminDataBootstrapper.TOTAL_SYNC_TASKS)
     }
+    RefreshErrorDialog(message = refreshError, onDismiss = { refreshError = null })
 
     fun goTab(tab: TeacherTab) {
         selectedTab = tab

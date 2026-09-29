@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.util.FailureSummary
 import com.mbd.cmscommon.domain.model.AdministratorAccount
 import com.mbd.cmscommon.domain.model.MoreHubSnapshot
 import com.mbd.cmscommon.domain.model.MoreSummarySource
@@ -82,9 +83,16 @@ class MoreHubController(
                         unreadResult.getOrDefault(0),
                         unavailableSources,
                     )
-                    _loadError.value = listOf(administratorsResult, authoredResult, unreadResult)
-                        .firstNotNullOfOrNull { it.exceptionOrNull() }
-                        ?.userMessageLogged("Some account summaries could not be loaded.")
+                    _loadError.value = FailureSummary.describe(
+                        FailureSummary.of(
+                            listOf(
+                                "administrators" to administratorsResult,
+                                "notifications you sent" to authoredResult,
+                                "the unread notification count" to unreadResult,
+                            ),
+                        ),
+                        "MoreHubController",
+                    )
                     _loading.value = false
                 }
             }

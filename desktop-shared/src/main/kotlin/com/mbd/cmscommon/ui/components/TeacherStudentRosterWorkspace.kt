@@ -80,6 +80,8 @@ fun TeacherStudentRosterWorkspace(
     tallies: Map<String, AttendanceTally>,
     onSelectAssignment: (ResolvedAssignment) -> Unit,
     onExport: ((ExportDocument, ExportFormat) -> Unit)? = null,
+    /** Why the roster/attendance refresh failed (a named reason), so an empty list isn't mistaken for an empty class. */
+    syncError: String? = null,
     modifier: Modifier = Modifier,
 ) {
     var query by remember { mutableStateOf("") }
@@ -111,6 +113,7 @@ fun TeacherStudentRosterWorkspace(
     WithVerticalScrollbar(listState) {
     LazyColumn(modifier.fillMaxWidth(), state = listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { TeacherRosterHero(selected, students.size) }
+        syncError?.let { message -> item { CmsNotice(message = message) } }
         if (onExport != null && selected != null) {
             item { ExportBar(onExport, build = { myStudentsExport(selected, students, tallies) }, enabled = students.isNotEmpty()) }
         }

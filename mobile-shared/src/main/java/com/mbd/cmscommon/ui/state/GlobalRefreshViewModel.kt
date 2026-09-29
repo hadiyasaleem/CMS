@@ -1,5 +1,7 @@
 package com.mbd.cmscommon.ui.state
 
+import kotlinx.coroutines.CancellationException
+import com.mbd.cmscommon.util.userMessageLogged
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.data.sync.AdminDataBootstrapper
@@ -36,16 +38,29 @@ class GlobalRefreshViewModel @Inject constructor(
 
     val totalTasks: Int = AdminDataBootstrapper.TOTAL_SYNC_TASKS
 
+    /** Which parts of the last refresh failed and why ("Couldn't refresh fees (no connection)."), or null when all synced. */
+    private val _refreshError = MutableStateFlow<String?>(null)
+    val refreshError: StateFlow<String?> = _refreshError.asStateFlow()
+
+    fun clearRefreshError() {
+        _refreshError.value = null
+    }
+
     fun refresh() {
         if (_refreshing.value) return
         viewModelScope.launch {
             _tasksCompleted.value = 0
+            _refreshError.value = null
             _refreshing.value = true
             try {
                 // onTaskDone fires from whichever sync task's own coroutine finishes it, so several
                 // can land concurrently -- update() does an atomic read-modify-write, a plain
                 // `_tasksCompleted.value += 1` here would drop updates under that concurrency.
-                dataBootstrapper.refreshAll(onTaskDone = { _tasksCompleted.update { it + 1 } })
+                _refreshError.value = dataBootstrapper.refreshAllReport(onTaskDone = { _tasksCompleted.update { it + 1 } }).message
+            } catch (c: CancellationException) {
+                throw c
+            } catch (t: Throwable) {
+                _refreshError.value = t.userMessageLogged("GlobalRefreshViewModel.refresh", "Couldn't refresh your data.")
             } finally {
                 _refreshVersion.value += 1
                 _refreshing.value = false

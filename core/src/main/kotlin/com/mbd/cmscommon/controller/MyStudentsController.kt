@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.util.FailureSummary
 import com.mbd.cmscommon.domain.model.AttendanceTally
 import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
@@ -49,8 +50,13 @@ class MyStudentsController(
     fun refresh() {
         val assignment = _selected.value ?: return
         launch("refresh the class list") {
-            runCatching { sessionRepository.syncStudents(assignment.sessionId) }.orLogCritical("MyStudentsController.syncStudents")
-            runCatching { attendanceRepository.syncSummary(assignment.sessionId, assignment.courseCode) }.orLogCritical("MyStudentsController.syncSummary")
+            val failures = FailureSummary.of(
+                listOf(
+                    "the student list" to runCatching { sessionRepository.syncStudents(assignment.sessionId) },
+                    "attendance summary" to runCatching { attendanceRepository.syncSummary(assignment.sessionId, assignment.courseCode) },
+                ),
+            )
+            showError(FailureSummary.describe(failures, "MyStudentsController", prefix = "Couldn't refresh"))
         }
     }
 }

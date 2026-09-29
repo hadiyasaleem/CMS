@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.util.FailureSummary
 import com.mbd.cmscommon.domain.model.Datesheet
 import com.mbd.cmscommon.domain.model.DatesheetSlot
 import com.mbd.cmscommon.domain.model.ExamPaperSubmission
@@ -76,8 +77,11 @@ class ExamsHubController(
                     val paperResult = papersDeferred.await()
 
                     if (version == loadVersion) {
-                        val firstFailure = listOf(paperResult, datesheetResult).firstNotNullOfOrNull { it.exceptionOrNull() }
-                        _loadError.value = firstFailure?.userMessageLogged("Some exam data could not be loaded.")
+                        _loadError.value = FailureSummary.describe(
+                            FailureSummary.of(listOf("submitted papers" to paperResult, "datesheets" to datesheetResult)),
+                            "ExamsHubController",
+                            prefix = "Couldn't refresh",
+                        )
                     }
                 }
             } finally {

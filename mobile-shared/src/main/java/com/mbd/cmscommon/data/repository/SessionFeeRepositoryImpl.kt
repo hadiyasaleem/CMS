@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.repository
 
+import com.mbd.cmscommon.util.CmsException
 import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.local.dao.SessionFeeDao
 import com.mbd.cmscommon.data.mapper.SessionFeeMapper
@@ -34,8 +35,8 @@ class SessionFeeRepositoryImpl @Inject constructor(
         feeDao.getFees(sessionId).map { fee -> SessionFeeMapper.toDomain(fee, feeDao.getHeads(sessionId, fee.shift)) }
 
     override suspend fun saveSessionFee(structure: SessionFeeStructure, updatedBy: String) {
-        require(structure.heads.all { it.label.trim().isNotBlank() }) { "Every fee head needs a label." }
-        require(structure.heads.all { it.amount > 0.0 }) { "Every fee amount must be greater than zero." }
+        if (!(structure.heads.all { it.label.trim().isNotBlank() })) throw CmsException.Validation("Every fee head needs a label.")
+        if (!(structure.heads.all { it.amount > 0.0 })) throw CmsException.Validation("Every fee amount must be greater than zero.")
 
         val shift = structure.shift.name
         val feeDto = SessionFeeDto(

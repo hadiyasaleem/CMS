@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.repository
 
+import com.mbd.cmscommon.util.CmsException
 import com.mbd.cmscommon.auth.RoleResolver
 import com.mbd.cmscommon.data.local.dao.UserDao
 import com.mbd.cmscommon.data.local.entity.UserEntity
@@ -22,9 +23,9 @@ class UserRepositoryImpl @Inject constructor(
     override fun observeCurrentUserRole(): Flow<UserRole?> = roleResolver.observeRole()
 
     override suspend fun getCachedRole(uid: String): UserRole {
-        val user = userDao.getByUid(uid) ?: error("No cached user for $uid")
+        val user = userDao.getByUid(uid) ?: throw CmsException.Auth("Your saved sign-in details are missing. Please sign in again.")
         return roleResolver.resolveRoleFromEntities(user.uid, user.role, user.teacherId, user.linkedStudentId)
-            ?: error("Unable to resolve role for $uid")
+            ?: throw CmsException.Auth("Your account has no role assigned yet. Contact an administrator.")
     }
 
     override suspend fun resolveRole(uid: String): UserRole {
@@ -33,14 +34,15 @@ class UserRepositoryImpl @Inject constructor(
                 eq("email", uid)
                 eq("is_deleted", false)
             }
-        }.decodeList<ProfileDto>().firstOrNull() ?: error("No profile found for $uid")
+        }.decodeList<ProfileDto>().firstOrNull()
+            ?: throw CmsException.NotFound("No CMS profile exists for this account. Contact an administrator to set it up.")
 
         val linkedStudentId = combineStudentId(profile.linkedSessionId, profile.linkedRoll)
         userDao.deleteOthers(uid)
         val teacherEmail = profile.teacherEmail?.takeIf { it.isNotBlank() }
         userDao.upsert(UserEntity(uid, profile.role ?: "", teacherEmail, linkedStudentId, System.currentTimeMillis()))
         return roleResolver.resolveRoleFromEntities(uid, profile.role ?: "", teacherEmail, linkedStudentId)
-            ?: error("Unable to resolve role for $uid")
+            ?: throw CmsException.Auth("Your account has no role assigned yet. Contact an administrator.")
     }
 
     override suspend fun touchLastLogin(uid: String) {

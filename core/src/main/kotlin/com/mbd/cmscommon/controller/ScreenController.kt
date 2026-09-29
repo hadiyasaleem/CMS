@@ -52,6 +52,11 @@ abstract class ScreenController(protected val scope: CoroutineScope) {
         _error.value = null
     }
 
+    /** Shows an already-worded message (e.g. a [com.mbd.cmscommon.util.FailureSummary] that names what failed) as the screen's error. */
+    protected fun showError(message: String?) {
+        _error.value = message
+    }
+
     /** For failures that happen outside [launch], e.g. a platform export step run by the screen. */
     fun reportFailure(t: Throwable, fallback: String) {
         _error.value = t.userMessageLogged(fallback)

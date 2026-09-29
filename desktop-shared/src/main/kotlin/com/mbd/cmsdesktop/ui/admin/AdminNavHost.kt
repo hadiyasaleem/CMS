@@ -1,5 +1,8 @@
 package com.mbd.cmsdesktop.ui.admin
 
+import kotlinx.coroutines.CancellationException
+import com.mbd.cmscommon.util.userMessageLogged
+import com.mbd.cmscommon.ui.components.RefreshErrorDialog
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -68,6 +71,7 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
     val screen by remember { derivedStateOf { backStack.last() } }
 
     var shellRefreshing by remember { mutableStateOf(false) }
+    var refreshError by remember { mutableStateOf<String?>(null) }
     var refreshVersion by remember { mutableStateOf(0) }
     val tasksCompleted = remember { MutableStateFlow(0) }
     val tasksCompletedCount by tasksCompleted.collectAsState()
@@ -93,8 +97,13 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
             tasksCompleted.value = 0
             shellRefreshing = true
             try {
-                component.adminDataBootstrapper().refreshAll(onTaskDone = { tasksCompleted.update { it + 1 } })
+                refreshError = null
+                refreshError = component.adminDataBootstrapper().refreshAllReport(onTaskDone = { tasksCompleted.update { it + 1 } }).message
                 refreshVersion++
+            } catch (c: CancellationException) {
+                throw c
+            } catch (t: Throwable) {
+                refreshError = t.userMessageLogged("AdminNavHost.refresh", "Couldn't refresh your data.")
             } finally {
                 shellRefreshing = false
             }
@@ -104,6 +113,7 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
     if (shellRefreshing) {
         SyncProgressDialog(completed = tasksCompletedCount, total = AdminDataBootstrapper.TOTAL_SYNC_TASKS)
     }
+    RefreshErrorDialog(message = refreshError, onDismiss = { refreshError = null })
 
     val teacherAssignmentsProvider = remember(component) {
         TeacherAssignmentsProvider(component.sessionManager(), component.sessionTimetableRepository(), component.academicSessionRepository(), component.departmentRepository())

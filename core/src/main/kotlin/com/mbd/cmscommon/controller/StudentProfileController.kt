@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.util.FailureSummary
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.Fine
 import com.mbd.cmscommon.domain.model.SessionStudent
@@ -55,7 +56,14 @@ class StudentProfileController(
                 if (profileLoad.isSuccess) _profile.value = profileLoad.getOrNull()
                 finesLoad.getOrNull()?.let { _fines.value = it }
 
-                (rosterSync.exceptionOrNull() ?: fineSync.exceptionOrNull() ?: profileLoad.exceptionOrNull() ?: finesLoad.exceptionOrNull())?.let { throw it }
+                showError(
+                    FailureSummary.describe(
+                        FailureSummary.of(
+                            listOf("student details" to rosterSync, "fines" to fineSync, "your profile" to profileLoad, "saved fines" to finesLoad),
+                        ),
+                        "StudentProfileController",
+                    ),
+                )
             } finally {
                 _loading.value = false
             }

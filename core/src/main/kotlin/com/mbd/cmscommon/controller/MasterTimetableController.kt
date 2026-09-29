@@ -1,5 +1,7 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.util.FailureSummary
+import com.mbd.cmscommon.util.LoadFailure
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.Building
 import com.mbd.cmscommon.domain.model.Department
@@ -254,22 +256,27 @@ class MasterTimetableController(
         _loading.value = false
     }
 
-    fun refresh() = launch {
+    fun refresh() = launch("refresh the master timetable") {
         _loading.value = true
         try {
-            val failures = mutableListOf<Throwable>()
+            val failures = mutableListOf<LoadFailure>()
 
-            runCatching { departmentRepository.sync() }.onFailure { failures += it }
-            val depts = departmentRepository.observeActiveDepartments().first()
+            runCatching { departmentRepository.sync() }.onFailure { failures += LoadFailure("departments", it) }
+            // The local reads can fail too (a broken cache) -- they must show up as a named refresh error, not escape.
+            val depts = runCatching { departmentRepository.observeActiveDepartments().first() }
+                .onFailure { failures += LoadFailure("the department list", it) }
+                .getOrDefault(emptyList())
             depts.forEach { dept ->
-                runCatching { sessionRepository.syncSessionsForDept(dept.deptId) }.onFailure { failures += it }
+                runCatching { sessionRepository.syncSessionsForDept(dept.deptId) }.onFailure { failures += LoadFailure("sessions", it) }
             }
-            val sessionIds = sessionRepository.observeAllSessions().first().map { it.sessionId }.distinct()
+            val sessionIds = runCatching { sessionRepository.observeAllSessions().first().map { it.sessionId }.distinct() }
+                .onFailure { failures += LoadFailure("the session list", it) }
+                .getOrDefault(emptyList())
             sessionIds.forEach { sessionId ->
-                runCatching { timetableRepository.syncSession(sessionId) }.onFailure { failures += it }
+                runCatching { timetableRepository.syncSession(sessionId) }.onFailure { failures += LoadFailure("timetables", it) }
             }
 
-            _refreshError.value = failures.firstOrNull()?.userMessageLogged("Could not refresh the master timetable.")
+            _refreshError.value = FailureSummary.describe(failures, "MasterTimetableController", prefix = "Couldn't refresh")
         } finally {
             _loading.value = false
         }

@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.util.FailureSummary
 import com.mbd.cmscommon.domain.model.AttendanceEntry
 import com.mbd.cmscommon.domain.model.AttendanceStatus
 import com.mbd.cmscommon.domain.model.NotificationTargetRole
@@ -61,13 +62,20 @@ class MarkAttendanceController(
         _alreadyMarked.value = false
         _submitState.value = null
         launch("load the register") {
-            val classRolls = runCatching { studentsForTab(sessionRepository.observeStudents(assignment.sessionId).first(), assignment.classShift) }
-                .getOrDefault(emptyList()).map { it.rollNumber }.toSet()
+            val classRollsLoad = runCatching { studentsForTab(sessionRepository.observeStudents(assignment.sessionId).first(), assignment.classShift) }
+            val classRolls = classRollsLoad.getOrDefault(emptyList()).map { it.rollNumber }.toSet()
             // Attendance rows carry no shift, so keep this class's students only: the other shift's register
             // for the same subject and day must not read as already marked here.
-            val marks = runCatching { attendanceRepository.marksBetween(assignment.sessionId, assignment.courseCode, day, day) }.getOrDefault(emptyList())
+            val marksLoad = runCatching { attendanceRepository.marksBetween(assignment.sessionId, assignment.courseCode, day, day) }
+            val marks = marksLoad.getOrDefault(emptyList())
                 .filter { assignment.classShift == null || it.rollNumber in classRolls }
-            if (marks.isEmpty() || token != loadToken) return@launch // stale: another date/class was picked meanwhile
+            if (token != loadToken) return@launch // stale: another date/class was picked meanwhile
+            // An empty register is only trustworthy if the check itself worked -- otherwise the teacher would mark a day that is already marked.
+            val failures = FailureSummary.of(listOf("the saved register for $day" to marksLoad, "this class's student list" to classRollsLoad))
+            FailureSummary.describe(failures, "MarkAttendanceController")?.let { message ->
+                _submitState.value = Outcome.Error("$message Check your connection before marking this register.", failures.first().cause)
+            }
+            if (marks.isEmpty()) return@launch
             _statuses.value = marks.associate { it.rollNumber to it.status }
             _late.value = marks.filter { it.isLate }.map { it.rollNumber }.toSet()
             _remarks.value = marks.mapNotNull { m -> m.remark?.takeIf { it.isNotBlank() }?.let { m.rollNumber to it } }.toMap()

@@ -48,7 +48,11 @@ fun StudentLinkRequestScreen(component: DesktopAppComponent, onLinked: (UserRole
             availableRollNumbers = null
         } else {
             availableRollNumbers = null
-            availableRollNumbers = runCatching { component.academicSessionRepository().getAvailableRollNumbers(sessionId) }.getOrDefault(emptyList())
+            // An empty list would read as "no roll numbers free", so say when the lookup itself failed.
+            availableRollNumbers = runCatching { component.academicSessionRepository().getAvailableRollNumbers(sessionId) }.getOrElse {
+                refreshError = it.userMessageLogged("UnlinkedStudentScreen.availableRollNumbers", "Couldn't load the available roll numbers.")
+                emptyList()
+            }
         }
     }
 

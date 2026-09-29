@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.util.FailureSummary
 import com.mbd.cmscommon.domain.model.ShiftScope
 import com.mbd.cmscommon.domain.model.SemesterGpa
 import com.mbd.cmscommon.domain.model.SessionStudent
@@ -125,15 +126,24 @@ class SemesterResultsController(
         launch("load the semester results") {
             try {
                 _loadState.value = Outcome.Loading
-                if (fetchRemote) {
-                    runCatching { sessionRepository.syncStudents(sid) }
-                    runCatching { curriculumRepository.syncSession(sid) }
-                    runCatching { marksRepository.syncSession(sid) }
+                val syncFailures = if (fetchRemote) {
+                    FailureSummary.of(
+                        listOf(
+                            "students" to runCatching { sessionRepository.syncStudents(sid) },
+                            "subjects" to runCatching { curriculumRepository.syncSession(sid) },
+                            "marks" to runCatching { marksRepository.syncSession(sid) },
+                        ),
+                    )
+                } else {
+                    emptyList()
                 }
 
                 _subjects.value = curriculumRepository.observeSemesterSubjects(sid, _semester.value).first().map { it.courseCode }
                 _results.value = marksRepository.getSemesterResults(sid, _semester.value).associateBy { it.rollNumber }
-                _loadState.value = Outcome.Success(Unit)
+                // The saved results are shown either way; a failed refresh is reported so they aren't mistaken for up to date.
+                _loadState.value = FailureSummary.describe(syncFailures, "SemesterResultsController", prefix = "Showing saved results. Couldn't refresh")
+                    ?.let { Outcome.Error(it, syncFailures.first().cause) }
+                    ?: Outcome.Success(Unit)
             } catch (t: Throwable) {
                 _loadState.value = Outcome.Error(t.userMessageLogged("Couldn't load the Semester ${_semester.value} results."), t)
             }

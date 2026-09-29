@@ -148,6 +148,7 @@ class AttendanceRecordsViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            // Best-effort: the pickers fall back to the cached departments/sessions; the shell's global refresh reports sync failures.
             runCatching { departmentRepository.sync() }
             val depts = runCatching { departmentRepository.observeActiveDepartments().first() }.getOrDefault(emptyList())
             depts.forEach { runCatching { sessionRepository.syncSessionsForDept(it.deptId) } }

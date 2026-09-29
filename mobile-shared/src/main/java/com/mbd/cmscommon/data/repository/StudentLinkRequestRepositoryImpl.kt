@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.repository
 
+import com.mbd.cmscommon.util.CmsException
 import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.local.dao.AcademicSessionDao
 import com.mbd.cmscommon.data.local.dao.DepartmentDao
@@ -109,24 +110,24 @@ class StudentLinkRequestRepositoryImpl @Inject constructor(
         message: String?,
         requestedByUid: String?,
     ) {
-        require(requestedByUid != null && FieldValidators.emailError(requestedByUid, false) == null) { "A valid account email is required." }
-        require(sessionId.isNotBlank()) { "Choose an academic session." }
+        if (requestedByUid == null || FieldValidators.emailError(requestedByUid, false) != null) throw CmsException.Validation("A valid account email is required.")
+        if (sessionId.isBlank()) throw CmsException.Validation("Choose an academic session.")
 
         val session = sessionDao.getById(sessionId.trim())
             ?.takeUnless { it.isDeleted }
-            ?: error("The selected academic session is no longer available.")
+            ?: throw CmsException.NotFound("The selected academic session is no longer available.")
         val department = departmentDao.getById(session.deptId)
             ?.takeUnless { it.isDeleted }
-            ?: error("The selected session's department is no longer available.")
+            ?: throw CmsException.NotFound("The selected session's department is no longer available.")
 
         val normalizedRoll = FieldValidators.normalizeRollNumber(rollNumber)
         FieldValidators.rollNumberError(normalizedRoll, department.code, session.startYear)?.let { throw IllegalArgumentException(it) }
         FieldValidators.nameError(name, "Full name")?.let { throw IllegalArgumentException(it) }
         FieldValidators.cnicError(cnic, true)?.let { throw IllegalArgumentException(it) }
-        require(FieldValidators.isoDateError(dob, false, "date of birth", latest = LocalDate.now()) == null) { "Choose a valid date of birth." }
-        require((universityRoll ?: "").trim().length <= 40) { "University roll number must not exceed 40 characters." }
-        require((registrationNo ?: "").trim().length <= 40) { "Registration number must not exceed 40 characters." }
-        require((message ?: "").trim().length <= 500) { "Message must not exceed 500 characters." }
+        if (FieldValidators.isoDateError(dob, false, "date of birth", latest = LocalDate.now()) != null) throw CmsException.Validation("Choose a valid date of birth.")
+        if ((universityRoll ?: "").trim().length > 40) throw CmsException.Validation("University roll number must not exceed 40 characters.")
+        if ((registrationNo ?: "").trim().length > 40) throw CmsException.Validation("Registration number must not exceed 40 characters.")
+        if ((message ?: "").trim().length > 500) throw CmsException.Validation("Message must not exceed 500 characters.")
 
         val dto = StudentLinkRequestDto(
             requestedByEmail = requestedByUid,
@@ -146,13 +147,13 @@ class StudentLinkRequestRepositoryImpl @Inject constructor(
 
     override suspend fun approveRequest(requestId: String, reviewedByUid: String) {
         val request = requestDao.getById(requestId)
-            ?: error("Link request $requestId is not available in the local cache.")
+            ?: throw CmsException.NotFound("This link request is not available on this device yet. Refresh and try again.")
 
         val roll = request.rollNumberClaimed?.trim() ?: ""
-        require(roll.isNotBlank()) { "Link request $requestId has no roll number" }
+        if (roll.isBlank()) throw CmsException.Validation("This link request has no roll number, so it cannot be approved. Ask the student to submit it again.")
         val requester = request.requestedByUid
         val sessionId = request.sessionIdClaimed?.trim() ?: ""
-        require(sessionId.isNotBlank()) { "Link request $requestId has no session" }
+        if (sessionId.isBlank()) throw CmsException.Validation("This link request has no session selected, so it cannot be approved. Ask the student to submit it again.")
 
         // Delegated to a security-definer RPC: session_students and profiles are otherwise
         // admin-only tables, so a permitted-but-non-admin teacher's direct writes to them were
@@ -176,7 +177,7 @@ class StudentLinkRequestRepositoryImpl @Inject constructor(
     }
 
     override suspend fun rejectRequest(requestId: String, reviewedByUid: String, reason: String?) {
-        require((reason ?: "").trim().length <= 500) { "Keep the rejection reason within 500 characters." }
+        if ((reason ?: "").trim().length > 500) throw CmsException.Validation("Keep the rejection reason within 500 characters.")
 
         postgrest.from(SupabaseTables.STUDENT_LINK_REQUESTS).update({
             set("status", "REJECTED")

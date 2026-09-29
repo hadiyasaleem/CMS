@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.navigation
 
+import com.mbd.cmscommon.ui.components.RefreshErrorDialog
 import android.app.Activity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -44,6 +45,8 @@ fun RoleBottomNavScaffold(
     if (refreshing) {
         SyncProgressDialog(completed = tasksCompleted, total = refreshVm.totalTasks)
     }
+    val refreshError by refreshVm.refreshError.collectAsState()
+    RefreshErrorDialog(message = refreshError, onDismiss = refreshVm::clearRefreshError)
 
     Scaffold(
         topBar = {

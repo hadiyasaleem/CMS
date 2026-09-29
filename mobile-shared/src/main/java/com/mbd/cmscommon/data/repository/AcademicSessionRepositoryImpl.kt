@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.repository
 
+import com.mbd.cmscommon.util.CmsException
 import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.local.dao.AcademicSessionDao
 import com.mbd.cmscommon.data.local.dao.SessionPeriodDao
@@ -154,7 +155,7 @@ class AcademicSessionRepositoryImpl @Inject constructor(
         maxStudents: Int,
         programType: ProgramType,
     ): AcademicSession {
-        require(maxStudents in 1..AcademicSession.MAX_CAPACITY) { "Student capacity must be between 1 and ${AcademicSession.MAX_CAPACITY}." }
+        if (maxStudents !in 1..AcademicSession.MAX_CAPACITY) throw CmsException.Validation("Student capacity must be between 1 and ${AcademicSession.MAX_CAPACITY}.", "maxStudents")
         val startSemester = programType.semesterRange.first
         val session = AcademicSession(
             sessionId = AcademicSession.buildId(deptId, startYear, programType),
@@ -186,7 +187,7 @@ class AcademicSessionRepositoryImpl @Inject constructor(
     }
 
     override suspend fun updateShiftMode(sessionId: String, shiftMode: ShiftMode, maxStudents: Int) {
-        require(maxStudents in 1..AcademicSession.MAX_CAPACITY) { "Student capacity must be between 1 and ${AcademicSession.MAX_CAPACITY}." }
+        if (maxStudents !in 1..AcademicSession.MAX_CAPACITY) throw CmsException.Validation("Student capacity must be between 1 and ${AcademicSession.MAX_CAPACITY}.", "maxStudents")
         // The database (trg_session_shift_change) is the authority: it rejects dropping a shift that still
         // has data, or a capacity that would push an existing roll number out of its shift's block.
         postgrest.from(SupabaseTables.ACADEMIC_SESSIONS).update({
@@ -250,7 +251,7 @@ class AcademicSessionRepositoryImpl @Inject constructor(
         val maxStudents = cachedSession?.maxStudents?.takeIf { it > 0 } ?: AcademicSession.MAX_STUDENTS
         val count = studentDao.countForSession(sessionId)
         if (count >= maxStudents) {
-            error("Session is full ($maxStudents students max).")
+            throw CmsException.Conflict("This session is full ($maxStudents students maximum). Raise the session capacity before adding more students.")
         }
         val roll = FieldValidators.normalizeRollNumber(rollNumber)
         // Friendly pre-check of the roll-number block; the database enforces the same rule.

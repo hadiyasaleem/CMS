@@ -69,6 +69,8 @@ class StudentHomeController(
     }.stateIn(scope, SharingStarted.WhileSubscribed(5000), StudentHomeUi())
 
     fun refresh() = launch("refresh your home screen") {
+        // Best-effort: these screens read the local cache, and the shell's global refresh (SyncReport) is what tells the user
+        // which tables failed to sync -- so a failure here is logged (CRITICAL only) but not shown a second time.
         runCatching { attendanceRepository.syncSession(sessionId) }.orLogCritical("StudentHomeController.refresh.attendance")
         runCatching { timetableRepository.syncSession(sessionId) }.orLogCritical("StudentHomeController.refresh.timetable")
     }

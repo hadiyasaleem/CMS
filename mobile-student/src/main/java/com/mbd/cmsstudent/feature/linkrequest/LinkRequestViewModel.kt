@@ -51,7 +51,13 @@ class LinkRequestViewModel @Inject constructor(
         } else {
             flow {
                 emit(null)
-                emit(runCatching { sessionRepository.getAvailableRollNumbers(sessionId) }.getOrDefault(emptyList()))
+                // An empty list would read as "no roll numbers free", so say when the lookup itself failed.
+                emit(
+                    runCatching { sessionRepository.getAvailableRollNumbers(sessionId) }.getOrElse {
+                        _refreshError.value = it.userMessageLogged("LinkRequestViewModel.availableRollNumbers", "Couldn't load the available roll numbers.")
+                        emptyList()
+                    },
+                )
             }
         }
     }

@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.ui.student
 
+import com.mbd.cmscommon.ui.components.RefreshErrorDialog
 import com.mbd.cmscommon.controller.observeStudentAudience
 import kotlinx.coroutines.flow.flatMapLatest
 import com.mbd.cmscommon.controller.observeShiftOf
@@ -70,6 +71,7 @@ private fun StudentShell(role: UserRole.LinkedStudent, component: DesktopAppComp
     var selectedTab by remember { mutableStateOf(StudentTab.Home) }
     var screen by remember { mutableStateOf<StudentScreen>(StudentTab.Home.root) }
     var shellRefreshing by remember { mutableStateOf(false) }
+    var refreshError by remember { mutableStateOf<String?>(null) }
     var refreshVersion by remember { mutableIntStateOf(0) }
     val tasksCompleted = remember { MutableStateFlow(0) }
     val tasksCompletedCount by tasksCompleted.collectAsState()
@@ -91,7 +93,8 @@ private fun StudentShell(role: UserRole.LinkedStudent, component: DesktopAppComp
             tasksCompleted.value = 0
             shellRefreshing = true
             try {
-                component.adminDataBootstrapper().refreshAll(onTaskDone = { tasksCompleted.update { it + 1 } })
+                refreshError = null
+                refreshError = component.adminDataBootstrapper().refreshAllReport(onTaskDone = { tasksCompleted.update { it + 1 } }).message
                 refreshVersion += 1
             } finally {
                 shellRefreshing = false
@@ -102,6 +105,7 @@ private fun StudentShell(role: UserRole.LinkedStudent, component: DesktopAppComp
     if (shellRefreshing) {
         SyncProgressDialog(completed = tasksCompletedCount, total = AdminDataBootstrapper.TOTAL_SYNC_TASKS)
     }
+    RefreshErrorDialog(message = refreshError, onDismiss = { refreshError = null })
 
     fun open(target: StudentScreen) {
         screen = target

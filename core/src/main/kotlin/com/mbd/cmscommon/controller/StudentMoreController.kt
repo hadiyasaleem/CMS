@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.util.FailureSummary
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.CalendarViewerContext
 import com.mbd.cmscommon.domain.model.CalendarViewerRole
@@ -53,6 +54,7 @@ class StudentMoreController(
             _loading.value = true
             _loadError.value = null
             // The roster row's shift; before it syncs, the session's (only or first) shift.
+            // Best-effort: a missing shift only widens the calendar audience; the profile failure itself is reported below.
             val shift = runCatching { sessionRepository.getStudentProfile(sessionId, rollNumber)?.shift }.getOrNull()
                 ?: runCatching { sessionRepository.observeSession(sessionId).first()?.shifts?.firstOrNull() }.getOrNull()
             coroutineScope {
@@ -81,7 +83,6 @@ class StudentMoreController(
                 val feeResult = fee.await()
                 val profileResult = profile.await()
                 val unreadResult = unread.await()
-                val results = listOf(eventResult, feeResult, profileResult, unreadResult)
 
                 if (request == version) {
                     val viewer = CalendarViewerContext(CalendarViewerRole.STUDENT, departmentId, setOf(sessionId), shift)
@@ -93,8 +94,17 @@ class StudentMoreController(
                         viewer,
                         LocalDate.now(),
                     )
-                    _loadError.value = results.firstNotNullOfOrNull { it.exceptionOrNull() }
-                        ?.userMessageLogged("Some portal summaries could not be loaded.")
+                    _loadError.value = FailureSummary.describe(
+                        FailureSummary.of(
+                            listOf(
+                                "calendar events" to eventResult,
+                                "fee details" to feeResult,
+                                "your profile" to profileResult,
+                                "unread notifications" to unreadResult,
+                            ),
+                        ),
+                        "StudentMoreController",
+                    )
                     _loading.value = false
                 }
             }

@@ -76,6 +76,7 @@ class SessionManager @Inject constructor(
     fun signOut() {
         LogContext.accountEmail = null
         scope.launch {
+            // Best-effort: the local session is already cleared; a failed server-side revoke (e.g. offline) must not block signing out.
             runCatching { auth.signOut() }
         }
     }

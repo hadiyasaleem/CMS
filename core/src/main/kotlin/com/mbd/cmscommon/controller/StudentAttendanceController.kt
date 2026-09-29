@@ -48,6 +48,7 @@ class StudentAttendanceController(
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), 0f)
 
     fun refresh() = launch("refresh your attendance") {
+        // Best-effort: the shell's global refresh (SyncReport) already tells the user which tables failed to sync.
         runCatching { attendanceRepository.syncSession(sessionId) }.orLogCritical("StudentAttendanceController.refresh.attendance")
         runCatching { curriculumRepository.syncSession(sessionId) }.orLogCritical("StudentAttendanceController.refresh.curriculum")
     }

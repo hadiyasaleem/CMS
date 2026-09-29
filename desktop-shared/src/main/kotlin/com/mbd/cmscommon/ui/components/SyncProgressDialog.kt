@@ -58,3 +58,14 @@ fun SyncProgressDialog(completed: Int, total: Int) {
         }
     }
 }
+
+/**
+ * Shown after a manual refresh when part of it failed: [message] (from `SyncReport.message`) names what
+ * couldn't be refreshed and why, e.g. "Couldn't refresh fees (no connection)." Renders nothing when null.
+ */
+@Composable
+fun RefreshErrorDialog(message: String?, onDismiss: () -> Unit) {
+    if (message != null) {
+        CmsErrorDialog(message = message, title = "Refresh incomplete", onDismiss = onDismiss)
+    }
+}

@@ -1,5 +1,6 @@
 package com.mbd.cmsstudent.feature.profile
 
+import com.mbd.cmscommon.util.FailureSummary
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.auth.SessionManager
@@ -63,11 +64,9 @@ class ProfileViewModel @Inject constructor(
                     val department = departmentResult.orLogCritical("ProfileViewModel.getDepartment")
                     val profile = profileResult.orLogCritical("ProfileViewModel.getStudentProfile")
                     val fines = finesResult.orLogCritical("ProfileViewModel.getFines", emptyList())
-                    _error.value = if (departmentResult.isFailure || profileResult.isFailure || finesResult.isFailure) {
-                        "Some profile details could not be loaded. Pull to refresh to try again."
-                    } else {
-                        null
-                    }
+                    _error.value = FailureSummary.describe(
+                        FailureSummary.of(listOf("your department" to departmentResult, "your profile" to profileResult, "fines" to finesResult)),
+                    )
                     StudentProfileScreenState(context, department, profile, fines)
                 }
             }

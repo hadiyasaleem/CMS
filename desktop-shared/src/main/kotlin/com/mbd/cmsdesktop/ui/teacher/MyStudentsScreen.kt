@@ -34,6 +34,7 @@ fun MyStudentsScreen(
     val selected by controller.selected.collectAsState()
     val roster by controller.roster.collectAsState()
     val tallies by controller.tallies.collectAsState()
+    val syncError by controller.error.collectAsState()
     val assignments by assignmentsProvider.observeAssignmentsFor(teacherId).collectAsState(initial = emptyList())
 
     LaunchedEffect(assignments, selected) {
@@ -52,5 +53,6 @@ fun MyStudentsScreen(
         students = roster,
         tallies = tallies,
         onSelectAssignment = controller::select,
+        syncError = syncError,
     )
 }

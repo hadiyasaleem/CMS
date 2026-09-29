@@ -1,5 +1,7 @@
 package com.mbd.cmsdesktop.ui.student
 
+import kotlinx.coroutines.CancellationException
+import com.mbd.cmscommon.util.userMessageLogged
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -38,10 +40,14 @@ fun StudentOwnProfileScreen(
     val profile by controller.profile.collectAsState()
     val fines by controller.fines.collectAsState()
     val loading by controller.loading.collectAsState()
+    val loadError by controller.error.collectAsState()
+    var resetMessage by remember { mutableStateOf<String?>(null) }
+    var resetError by remember { mutableStateOf<String?>(null) }
 
     val accountKey = sessionManager.accountKey.orEmpty()
     var department by remember { mutableStateOf<Department?>(null) }
     LaunchedEffect(sessionId) {
+        // Best-effort: the department name is only a label; the profile itself reports its own load failures.
         department = runCatching { departmentRepository.getDepartment(StudentIdCodec.deptIdOf(sessionId)) }.getOrNull()
     }
 
@@ -57,10 +63,23 @@ fun StudentOwnProfileScreen(
         accountKey = accountKey,
         fines = fines,
         loading = loading && me == null,
-        errorMessage = null,
-        actionMessage = null,
+        errorMessage = resetError ?: loadError,
+        actionMessage = resetMessage,
         onRetry = controller::refresh,
-        onResetPassword = { scope.launch { runCatching { sessionManager.sendPasswordReset(accountKey) } } },
+        onResetPassword = {
+            scope.launch {
+                try {
+                    sessionManager.sendPasswordReset(accountKey)
+                    resetError = null
+                    resetMessage = "Password reset email sent."
+                } catch (c: CancellationException) {
+                    throw c
+                } catch (t: Throwable) {
+                    resetMessage = null
+                    resetError = t.userMessageLogged("StudentOwnProfileScreen.resetPassword", "Couldn't send the password reset email to $accountKey.")
+                }
+            }
+        },
         onSignOut = onSignOut,
     )
 }

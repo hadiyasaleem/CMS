@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.repository
 
+import com.mbd.cmscommon.util.orLogCritical
 import com.mbd.cmscommon.data.remote.PgTime
 import com.mbd.cmscommon.data.remote.SupabaseTables
 import com.mbd.cmscommon.data.remote.dto.MarkEditRequestDto
@@ -107,12 +108,12 @@ class MarkEditRequestRepositoryImpl @Inject constructor(
         sessionId = sessionId.orEmpty(),
         semester = semester,
         courseCode = courseCode.orEmpty(),
-        examType = runCatching { ExamType.valueOf(examType.orEmpty()) }.getOrDefault(ExamType.MIDTERM),
+        examType = runCatching { ExamType.valueOf(examType.orEmpty()) }.orLogCritical("MarkEditRequest.examType", ExamType.MIDTERM),
         rollNumber = rollNumber.orEmpty(),
         currentScore = currentScore,
         requestedScore = requestedScore,
         reason = reason,
-        status = runCatching { MarkEditStatus.valueOf(status.orEmpty()) }.getOrDefault(MarkEditStatus.PENDING),
+        status = runCatching { MarkEditStatus.valueOf(status.orEmpty()) }.orLogCritical("MarkEditRequest.status", MarkEditStatus.PENDING),
         requestedBy = requestedBy,
         reviewedBy = reviewedBy,
         requestedAt = PgTime.parseOrEpoch(requestedAt),

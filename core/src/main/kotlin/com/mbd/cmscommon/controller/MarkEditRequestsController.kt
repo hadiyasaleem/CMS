@@ -188,6 +188,7 @@ class MarkEditRequestsController(
     private suspend fun detailsFor(request: MarkEditRequest): Pair<String, MarkEditRequestDetails> =
         request.id to lookupDetails(request.sessionId, request.semester, request.courseCode, request.rollNumber)
 
+    // Best-effort: names are display sugar for the request row (it falls back to the roll number / course code); failures are logged.
     private suspend fun lookupDetails(sessionId: String, semester: Int, courseCode: String, rollNumber: String): MarkEditRequestDetails {
         val studentName = runCatching {
             sessionRepository.observeStudents(sessionId).first()

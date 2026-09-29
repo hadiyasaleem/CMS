@@ -13,6 +13,7 @@ fun MyStudentsScreen(viewModel: MyStudentsViewModel = hiltViewModel()) {
     val selected by viewModel.selected.collectAsState()
     val students by viewModel.students.collectAsState()
     val tallies by viewModel.tallies.collectAsState()
+    val syncError by viewModel.syncError.collectAsState()
 
     TeacherStudentRosterWorkspace(
 
@@ -22,5 +23,6 @@ fun MyStudentsScreen(viewModel: MyStudentsViewModel = hiltViewModel()) {
         students = students,
         tallies = tallies,
         onSelectAssignment = viewModel::selectAssignment,
+        syncError = syncError,
     )
 }

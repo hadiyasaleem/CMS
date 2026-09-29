@@ -88,6 +88,7 @@ class DatesheetEditorController(
         // semester is available, prefill one unscheduled paper per subject.
         launch("load the datesheet papers") {
             val current = sheet.filterNotNull().first()
+            // Best-effort: only refreshes the subject list offered in the slot picker; the cached subjects still work.
             runCatching { curriculumRepository.syncSession(current.sessionId) }.orLogCritical("DatesheetEditorController.syncCurriculum")
             val currentSubjects = curriculumRepository.observeSemesterSubjects(current.sessionId, current.semester).first()
             val currentSlots = datesheetRepository.observeSlots(datesheetId).first()

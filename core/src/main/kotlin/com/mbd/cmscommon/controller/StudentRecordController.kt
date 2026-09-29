@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.util.FailureSummary
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.AttendanceTally
 import com.mbd.cmscommon.domain.model.Department
@@ -70,23 +71,39 @@ class StudentRecordController(
             if (profile == null) return@launch
             val session = sessionRepository.observeSession(sessionId).first()
             val department = session?.let { s -> departmentRepository.observeActiveDepartments().first().firstOrNull { it.deptId == s.deptId } }
-            // Each block below is optional: a missing cache for one area shouldn't hide the rest of the record.
-            val subjects = runCatching { curriculumRepository.observeSessionSubjects(sessionId).first() }
-                .orLogCritical("StudentRecordController.subjects").orEmpty()
-            val fines = runCatching { fineRepository.getFines(sessionId, rollNumber) }.orLogCritical("StudentRecordController.fines").orEmpty()
+            // Each block below is optional: a missing cache for one area shouldn't hide the rest of the record,
+            // but the areas that could not be read are named in the error so an empty section isn't mistaken for "no data".
+            val subjectsLoad = runCatching { curriculumRepository.observeSessionSubjects(sessionId).first() }
+            val finesLoad = runCatching { fineRepository.getFines(sessionId, rollNumber) }
+            val attendanceLoad = runCatching { attendanceRepository.observeStudentTallies(sessionId, rollNumber).first() }
+            val marksLoad = runCatching { marksRepository.observeStudentMarks(sessionId, rollNumber).first() }
+            val resultsLoad = runCatching { marksRepository.getSemesterGpa(sessionId, rollNumber) }
+            val feeLoad = runCatching { feeRepository.getSessionFee(sessionId, profile.shift) }
+            showError(
+                FailureSummary.describe(
+                    FailureSummary.of(
+                        listOf(
+                            "subjects" to subjectsLoad,
+                            "fines" to finesLoad,
+                            "attendance" to attendanceLoad,
+                            "marks" to marksLoad,
+                            "results" to resultsLoad,
+                            "fee details" to feeLoad,
+                        ),
+                    ),
+                    "StudentRecordController",
+                ),
+            )
             _record.value = StudentRecord(
                 profile = profile,
                 session = session,
                 department = department,
-                subjectNames = subjects.associate { it.courseCode to it.name },
-                attendance = runCatching { attendanceRepository.observeStudentTallies(sessionId, rollNumber).first() }
-                    .orLogCritical("StudentRecordController.attendance").orEmpty(),
-                marks = runCatching { marksRepository.observeStudentMarks(sessionId, rollNumber).first() }
-                    .orLogCritical("StudentRecordController.marks").orEmpty(),
-                results = runCatching { marksRepository.getSemesterGpa(sessionId, rollNumber) }
-                    .orLogCritical("StudentRecordController.results").orEmpty().sortedBy { it.semester },
-                feeStructure = runCatching { feeRepository.getSessionFee(sessionId, profile.shift) }.orLogCritical("StudentRecordController.fees"),
-                snapshot = studentProfileSnapshot(profile, fines),
+                subjectNames = subjectsLoad.getOrNull().orEmpty().associate { it.courseCode to it.name },
+                attendance = attendanceLoad.getOrNull().orEmpty(),
+                marks = marksLoad.getOrNull().orEmpty(),
+                results = resultsLoad.getOrNull().orEmpty().sortedBy { it.semester },
+                feeStructure = feeLoad.getOrNull(),
+                snapshot = studentProfileSnapshot(profile, finesLoad.getOrNull().orEmpty()),
             )
         } finally {
             _loading.value = false

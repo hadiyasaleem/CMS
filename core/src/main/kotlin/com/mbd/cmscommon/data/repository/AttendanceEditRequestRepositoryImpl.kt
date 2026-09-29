@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.repository
 
+import com.mbd.cmscommon.util.orLogCritical
 import com.mbd.cmscommon.data.remote.PgTime
 import com.mbd.cmscommon.data.remote.SupabaseTables
 import com.mbd.cmscommon.data.remote.dto.AttendanceEditRequestDto
@@ -105,12 +106,12 @@ class AttendanceEditRequestRepositoryImpl @Inject constructor(
         courseCode = courseCode.orEmpty(),
         date = date?.let(LocalDate::parse) ?: LocalDate.EPOCH,
         rollNumber = rollNumber.orEmpty(),
-        currentStatus = currentStatus?.let { runCatching { AttendanceStatus.valueOf(it) }.getOrNull() },
+        currentStatus = currentStatus?.let { runCatching { AttendanceStatus.valueOf(it) }.orLogCritical("AttendanceEditRequest.currentStatus") },
         currentIsLate = currentIsLate,
-        requestedStatus = runCatching { AttendanceStatus.valueOf(requestedStatus.orEmpty()) }.getOrDefault(AttendanceStatus.PRESENT),
+        requestedStatus = runCatching { AttendanceStatus.valueOf(requestedStatus.orEmpty()) }.orLogCritical("AttendanceEditRequest.requestedStatus", AttendanceStatus.PRESENT),
         requestedIsLate = requestedIsLate,
         reason = reason,
-        status = runCatching { MarkEditStatus.valueOf(status.orEmpty()) }.getOrDefault(MarkEditStatus.PENDING),
+        status = runCatching { MarkEditStatus.valueOf(status.orEmpty()) }.orLogCritical("AttendanceEditRequest.status", MarkEditStatus.PENDING),
         requestedBy = requestedBy,
         reviewedBy = reviewedBy,
         requestedAt = PgTime.parseOrEpoch(requestedAt),

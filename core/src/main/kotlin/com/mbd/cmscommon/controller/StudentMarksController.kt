@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.util.FailureSummary
 import com.mbd.cmscommon.domain.model.ExamType
 import com.mbd.cmscommon.domain.model.SubjectExamScore
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
@@ -59,11 +60,13 @@ class StudentMarksController(
         _refreshing.value = true
         launch("refresh your marks") {
             try {
-                val failures = listOfNotNull(
-                    runCatching { marksRepository.syncSession(sessionId) }.exceptionOrNull(),
-                    runCatching { curriculumRepository.syncSession(sessionId) }.exceptionOrNull(),
+                val failures = FailureSummary.of(
+                    listOf(
+                        "marks" to runCatching { marksRepository.syncSession(sessionId) },
+                        "subjects" to runCatching { curriculumRepository.syncSession(sessionId) },
+                    ),
                 )
-                failures.firstOrNull()?.let { throw it }
+                showError(FailureSummary.describe(failures, "StudentMarksController", prefix = "Couldn't refresh"))
             } finally {
                 _refreshing.value = false
             }

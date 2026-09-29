@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.controller
 
+import com.mbd.cmscommon.util.FailureSummary
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.AtRiskStudent
 import com.mbd.cmscommon.domain.model.CalendarEvent
@@ -100,9 +101,17 @@ class RecordsHubController(
                     _filterOptions.value = departmentsDeferred.await().getOrNull()?.let { ScopeFilterOptions.of(it, sessions) }
                         ?: ScopeFilterOptions(sessions.map { it.deptId to it.deptId.uppercase() }.distinct(), sessions)
                     publish()
-                    _loadError.value = listOf(sessionsResult, eventsResult, datesheetsResult, risksResult)
-                        .firstNotNullOfOrNull { it.exceptionOrNull() }
-                        ?.userMessageLogged("Some record summaries could not be loaded.")
+                    _loadError.value = FailureSummary.describe(
+                        FailureSummary.of(
+                            listOf(
+                                "sessions" to sessionsResult,
+                                "calendar events" to eventsResult,
+                                "datesheets" to datesheetsResult,
+                                "at-risk students" to risksResult,
+                            ),
+                        ),
+                        "RecordsHubController",
+                    )
                     _loading.value = false
                 }
             }
