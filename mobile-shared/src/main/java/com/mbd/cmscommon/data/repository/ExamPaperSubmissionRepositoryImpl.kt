@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.repository
 
+import com.mbd.cmscommon.util.orThrowValidation
 import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.local.dao.ExamPaperSubmissionDao
 import com.mbd.cmscommon.data.mapper.ExamPaperSubmissionMapper
@@ -48,7 +49,7 @@ class ExamPaperSubmissionRepositoryImpl @Inject constructor(
         fileName: String,
         description: String?,
     ) {
-        examPaperUploadError(fileName, fileBytes)?.let { throw IllegalArgumentException(it) }
+        examPaperUploadError(fileName, fileBytes).orThrowValidation("file")
 
         // Path is keyed by the slot itself (not a timestamp), and always .pdf (the bucket only
         // allows application/pdf) -- so a reupload always targets the same object and `upsert = true`

@@ -98,7 +98,7 @@ class SessionStudentsController(
                         try {
                             // A "Shift" column wins; otherwise the roll number's block decides.
                             val shift = row.shift ?: currentSession?.let { shiftForRoll(it, normalizedRoll) } ?: Session.MORNING
-                            currentSession?.let { rollBlockError(it, shift, normalizedRoll) }?.let { throw IllegalArgumentException(it) }
+                            currentSession?.let { rollBlockError(it, shift, normalizedRoll) }.orThrowValidation("rollNumber")
                             repo.addStudent(sessionId, normalizedRoll, normalizedName, shift, null, null)
                             succeeded++
                         } catch (t: Throwable) {

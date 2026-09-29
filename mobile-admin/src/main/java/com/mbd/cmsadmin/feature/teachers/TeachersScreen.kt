@@ -1,5 +1,6 @@
 package com.mbd.cmsadmin.feature.teachers
 
+import com.mbd.cmscommon.util.CmsException
 import com.mbd.cmscommon.util.FileReadErrors
 import com.mbd.cmscommon.util.rememberDocumentExport
 import android.graphics.Bitmap
@@ -50,9 +51,9 @@ fun TeachersScreen(onOpenTeacher: (String) -> Unit, viewModel: TeachersViewModel
             scope.launch {
                 try {
                     val bytes = withContext(Dispatchers.IO) { context.contentResolver.openInputStream(uri)?.use { it.readBytes() } }
-                        ?: throw IllegalStateException("Couldn't read the selected photo.")
+                        ?: throw CmsException.Validation("Couldn't read the selected photo.", "file")
                     val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
-                        ?: throw IllegalStateException("Couldn't decode the selected photo.")
+                        ?: throw CmsException.Validation("Couldn't decode the selected photo.", "file")
                     onPicked(bitmap)
                 } catch (t: Throwable) {
                     viewModel.reportPhotoPickFailure(FileReadErrors.asCmsException(t, "photo"))

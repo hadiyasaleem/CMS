@@ -1,5 +1,6 @@
 package com.mbd.cmsteacher.feature.attendance
 
+import com.mbd.cmscommon.util.CmsException
 import com.mbd.cmscommon.util.FileReadErrors
 import android.content.Context
 import androidx.lifecycle.SavedStateHandle
@@ -132,7 +133,7 @@ class AttendanceHistoryViewModel @Inject constructor(
             _requestState.value = Outcome.Loading
             try {
                 val semester = sessionRepository.observeSession(sessionId).first()?.currentSemester
-                    ?: error("This session could not be found.")
+                    ?: throw CmsException.NotFound("This session could not be found. Refresh and try again.")
                 editRequestRepository.submitRequest(
                     sessionId = sessionId,
                     semester = semester,

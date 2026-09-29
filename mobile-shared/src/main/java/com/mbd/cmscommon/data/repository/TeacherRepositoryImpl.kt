@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.repository
 
+import com.mbd.cmscommon.util.orThrowValidation
 import com.mbd.cmscommon.auth.AdminUserProvisioner
 import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.local.dao.TeacherDao
@@ -120,7 +121,7 @@ class TeacherRepositoryImpl @Inject constructor(
     }
 
     override suspend fun uploadPhoto(teacherId: String, imageBytes: ByteArray, mimeType: String) {
-        profilePhotoUploadError(mimeType, imageBytes)?.let { throw IllegalArgumentException(it) }
+        profilePhotoUploadError(mimeType, imageBytes).orThrowValidation("photo")
         val path = "teachers/$teacherId.${profilePhotoExtension(mimeType)}"
         storage.from(SupabaseTables.BUCKET_PHOTOS).upload(path, imageBytes) { upsert = true }
         postgrest.from(SupabaseTables.TEACHERS).update({ set("photo_path", path) }) {

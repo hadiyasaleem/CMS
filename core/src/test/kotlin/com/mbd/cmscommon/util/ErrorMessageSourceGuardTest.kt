@@ -87,4 +87,18 @@ class ErrorMessageSourceGuardTest {
         val hits = scan(sources()) { Regex("""CmsErrorDialog\([^)]*title\s*=\s*\"(Error|Oops|Something went wrong)\"""").containsMatchIn(it) }
         assertNone("CmsErrorDialog with a non-descriptive title", hits)
     }
+
+    @Test
+    fun userFacingFailuresAreThrownAsTypedCmsExceptions() {
+        // IllegalArgument/IllegalState only reach the user through ErrorClassifier's "safe message" sniffing, and turn into a
+        // Ref-code error the moment the text contains a word it distrusts. Throw CmsException.Validation/NotFound/Conflict
+        // (or call orThrowValidation / requireValid) so the wording always survives.
+        // Developer-facing setup/programming errors thrown before any screen exists, never shown as a user message.
+        val programmingErrors = setOf("SupabaseModule.kt", "DocumentExporter.kt")
+        val hits = scan(sources(), allowed = { it.name == "ErrorClassifier.kt" || it.name in programmingErrors }) {
+            Regex("""throw (IllegalArgumentException|IllegalStateException)\(""").containsMatchIn(it) ||
+                Regex("""(^|[^.\w])(error|require|check)\(""").containsMatchIn(it)
+        }
+        assertNone("Untyped throw (IllegalArgument/IllegalState/error()/require()/check()) -- use CmsException", hits)
+    }
 }

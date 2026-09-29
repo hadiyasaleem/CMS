@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.repository
 
+import com.mbd.cmscommon.util.orThrowValidation
 import com.mbd.cmscommon.util.CmsException
 import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.local.dao.AcademicSessionDao
@@ -257,7 +258,7 @@ class AcademicSessionRepositoryImpl @Inject constructor(
         // Friendly pre-check of the roll-number block; the database enforces the same rule.
         val mode = parseShiftMode(cachedSession?.shiftMode)
         if (mode != null) {
-            rollBlockError(mode, maxStudents, shift, roll)?.let { throw IllegalArgumentException(it) }
+            rollBlockError(mode, maxStudents, shift, roll).orThrowValidation("rollNumber")
         }
         val dto = SessionStudentDto(sessionId = sessionId, rollNumber = roll, name = name.trim(), shift = shift.name, gpa = gpa, cgpa = cgpa)
         postgrest.from(SupabaseTables.SESSION_STUDENTS).upsert(dto) { onConflict = "session_id,roll_number" }
@@ -534,7 +535,7 @@ class AcademicSessionRepositoryImpl @Inject constructor(
     }
 
     override suspend fun uploadStudentPhoto(sessionId: String, rollNumber: String, imageBytes: ByteArray, mimeType: String) {
-        profilePhotoUploadError(mimeType, imageBytes)?.let { throw IllegalArgumentException(it) }
+        profilePhotoUploadError(mimeType, imageBytes).orThrowValidation("photo")
         val path = "students/$sessionId/$rollNumber.${profilePhotoExtension(mimeType)}"
         storage.from(SupabaseTables.BUCKET_PHOTOS).upload(path, imageBytes) { upsert = true }
         postgrest.from(SupabaseTables.SESSION_STUDENTS).update({ set("photo_path", path) }) {

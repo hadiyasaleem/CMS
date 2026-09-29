@@ -133,7 +133,7 @@ class StudentAuthController(
                     val role = userRepository.resolveRole(accountKey)
                     if (role !is UserRole.LinkedStudent && role !is UserRole.UnlinkedStudent) {
                         sessionManager.signOut()
-                        error("This account is not a Student account")
+                        throw CmsException.Auth("This account is not a Student account.")
                     }
                     userRepository.touchLastLogin(accountKey)
                     onResolved(role)

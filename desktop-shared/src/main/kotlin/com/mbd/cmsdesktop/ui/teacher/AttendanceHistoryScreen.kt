@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.ui.teacher
 
+import com.mbd.cmscommon.util.CmsException
 import com.mbd.cmscommon.util.FileReadErrors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -104,7 +105,7 @@ fun AttendanceHistoryScreen(
                 scope.launch {
                     requestState = try {
                         val semester = sessionRepository.observeSession(sessionId).first()?.currentSemester
-                            ?: error("This session could not be found.")
+                            ?: throw CmsException.NotFound("This session could not be found. Refresh and try again.")
                         editRequestRepository.submitRequest(
                             sessionId = sessionId,
                             semester = semester,

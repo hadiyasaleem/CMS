@@ -101,7 +101,7 @@ object StudentImportParser {
     private fun parseXlsxTable(bytes: ByteArray): List<List<String>> {
         val sharedStrings = readZipEntry(bytes, "xl/sharedStrings.xml")?.let { parseSharedStrings(it) } ?: emptyList()
         val sheetBytes = readZipEntry(bytes, "xl/worksheets/sheet1.xml")
-            ?: throw IllegalArgumentException("Couldn't find a worksheet in this Excel file.")
+            ?: throw CmsException.Validation("Couldn't find a worksheet in this Excel file.", "file")
         return parseSheetRows(sheetBytes, sharedStrings)
     }
 

@@ -1,5 +1,6 @@
 package com.mbd.cmsadmin.feature.academics
 
+import com.mbd.cmscommon.util.CmsException
 import com.mbd.cmscommon.util.FileReadErrors
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.util.rememberDocumentExport
@@ -91,7 +92,7 @@ fun SessionStudentsScreen(
         if (uri == null) return@rememberLauncherForActivityResult
         try {
             val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
-                ?: throw IllegalStateException("Couldn't read the selected file.")
+                ?: throw CmsException.Validation("Couldn't read the selected file.", "file")
             importPreview = if (bytes.isZipFile()) {
                 StudentImportParser.parseXlsx(bytes)
             } else {

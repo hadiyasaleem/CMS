@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.platform
 
+import com.mbd.cmscommon.util.CmsException
 import androidx.compose.ui.awt.ComposeWindow
 import java.awt.Desktop
 import java.awt.FileDialog
@@ -29,7 +30,7 @@ object AwtDesktopPlatformServices : DesktopPlatformServices {
     }
 
     private fun desktopAction(action: Desktop.() -> Unit): Result<Unit> = runCatching {
-        check(Desktop.isDesktopSupported()) { "Desktop integration is not supported on this system" }
+        if (!Desktop.isDesktopSupported()) throw CmsException.Unexpected("Opening files and links is not supported on this computer.")
         Desktop.getDesktop().action()
     }
 }

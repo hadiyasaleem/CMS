@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.repository
 
+import com.mbd.cmscommon.util.orThrowValidation
 import com.mbd.cmscommon.util.CmsException
 import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.local.dao.AcademicSessionDao
@@ -121,9 +122,9 @@ class StudentLinkRequestRepositoryImpl @Inject constructor(
             ?: throw CmsException.NotFound("The selected session's department is no longer available.")
 
         val normalizedRoll = FieldValidators.normalizeRollNumber(rollNumber)
-        FieldValidators.rollNumberError(normalizedRoll, department.code, session.startYear)?.let { throw IllegalArgumentException(it) }
-        FieldValidators.nameError(name, "Full name")?.let { throw IllegalArgumentException(it) }
-        FieldValidators.cnicError(cnic, true)?.let { throw IllegalArgumentException(it) }
+        FieldValidators.rollNumberError(normalizedRoll, department.code, session.startYear).orThrowValidation("rollNumber")
+        FieldValidators.nameError(name, "Full name").orThrowValidation("name")
+        FieldValidators.cnicError(cnic, true).orThrowValidation("cnic")
         if (FieldValidators.isoDateError(dob, false, "date of birth", latest = LocalDate.now()) != null) throw CmsException.Validation("Choose a valid date of birth.")
         if ((universityRoll ?: "").trim().length > 40) throw CmsException.Validation("University roll number must not exceed 40 characters.")
         if ((registrationNo ?: "").trim().length > 40) throw CmsException.Validation("Registration number must not exceed 40 characters.")
