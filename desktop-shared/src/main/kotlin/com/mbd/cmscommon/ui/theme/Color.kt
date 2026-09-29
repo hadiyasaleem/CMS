@@ -2,21 +2,21 @@ package com.mbd.cmscommon.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val ModInk = Color(0xFF201E1D)
-val ModGround = Color(0xFFF3F2F2)
+val ModInk = Color(0xFF122A63)
+val ModGround = Color(0xFFF1F4FA)
 val ModSurface = Color(0xFFFFFFFF)
-val ModSurfaceAlt = Color(0xFFEAE9E9)
-val ModAccent = Color(0xFFEC3013)
-val ModAccentPressed = Color(0xFFDD2B0F)
-val ModAccentDeep = Color(0xFFAE1800)
-val ModRedTint = Color(0xFFFDECEB)
-val ModMuted = Color(0xFF6B6968)
-val ModFaint = Color(0xFFC7C5C4)
-val ModTrack = Color(0xFFE2DED9)
+val ModSurfaceAlt = Color(0xFFE7EAF3)
+val ModAccent = Color(0xFFE8452A)
+val ModAccentPressed = Color(0xFFD03B22)
+val ModAccentDeep = Color(0xFF9E2814)
+val ModRedTint = Color(0xFFFBE9E5)
+val ModMuted = Color(0xFF5B6478)
+val ModFaint = Color(0xFFC2C9DB)
+val ModTrack = Color(0xFFD8DEEC)
 val ModOnInk = Color(0xFFFFFFFF)
-val ModOnInkMuted = Color(0xFFC7C5C4)
-val ModSuccess = Color(0xFF1A7A3D)
-val ModWarn = Color(0xFFC47A00)
+val ModOnInkMuted = Color(0xFFC2C9DB)
+val ModSuccess = Color(0xFF1B8A4A)
+val ModWarn = Color(0xFFC6900C)
 
 val InkNavy = ModInk
 val ScholarNavy = ModInk
