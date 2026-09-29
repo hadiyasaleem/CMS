@@ -46,7 +46,10 @@ data class GridCell(
     val subtitle: String,
     val meta: String,
     val isBreak: Boolean = false,
+    /** A real teacher/room double-booking -- shown in red. */
     val isAlert: Boolean = false,
+    /** Missing a teacher or room, but not conflicting with anything -- shown in amber, distinct from [isAlert]. */
+    val isWarning: Boolean = false,
 )
 
 data class GridRow(
@@ -161,13 +164,23 @@ fun GridCellBox(cell: GridCell?, width: Dp, editable: Boolean = false, onClick: 
                     Modifier
                         .fillMaxWidth()
                         .then(clickMod)
-                        .then(if (cell.isAlert) Modifier.background(CmsTheme.colors.redTint) else Modifier)
+                        .then(
+                            when {
+                                cell.isAlert -> Modifier.background(CmsTheme.colors.redTint)
+                                cell.isWarning -> Modifier.background(CmsTheme.colors.goldFill)
+                                else -> Modifier
+                            },
+                        )
                         .padding(horizontal = 6.dp, vertical = 4.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
                         cell.title,
-                        color = if (cell.isAlert) CmsTheme.colors.accent else MaterialTheme.colorScheme.onSurface,
+                        color = when {
+                            cell.isAlert -> CmsTheme.colors.accent
+                            cell.isWarning -> CmsTheme.colors.warn
+                            else -> MaterialTheme.colorScheme.onSurface
+                        },
                         style = MaterialTheme.typography.labelLarge,
                         textAlign = TextAlign.Center,
                     )

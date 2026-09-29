@@ -1,12 +1,30 @@
 package com.mbd.cmscommon.controller
 
 import com.mbd.cmscommon.domain.model.AcademicSession
+import com.mbd.cmscommon.domain.model.Building
 import com.mbd.cmscommon.domain.model.Department
+import com.mbd.cmscommon.domain.model.PeriodType
+import com.mbd.cmscommon.domain.model.ProgramType
+import com.mbd.cmscommon.domain.model.Room
+import com.mbd.cmscommon.domain.model.SemesterSubject
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.SessionPeriod
+import com.mbd.cmscommon.domain.model.Teacher
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
+import com.mbd.cmscommon.domain.repository.BuildingRepository
+import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
+import com.mbd.cmscommon.domain.repository.RoomRepository
 import com.mbd.cmscommon.domain.repository.SessionTimetableRepository
+import com.mbd.cmscommon.domain.repository.TeacherRepository
+import com.mbd.cmscommon.util.clockDisplay
+import com.mbd.cmscommon.util.orThrowValidation
+import com.mbd.cmscommon.util.parseClock
+import com.mbd.cmscommon.util.requireValid
+import java.time.DayOfWeek
+import java.time.Duration
+import java.time.LocalDate
+import java.time.LocalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -14,16 +32,133 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+
+/** One department's row within a semester+shift grid. */
+data class MasterGridRow(
+    val session: AcademicSession,
+    val department: Department?,
+    val periods: List<SessionPeriod>,
+)
+
+/** One titled grid, e.g. "Semester 1 Morning" — mirrors the college's printed per-semester timetables.
+ * A BS session and an MA-Replacement session can share the same [semester] number (MA-Replacement runs
+ * 5-8), so [programType] is part of the grid's identity: each program type always gets its own grid,
+ * never merged, even at the same semester and shift. */
+data class MasterGrid(
+    val semester: Int,
+    val programType: ProgramType,
+    val shift: Session,
+    val rows: List<MasterGridRow>,
+) {
+    val title: String get() = "Semester $semester${if (programType == ProgramType.MA_REPLACEMENT) " (Intake)" else ""} ${shift.label}"
+}
+
+/**
+ * Pure cascade math for "edit one time column, push overlapping neighbours out of the way": given every
+ * distinct (start, end) column in a grid, sorted left to right, re-time [oldKey] to [newStart]-[newEnd]
+ * and, if that now overlaps the next column, shift it forward by the same amount (keeping its own
+ * duration), and so on rightward until a column no longer overlaps its neighbour. Returns old-column-key
+ * -> new-column-key for every column that moved (including [oldKey] itself), or an empty map if
+ * [oldKey] isn't one of [columns] or the new range is invalid. No I/O — safe to call for a live preview
+ * before anything is saved.
+ */
+fun timeSlotCascade(
+    columns: List<Pair<String, String>>,
+    oldKey: Pair<String, String>,
+    newStart: String,
+    newEnd: String,
+): Map<Pair<String, String>, Pair<String, String>> {
+    val newStartTime = parseClock(newStart) ?: return emptyMap()
+    val newEndTime = parseClock(newEnd) ?: return emptyMap()
+    if (!newEndTime.isAfter(newStartTime)) return emptyMap()
+    val startIndex = columns.indexOf(oldKey)
+    if (startIndex < 0) return emptyMap()
+
+    val shifts = LinkedHashMap<Pair<String, String>, Pair<String, String>>()
+    shifts[columns[startIndex]] = clockDisplay(newStart) to clockDisplay(newEnd)
+    var frontier: LocalTime = newEndTime
+    for (i in (startIndex + 1) until columns.size) {
+        val (colStart, colEnd) = columns[i]
+        val colStartTime = parseClock(colStart) ?: break
+        if (!colStartTime.isBefore(frontier)) break // this column already starts at/after the new frontier — no overlap, stop.
+        val duration = Duration.between(colStartTime, parseClock(colEnd) ?: break)
+        val shiftedStart = frontier
+        val shiftedEnd = shiftedStart.plus(duration)
+        shifts[colStart to colEnd] = shiftedStart.toString().take(5) to shiftedEnd.toString().take(5)
+        frontier = shiftedEnd
+    }
+    return shifts
+}
+
+/** Every semester+shift grid the college runs, department rows sorted by code. Shared by
+ * [MasterTimetableController] (every row) and [TeacherScheduleController] (narrowed to one teacher's own rows). */
+fun buildMasterGrids(
+    sessionList: List<AcademicSession>,
+    deptList: List<Department>,
+    periods: List<SessionPeriod>,
+): List<MasterGrid> {
+    val deptById = deptList.associateBy { it.deptId }
+    val periodsBySessionShift = periods.groupBy { it.sessionId to it.shift }
+    return sessionList
+        .flatMap { session -> session.shifts.map { shift -> session to shift } }
+        .groupBy({ (session, shift) -> Triple(session.currentSemester, session.programType, shift) }) { (session, shift) ->
+            MasterGridRow(
+                session = session,
+                department = deptById[session.deptId],
+                periods = periodsBySessionShift[session.sessionId to shift].orEmpty(),
+            )
+        }
+        .map { (key, rows) ->
+            MasterGrid(
+                semester = key.first,
+                programType = key.second,
+                shift = key.third,
+                rows = rows.sortedBy { it.department?.code ?: it.session.deptId },
+            )
+        }
+        .sortedWith(compareBy({ it.semester }, { it.programType }, { it.shift }))
+}
+
+/**
+ * The one time gap in a grid's day where no lecture is ever scheduled (e.g. the morning 10:40-11:00
+ * break) — detected purely from a genuine gap between two adjacent known columns, since breaks aren't
+ * stored as their own timetable_periods rows. Returns null when the grid's columns run back-to-back
+ * (typically the evening shift, which has no such gap).
+ */
+fun detectBreakSlot(gridPeriods: List<SessionPeriod>): Pair<String, String>? {
+    val columns = gridPeriods.map { clockDisplay(it.startTime) to clockDisplay(it.endTime) }.distinct().sortedBy { parseClock(it.first) }
+    for (i in 0 until columns.size - 1) {
+        val (_, endA) = columns[i]
+        val (startB, _) = columns[i + 1]
+        if (endA == startB) continue
+        val endTime = parseClock(endA) ?: continue
+        val startTime = parseClock(startB) ?: continue
+        if (startTime.isAfter(endTime)) return endA to startB
+    }
+    return null
+}
 
 class MasterTimetableController(
     private val departmentRepository: DepartmentRepository,
     private val sessionRepository: AcademicSessionRepository,
     private val timetableRepository: SessionTimetableRepository,
+    private val curriculumRepository: CurriculumRepository,
+    teacherRepository: TeacherRepository,
+    buildingRepository: BuildingRepository,
+    roomRepository: RoomRepository,
     scope: CoroutineScope,
 ) : ScreenController(scope) {
+
+    val teachers: StateFlow<List<Teacher>> =
+        teacherRepository.observeActiveTeachers().stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val buildings: StateFlow<List<Building>> =
+        buildingRepository.observeActiveBuildings().stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val rooms: StateFlow<List<Room>> =
+        roomRepository.observeActiveRooms().stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _loading = MutableStateFlow(true)
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
@@ -37,39 +172,52 @@ class MasterTimetableController(
     val sessions: StateFlow<List<AcademicSession>> =
         sessionRepository.observeAllSessions().stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    private val _selectedDeptId = MutableStateFlow<String?>(null)
-    val selectedDeptId: StateFlow<String?> = _selectedDeptId.asStateFlow()
+    private val allPeriods: StateFlow<List<SessionPeriod>> =
+        timetableRepository.observeAll().stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    private val _selectedStartYear = MutableStateFlow<Int?>(null)
-    val selectedStartYear: StateFlow<Int?> = _selectedStartYear.asStateFlow()
+    /** Every teacher/room double-booking across the whole college, keyed by period id -- see
+     * [masterTimetableConflicts]. Computed from every period regardless of the active filters, so a
+     * conflict with a period outside the current filter is still detected and explained. */
+    val periodConflicts: StateFlow<Map<String, List<PeriodConflict>>> = allPeriods
+        .map { masterTimetableConflicts(it) }
+        .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
+    /** Every distinct semester number with an active session, low to high (1, 3, 5, 7, …). */
+    val availableSemesters: StateFlow<List<Int>> = sessions
+        .map { list -> list.map { it.currentSemester }.distinct().sorted() }
+        .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /** null means "All" — the dropdown's default, unfiltered state. */
+    private val _selectedSemester = MutableStateFlow<Int?>(null)
+    val selectedSemester: StateFlow<Int?> = _selectedSemester.asStateFlow()
 
     private val _selectedShift = MutableStateFlow<Session?>(null)
     val selectedShift: StateFlow<Session?> = _selectedShift.asStateFlow()
 
-    /** Sessions in the selected department, offered as choices for the "Session" dropdown. */
-    val sessionsInDepartment: StateFlow<List<AcademicSession>> = combine(sessions, _selectedDeptId) { all, deptId ->
-        if (deptId == null) emptyList() else all.filter { it.deptId == deptId }
+    private val _selectedDeptId = MutableStateFlow<String?>(null)
+    val selectedDeptId: StateFlow<String?> = _selectedDeptId.asStateFlow()
+
+    /** null means "All" -- shows both BS and MA-Replacement grids together. */
+    private val _selectedProgramType = MutableStateFlow<ProgramType?>(null)
+    val selectedProgramType: StateFlow<ProgramType?> = _selectedProgramType.asStateFlow()
+
+    /** Every semester+shift grid the college runs, department rows sorted by code. */
+    val grids: StateFlow<List<MasterGrid>> = combine(sessions, departments, allPeriods) { sessionList, deptList, periods ->
+        buildMasterGrids(sessionList, deptList, periods)
     }.stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    /** Shifts available for the selected department + intake year, offered as choices for the "Shift" dropdown. */
-    val shiftsForSelection: StateFlow<List<Session>> = combine(sessionsInDepartment, _selectedStartYear) { inDept, year ->
-        if (year == null) emptyList() else inDept.filter { it.startYear == year }.flatMap { it.shifts }.distinct()
-    }.stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    /** The single session identified once department + intake year + shift are all chosen. */
-    val resolvedSession: StateFlow<AcademicSession?> = combine(sessions, _selectedDeptId, _selectedStartYear, _selectedShift) { all, deptId, year, shift ->
-        if (deptId == null || year == null || shift == null) {
-            null
-        } else {
-            all.firstOrNull { it.deptId == deptId && it.startYear == year && it.runs(shift) }
-        }
-    }.stateIn(scope, SharingStarted.WhileSubscribed(5000), null)
-
-    /** The selected shift's grid only: Morning and Evening periods can share slot times. */
-    val periods: StateFlow<List<SessionPeriod>> = resolvedSession
-        .flatMapLatest { session -> if (session != null) timetableRepository.observeWeek(session.sessionId) else flowOf(emptyList()) }
-        .combine(_selectedShift) { periods, shift -> periodsForShift(periods, shift) }
-        .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
+    /** [grids] narrowed by the active filters. Each dropdown defaults to "All" (null), which lets
+     * every grid through; picking a value narrows to matching grids (or rows, for department). */
+    val filteredGrids: StateFlow<List<MasterGrid>> =
+        combine(grids, _selectedSemester, _selectedShift, _selectedDeptId, _selectedProgramType) { all, semester, shift, deptId, programType ->
+            all.asSequence()
+                .filter { semester == null || it.semester == semester }
+                .filter { shift == null || it.shift == shift }
+                .filter { programType == null || it.programType == programType }
+                .map { grid -> if (deptId == null) grid else grid.copy(rows = grid.rows.filter { it.session.deptId == deptId }) }
+                .filter { it.rows.isNotEmpty() }
+                .toList()
+        }.stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     init {
         _loading.value = false
@@ -96,21 +244,117 @@ class MasterTimetableController(
         }
     }
 
-    fun selectDepartment(deptId: String?) {
-        _selectedDeptId.value = deptId
-        _selectedStartYear.value = null
-        _selectedShift.value = null
-    }
-
-    fun selectStartYear(year: Int?) {
-        _selectedStartYear.value = year
-        // A single-shift session has only one tab, so pick it; a two-shift session opens on Morning.
-        _selectedShift.value = year?.let { y ->
-            sessions.value.filter { it.deptId == _selectedDeptId.value && it.startYear == y }.flatMap { it.shifts }.distinct().minOrNull()
-        }
+    fun selectSemester(semester: Int?) {
+        _selectedSemester.value = semester
     }
 
     fun selectShift(shift: Session?) {
         _selectedShift.value = shift
+    }
+
+    fun selectDepartment(deptId: String?) {
+        _selectedDeptId.value = deptId
+    }
+
+    fun selectProgramType(programType: ProgramType?) {
+        _selectedProgramType.value = programType
+    }
+
+    fun clearFilters() {
+        _selectedSemester.value = null
+        _selectedShift.value = null
+        _selectedDeptId.value = null
+        _selectedProgramType.value = null
+    }
+
+    /**
+     * Persists a set of column edits already staged in the UI (see [timeSlotCascade]): for every
+     * original-column-key -> new-column-key pair, every period currently at that original time in
+     * [grid] is moved to the new time. Applied in descending order of the new start time — a later
+     * target time is never one still occupied by a column that hasn't moved yet — so an edit that
+     * cascaded through several columns never trips the no-double-booking check on its own account.
+     */
+    fun applyShifts(grid: MasterGrid, shifts: Map<Pair<String, String>, Pair<String, String>>) = launch {
+        requireValid(shifts.isNotEmpty()) { "Nothing to save." }
+        for ((oldKey, newKeyPair) in shifts.entries.sortedByDescending { parseClock(it.value.first) }) {
+            val (newS, newE) = newKeyPair
+            for (row in grid.rows) {
+                for (period in row.periods) {
+                    val key = clockDisplay(period.startTime) to clockDisplay(period.endTime)
+                    if (key != oldKey) continue
+                    val updated = period.copy(
+                        id = SessionPeriod.buildId(period.sessionId, period.shift, period.day, newS),
+                        startTime = newS,
+                        endTime = newE,
+                    )
+                    timetableRepository.removePeriod(period)
+                    timetableRepository.savePeriod(updated)
+                }
+            }
+        }
+    }
+
+    /** The subjects offered for one row's own session+semester -- fetched on demand when its edit
+     * dialog opens, since the grid spans many sessions and keeping every one's subject list live
+     * would be wasted work. */
+    suspend fun subjectsFor(sessionId: String, semester: Int): List<SemesterSubject> =
+        curriculumRepository.observeSemesterSubjects(sessionId, semester).first()
+
+    /**
+     * Edits one existing period from the grid (subject, teacher, room, building, time, notes, or its
+     * day). [replaces] is the period being edited; a day removed from [days] deletes its own row, a
+     * day added beyond [replaces]'s own inserts a new one alongside it.
+     */
+    fun savePeriod(
+        replaces: SessionPeriod,
+        days: Set<DayOfWeek>,
+        start: String,
+        end: String,
+        subject: SemesterSubject?,
+        teacher: Teacher?,
+        periodType: PeriodType,
+        roomNo: String?,
+        building: String?,
+        notes: String?,
+        effectiveFrom: LocalDate?,
+        effectiveTo: LocalDate?,
+    ) = launch {
+        requireValid(days.isNotEmpty()) { "Choose at least one day." }
+        requireValid(periodType == PeriodType.BREAK || subject != null) { "Choose a subject for this period." }
+
+        val normalizedStart = start.trim()
+        val normalizedEnd = end.trim()
+        val sessionPeriods = timetableRepository.observeWeek(replaces.sessionId).first()
+
+        days.forEach { day ->
+            val dayReplaces = if (day == replaces.day) replaces else null
+            val period = SessionPeriod(
+                id = SessionPeriod.buildId(replaces.sessionId, replaces.shift, day, normalizedStart),
+                sessionId = replaces.sessionId,
+                shift = replaces.shift,
+                day = day,
+                startTime = normalizedStart,
+                endTime = normalizedEnd,
+                courseCode = subject?.courseCode ?: "BREAK",
+                subjectName = subject?.name ?: "Break",
+                teacherId = if (periodType != PeriodType.BREAK) teacher?.teacherId ?: "" else "",
+                teacherName = if (periodType != PeriodType.BREAK) teacher?.name ?: "" else "",
+                periodType = periodType,
+                creditHours = subject?.creditHours,
+                roomNo = roomNo?.trim()?.takeIf { it.isNotBlank() },
+                building = building?.trim()?.takeIf { it.isNotBlank() },
+                notes = notes?.trim()?.takeIf { it.isNotBlank() },
+                effectiveFrom = effectiveFrom,
+                effectiveTo = effectiveTo,
+            )
+            validateTimetablePeriod(period, dayReplaces, sessionPeriods).orThrowValidation()
+            timetableRepository.savePeriod(period)
+            if (dayReplaces != null && (dayReplaces.shift != period.shift || dayReplaces.day != period.day || clockDisplay(dayReplaces.startTime) != clockDisplay(period.startTime))) {
+                timetableRepository.removePeriod(dayReplaces)
+            }
+        }
+        if (replaces.day !in days) {
+            timetableRepository.removePeriod(replaces)
+        }
     }
 }

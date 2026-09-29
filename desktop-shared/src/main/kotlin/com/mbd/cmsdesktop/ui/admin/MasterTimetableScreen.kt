@@ -7,49 +7,75 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import com.mbd.cmscommon.controller.MasterTimetableController
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
+import com.mbd.cmscommon.domain.repository.BuildingRepository
+import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
+import com.mbd.cmscommon.domain.repository.RoomRepository
 import com.mbd.cmscommon.domain.repository.SessionTimetableRepository
+import com.mbd.cmscommon.domain.repository.TeacherRepository
 import com.mbd.cmscommon.ui.components.MasterTimetableWorkspace
+import com.mbd.cmsdesktop.platform.rememberDocumentExport
 
 @Composable
 fun MasterTimetableScreen(
     departmentRepository: DepartmentRepository,
     sessionRepository: AcademicSessionRepository,
     timetableRepository: SessionTimetableRepository,
+    curriculumRepository: CurriculumRepository,
+    teacherRepository: TeacherRepository,
+    buildingRepository: BuildingRepository,
+    roomRepository: RoomRepository,
     onOpenSession: (String) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    val controller = remember(departmentRepository, sessionRepository, timetableRepository) {
-        MasterTimetableController(departmentRepository, sessionRepository, timetableRepository, scope)
+    val controller = remember(departmentRepository, sessionRepository, timetableRepository, curriculumRepository, teacherRepository, buildingRepository, roomRepository) {
+        MasterTimetableController(departmentRepository, sessionRepository, timetableRepository, curriculumRepository, teacherRepository, buildingRepository, roomRepository, scope)
     }
+    val teachers by controller.teachers.collectAsState()
+    val buildings by controller.buildings.collectAsState()
+    val rooms by controller.rooms.collectAsState()
     val departments by controller.departments.collectAsState()
-    val sessions by controller.sessions.collectAsState()
-    val sessionsInDepartment by controller.sessionsInDepartment.collectAsState()
-    val shiftsForSelection by controller.shiftsForSelection.collectAsState()
-    val selectedDeptId by controller.selectedDeptId.collectAsState()
-    val selectedStartYear by controller.selectedStartYear.collectAsState()
+    val availableSemesters by controller.availableSemesters.collectAsState()
+    val selectedSemester by controller.selectedSemester.collectAsState()
     val selectedShift by controller.selectedShift.collectAsState()
-    val resolvedSession by controller.resolvedSession.collectAsState()
-    val periods by controller.periods.collectAsState()
+    val selectedDeptId by controller.selectedDeptId.collectAsState()
+    val selectedProgramType by controller.selectedProgramType.collectAsState()
+    val grids by controller.filteredGrids.collectAsState()
+    val periodConflicts by controller.periodConflicts.collectAsState()
     val loading by controller.loading.collectAsState()
-    val errorMessage by controller.refreshError.collectAsState()
+    val refreshError by controller.refreshError.collectAsState()
+    // savePeriod/applyShifts failures land here (ScreenController.launch's own catch), separately
+    // from refreshError -- surfaced too, since a rejected edit (e.g. a scheduling conflict) must not
+    // fail silently.
+    val actionError by controller.error.collectAsState()
+    val errorMessage = actionError ?: refreshError
 
     MasterTimetableWorkspace(
         departments = departments,
-        sessions = sessions,
-        sessionsInDepartment = sessionsInDepartment,
-        shiftsForSelection = shiftsForSelection,
-        selectedDeptId = selectedDeptId,
-        selectedStartYear = selectedStartYear,
+        availableSemesters = availableSemesters,
+        selectedSemester = selectedSemester,
         selectedShift = selectedShift,
-        resolvedSession = resolvedSession,
-        periods = periods,
+        selectedDeptId = selectedDeptId,
+        selectedProgramType = selectedProgramType,
+        grids = grids,
+        periodConflicts = periodConflicts,
         loading = loading,
         errorMessage = errorMessage,
-        onSelectDepartment = controller::selectDepartment,
-        onSelectStartYear = controller::selectStartYear,
+        onSelectSemester = controller::selectSemester,
         onSelectShift = controller::selectShift,
+        onSelectDepartment = controller::selectDepartment,
+        onSelectProgramType = controller::selectProgramType,
+        onClearFilters = controller::clearFilters,
         onRetry = controller::refresh,
         onOpenSession = onOpenSession,
+        onSaveShifts = controller::applyShifts,
+        onExport = rememberDocumentExport(),
+        teachers = teachers,
+        buildings = buildings,
+        rooms = rooms,
+        onLoadSubjects = controller::subjectsFor,
+        onSavePeriod = { replaces, days, start, end, subject, teacher, type, room, building, notes, from, to ->
+            controller.savePeriod(replaces, days, start, end, subject, teacher, type, room, building, notes, from, to)
+        },
     )
 }

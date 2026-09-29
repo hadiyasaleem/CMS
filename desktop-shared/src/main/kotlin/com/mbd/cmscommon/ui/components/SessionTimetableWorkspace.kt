@@ -183,6 +183,7 @@ fun SessionTimetableWorkspace(
             buildings = buildings,
             rooms = rooms,
             currentSemesterTerm = currentSemesterTerm,
+            initialDays = editorState?.let { siblingDaysFor(it, shown) } ?: setOf(addingPeriodDay ?: DayOfWeek.MONDAY),
             onDismiss = { addingPeriodDay = null; editorState = null },
             onSave = { days, start, end, subject, teacher, type, room, building, notes, from, to ->
                 // Multiple days can be checked at once. Each checked day resolves its own "replaces"
@@ -348,7 +349,7 @@ private fun TimetableEmptyState(onAdd: () -> Unit) {
 }
 
 @Composable
-private fun PeriodEditorDialog(
+fun PeriodEditorDialog(
     day: DayOfWeek,
     existing: SessionPeriod?,
     subjects: List<SemesterSubject>,
@@ -358,8 +359,12 @@ private fun PeriodEditorDialog(
     currentSemesterTerm: SemesterTerm?,
     onDismiss: () -> Unit,
     onSave: (Set<DayOfWeek>, String, String, SemesterSubject?, Teacher?, PeriodType, String, String, String, LocalDate?, LocalDate?) -> Unit,
+    /** Days already checked when the dialog opens -- every day (besides [day]) that repeats this
+     * exact lecture, so editing one day of a Mon/Tue/Wed block shows all three checked, not just
+     * the one that was clicked. Defaults to just [day] for a brand-new period. */
+    initialDays: Set<DayOfWeek> = setOf(day),
 ) {
-    var selectedDays by remember { mutableStateOf(setOf(day)) }
+    var selectedDays by remember { mutableStateOf(initialDays) }
     var start by remember { mutableStateOf(existing?.startTime ?: "") }
     var end by remember { mutableStateOf(existing?.endTime ?: "") }
     var type by remember { mutableStateOf(existing?.periodType ?: PeriodType.LECTURE) }

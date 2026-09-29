@@ -41,6 +41,43 @@ fun sessionTimetableSnapshot(periods: List<SessionPeriod>): SessionTimetableSnap
     return SessionTimetableSnapshot(teachingDays, teacherAssigned, roomAssigned, uniqueTeachers, conflicts, malformed)
 }
 
+enum class ConflictKind { TEACHER, ROOM }
+
+/** The other period a period double-books, and whether it's the teacher or the room that clashes. */
+data class PeriodConflict(val kind: ConflictKind, val other: SessionPeriod)
+
+/**
+ * Every teacher/room double-booking across the *whole college's* timetable, keyed by period id.
+ * Mirrors the database's `fn_check_timetable_conflict` trigger exactly (LECTURE periods only, same
+ * day, overlapping time range and effective-date range, same teacher email or same room) so the
+ * Master Timetable can explain *why* a cell is flagged, client-side, before anyone tries to save
+ * anything. Unlike [sessionTimetableSnapshot] (one session's own periods only), this checks across
+ * every session and shift, the same way the trigger does.
+ */
+fun masterTimetableConflicts(periods: List<SessionPeriod>): Map<String, List<PeriodConflict>> {
+    val lectures = periods.filter { it.periodType == PeriodType.LECTURE }
+    val result = mutableMapOf<String, MutableList<PeriodConflict>>()
+    fun record(id: String, conflict: PeriodConflict) {
+        result.getOrPut(id) { mutableListOf() } += conflict
+    }
+    lectures.groupBy { it.day }.values.forEach { dayPeriods ->
+        dayPeriods.forEachIndexed { index, period ->
+            dayPeriods.drop(index + 1).forEach { other ->
+                if (!periodsOverlap(period, other)) return@forEach
+                if (period.teacherId.isNotBlank() && period.teacherId == other.teacherId) {
+                    record(period.id, PeriodConflict(ConflictKind.TEACHER, other))
+                    record(other.id, PeriodConflict(ConflictKind.TEACHER, period))
+                }
+                if (!period.roomNo.isNullOrBlank() && period.roomNo == other.roomNo) {
+                    record(period.id, PeriodConflict(ConflictKind.ROOM, other))
+                    record(other.id, PeriodConflict(ConflictKind.ROOM, period))
+                }
+            }
+        }
+    }
+    return result
+}
+
 fun validateTimetableDraft(
     day: DayOfWeek,
     start: String,
