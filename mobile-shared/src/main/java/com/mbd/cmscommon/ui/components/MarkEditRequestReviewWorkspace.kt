@@ -83,6 +83,20 @@ enum class MarkRequestSort(val label: String) {
     LARGEST_CHANGE("Largest change"),
 }
 
+enum class AttendanceRequestFilter(val label: String) {
+    ALL("All"),
+    TO_PRESENT("Marked present"),
+    TO_ABSENT("Marked absent"),
+    TO_LEAVE("Marked leave"),
+    NO_REASON("No reason"),
+    BLOCKED("Approval blocked"),
+}
+
+enum class AttendanceRequestSort(val label: String) {
+    OLDEST("Oldest"),
+    NEWEST("Newest"),
+}
+
 @Composable
 fun MarkEditRequestReviewWorkspace(
     requests: List<MarkEditRequest>,
@@ -117,6 +131,9 @@ fun MarkEditRequestReviewWorkspace(
     var tab by remember { mutableStateOf(EditRequestTab.MARKS) }
     var attendanceApproval by remember { mutableStateOf<AttendanceEditRequest?>(null) }
     var attendanceRejection by remember { mutableStateOf<AttendanceEditRequest?>(null) }
+    var attendanceQuery by remember { mutableStateOf("") }
+    var attendanceFilter by remember { mutableStateOf(AttendanceRequestFilter.ALL) }
+    var attendanceSort by remember { mutableStateOf(AttendanceRequestSort.NEWEST) }
 
     fun sessionLabel(sessionId: String): String {
         val session = sessions.firstOrNull { it.sessionId == sessionId }
@@ -151,6 +168,31 @@ fun MarkEditRequestReviewWorkspace(
         MarkRequestSort.LARGEST_CHANGE -> filtered.sortedByDescending { kotlin.math.abs(it.requestedScore - (it.currentScore ?: 0)) }
     }
 
+    fun attendanceStudentName(request: AttendanceEditRequest): String =
+        details[request.id]?.studentName?.takeIf { it.isNotBlank() } ?: "Student name unavailable"
+
+    val attendanceFiltered = attendanceRequests.filter { request ->
+        val issues = attendanceEditReviewIssues(request)
+        val matchesQuery = attendanceQuery.isBlank() ||
+            attendanceStudentName(request).contains(attendanceQuery, ignoreCase = true) ||
+            request.rollNumber.contains(attendanceQuery, ignoreCase = true) ||
+            request.courseCode.contains(attendanceQuery, ignoreCase = true)
+        val matchesFilter = when (attendanceFilter) {
+            AttendanceRequestFilter.ALL -> true
+            AttendanceRequestFilter.TO_PRESENT -> request.requestedStatus == AttendanceStatus.PRESENT
+            AttendanceRequestFilter.TO_ABSENT -> request.requestedStatus == AttendanceStatus.ABSENT
+            AttendanceRequestFilter.TO_LEAVE -> request.requestedStatus == AttendanceStatus.LEAVE
+            AttendanceRequestFilter.NO_REASON -> request.reason.isNullOrBlank()
+            AttendanceRequestFilter.BLOCKED -> issues.isNotEmpty()
+        }
+        matchesQuery && matchesFilter
+    }
+
+    val attendanceVisible = when (attendanceSort) {
+        AttendanceRequestSort.OLDEST -> attendanceFiltered.sortedBy { it.requestedAt }
+        AttendanceRequestSort.NEWEST -> attendanceFiltered.sortedByDescending { it.requestedAt }
+    }
+
     LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { MarkRequestHero(requests.size + attendanceRequests.size) }
         item { ShiftScopeSelector(filterScope, departmentScopeOptions(departments), sessions, { filterScope = it }) }
@@ -175,13 +217,50 @@ fun MarkEditRequestReviewWorkspace(
             rowErrors[MarkEditRequestsController.ATTENDANCE_LOAD_KEY]?.let { message ->
                 item { CmsNotice(message, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRefresh) }
             }
+            item { AttendanceSummaryCard(attendanceRequests) }
+
+            item {
+                Column(Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = attendanceQuery,
+                        onValueChange = { attendanceQuery = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("Search by student, roll, or course") },
+                        singleLine = true,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        AttendanceRequestFilter.entries.forEach { option ->
+                            CmsChip(option.label, selected = attendanceFilter == option, onClick = { attendanceFilter = option })
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Text("SORT: ${attendanceSort.label}", color = ModMuted, style = CmsTextStyles.eyebrow)
+                    Spacer(Modifier.height(6.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        AttendanceRequestSort.entries.forEach { option ->
+                            CmsChip(option.label, selected = attendanceSort == option, onClick = { attendanceSort = option })
+                        }
+                    }
+                }
+            }
+
             when {
                 loading -> items(3) { SkeletonRow() }
                 attendanceRequests.isEmpty() -> item { MarkRequestEmpty(filtered = false, onClearFilters = {}, attendance = true) }
-                else -> items(attendanceRequests.sortedByDescending { it.requestedAt }, key = { it.id }) { request ->
+                attendanceVisible.isEmpty() -> item {
+                    MarkRequestEmpty(filtered = true, onClearFilters = { attendanceQuery = ""; attendanceFilter = AttendanceRequestFilter.ALL }, attendance = true)
+                }
+                else -> items(attendanceVisible, key = { it.id }) { request ->
                     AttendanceRequestCard(
                         request = request,
-                        studentName = details[request.id]?.studentName?.takeIf { it.isNotBlank() } ?: "Student name unavailable",
+                        studentName = attendanceStudentName(request),
                         subjectName = details[request.id]?.subjectName?.takeIf { it.isNotBlank() } ?: request.courseCode,
                         sessionLabel = sessionLabel(request.sessionId),
                         busy = busyRequestId == request.id,
@@ -298,7 +377,7 @@ private fun MarkRequestHero(count: Int) {
         Column(Modifier.padding(20.dp)) {
             Text("ASSESSMENT CONTROL", color = MarkAmber, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
-            Text("Edit requests", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+            Text("Mark & Attendance Edit Requests", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
             Spacer(Modifier.height(4.dp))
             Text("$count in the review queue", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
         }
@@ -316,6 +395,20 @@ private fun MarkSummaryCard(requests: List<MarkEditRequest>) {
         MarkStatLabel("BLOCKED", blocked.toString(), Modifier.weight(1f), alert = blocked > 0)
         MarkStatLabel("NEEDS ATTENTION", needsAttention.toString(), Modifier.weight(1f), alert = needsAttention > 0)
         MarkStatLabel("INCREASES", increases.toString(), Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun AttendanceSummaryCard(requests: List<AttendanceEditRequest>) {
+    val blocked = requests.count { attendanceEditReviewIssues(it).isNotEmpty() }
+    val noReason = requests.count { it.reason.isNullOrBlank() }
+    val toPresent = requests.count { it.requestedStatus == AttendanceStatus.PRESENT }
+
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        MarkStatLabel("REVIEW QUEUE", requests.size.toString(), Modifier.weight(1f))
+        MarkStatLabel("BLOCKED", blocked.toString(), Modifier.weight(1f), alert = blocked > 0)
+        MarkStatLabel("NO REASON", noReason.toString(), Modifier.weight(1f))
+        MarkStatLabel("TO PRESENT", toPresent.toString(), Modifier.weight(1f))
     }
 }
 
