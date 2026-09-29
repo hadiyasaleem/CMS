@@ -5,16 +5,13 @@ import kotlinx.coroutines.flow.flatMapLatest
 import com.mbd.cmscommon.controller.observeShiftOf
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationRail
-import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -123,103 +120,107 @@ private fun StudentShell(role: UserRole.LinkedStudent, component: DesktopAppComp
             notificationCount = unreadCount,
             goldWordmark = true,
         )
-        Row(Modifier.weight(1f).fillMaxWidth()) {
-            NavigationRail(containerColor = CmsTheme.colors.ink, contentColor = CmsTheme.colors.onInk) {
-                Spacer(Modifier.height(16.dp))
-                StudentTab.entries.forEach { tab ->
-                    NavigationRailItem(
-                        selected = screen == tab.root,
-                        onClick = { selectedTab = tab; screen = tab.root },
-                        icon = {
-                            if (tab == StudentTab.More && unreadCount > 0) {
-                                Box {
-                                    Icon(tab.icon, contentDescription = tab.label)
-                                    NotificationBadge(unreadCount, modifier = Modifier.align(Alignment.TopEnd))
-                                }
-                            } else {
-                                Icon(tab.icon, contentDescription = tab.label)
+        Box(Modifier.weight(1f).fillMaxWidth().padding(horizontal = 24.dp)) {
+            key(refreshVersion) {
+                when (screen) {
+                    StudentScreen.Home -> StudentHomeWorkspaceScreen(
+                        sessionId, rollNumber, component.academicSessionRepository(), component.sessionAttendanceRepository(), component.sessionTimetableRepository(),
+                    ) { destination ->
+                        when (destination) {
+                            StudentHomeDestination.ATTENDANCE -> { selectedTab = StudentTab.Attendance; open(StudentScreen.Attendance) }
+                            StudentHomeDestination.MARKS -> open(StudentScreen.Marks)
+                            StudentHomeDestination.TIMETABLE -> { selectedTab = StudentTab.Timetable; open(StudentScreen.Timetable) }
+                            StudentHomeDestination.FEES -> open(StudentScreen.Fees)
+                        }
+                    }
+                    StudentScreen.Attendance -> StudentAttendanceWorkspaceScreen(
+                        sessionId, rollNumber, component.sessionAttendanceRepository(), component.curriculumRepository(),
+                    )
+                    StudentScreen.ExamsHub -> StudentExamsHubScreen(
+                        sessionId, rollNumber, component.sessionMarksRepository(), component.datesheetRepository(),
+                        component.academicSessionRepository(),
+                    ) { destination ->
+                        when (destination) {
+                            StudentExamsDestination.MARKS -> open(StudentScreen.Marks)
+                            StudentExamsDestination.RESULTS -> open(StudentScreen.Results)
+                            StudentExamsDestination.DATESHEETS -> open(StudentScreen.Datesheets)
+                        }
+                    }
+                    StudentScreen.Timetable -> StudentTimetableScreen(
+                        sessionId,
+                        component.sessionTimetableRepository(),
+                        shift = component.academicSessionRepository().observeShiftOf(sessionId, rollNumber),
+                    )
+                    StudentScreen.MoreHub -> StudentMoreScreen(
+                        sessionId, deptId, rollNumber,
+                        component.calendarRepository(), component.sessionFeeRepository(),
+                        component.notificationRepository(), component.academicSessionRepository(),
+                        onOpen = { destination ->
+                            when (destination) {
+                                StudentMoreDestination.CALENDAR -> open(StudentScreen.Events)
+                                StudentMoreDestination.FEES -> open(StudentScreen.Fees)
+                                StudentMoreDestination.NOTIFICATIONS -> open(StudentScreen.Notifications)
+                                StudentMoreDestination.PROFILE -> open(StudentScreen.Profile)
                             }
                         },
-                        label = { Text(tab.label) },
+                        onSignOut = onSignOut,
+                    )
+                    StudentScreen.Marks -> StudentMarksScreen(sessionId, rollNumber, component.sessionMarksRepository(), component.curriculumRepository())
+                    StudentScreen.Results -> StudentResultsScreen(sessionId, rollNumber, component.sessionMarksRepository())
+                    StudentScreen.Datesheets -> StudentDatesheetsScreen(
+                        sessionId = sessionId,
+                        rollNumber = rollNumber,
+                        datesheetRepository = component.datesheetRepository(),
+                        sessionRepository = component.academicSessionRepository(),
+                    )
+                    StudentScreen.Events -> StudentCalendarScreen(sessionId, deptId, component.calendarRepository(), component.departmentRepository(), component.academicSessionRepository(), rollNumber)
+                    StudentScreen.Fees -> StudentFeeChallanScreen(
+                        sessionId = sessionId,
+                        rollNumber = rollNumber,
+                        feeRepository = component.sessionFeeRepository(),
+                        sessionRepository = component.academicSessionRepository(),
+                        departmentRepository = component.departmentRepository(),
+                        window = window,
+                    )
+                    StudentScreen.Notifications -> NotificationsScreen(
+                        repository = component.notificationRepository(),
+                        role = NotificationTargetRole.STUDENT,
+                        accountKey = accountKey,
+                        sessionRepository = component.academicSessionRepository(),
+                        departmentRepository = component.departmentRepository(),
+                        audienceContext = studentAudience,
+                    )
+                    StudentScreen.Profile -> StudentOwnProfileScreen(
+                        sessionId, rollNumber, component.sessionManager(), component.academicSessionRepository(), component.departmentRepository(), component.fineRepository(),
+                        onSignOut = onSignOut,
                     )
                 }
             }
-            Box(Modifier.weight(1f).fillMaxHeight().padding(horizontal = 24.dp)) {
-                key(refreshVersion) {
-                    when (screen) {
-                        StudentScreen.Home -> StudentHomeWorkspaceScreen(
-                            sessionId, rollNumber, component.academicSessionRepository(), component.sessionAttendanceRepository(), component.sessionTimetableRepository(),
-                        ) { destination ->
-                            when (destination) {
-                                StudentHomeDestination.ATTENDANCE -> { selectedTab = StudentTab.Attendance; open(StudentScreen.Attendance) }
-                                StudentHomeDestination.MARKS -> open(StudentScreen.Marks)
-                                StudentHomeDestination.TIMETABLE -> { selectedTab = StudentTab.Timetable; open(StudentScreen.Timetable) }
-                                StudentHomeDestination.FEES -> open(StudentScreen.Fees)
+        }
+        NavigationBar(containerColor = CmsTheme.colors.ink, contentColor = CmsTheme.colors.onInk) {
+            StudentTab.entries.forEach { tab ->
+                NavigationBarItem(
+                    selected = screen == tab.root,
+                    onClick = { selectedTab = tab; screen = tab.root },
+                    icon = {
+                        if (tab == StudentTab.More && unreadCount > 0) {
+                            Box {
+                                Icon(tab.icon, contentDescription = tab.label)
+                                NotificationBadge(unreadCount, modifier = Modifier.align(Alignment.TopEnd))
                             }
+                        } else {
+                            Icon(tab.icon, contentDescription = tab.label)
                         }
-                        StudentScreen.Attendance -> StudentAttendanceWorkspaceScreen(
-                            sessionId, rollNumber, component.sessionAttendanceRepository(), component.curriculumRepository(),
-                        )
-                        StudentScreen.ExamsHub -> StudentExamsHubScreen(
-                            sessionId, rollNumber, component.sessionMarksRepository(), component.datesheetRepository(),
-                            component.academicSessionRepository(),
-                        ) { destination ->
-                            when (destination) {
-                                StudentExamsDestination.MARKS -> open(StudentScreen.Marks)
-                                StudentExamsDestination.RESULTS -> open(StudentScreen.Results)
-                                StudentExamsDestination.DATESHEETS -> open(StudentScreen.Datesheets)
-                            }
-                        }
-                        StudentScreen.Timetable -> StudentTimetableScreen(
-                            sessionId,
-                            component.sessionTimetableRepository(),
-                            shift = component.academicSessionRepository().observeShiftOf(sessionId, rollNumber),
-                        )
-                        StudentScreen.MoreHub -> StudentMoreScreen(
-                            sessionId, deptId, rollNumber,
-                            component.calendarRepository(), component.sessionFeeRepository(),
-                            component.notificationRepository(), component.academicSessionRepository(),
-                            onOpen = { destination ->
-                                when (destination) {
-                                    StudentMoreDestination.CALENDAR -> open(StudentScreen.Events)
-                                    StudentMoreDestination.FEES -> open(StudentScreen.Fees)
-                                    StudentMoreDestination.NOTIFICATIONS -> open(StudentScreen.Notifications)
-                                    StudentMoreDestination.PROFILE -> open(StudentScreen.Profile)
-                                }
-                            },
-                            onSignOut = onSignOut,
-                        )
-                        StudentScreen.Marks -> StudentMarksScreen(sessionId, rollNumber, component.sessionMarksRepository(), component.curriculumRepository())
-                        StudentScreen.Results -> StudentResultsScreen(sessionId, rollNumber, component.sessionMarksRepository())
-                        StudentScreen.Datesheets -> StudentDatesheetsScreen(
-                            sessionId = sessionId,
-                            rollNumber = rollNumber,
-                            datesheetRepository = component.datesheetRepository(),
-                            sessionRepository = component.academicSessionRepository(),
-                        )
-                        StudentScreen.Events -> StudentCalendarScreen(sessionId, deptId, component.calendarRepository(), component.departmentRepository(), component.academicSessionRepository(), rollNumber)
-                        StudentScreen.Fees -> StudentFeeChallanScreen(
-                            sessionId = sessionId,
-                            rollNumber = rollNumber,
-                            feeRepository = component.sessionFeeRepository(),
-                            sessionRepository = component.academicSessionRepository(),
-                            departmentRepository = component.departmentRepository(),
-                            window = window,
-                        )
-                        StudentScreen.Notifications -> NotificationsScreen(
-                            repository = component.notificationRepository(),
-                            role = NotificationTargetRole.STUDENT,
-                            accountKey = accountKey,
-                            sessionRepository = component.academicSessionRepository(),
-                            departmentRepository = component.departmentRepository(),
-                            audienceContext = studentAudience,
-                        )
-                        StudentScreen.Profile -> StudentOwnProfileScreen(
-                            sessionId, rollNumber, component.sessionManager(), component.academicSessionRepository(), component.departmentRepository(), component.fineRepository(),
-                            onSignOut = onSignOut,
-                        )
-                    }
-                }
+                    },
+                    label = { Text(tab.label) },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = CmsTheme.colors.onInk,
+                        selectedTextColor = CmsTheme.colors.onInk,
+                        indicatorColor = CmsTheme.colors.accent,
+                        unselectedIconColor = CmsTheme.colors.onInkMuted,
+                        unselectedTextColor = CmsTheme.colors.onInkMuted,
+                    ),
+                )
             }
         }
     }
