@@ -14,14 +14,21 @@ abstract class ScreenController(protected val scope: CoroutineScope) {
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
-    protected fun launch(block: suspend () -> Unit) {
+    /**
+     * Runs [block] and routes any failure to [error]. [action] is a short verb phrase in lower case
+     * ("save the teacher", "delete the department"): when the failure is one we cannot classify, the
+     * user sees "Couldn't save the teacher. (Ref A1B2)" instead of a bare "Something went wrong".
+     * Failures we *can* classify (validation, conflicts, database constraints, network, ...) show
+     * their specific message regardless.
+     */
+    protected fun launch(action: String? = null, block: suspend () -> Unit) {
         scope.launch {
             try {
                 block()
             } catch (c: CancellationException) {
                 throw c
             } catch (t: Throwable) {
-                _error.value = t.userMessageLogged()
+                _error.value = t.userMessageLogged(ErrorClassifier.fallbackFor(action))
             }
         }
     }
@@ -33,7 +40,7 @@ abstract class ScreenController(protected val scope: CoroutineScope) {
      * those local catches bypass the logging [launch] does, so they should call this instead of
      * the plain [com.mbd.cmscommon.util.userMessage] extension to still get it.
      */
-    protected fun Throwable.userMessageLogged(fallback: String = "Something went wrong. Please try again."): String {
+    protected fun Throwable.userMessageLogged(fallback: String = ErrorClassifier.DEFAULT_FALLBACK): String {
         val classified = ErrorClassifier.classify(this, fallback)
         if (classified.severity == Severity.CRITICAL) {
             CmsLog.critical(this@ScreenController::class.simpleName ?: "ScreenController", classified.userMessage, this)

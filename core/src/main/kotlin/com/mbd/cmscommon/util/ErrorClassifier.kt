@@ -16,22 +16,35 @@ enum class ErrorKind {
  */
 enum class Severity { EXPECTED, CRITICAL }
 
+/**
+ * [reference] is a short, deterministic code (e.g. `A1B2`) set only for [ErrorKind.UNEXPECTED]
+ * failures: it is appended to [userMessage] and written to [CmsLog] with the full throwable, so a
+ * user can quote it and support can find the exact failure.
+ */
 data class ClassifiedError(
     val kind: ErrorKind,
     val severity: Severity,
     val userMessage: String,
     val cause: Throwable,
+    val reference: String? = null,
 )
 
 /**
- * Classifies a [Throwable] into a typed [ClassifiedError]. Prefers a [CmsException] found
- * anywhere in the cause chain (a typed decision made at the throw site); falls back to the
- * legacy string-matching in [UserFacingErrorHandler] for raw Ktor/Postgrest/etc throwables so
- * existing call sites keep behaving exactly as before.
+ * Classifies a [Throwable] into a typed [ClassifiedError]. Order of precedence: a [CmsException]
+ * anywhere in the cause chain (a typed decision made at the throw site); then a recognised Postgres
+ * error ([PostgresErrorParser]: `RAISE EXCEPTION` text, unique/foreign-key/check/not-null
+ * violations, RLS denials) turned into plain words by [ConstraintMessages]; then the legacy
+ * string-matching for raw Ktor/GoTrue/etc throwables. A truly unrecognised failure gets the
+ * caller's action-aware `fallback` plus a reference code.
  */
 object ErrorClassifier {
 
-    fun classify(error: Throwable, fallback: String = "Something went wrong. Please try again."): ClassifiedError {
+    const val DEFAULT_FALLBACK = "Something went wrong. Please try again."
+
+    /** "Couldn't save the teacher." for an action phrase like "save the teacher"; [DEFAULT_FALLBACK] when there is none. */
+    fun fallbackFor(action: String?): String = action?.takeIf { it.isNotBlank() }?.let { "Couldn't ${it.trim().trimEnd('.')}." } ?: DEFAULT_FALLBACK
+
+    fun classify(error: Throwable, fallback: String = DEFAULT_FALLBACK): ClassifiedError {
         if (error is CancellationException) throw error
 
         val causes = generateSequence(error) { it.cause }.take(6).toList()
@@ -47,12 +60,18 @@ object ErrorClassifier {
                 is CmsException.Auth -> ErrorKind.AUTH
                 is CmsException.Unexpected -> ErrorKind.UNEXPECTED
             }
-            return ClassifiedError(
-                kind = kind,
-                severity = if (kind == ErrorKind.UNEXPECTED) Severity.CRITICAL else Severity.EXPECTED,
-                userMessage = typed.message ?: fallback,
-                cause = error,
-            )
+            val text = typed.message ?: fallback
+            return if (kind == ErrorKind.UNEXPECTED) {
+                unexpected(error, text)
+            } else {
+                ClassifiedError(kind, Severity.EXPECTED, text, error)
+            }
+        }
+
+        PostgresErrorParser.parse(error)?.let { pg ->
+            postgresMessage(pg)?.let { (kind, message) ->
+                return ClassifiedError(kind, Severity.EXPECTED, message, error)
+            }
         }
 
         val raw = causes.mapNotNull { it.message }.joinToString(" ")
@@ -96,16 +115,61 @@ object ErrorClassifier {
             isSafeValidationError(error, raw) ->
                 ErrorKind.VALIDATION to raw.trim().lineSequence().first().take(180)
             else ->
-                ErrorKind.UNEXPECTED to fallback.ifBlank { "Something went wrong. Please try again." }
+                return unexpected(error, fallback)
         }
 
+        return ClassifiedError(kind = kind, severity = Severity.EXPECTED, userMessage = message, cause = error)
+    }
+
+    /** A failure nobody anticipated: the action-aware [text] plus a reference code that is also logged. */
+    private fun unexpected(error: Throwable, text: String): ClassifiedError {
+        val reference = referenceFor(error)
         return ClassifiedError(
-            kind = kind,
-            severity = if (kind == ErrorKind.UNEXPECTED) Severity.CRITICAL else Severity.EXPECTED,
-            userMessage = message,
+            kind = ErrorKind.UNEXPECTED,
+            severity = Severity.CRITICAL,
+            userMessage = "${text.ifBlank { DEFAULT_FALLBACK }} (Ref $reference)",
             cause = error,
+            reference = reference,
         )
     }
+
+    /** Same failure => same code, so repeated reports of one problem can be grouped. */
+    private fun referenceFor(error: Throwable): String {
+        val basis = (error::class.qualifiedName ?: "") + "|" + (error.message ?: "").take(200)
+        return String.format(Locale.ROOT, "%04X", basis.hashCode() and 0xFFFF)
+    }
+
+    private fun postgresMessage(pg: PostgresError): Pair<ErrorKind, String>? = when (pg.code) {
+        "P0001" -> safeRaisedMessage(pg.message)?.let { text ->
+            val kind = if (CONFLICT_HINTS.any { text.contains(it, ignoreCase = true) }) ErrorKind.CONFLICT else ErrorKind.VALIDATION
+            kind to text
+        }
+        "23505" -> ErrorKind.CONFLICT to ConstraintMessages.uniqueViolation(pg)
+        "23503" -> ErrorKind.CONFLICT to ConstraintMessages.foreignKeyViolation(pg)
+        "23514" -> ErrorKind.VALIDATION to ConstraintMessages.checkViolation(pg)
+        "23502" -> ErrorKind.VALIDATION to ConstraintMessages.notNullViolation(pg)
+        "22001" -> ErrorKind.VALIDATION to ConstraintMessages.tooLong(pg)
+        "22P02", "22007", "22008", "22003" -> ErrorKind.VALIDATION to ConstraintMessages.invalidFormat()
+        "42501" -> ErrorKind.PERMISSION to ConstraintMessages.permissionDenied(pg)
+        else -> null
+    }
+
+    /**
+     * `RAISE EXCEPTION` text is written by us for end users, so it is shown as-is (first line only,
+     * capped) -- unless it contains anything that looks like an internal detail, in which case the
+     * caller falls through to the generic path.
+     */
+    private fun safeRaisedMessage(message: String): String? {
+        val line = message.trim().lineSequence().firstOrNull()?.trim().orEmpty()
+        if (line.isBlank() || line.length > 220) return null
+        return if (UNSAFE_MARKERS.none { line.contains(it, ignoreCase = true) }) line else null
+    }
+
+    private val CONFLICT_HINTS = listOf("already", "overlapping", "is full", "no longer", "still has", "still have")
+    private val UNSAFE_MARKERS = listOf(
+        "http://", "https://", "supabase", "postgrest", "exception", "request url",
+        "apikey", "authorization", "bearer ", "select=", "stacktrace", "{", "}",
+    )
 
     private fun hasStatus(text: String, status: Int): Boolean {
         val value = status.toString()

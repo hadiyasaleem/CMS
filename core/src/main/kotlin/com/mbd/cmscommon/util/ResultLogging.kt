@@ -32,7 +32,7 @@ fun Result<*>.isSuccessLogged(tag: String): Boolean {
  * logging for CRITICAL failures. `tag` is explicit here since there's no enclosing controller
  * class name to infer it from.
  */
-fun Throwable.userMessageLogged(tag: String, fallback: String = "Something went wrong. Please try again."): String {
+fun Throwable.userMessageLogged(tag: String, fallback: String = ErrorClassifier.DEFAULT_FALLBACK): String {
     val classified = ErrorClassifier.classify(this, fallback)
     if (classified.severity == Severity.CRITICAL) {
         CmsLog.critical(tag, classified.userMessage, this)

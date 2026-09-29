@@ -6,9 +6,9 @@ package com.mbd.cmscommon.util
  * first, legacy string matching as fallback) now lives in [ErrorClassifier].
  */
 object UserFacingErrorHandler {
-    fun message(error: Throwable, fallback: String = "Something went wrong. Please try again."): String =
+    fun message(error: Throwable, fallback: String = ErrorClassifier.DEFAULT_FALLBACK): String =
         ErrorClassifier.classify(error, fallback).userMessage
 }
 
-fun Throwable.userMessage(fallback: String = "Something went wrong. Please try again."): String =
+fun Throwable.userMessage(fallback: String = ErrorClassifier.DEFAULT_FALLBACK): String =
     UserFacingErrorHandler.message(this, fallback)
