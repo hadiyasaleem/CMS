@@ -50,7 +50,7 @@ class StudentMoreController(
     fun refresh(fetchRemote: Boolean = true) {
         version++
         val request = version
-        launch {
+        launch("load your portal summaries") {
             _loading.value = true
             _loadError.value = null
             // The roster row's shift; before it syncs, the session's (only or first) shift.

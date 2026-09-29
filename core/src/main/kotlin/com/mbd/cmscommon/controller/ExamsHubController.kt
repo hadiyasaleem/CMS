@@ -65,7 +65,7 @@ class ExamsHubController(
     fun refresh(fetchRemote: Boolean = true) {
         loadVersion++
         val version = loadVersion
-        launch {
+        launch("refresh the exam data") {
             _loading.value = true
             _loadError.value = null
             try {

@@ -1,12 +1,12 @@
 package com.mbd.cmsstudent.feature.datesheets
 
+import com.mbd.cmscommon.util.FailureSummary
 import com.mbd.cmscommon.controller.studentDatesheet
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.domain.model.Datesheet
 import com.mbd.cmscommon.domain.model.DatesheetSlot
 import com.mbd.cmscommon.domain.repository.DatesheetRepository
-import com.mbd.cmscommon.util.orLogCritical
 import com.mbd.cmsstudent.feature.common.CurrentStudentProvider
 import com.mbd.cmsstudent.feature.common.StudentContext
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -65,8 +65,7 @@ class StudentDatesheetsViewModel @Inject constructor(
             _loading.value = true
             try {
                 val syncResult = runCatching { datesheetRepository.sync(); datesheetRepository.syncAllSlots() }
-                syncResult.orLogCritical("StudentDatesheetsViewModel.refresh")
-                _error.value = if (syncResult.isFailure) "Some data could not be loaded. Pull to refresh to try again." else null
+                _error.value = FailureSummary.describe(FailureSummary.of(listOf("datesheets" to syncResult)), "StudentDatesheetsViewModel")
             } finally {
                 _loading.value = false
             }

@@ -65,7 +65,7 @@ class StudentExamsHubController(
         refresh(fetchRemote = false)
     }
 
-    fun refresh(fetchRemote: Boolean = true) = launch {
+    fun refresh(fetchRemote: Boolean = true) = launch("load your exam data") {
         clearError()
         _loadError.value = null
         _loading.value = true

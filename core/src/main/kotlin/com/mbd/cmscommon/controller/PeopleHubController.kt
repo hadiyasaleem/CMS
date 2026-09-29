@@ -73,7 +73,7 @@ class PeopleHubController(
     fun refresh(fetchRemote: Boolean = true) {
         loadVersion++
         val version = loadVersion
-        launch {
+        launch("load the people summaries") {
             _loading.value = true
             _loadError.value = null
             supervisorScope {

@@ -1,5 +1,6 @@
 package com.mbd.cmsstudent.feature.hub
 
+import com.mbd.cmscommon.util.FailureSummary
 import com.mbd.cmscommon.domain.model.Session
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -73,11 +74,16 @@ class MoreHubViewModel @Inject constructor(
                         ).first()
                     }
                     val unread = unreadResult.orLogCritical("MoreHubViewModel.observeUnreadCount", 0)
-                    _error.value = if (listOf(eventsResult, feeResult, profileResult, unreadResult).any { it.isFailure }) {
-                        "Some account summaries could not be loaded. Pull to refresh to try again."
-                    } else {
-                        null
-                    }
+                    _error.value = FailureSummary.describe(
+                        FailureSummary.of(
+                            listOf(
+                                "calendar events" to eventsResult,
+                                "fee details" to feeResult,
+                                "your profile" to profileResult,
+                                "unread notifications" to unreadResult,
+                            ),
+                        ),
+                    )
                     studentMoreSnapshot(
                         events = events,
                         fee = fee,
