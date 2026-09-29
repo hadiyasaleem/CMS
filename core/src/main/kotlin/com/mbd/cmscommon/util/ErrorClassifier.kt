@@ -97,7 +97,8 @@ object ErrorClassifier {
                 ErrorKind.CONFLICT to "An account with this email already exists."
             normalized.contains("password should be") || normalized.contains("weak password") ->
                 ErrorKind.VALIDATION to "Choose a stronger password and try again."
-            normalized.contains("jwt expired") || normalized.contains("refresh token") || normalized.contains("session expired") ->
+            normalized.contains("jwt expired") || normalized.contains("refresh token") || normalized.contains("session expired") ||
+                normalized.contains("anonymous access is disabled") ->
                 ErrorKind.AUTH to "Your session has expired. Sign in again."
             hasStatus(normalized, 401) || normalized.contains("unauthorized") ->
                 ErrorKind.AUTH to "Your session is no longer valid. Sign in again."
@@ -167,6 +168,10 @@ object ErrorClassifier {
         "22001" -> ErrorKind.VALIDATION to ConstraintMessages.tooLong(pg)
         "22P02", "22007", "22008", "22003" -> ErrorKind.VALIDATION to ConstraintMessages.invalidFormat()
         "42501" -> ErrorKind.PERMISSION to ConstraintMessages.permissionDenied(pg)
+        // Transient database conditions: the same request usually works a moment later.
+        "40001", "40P01" -> ErrorKind.CONFLICT to "Someone else changed this at the same time. Refresh and try again."
+        "53300", "53400", "08000", "08003", "08006", "57P01", "57P03" ->
+            ErrorKind.NETWORK to "The server is temporarily unavailable. Try again in a moment."
         else -> null
     }
 

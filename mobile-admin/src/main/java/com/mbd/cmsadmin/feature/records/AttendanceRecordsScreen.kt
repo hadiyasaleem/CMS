@@ -175,6 +175,7 @@ class AttendanceRecordsViewModel @Inject constructor(
         viewModelScope.launch {
             _loading.value = true
             _error.value = null
+            // Best-effort: the report is built from the local cache below (and any failure there is shown); the shell's refresh reports sync failures.
             runCatching { sessionRepository.syncStudents(sessionId) }
             runCatching { curriculumRepository.syncSession(sessionId) }
             runCatching {

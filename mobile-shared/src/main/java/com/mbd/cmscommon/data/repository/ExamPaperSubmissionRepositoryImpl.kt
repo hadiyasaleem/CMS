@@ -110,6 +110,7 @@ class ExamPaperSubmissionRepositoryImpl @Inject constructor(
             filter { eq("id", id) }
         }
         if (!path.isNullOrBlank()) {
+            // Best-effort: the record is already soft-deleted; a blob that could not be removed is only orphaned storage, not a failed delete.
             runCatching { storage.from(SupabaseTables.BUCKET_EXAM_PAPERS).delete(path) }
         }
         submissionDao.deleteById(id)

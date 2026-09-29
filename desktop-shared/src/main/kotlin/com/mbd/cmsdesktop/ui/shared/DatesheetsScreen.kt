@@ -1,5 +1,7 @@
 package com.mbd.cmsdesktop.ui.shared
 
+import com.mbd.cmscommon.util.rethrowCancellation
+import com.mbd.cmscommon.util.FailureSummary
 import com.mbd.cmscommon.controller.observeShiftOf
 import com.mbd.cmscommon.controller.studentDatesheet
 import com.mbd.cmsdesktop.platform.rememberDocumentExport
@@ -160,16 +162,23 @@ fun StudentDatesheetsScreen(
     val allSlots by datesheetRepository.observeAllSlots().collectAsState(initial = emptyList())
     val slots = sheet?.let { s -> allSlots.filter { it.datesheetId == s.id } }.orEmpty()
 
-    LaunchedEffect(datesheetRepository) {
-        runCatching { datesheetRepository.sync(); datesheetRepository.syncAllSlots() }
+    var syncError by remember { mutableStateOf<String?>(null) }
+    var syncing by remember { mutableStateOf(false) }
+    val syncScope = rememberCoroutineScope()
+    suspend fun sync() {
+        syncing = true
+        val result = runCatching { datesheetRepository.sync(); datesheetRepository.syncAllSlots() }.rethrowCancellation()
+        syncError = FailureSummary.describe(FailureSummary.of(listOf("datesheets" to result)), "StudentDatesheetsScreen")
+        syncing = false
     }
+    LaunchedEffect(datesheetRepository) { sync() }
 
     StudentDatesheetWorkspace(
         sheet = sheet,
         session = session,
         slots = slots,
-        loading = false,
-        errorMessage = null,
-        onRetry = {},
+        loading = syncing && sheet == null,
+        errorMessage = syncError,
+        onRetry = { syncScope.launch { sync() } },
     )
 }

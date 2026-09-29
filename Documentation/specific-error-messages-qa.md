@@ -9,7 +9,11 @@ Automated coverage (run `./gradlew :core:test`):
 | Test | What it protects |
 |---|---|
 | `ErrorMessageMatrixTest` | One row per failure kind (typed, network, database, edge function, sign-in, unknown): kind, wording, no internals, Ref code only for unknowns |
-| `ErrorMessageSourceGuardTest` | Source scan: no stray "Something went wrong", no vague "Some … could not be loaded", every controller `launch` labelled, no raw `exception.message` shown |
+| `ErrorMessageSourceGuardTest` | Source scan: no stray "Something went wrong", no vague "Some … could not be loaded", every controller `launch` labelled, no raw `exception.message` shown, no untyped `IllegalArgument`/`IllegalState` throws |
+| `ErrorMessageUiGuardTest` | Source scan of ViewModels, desktop screens and controllers: no reliance on the default generic fallback, no `catch` that swallows a failure, no fixed sentence set inside a `catch`, every dropped `runCatching` carries a `// Best-effort: <why>` comment |
+| `EdgeFunctionGuardTest` | Source scan of `supabase/functions/**/*.ts`: no generic `httpError` message, a specific code on every 5xx, no raw `error.message` echoed, no hand-built responses, `dbError`/`authError` fallbacks that say what to do next |
+| `ErrorMessageMatrixExtrasTest` | Transient/platform database codes, edge-function HTTP statuses (401/403/404/422/429/500/502/503), file-picker and export failures |
+| `DatabaseScenarioMessagesTest` | (needs the local tools, otherwise skipped) real errors from a scratch Postgres, and constraint names that still exist |
 | `ErrorClassifierTest`, `EdgeFunctionErrorsTest`, `AuthAndFileErrorsTest` | Detailed wording of the classifier, edge function errors, sign-in and file errors |
 | `FailureSummaryTest`, `HubFailureMessageTest` | "Couldn't load fees and marks (no connection)" style aggregation |
 | `AdminControllerPreChecksTest`, `TeacherControllerChecksTest`, `TimetableConflictMessageTest` | Controller pre-check wording, timetable conflict detail |
@@ -136,6 +140,17 @@ report unless the check says otherwise.
 - [ ] No message contains a URL, SQL, JSON, a stack trace, an exception class name, a UUID or someone else's email.
 - [ ] Dismissing an error and repeating the action shows the same message (not a stale one, not none).
 - [ ] The Ref code in an unexpected message also appears in the app's critical log (Settings → logs / `app_logs` table).
+
+## Known wording divergences (UI text vs controller text)
+
+Some pre-validation lives in the shared composables as well as in the controller, so the same mistake can read two ways
+depending on which check fires first. Both are specific and correct; they just differ. Unify them if you touch either side.
+
+| Where | Composable says | Controller says |
+|---|---|---|
+| Term dates dialog (`SemesterCurriculumWorkspace`, mobile + desktop) | "Use a valid YYYY-MM-DD start date." / "Use a valid YYYY-MM-DD end date." / "End date cannot be before start date." | `SemesterSubjectsController`: "Enter the start date as YYYY-MM-DD (for example 2026-09-01)." / "The term can't end (…) before it starts (…)." |
+| Fine amount (`StudentProfileWorkspace`) | "Enter an amount greater than zero." | `StudentProfileEditController.issueFine`: "Fine amount must be greater than zero." |
+| Session capacity (`SessionOperationsWorkspace`) | shared `capacityError` | shared `capacityError` (identical — no divergence) |
 
 ## When you find a generic message
 

@@ -13,6 +13,7 @@ import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
 import com.mbd.cmscommon.teacher.ResolvedAssignment
 import com.mbd.cmscommon.util.CmsException
 import com.mbd.cmscommon.util.Outcome
+import com.mbd.cmscommon.util.orLogCritical
 import com.mbd.cmscommon.util.previewText
 import java.time.LocalDate
 import kotlinx.coroutines.CoroutineScope
@@ -235,7 +236,7 @@ class MarkAttendanceController(
                     targetDeptId = assignment.deptId.ifBlank { null },
                     targetShift = assignment.classShift,
                 )
-            }
+            }.orLogCritical("MarkAttendanceController.notifyAdmin") // the register is already saved; a failed heads-up to admins must not undo that
             _alreadyMarked.value = true
             _submitState.value = Outcome.Success(Unit)
         } catch (t: Throwable) {

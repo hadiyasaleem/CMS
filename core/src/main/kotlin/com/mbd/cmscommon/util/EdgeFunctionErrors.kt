@@ -80,13 +80,14 @@ object EdgeFunctionErrors {
         "NOT_FOUND" -> Kind.NOT_FOUND
         "CONFLICT", "ALREADY_EXISTS", "EMAIL_EXISTS", "SESSION_ACTIVE", "RELATED_RECORDS" -> Kind.CONFLICT
         "RATE_LIMIT" -> Kind.RATE_LIMIT
-        "INTERNAL", "DB_FAILED", "AUTH_FAILED", "ARCHIVE_EXPORT_FAILED", "ARCHIVE_UPLOAD_FAILED" -> Kind.UNEXPECTED
+        "INTERNAL", "DB_FAILED", "AUTH_FAILED", "ARCHIVE_EXPORT_FAILED", "ARCHIVE_UPLOAD_FAILED", "PERMISSION_CHECK_FAILED" -> Kind.UNEXPECTED
         else -> when {
             status == 400 -> Kind.VALIDATION
             status == 401 -> Kind.AUTH
             status == 403 -> Kind.PERMISSION
             status == 404 -> Kind.NOT_FOUND
             status == 409 -> Kind.CONFLICT
+            status == 422 -> Kind.VALIDATION
             status == 429 -> Kind.RATE_LIMIT
             status >= 500 -> Kind.UNEXPECTED
             else -> Kind.UNEXPECTED

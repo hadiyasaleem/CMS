@@ -27,6 +27,7 @@ class RoomLogSink @Inject constructor(
 
     override fun write(record: LogRecord) {
         scope.launch {
+            // Best-effort: this IS the logger, so a failed log write has nowhere else to be reported.
             runCatching { appLogDao.insert(AppLogMapper.recordToEntity(record)) }
         }
     }

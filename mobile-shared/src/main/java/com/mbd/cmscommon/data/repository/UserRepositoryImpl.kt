@@ -1,6 +1,7 @@
 package com.mbd.cmscommon.data.repository
 
 import com.mbd.cmscommon.util.CmsException
+import com.mbd.cmscommon.util.orLogCritical
 import com.mbd.cmscommon.auth.RoleResolver
 import com.mbd.cmscommon.data.local.dao.UserDao
 import com.mbd.cmscommon.data.local.entity.UserEntity
@@ -62,7 +63,7 @@ class UserRepositoryImpl @Inject constructor(
             }) {
                 filter { eq("email", uid) }
             }
-        }
+        }.orLogCritical("UserRepositoryImpl.provisionAdmin") // resolveRole below reports the failure if the profile was not promoted
         resolveRole(uid)
     }
 
@@ -100,7 +101,7 @@ class UserRepositoryImpl @Inject constructor(
             postgrest.from(SupabaseTables.PROFILES).update({ set("is_deleted", true) }) {
                 filter { eq("email", uid) }
             }
-        }
+        }.orLogCritical("UserRepositoryImpl.deleteUser") // best-effort remote soft-delete; the local session is cleared either way
         userDao.clear()
     }
 

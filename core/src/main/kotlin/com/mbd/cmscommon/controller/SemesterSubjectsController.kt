@@ -155,10 +155,7 @@ class SemesterSubjectsController(
     private fun parseDate(text: String): Pair<LocalDate?, Boolean> {
         val trimmed = text.trim()
         if (trimmed.isEmpty()) return null to false
-        return try {
-            LocalDate.parse(trimmed) to false
-        } catch (e: Exception) {
-            null to true
-        }
+        val parsed = runCatching { LocalDate.parse(trimmed) }.getOrNull()
+        return parsed to (parsed == null)
     }
 }

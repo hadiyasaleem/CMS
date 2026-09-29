@@ -117,7 +117,7 @@ class AdminDataBootstrapper @Inject constructor(
             ).awaitAll().filterNotNull()
         }
 
-        // Flush buffered crash/critical logs alongside the normal sync cycle. Never allowed to
+        // Flush buffered crash/critical logs alongside the normal sync cycle. Best-effort: never allowed to
         // affect the report or throw -- see AppLogRepositoryImpl.flush().
         runCatching { appLogRepository.flush() }
         onTaskDone()
