@@ -1,5 +1,10 @@
 package com.mbd.cmsadmin.feature.records
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.ChevronLeft
+import compose.icons.tablericons.ChevronRight
+import compose.icons.tablericons.ChevronUp
+import compose.icons.tablericons.Edit
 import com.mbd.cmscommon.util.userMessageLogged
 import com.mbd.cmscommon.util.FileReadErrors
 import com.mbd.cmscommon.ui.components.DialogScrollBody
@@ -29,11 +34,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -328,7 +328,7 @@ fun AttendanceRecordsScreen(viewModel: AttendanceRecordsViewModel = hiltViewMode
                     }
                     IconButton(onClick = { expanded = !expanded }) {
                         Icon(
-                            if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.Edit,
+                            if (expanded) TablerIcons.ChevronUp else TablerIcons.Edit,
                             contentDescription = if (expanded) "Collapse filters" else "Edit filters",
                         )
                     }
@@ -502,14 +502,14 @@ private fun MonthNav(months: List<YearMonth>, selected: YearMonth?, onSelect: (Y
     val idx = months.indexOf(selected)
     Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = { if (idx > 0) onSelect(months[idx - 1]) }, enabled = idx > 0) {
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Previous month", tint = MaterialTheme.colorScheme.onSurface)
+            Icon(TablerIcons.ChevronLeft, contentDescription = "Previous month", tint = MaterialTheme.colorScheme.onSurface)
         }
         Text(
             selected?.let { "${it.month.getDisplayName(TextStyle.SHORT, Locale.ENGLISH)} ${it.year}" } ?: "—",
             style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface,
         )
         IconButton(onClick = { if (idx in 0 until months.lastIndex) onSelect(months[idx + 1]) }, enabled = idx in 0 until months.lastIndex) {
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Next month", tint = MaterialTheme.colorScheme.onSurface)
+            Icon(TablerIcons.ChevronRight, contentDescription = "Next month", tint = MaterialTheme.colorScheme.onSurface)
         }
     }
 }

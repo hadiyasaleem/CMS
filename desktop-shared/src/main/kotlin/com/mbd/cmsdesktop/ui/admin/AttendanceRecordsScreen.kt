@@ -1,5 +1,10 @@
 package com.mbd.cmsdesktop.ui.admin
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.ChevronLeft
+import compose.icons.tablericons.ChevronRight
+import compose.icons.tablericons.ChevronUp
+import compose.icons.tablericons.Edit
 import com.mbd.cmscommon.util.userMessageLogged
 import com.mbd.cmscommon.util.FileReadErrors
 import com.mbd.cmscommon.ui.components.DialogScrollBody
@@ -31,11 +36,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -285,7 +285,7 @@ fun AttendanceRecordsScreen(
                     }
                     IconButton(onClick = { expanded = !expanded }) {
                         Icon(
-                            imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.Edit,
+                            imageVector = if (expanded) TablerIcons.ChevronUp else TablerIcons.Edit,
                             contentDescription = if (expanded) "Collapse filters" else "Edit filters",
                         )
                     }
@@ -515,7 +515,7 @@ private fun MonthNav(months: List<YearMonth>, selected: YearMonth?, onSelect: (Y
     ) {
         IconButton(onClick = { if (idx > 0) onSelect(months[idx - 1]) }, enabled = idx > 0) {
             Icon(
-                Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                TablerIcons.ChevronLeft,
                 contentDescription = "Previous month",
                 tint = MaterialTheme.colorScheme.onSurface,
             )
@@ -525,7 +525,7 @@ private fun MonthNav(months: List<YearMonth>, selected: YearMonth?, onSelect: (Y
         val hasNext = idx in 0 until months.lastIndex
         IconButton(onClick = { if (hasNext) onSelect(months[idx + 1]) }, enabled = hasNext) {
             Icon(
-                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                TablerIcons.ChevronRight,
                 contentDescription = "Next month",
                 tint = MaterialTheme.colorScheme.onSurface,
             )

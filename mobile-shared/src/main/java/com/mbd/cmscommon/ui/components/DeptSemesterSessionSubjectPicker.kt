@@ -1,12 +1,12 @@
 package com.mbd.cmscommon.ui.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.ChevronDown
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
@@ -79,7 +79,7 @@ private fun PickerDropdown(
                 modifier = Modifier.fillMaxWidth(),
                 readOnly = true,
                 label = { Text(label) },
-                trailingIcon = { Icon(Icons.Filled.ArrowDropDown, contentDescription = null) },
+                trailingIcon = { Icon(TablerIcons.ChevronDown, contentDescription = null) },
             )
             Box(Modifier.matchParentSize().clickable { expanded = true })
         }

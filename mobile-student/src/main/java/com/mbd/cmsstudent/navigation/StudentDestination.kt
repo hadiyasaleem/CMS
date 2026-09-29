@@ -1,15 +1,14 @@
 package com.mbd.cmsstudent.navigation
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.FactCheck
-import androidx.compose.material.icons.filled.Grading
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Payments
-import androidx.compose.material.icons.filled.Person
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Bell
+import compose.icons.tablericons.Calendar
+import compose.icons.tablericons.ClipboardCheck
+import compose.icons.tablericons.CreditCard
+import compose.icons.tablericons.Home
+import compose.icons.tablericons.Menu2
+import compose.icons.tablericons.Report
+import compose.icons.tablericons.User
 import androidx.compose.ui.graphics.vector.ImageVector
 
 sealed class StudentDestination(
@@ -18,18 +17,18 @@ sealed class StudentDestination(
     val navIcon: ImageVector? = null,
     val navLabel: String = label,
 ) {
-    data object Home : StudentDestination("home", "Home", Icons.Filled.Home)
-    data object Attendance : StudentDestination("attendance", "Attendance", Icons.Filled.FactCheck, "Attend")
-    data object ExamsHub : StudentDestination("exams_hub", "Exams", Icons.Filled.Grading)
-    data object Timetable : StudentDestination("timetable", "Timetable", Icons.Filled.CalendarMonth)
-    data object More : StudentDestination("more", "More", Icons.Filled.Menu)
-    data object Marks : StudentDestination("marks", "Marks", Icons.Filled.Grading)
-    data object Results : StudentDestination("results", "Results", Icons.Filled.Grading)
-    data object Events : StudentDestination("events", "Events", Icons.Filled.CalendarMonth)
-    data object Datesheets : StudentDestination("datesheets", "Datesheets", Icons.Filled.CalendarMonth)
-    data object Fees : StudentDestination("fees", "Fee Challan", Icons.Filled.Payments)
-    data object Notifications : StudentDestination("notifications", "Notifications", Icons.Filled.Notifications)
-    data object Profile : StudentDestination("profile", "Profile", Icons.Filled.Person)
+    data object Home : StudentDestination("home", "Home", TablerIcons.Home)
+    data object Attendance : StudentDestination("attendance", "Attendance", TablerIcons.ClipboardCheck, "Attend")
+    data object ExamsHub : StudentDestination("exams_hub", "Exams", TablerIcons.Report)
+    data object Timetable : StudentDestination("timetable", "Timetable", TablerIcons.Calendar)
+    data object More : StudentDestination("more", "More", TablerIcons.Menu2)
+    data object Marks : StudentDestination("marks", "Marks", TablerIcons.Report)
+    data object Results : StudentDestination("results", "Results", TablerIcons.Report)
+    data object Events : StudentDestination("events", "Events", TablerIcons.Calendar)
+    data object Datesheets : StudentDestination("datesheets", "Datesheets", TablerIcons.Calendar)
+    data object Fees : StudentDestination("fees", "Fee Challan", TablerIcons.CreditCard)
+    data object Notifications : StudentDestination("notifications", "Notifications", TablerIcons.Bell)
+    data object Profile : StudentDestination("profile", "Profile", TablerIcons.User)
 
     companion object {
         val bottomNavItems = listOf(Home, Attendance, ExamsHub, Timetable, More)

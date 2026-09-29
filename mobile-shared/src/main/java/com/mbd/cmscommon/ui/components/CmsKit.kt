@@ -1,5 +1,14 @@
 package com.mbd.cmscommon.ui.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.ArrowLeft
+import compose.icons.tablericons.Bell
+import compose.icons.tablericons.Calendar
+import compose.icons.tablericons.ChevronRight
+import compose.icons.tablericons.Plus
+import compose.icons.tablericons.Refresh
+import compose.icons.tablericons.School
+import compose.icons.tablericons.Search
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
 import androidx.compose.foundation.BorderStroke
@@ -19,15 +28,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.outlined.CalendarMonth
-import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material.icons.outlined.School
-import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
@@ -92,7 +92,7 @@ fun CmsTopBar(
             when {
                 onBack != null -> {
                     IconButton(onClick = onBack, modifier = Modifier.size(40.dp)) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", modifier = Modifier.size(22.dp), tint = CmsTheme.colors.onInk)
+                        Icon(TablerIcons.ArrowLeft, contentDescription = "Back", modifier = Modifier.size(22.dp), tint = CmsTheme.colors.onInk)
                     }
                     Spacer(Modifier.width(4.dp))
                 }
@@ -102,7 +102,7 @@ fun CmsTopBar(
                 }
                 else -> {
                     Box(Modifier.size(28.dp).background(CmsTheme.colors.accent), contentAlignment = Alignment.Center) {
-                        Icon(Icons.Outlined.School, contentDescription = null, modifier = Modifier.size(16.dp), tint = CmsTheme.colors.onInk)
+                        Icon(TablerIcons.School, contentDescription = null, modifier = Modifier.size(16.dp), tint = CmsTheme.colors.onInk)
                     }
                     Spacer(Modifier.width(10.dp))
                 }
@@ -120,7 +120,7 @@ fun CmsTopBar(
                     if (isRefreshing) {
                         CircularProgressIndicator(modifier = Modifier.size(20.dp), color = CmsTheme.colors.onInk, strokeWidth = 2.dp)
                     } else {
-                        Icon(Icons.Outlined.Refresh, contentDescription = "Refresh", modifier = Modifier.size(22.dp), tint = CmsTheme.colors.onInk)
+                        Icon(TablerIcons.Refresh, contentDescription = "Refresh", modifier = Modifier.size(22.dp), tint = CmsTheme.colors.onInk)
                     }
                 }
             }
@@ -134,7 +134,7 @@ fun CmsTopBar(
                             }
                         }
                     }) {
-                        Icon(Icons.Outlined.Notifications, contentDescription = "Notifications", tint = CmsTheme.colors.onInk)
+                        Icon(TablerIcons.Bell, contentDescription = "Notifications", tint = CmsTheme.colors.onInk)
                     }
                 }
             }
@@ -162,7 +162,7 @@ fun ActiveTermBanner(
     onCta: () -> Unit,
     modifier: Modifier = Modifier,
     ctaLabel: String = "Manage",
-    icon: ImageVector = Icons.Outlined.CalendarMonth,
+    icon: ImageVector = TablerIcons.Calendar,
 ) {
     Surface(modifier = modifier.fillMaxWidth(), shape = RectangleShape, color = CmsTheme.colors.ink) {
         Row(
@@ -207,7 +207,7 @@ fun HubNavCard(label: String, subtitle: String, icon: ImageVector, modifier: Mod
                 Text(label, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleLarge)
                 Text(subtitle, color = CmsTheme.colors.muted, style = MaterialTheme.typography.bodyMedium)
             }
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = CmsTheme.colors.muted)
+            Icon(TablerIcons.ChevronRight, contentDescription = null, tint = CmsTheme.colors.muted)
         }
     }
 }
@@ -250,7 +250,7 @@ fun CmsFab(onClick: () -> Unit, modifier: Modifier = Modifier, contentDescriptio
         containerColor = CmsTheme.colors.accent,
         contentColor = CmsTheme.colors.onInk,
     ) {
-        Icon(Icons.Filled.Add, contentDescription = contentDescription)
+        Icon(TablerIcons.Plus, contentDescription = contentDescription)
     }
 }
 
@@ -327,7 +327,7 @@ fun TableToolbar(
             onValueChange = onQueryChange,
             label = "",
             placeholder = placeholder,
-            leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null, tint = CmsTheme.colors.muted) },
+            leadingIcon = { Icon(TablerIcons.Search, contentDescription = null, tint = CmsTheme.colors.muted) },
         )
         if (extraActions != null) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {

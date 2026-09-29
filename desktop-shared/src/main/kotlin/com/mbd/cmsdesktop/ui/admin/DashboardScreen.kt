@@ -1,12 +1,12 @@
 package com.mbd.cmsdesktop.ui.admin
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Assessment
-import androidx.compose.material.icons.outlined.CalendarMonth
-import androidx.compose.material.icons.outlined.Campaign
-import androidx.compose.material.icons.outlined.Groups
-import androidx.compose.material.icons.outlined.HowToReg
-import androidx.compose.material.icons.outlined.School
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Calendar
+import compose.icons.tablericons.ChartBar
+import compose.icons.tablericons.School
+import compose.icons.tablericons.Speakerphone
+import compose.icons.tablericons.UserCheck
+import compose.icons.tablericons.Users
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -47,12 +47,12 @@ fun DashboardScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val actions = listOf(
-        DashboardActionUi("Departments", Icons.Outlined.School, onOpenAcademics),
-        DashboardActionUi("Teachers", Icons.Outlined.Groups, onOpenTeachers),
-        DashboardActionUi("Calendar", Icons.Outlined.CalendarMonth, onOpenCalendar),
-        DashboardActionUi("Link requests", Icons.Outlined.HowToReg, onOpenLinkRequests),
-        DashboardActionUi("Insights", Icons.Outlined.Assessment, onOpenInsights),
-        DashboardActionUi("Notifications", Icons.Outlined.Campaign, onOpenNotifications),
+        DashboardActionUi("Departments", TablerIcons.School, onOpenAcademics),
+        DashboardActionUi("Teachers", TablerIcons.Users, onOpenTeachers),
+        DashboardActionUi("Calendar", TablerIcons.Calendar, onOpenCalendar),
+        DashboardActionUi("Link requests", TablerIcons.UserCheck, onOpenLinkRequests),
+        DashboardActionUi("Insights", TablerIcons.ChartBar, onOpenInsights),
+        DashboardActionUi("Notifications", TablerIcons.Speakerphone, onOpenNotifications),
     )
 
     AdminDashboardContent(

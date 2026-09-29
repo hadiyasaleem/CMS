@@ -1,11 +1,11 @@
 package com.mbd.cmsadmin.navigation
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Assessment
-import androidx.compose.material.icons.filled.Dashboard
-import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.filled.MoreHoriz
-import androidx.compose.material.icons.filled.School
+import compose.icons.TablerIcons
+import compose.icons.tablericons.ChartBar
+import compose.icons.tablericons.Dashboard
+import compose.icons.tablericons.Dots
+import compose.icons.tablericons.School
+import compose.icons.tablericons.Users
 import androidx.compose.ui.graphics.vector.ImageVector
 
 /**
@@ -14,11 +14,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
  * "2021-2025 Morning") → students + weekly timetable. No terms/offerings indirection.
  */
 enum class AdminTab(val route: String, val label: String, val icon: ImageVector) {
-    Dashboard("tab_dashboard", "Dashboard", Icons.Filled.Dashboard),
-    Academics("tab_academics", "Academics", Icons.Filled.School),
-    People("tab_people", "People", Icons.Filled.Groups),
-    Records("tab_records", "Records", Icons.Filled.Assessment),
-    More("tab_more", "More", Icons.Filled.MoreHoriz),
+    Dashboard("tab_dashboard", "Dashboard", TablerIcons.Dashboard),
+    Academics("tab_academics", "Academics", TablerIcons.School),
+    People("tab_people", "People", TablerIcons.Users),
+    Records("tab_records", "Records", TablerIcons.ChartBar),
+    More("tab_more", "More", TablerIcons.Dots),
 }
 
 /** Leaf routes reached from tabs (registered once in the NavHost). */

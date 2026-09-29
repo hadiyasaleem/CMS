@@ -1,5 +1,9 @@
 package com.mbd.cmscommon.ui.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Calendar
+import compose.icons.tablericons.ChevronDown
+import compose.icons.tablericons.Clock
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,10 +12,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.clickable
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.outlined.AccessTime
-import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -78,7 +78,7 @@ fun CmsDateField(
             readOnly = true,
             label = { Text(label) },
             placeholder = { Text(if (optional) "Optional" else "Select date") },
-            trailingIcon = { Icon(Icons.Outlined.CalendarMonth, contentDescription = "Choose $label") },
+            trailingIcon = { Icon(TablerIcons.Calendar, contentDescription = "Choose $label") },
             supportingText = helper?.let { { Text(it) } },
             isError = isError || beforeMin || afterMax,
             singleLine = true,
@@ -152,7 +152,7 @@ fun CmsTimeField(
             readOnly = true,
             label = { Text(label) },
             placeholder = { Text("Select time") },
-            trailingIcon = { Icon(Icons.Outlined.AccessTime, contentDescription = "Choose $label") },
+            trailingIcon = { Icon(TablerIcons.Clock, contentDescription = "Choose $label") },
             supportingText = if (notAfterMin) { { Text("Must be after ${clockDisplay(minTime)}") } } else null,
             isError = isError || notAfterMin,
             singleLine = true,
@@ -224,7 +224,7 @@ fun CmsEntityPicker(
                         Text(it, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
-                Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
+                Icon(TablerIcons.ChevronDown, contentDescription = null)
             }
             CmsDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                 if (optional) {

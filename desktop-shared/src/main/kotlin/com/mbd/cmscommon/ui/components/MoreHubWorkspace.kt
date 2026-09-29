@@ -1,5 +1,10 @@
 package com.mbd.cmscommon.ui.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Building
+import compose.icons.tablericons.Settings
+import compose.icons.tablericons.Shield
+import compose.icons.tablericons.Speakerphone
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -23,11 +28,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AdminPanelSettings
-import androidx.compose.material.icons.outlined.Apartment
-import androidx.compose.material.icons.outlined.Campaign
-import androidx.compose.material.icons.outlined.ManageAccounts
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -83,10 +83,10 @@ fun MoreHubWorkspace(
     modifier: Modifier = Modifier,
 ) {
     val actions = listOf(
-        MoreAction(MoreDestination.ADMINISTRATORS, "Administrators", Icons.Outlined.AdminPanelSettings, MoreNavy),
-        MoreAction(MoreDestination.NOTIFICATIONS, "Notifications", Icons.Outlined.Campaign, MoreNavy),
-        MoreAction(MoreDestination.BUILDINGS_ROOMS, "Buildings & Rooms", Icons.Outlined.Apartment, MoreGold),
-        MoreAction(MoreDestination.PROFILE, "Profile & Security", Icons.Outlined.ManageAccounts, MoreGreen),
+        MoreAction(MoreDestination.ADMINISTRATORS, "Administrators", TablerIcons.Shield, MoreNavy),
+        MoreAction(MoreDestination.NOTIFICATIONS, "Notifications", TablerIcons.Speakerphone, MoreNavy),
+        MoreAction(MoreDestination.BUILDINGS_ROOMS, "Buildings & Rooms", TablerIcons.Building, MoreGold),
+        MoreAction(MoreDestination.PROFILE, "Profile & Security", TablerIcons.Settings, MoreGreen),
     )
 
     val listState = rememberLazyListState()

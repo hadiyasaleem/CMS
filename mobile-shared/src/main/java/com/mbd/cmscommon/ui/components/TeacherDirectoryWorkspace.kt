@@ -1,5 +1,10 @@
 package com.mbd.cmscommon.ui.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Camera
+import compose.icons.tablericons.DotsVertical
+import compose.icons.tablericons.Eye
+import compose.icons.tablericons.EyeOff
 import com.mbd.cmscommon.export.ExportDocument
 import com.mbd.cmscommon.export.ExportFormat
 import com.mbd.cmscommon.export.teacherDirectoryExport
@@ -26,12 +31,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
@@ -430,7 +429,7 @@ private fun TeacherCard(
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 Box {
-                    IconButton(onClick = { menuExpanded = true }, enabled = !busy) { Icon(Icons.Filled.MoreVert, contentDescription = "More") }
+                    IconButton(onClick = { menuExpanded = true }, enabled = !busy) { Icon(TablerIcons.DotsVertical, contentDescription = "More") }
                     CmsDropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                         DropdownMenuItem(text = { Text("Edit") }, onClick = { menuExpanded = false; onEdit() })
                         when (teacher.status) {
@@ -549,7 +548,7 @@ private fun TeacherActionDialog(
                                     if (photoBusy) {
                                         CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp, color = CmsTheme.colors.onInk)
                                     } else {
-                                        Icon(Icons.Filled.PhotoCamera, contentDescription = "Change photo", tint = CmsTheme.colors.onInk, modifier = Modifier.size(16.dp))
+                                        Icon(TablerIcons.Camera, contentDescription = "Change photo", tint = CmsTheme.colors.onInk, modifier = Modifier.size(16.dp))
                                     }
                                 }
                             }
@@ -578,7 +577,7 @@ private fun TeacherActionDialog(
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         trailingIcon = {
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                                Icon(if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility, contentDescription = if (passwordVisible) "Hide password" else "Show password")
+                                Icon(if (passwordVisible) TablerIcons.EyeOff else TablerIcons.Eye, contentDescription = if (passwordVisible) "Hide password" else "Show password")
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
@@ -689,7 +688,7 @@ private fun ResetPasswordDialog(
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                            Icon(if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility, contentDescription = if (passwordVisible) "Hide password" else "Show password")
+                            Icon(if (passwordVisible) TablerIcons.EyeOff else TablerIcons.Eye, contentDescription = if (passwordVisible) "Hide password" else "Show password")
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),

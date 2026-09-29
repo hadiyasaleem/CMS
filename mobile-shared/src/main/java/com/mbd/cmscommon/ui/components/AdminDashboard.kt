@@ -1,5 +1,16 @@
 package com.mbd.cmscommon.ui.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.ArrowRight
+import compose.icons.tablericons.Calendar
+import compose.icons.tablericons.ChevronDown
+import compose.icons.tablericons.ChevronUp
+import compose.icons.tablericons.Clock
+import compose.icons.tablericons.Dashboard
+import compose.icons.tablericons.School
+import compose.icons.tablericons.Speakerphone
+import compose.icons.tablericons.UserCheck
+import compose.icons.tablericons.Users
 import com.mbd.cmscommon.controller.ScopeFilterOptions
 import com.mbd.cmscommon.domain.model.ShiftScope
 import androidx.compose.foundation.Image
@@ -23,17 +34,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.outlined.CalendarMonth
-import androidx.compose.material.icons.outlined.Campaign
-import androidx.compose.material.icons.outlined.Groups
-import androidx.compose.material.icons.outlined.HowToReg
-import androidx.compose.material.icons.outlined.Schedule
-import androidx.compose.material.icons.outlined.School
-import androidx.compose.material.icons.outlined.SpaceDashboard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -106,7 +106,7 @@ fun AdminDashboardContent(
             "Students",
             state.students.toString(),
             if (state.activeSessions > 0) "$studentsPerSession per active session" else "No active sessions",
-            Icons.Outlined.School,
+            TablerIcons.School,
             ModInk,
             ModInk.copy(alpha = 0.08f),
         ),
@@ -114,7 +114,7 @@ fun AdminDashboardContent(
             "Teachers",
             state.teachers.toString(),
             if (state.teachers > 0) "$studentsPerTeacher students per teacher" else "Faculty directory is empty",
-            Icons.Outlined.Groups,
+            TablerIcons.Users,
             ModSuccess,
             ModSuccess.copy(alpha = 0.12f),
         ),
@@ -122,7 +122,7 @@ fun AdminDashboardContent(
             "Departments",
             state.departments.toString(),
             if (state.departments > 0) "$sessionsPerDepartment sessions per department" else "Create the first department",
-            Icons.Outlined.SpaceDashboard,
+            TablerIcons.Dashboard,
             ModWarn,
             ModWarn.copy(alpha = 0.14f),
         ),
@@ -130,7 +130,7 @@ fun AdminDashboardContent(
             "Active sessions",
             state.activeSessions.toString(),
             if (state.activeSessions > 0) "$studentsPerSession students per session" else "No active intakes",
-            Icons.Outlined.Schedule,
+            TablerIcons.Clock,
             ModInk,
             ModInk.copy(alpha = 0.08f),
         ),
@@ -138,7 +138,7 @@ fun AdminDashboardContent(
             "Link requests",
             state.pendingRequests.toString(),
             if (state.pendingRequests > 0) "Waiting for review" else "Queue is clear",
-            Icons.Outlined.HowToReg,
+            TablerIcons.UserCheck,
             if (state.pendingRequests > 0) CmsTheme.colors.accent else ModSuccess,
             if (state.pendingRequests > 0) ModRedTint else ModSuccess.copy(alpha = 0.12f),
         ),
@@ -263,7 +263,7 @@ private fun FoldableDashboardSectionHeading(title: String, expanded: Boolean, on
     ) {
         DashboardSectionHeading(title)
         Icon(
-            imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+            imageVector = if (expanded) TablerIcons.ChevronUp else TablerIcons.ChevronDown,
             contentDescription = if (expanded) "Collapse" else "Expand",
             tint = ModMuted,
         )
@@ -308,7 +308,7 @@ private fun DashboardMetricCard(metric: DashboardMetric, modifier: Modifier = Mo
 private fun TimetableCard(onClick: () -> Unit, modifier: Modifier = Modifier) {
     DashboardOperationCard(
         "Master timetable", null, "Open schedule",
-        Icons.Outlined.CalendarMonth, ModInk, ModInk.copy(alpha = 0.08f), onClick, modifier,
+        TablerIcons.Calendar, ModInk, ModInk.copy(alpha = 0.08f), onClick, modifier,
     )
 }
 
@@ -317,14 +317,14 @@ private fun ReviewQueueCard(pendingRequests: Int, onClick: () -> Unit, modifier:
     val title = if (pendingRequests > 0) "$pendingRequests requests" else "Queue clear"
     val tint = if (pendingRequests > 0) CmsTheme.colors.accent else ModSuccess
     val container = if (pendingRequests > 0) ModRedTint else ModSuccess.copy(alpha = 0.12f)
-    DashboardOperationCard(title, null, "Review queue", Icons.Outlined.HowToReg, tint, container, onClick, modifier)
+    DashboardOperationCard(title, null, "Review queue", TablerIcons.UserCheck, tint, container, onClick, modifier)
 }
 
 @Composable
 private fun BroadcastCard(onClick: () -> Unit, modifier: Modifier = Modifier) {
     DashboardOperationCard(
         "Broadcast", null, "New notice",
-        Icons.Outlined.Campaign, ModWarn, ModWarn.copy(alpha = 0.14f), onClick, modifier,
+        TablerIcons.Speakerphone, ModWarn, ModWarn.copy(alpha = 0.14f), onClick, modifier,
     )
 }
 
@@ -353,7 +353,7 @@ private fun DashboardOperationCard(
             Spacer(Modifier.height(12.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(label.uppercase(Locale.ROOT), color = tint, style = CmsTextStyles.eyebrow)
-                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = tint, modifier = Modifier.size(16.dp))
+                Icon(TablerIcons.ArrowRight, contentDescription = null, tint = tint, modifier = Modifier.size(16.dp))
             }
         }
     }

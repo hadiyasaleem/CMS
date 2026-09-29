@@ -1,5 +1,8 @@
 package com.mbd.cmscommon.ui.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.MapPin
+import compose.icons.tablericons.User
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -20,9 +23,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -235,8 +235,8 @@ private fun StudentPeriodDetailDialog(item: StudentScheduledPeriod, onDismiss: (
         title = { Text(item.period.subjectName) },
         text = { DialogScrollBody {
             Column {
-                DetailRow(Icons.Filled.Person, item.period.teacherName.ifBlank { "Teacher not assigned" })
-                DetailRow(Icons.Filled.LocationOn, listOfNotNull(item.period.building, item.period.roomNo).joinToString(" / ").ifBlank { "Location not assigned" })
+                DetailRow(TablerIcons.User, item.period.teacherName.ifBlank { "Teacher not assigned" })
+                DetailRow(TablerIcons.MapPin, listOfNotNull(item.period.building, item.period.roomNo).joinToString(" / ").ifBlank { "Location not assigned" })
                 Spacer(Modifier.height(6.dp))
                 Text("${item.date.format(DayFormat)} · ${item.period.timeRange}", color = TimetableBlue, style = MaterialTheme.typography.bodySmall)
                 Text("Subject code: ${item.period.courseCode}", color = ModMuted, style = MaterialTheme.typography.bodySmall)

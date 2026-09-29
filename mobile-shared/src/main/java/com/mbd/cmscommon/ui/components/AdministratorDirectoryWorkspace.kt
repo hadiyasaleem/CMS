@@ -1,5 +1,16 @@
 package com.mbd.cmscommon.ui.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.CircleCheck
+import compose.icons.tablericons.Eye
+import compose.icons.tablericons.EyeOff
+import compose.icons.tablericons.History
+import compose.icons.tablericons.Login
+import compose.icons.tablericons.Search
+import compose.icons.tablericons.Shield
+import compose.icons.tablericons.ShieldCheck
+import compose.icons.tablericons.Users
+import compose.icons.tablericons.X
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
@@ -16,17 +27,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.Login
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material.icons.outlined.AdminPanelSettings
-import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.outlined.Groups
-import androidx.compose.material.icons.outlined.History
-import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
@@ -135,10 +135,10 @@ fun AdministratorDirectoryWorkspace(
     }
 
     val summaries = listOf(
-        AdministratorSummary("Total admins", directory.accounts.size.toString(), null, Icons.Outlined.Groups),
-        AdministratorSummary("Active", directory.activeCount.toString(), "${directory.unavailableCount} unavailable", Icons.Outlined.CheckCircle),
-        AdministratorSummary("Recent", directory.recentlyActiveCount.toString(), null, Icons.AutoMirrored.Outlined.Login),
-        AdministratorSummary("Pending use", directory.neverSignedInCount.toString(), null, Icons.Outlined.History),
+        AdministratorSummary("Total admins", directory.accounts.size.toString(), null, TablerIcons.Users),
+        AdministratorSummary("Active", directory.activeCount.toString(), "${directory.unavailableCount} unavailable", TablerIcons.CircleCheck),
+        AdministratorSummary("Recent", directory.recentlyActiveCount.toString(), null, TablerIcons.Login),
+        AdministratorSummary("Pending use", directory.neverSignedInCount.toString(), null, TablerIcons.History),
     )
 
     Scaffold(
@@ -240,7 +240,7 @@ private fun AdministratorHero(count: Int, modifier: Modifier = Modifier) {
 private fun SecurityNotice(modifier: Modifier = Modifier) {
     Surface(modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), color = ModInk.copy(alpha = 0.08f), border = BorderStroke(1.dp, ModInk.copy(alpha = 0.2f))) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Outlined.AdminPanelSettings, contentDescription = null, tint = ModInk)
+            Icon(TablerIcons.Shield, contentDescription = null, tint = ModInk)
             Spacer(Modifier.size(12.dp))
             Text(
                 "Administrator accounts have full-access, college-wide permissions. Create them only for people who need this level of access.",
@@ -254,13 +254,13 @@ private fun SecurityNotice(modifier: Modifier = Modifier) {
 private fun AdministratorCreatedBanner(email: String, onDismiss: () -> Unit, modifier: Modifier = Modifier) {
     Surface(modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), color = ModSuccess.copy(alpha = 0.12f), border = BorderStroke(1.dp, ModSuccess.copy(alpha = 0.35f))) {
         Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Outlined.CheckCircle, contentDescription = null, tint = ModSuccess)
+            Icon(TablerIcons.CircleCheck, contentDescription = null, tint = ModSuccess)
             Spacer(Modifier.size(12.dp))
             Column(Modifier.weight(1f)) {
                 Text("Administrator created", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                 Text(email, color = ModMuted, style = MaterialTheme.typography.bodyMedium)
             }
-            IconButton(onClick = onDismiss) { Icon(Icons.Filled.Close, contentDescription = "Dismiss") }
+            IconButton(onClick = onDismiss) { Icon(TablerIcons.X, contentDescription = "Dismiss") }
         }
     }
 }
@@ -313,7 +313,7 @@ private fun AdministratorDirectoryControls(
             onValueChange = onQueryChange,
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text("Search by email") },
-            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+            leadingIcon = { Icon(TablerIcons.Search, contentDescription = null) },
             singleLine = true,
         )
         Spacer(Modifier.height(12.dp))
@@ -365,9 +365,9 @@ private fun AdministratorCard(account: AdministratorAccount, isCurrent: Boolean,
             Spacer(Modifier.height(14.dp))
             HorizontalDivider(color = ModTrack)
             Spacer(Modifier.height(13.dp))
-            AdministratorDetailRow(Icons.AutoMirrored.Outlined.Login, "Last sign-in", relativeActivity(account.lastLoginAt, now))
+            AdministratorDetailRow(TablerIcons.Login, "Last sign-in", relativeActivity(account.lastLoginAt, now))
             Spacer(Modifier.height(9.dp))
-            AdministratorDetailRow(Icons.Outlined.Security, "Scope", "College-wide administration")
+            AdministratorDetailRow(TablerIcons.ShieldCheck, "Scope", "College-wide administration")
         }
     }
 }
@@ -458,7 +458,7 @@ private fun CreateAdministratorDialog(
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                            Icon(if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility, contentDescription = "Toggle password visibility")
+                            Icon(if (passwordVisible) TablerIcons.EyeOff else TablerIcons.Eye, contentDescription = "Toggle password visibility")
                         }
                     },
                     singleLine = true,

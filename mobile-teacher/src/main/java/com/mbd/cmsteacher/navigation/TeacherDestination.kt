@@ -1,11 +1,11 @@
 package com.mbd.cmsteacher.navigation
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.FactCheck
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.MenuBook
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Calendar
+import compose.icons.tablericons.ClipboardCheck
+import compose.icons.tablericons.Home
+import compose.icons.tablericons.Menu2
+import compose.icons.tablericons.Notebook
 import androidx.compose.ui.graphics.vector.ImageVector
 
 sealed class TeacherDestination(
@@ -14,16 +14,16 @@ sealed class TeacherDestination(
     val navLabel: String = label,
     val navIcon: ImageVector? = null,
 ) {
-    data object Home : TeacherDestination("home", "Home", "Home", Icons.Filled.Home)
-    data object Attendance : TeacherDestination("attendance", "Mark Attendance", "Attend", Icons.Filled.FactCheck)
+    data object Home : TeacherDestination("home", "Home", "Home", TablerIcons.Home)
+    data object Attendance : TeacherDestination("attendance", "Mark Attendance", "Attend", TablerIcons.ClipboardCheck)
     data object AttendanceHistory : TeacherDestination("attendance_history/{sessionId}/{courseCode}/{shift}", "Attendance History")
     data object AttendanceStudent : TeacherDestination("attendance_student/{sessionId}/{courseCode}/{rollNumber}", "Student Attendance")
-    data object ExamsHub : TeacherDestination("exams_hub", "Exams", "Exams", Icons.Filled.MenuBook)
+    data object ExamsHub : TeacherDestination("exams_hub", "Exams", "Exams", TablerIcons.Notebook)
     data object Marks : TeacherDestination("marks", "Marks Entry")
     data object SemesterResults : TeacherDestination("semester_results", "Semester Results")
     data object ExamPaper : TeacherDestination("exam_paper", "Submit Exam Paper")
-    data object Schedule : TeacherDestination("schedule", "Schedule", "Schedule", Icons.Filled.CalendarMonth)
-    data object MenuHub : TeacherDestination("menu_hub", "Menu", "Menu", Icons.Filled.Menu)
+    data object Schedule : TeacherDestination("schedule", "Schedule", "Schedule", TablerIcons.Calendar)
+    data object MenuHub : TeacherDestination("menu_hub", "Menu", "Menu", TablerIcons.Menu2)
     data object Notifications : TeacherDestination("notifications", "Notifications")
     data object LinkRequests : TeacherDestination("link_requests", "Link Requests")
     data object MyStudents : TeacherDestination("my_students", "My Students")

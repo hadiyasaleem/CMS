@@ -51,7 +51,7 @@ dependencies {
 
     api(compose.desktop.currentOs)
     api(compose.material3)
-    api(compose.materialIconsExtended)
+    api(libs.compose.icons.tabler)
 
     api(libs.supabase.postgrest)
     api(libs.supabase.storage)

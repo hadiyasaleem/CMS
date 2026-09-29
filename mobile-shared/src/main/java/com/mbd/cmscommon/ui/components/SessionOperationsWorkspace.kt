@@ -1,5 +1,9 @@
 package com.mbd.cmscommon.ui.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Calendar
+import compose.icons.tablericons.CreditCard
+import compose.icons.tablericons.School
 import com.mbd.cmscommon.controller.feeSummaryLine
 import com.mbd.cmscommon.controller.promotionConfirmText
 import com.mbd.cmscommon.domain.model.Session
@@ -22,10 +26,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CalendarMonth
-import androidx.compose.material.icons.outlined.Payments
-import androidx.compose.material.icons.outlined.School
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
@@ -103,9 +103,9 @@ fun SessionOperationsWorkspace(
     val configuredSemesters = subjectCounts.count { it.value > 0 }
 
     val actions = listOf(
-        SessionAction("Students", shiftEnrolmentLine(session, students.size, shiftCounts), Icons.Outlined.School, onOpenStudents),
-        SessionAction("Timetable", "${periods.size} period(s) configured", Icons.Outlined.CalendarMonth, onOpenTimetable),
-        SessionAction("Fee structure", feeSummaryLine(session, fees), Icons.Outlined.Payments, onOpenFees),
+        SessionAction("Students", shiftEnrolmentLine(session, students.size, shiftCounts), TablerIcons.School, onOpenStudents),
+        SessionAction("Timetable", "${periods.size} period(s) configured", TablerIcons.Calendar, onOpenTimetable),
+        SessionAction("Fee structure", feeSummaryLine(session, fees), TablerIcons.CreditCard, onOpenFees),
     )
 
     LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {

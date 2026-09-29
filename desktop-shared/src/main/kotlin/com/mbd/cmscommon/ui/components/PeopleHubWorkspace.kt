@@ -1,5 +1,11 @@
 package com.mbd.cmscommon.ui.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Clipboard
+import compose.icons.tablericons.Notes
+import compose.icons.tablericons.School
+import compose.icons.tablericons.UserCheck
+import compose.icons.tablericons.Users
 import com.mbd.cmscommon.controller.ScopeFilterOptions
 import com.mbd.cmscommon.domain.model.ShiftScope
 import androidx.compose.foundation.BorderStroke
@@ -21,12 +27,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Assignment
-import androidx.compose.material.icons.outlined.EditNote
-import androidx.compose.material.icons.outlined.Groups
-import androidx.compose.material.icons.outlined.HowToReg
-import androidx.compose.material.icons.outlined.School
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -163,27 +163,27 @@ private fun peopleCards(snapshot: PeopleHubSnapshot): List<PeopleCard> = listOf(
     PeopleCard(
         PeopleDestination.TEACHERS, "Teachers",
         "${snapshot.teacherCount} active · ${snapshot.delegatedTeacherCount} delegated",
-        Icons.Outlined.Groups, PeopleBlue,
+        TablerIcons.Users, PeopleBlue,
     ),
     PeopleCard(
         PeopleDestination.STUDENTS, "Student Rosters",
         "${snapshot.studentCount} enrolled student(s)",
-        Icons.Outlined.School, PeopleGreen,
+        TablerIcons.School, PeopleGreen,
     ),
     PeopleCard(
         PeopleDestination.LINK_REQUESTS, "Student Link Requests",
         "${snapshot.pendingLinkRequests} awaiting review" + if (snapshot.repeatLinkRequests > 0) " / ${snapshot.repeatLinkRequests} repeat" else "",
-        Icons.Outlined.HowToReg, if (snapshot.pendingLinkRequests > 0) PeopleRed else PeopleGreen,
+        TablerIcons.UserCheck, if (snapshot.pendingLinkRequests > 0) PeopleRed else PeopleGreen,
     ),
     PeopleCard(
         PeopleDestination.MARK_EDIT_REQUESTS, "Mark & Attendance Edit Requests",
         "${snapshot.pendingMarkEdits} awaiting review",
-        Icons.Outlined.EditNote, if (snapshot.pendingMarkEdits > 0) PeopleGold else PeopleGreen,
+        TablerIcons.Notes, if (snapshot.pendingMarkEdits > 0) PeopleGold else PeopleGreen,
     ),
     PeopleCard(
         PeopleDestination.SUBMITTED_PAPERS, "Submitted Exam Papers",
         "${snapshot.submittedPapers} submitted",
-        Icons.Outlined.Assignment, PeopleNavy,
+        TablerIcons.Clipboard, PeopleNavy,
     ),
 )
 

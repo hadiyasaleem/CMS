@@ -1,5 +1,8 @@
 package com.mbd.cmscommon.ui.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.AlertTriangle
+import compose.icons.tablericons.CircleCheck
 import com.mbd.cmscommon.controller.inScope
 import com.mbd.cmscommon.controller.ownScopeOptions
 import com.mbd.cmscommon.domain.model.ShiftScope
@@ -34,9 +37,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.controller.StagedPaperFile
@@ -178,7 +178,7 @@ private fun PaperHeader(total: Int, submitted: Int) {
 @Composable
 private fun SubjectTile(paperSlot: TeacherPaperSlot, onClick: () -> Unit) {
     val tone = if (paperSlot.isSubmitted) PaperGreen else PaperRed
-    val icon: ImageVector = if (paperSlot.isSubmitted) Icons.Filled.CheckCircle else Icons.Filled.Warning
+    val icon: ImageVector = if (paperSlot.isSubmitted) TablerIcons.CircleCheck else TablerIcons.AlertTriangle
     Surface(
         modifier = Modifier.width(180.dp).clickable(onClick = onClick),
         shape = RoundedCornerShape(14.dp),

@@ -1,5 +1,7 @@
 package com.mbd.cmscommon.ui.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.ArrowRight
 import com.mbd.cmscommon.ui.theme.ModInk
 import com.mbd.cmscommon.ui.theme.ModTrack
 import com.mbd.cmscommon.ui.theme.ModGround
@@ -20,8 +22,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -131,7 +131,7 @@ fun HeroAction(label: String, onClick: () -> Unit, primary: Boolean) {
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Text(label, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, maxLines = 1, style = MaterialTheme.typography.labelLarge)
-            Icon(Icons.AutoMirrored.Outlined.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+            Icon(TablerIcons.ArrowRight, contentDescription = null, modifier = Modifier.size(16.dp))
         }
     }
 }

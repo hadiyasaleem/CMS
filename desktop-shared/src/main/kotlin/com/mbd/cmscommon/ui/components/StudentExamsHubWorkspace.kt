@@ -1,5 +1,9 @@
 package com.mbd.cmscommon.ui.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.CalendarStats
+import compose.icons.tablericons.Report
+import compose.icons.tablericons.TrendingUp
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -19,10 +23,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.EventNote
-import androidx.compose.material.icons.outlined.Grading
-import androidx.compose.material.icons.outlined.TrendingUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -120,9 +120,9 @@ private fun buildStudentExamCards(snapshot: StudentExamsHubSnapshot): List<Stude
     val datesheetTone = if (snapshot.publishedDatesheets == 0) BadgeTone.Neutral else BadgeTone.Success
 
     return listOf(
-        StudentExamCard("Marks", null, snapshot.enteredAssessments.toString(), "assessments entered", marksStatus, if (snapshot.absentAssessments == 0) BadgeTone.Success else BadgeTone.Warning, Icons.Outlined.Grading, StudentExamsDestination.MARKS),
-        StudentExamCard("Results", null, resultsValue, "current CGPA", resultsStatus, resultsTone, Icons.Outlined.TrendingUp, StudentExamsDestination.RESULTS),
-        StudentExamCard("Datesheets", datesheetSubtitle, snapshot.upcomingPapers.toString(), "upcoming papers", datesheetStatus, datesheetTone, Icons.Outlined.EventNote, StudentExamsDestination.DATESHEETS),
+        StudentExamCard("Marks", null, snapshot.enteredAssessments.toString(), "assessments entered", marksStatus, if (snapshot.absentAssessments == 0) BadgeTone.Success else BadgeTone.Warning, TablerIcons.Report, StudentExamsDestination.MARKS),
+        StudentExamCard("Results", null, resultsValue, "current CGPA", resultsStatus, resultsTone, TablerIcons.TrendingUp, StudentExamsDestination.RESULTS),
+        StudentExamCard("Datesheets", datesheetSubtitle, snapshot.upcomingPapers.toString(), "upcoming papers", datesheetStatus, datesheetTone, TablerIcons.CalendarStats, StudentExamsDestination.DATESHEETS),
     )
 }
 

@@ -1,12 +1,12 @@
 package com.mbd.cmsadmin.feature.dashboard
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Assessment
-import androidx.compose.material.icons.outlined.CalendarMonth
-import androidx.compose.material.icons.outlined.Campaign
-import androidx.compose.material.icons.outlined.Groups
-import androidx.compose.material.icons.outlined.HowToReg
-import androidx.compose.material.icons.outlined.School
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Calendar
+import compose.icons.tablericons.ChartBar
+import compose.icons.tablericons.School
+import compose.icons.tablericons.Speakerphone
+import compose.icons.tablericons.UserCheck
+import compose.icons.tablericons.Users
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -24,22 +24,22 @@ fun DashboardScreen(onOpen: (String) -> Unit, viewModel: DashboardViewModel = hi
     val filterScope by viewModel.filterScope.collectAsState()
     val filterOptions by viewModel.filterOptions.collectAsState()
     val actions = listOf(
-        DashboardActionUi("Departments", Icons.Outlined.School) {
+        DashboardActionUi("Departments", TablerIcons.School) {
             onOpen(AdminTab.Academics.route)
         },
-        DashboardActionUi("Teachers", Icons.Outlined.Groups) {
+        DashboardActionUi("Teachers", TablerIcons.Users) {
             onOpen(AdminLeaf.TEACHERS)
         },
-        DashboardActionUi("Calendar", Icons.Outlined.CalendarMonth) {
+        DashboardActionUi("Calendar", TablerIcons.Calendar) {
             onOpen(AdminLeaf.CALENDAR)
         },
-        DashboardActionUi("Link requests", Icons.Outlined.HowToReg) {
+        DashboardActionUi("Link requests", TablerIcons.UserCheck) {
             onOpen(AdminLeaf.LINK_REQUESTS)
         },
-        DashboardActionUi("Insights", Icons.Outlined.Assessment) {
+        DashboardActionUi("Insights", TablerIcons.ChartBar) {
             onOpen(AdminLeaf.INSIGHTS)
         },
-        DashboardActionUi("Notifications", Icons.Outlined.Campaign) {
+        DashboardActionUi("Notifications", TablerIcons.Speakerphone) {
             onOpen(AdminLeaf.NOTIFICATIONS)
         },
     )

@@ -1,5 +1,7 @@
 package com.mbd.cmscommon.ui.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.ChevronDown
 import com.mbd.cmscommon.controller.ScopeFilterOptions
 import com.mbd.cmscommon.domain.model.ShiftScope
 import com.mbd.cmscommon.export.ExportDocument
@@ -21,8 +23,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -189,7 +189,7 @@ private fun SessionPicker(sessions: List<Pair<String, String>>, selected: String
     Box(Modifier.fillMaxWidth()) {
         OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) {
             Text(selectedLabel ?: sessions.firstOrNull { it.first == selected }?.second ?: "Select a class", modifier = Modifier.weight(1f))
-            Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
+            Icon(TablerIcons.ChevronDown, contentDescription = null)
         }
         CmsDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             if (sessions.isEmpty()) DropdownMenuItem(text = { Text("No classes match these filters") }, onClick = { expanded = false }, enabled = false)

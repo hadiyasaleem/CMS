@@ -1,5 +1,12 @@
 package com.mbd.cmscommon.ui.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Bell
+import compose.icons.tablericons.Calendar
+import compose.icons.tablericons.ClipboardCheck
+import compose.icons.tablericons.Star
+import compose.icons.tablericons.Upload
+import compose.icons.tablericons.Users
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.Image
@@ -19,13 +26,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CalendarMonth
-import androidx.compose.material.icons.outlined.FactCheck
-import androidx.compose.material.icons.outlined.Groups
-import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.RateReview
-import androidx.compose.material.icons.outlined.UploadFile
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -60,12 +60,12 @@ enum class TeacherHomeDestination { ATTENDANCE, MARKS, EXAM_PAPER, STUDENTS, SCH
 private data class HomeAction(val destination: TeacherHomeDestination, val title: String, val icon: ImageVector, val tone: HomeTone)
 
 private val TEACHER_HOME_ACTIONS = listOf(
-    HomeAction(TeacherHomeDestination.ATTENDANCE, "Mark Attendance", Icons.Outlined.FactCheck, HomeTone.SUCCESS),
-    HomeAction(TeacherHomeDestination.MARKS, "Marks Entry", Icons.Outlined.RateReview, HomeTone.NAVY),
-    HomeAction(TeacherHomeDestination.EXAM_PAPER, "Exam Paper", Icons.Outlined.UploadFile, HomeTone.WARN),
-    HomeAction(TeacherHomeDestination.STUDENTS, "My Students", Icons.Outlined.Groups, HomeTone.NAVY),
-    HomeAction(TeacherHomeDestination.SCHEDULE, "My Schedule", Icons.Outlined.CalendarMonth, HomeTone.SUCCESS),
-    HomeAction(TeacherHomeDestination.NOTIFICATIONS, "Notifications", Icons.Outlined.Notifications, HomeTone.ACCENT),
+    HomeAction(TeacherHomeDestination.ATTENDANCE, "Mark Attendance", TablerIcons.ClipboardCheck, HomeTone.SUCCESS),
+    HomeAction(TeacherHomeDestination.MARKS, "Marks Entry", TablerIcons.Star, HomeTone.NAVY),
+    HomeAction(TeacherHomeDestination.EXAM_PAPER, "Exam Paper", TablerIcons.Upload, HomeTone.WARN),
+    HomeAction(TeacherHomeDestination.STUDENTS, "My Students", TablerIcons.Users, HomeTone.NAVY),
+    HomeAction(TeacherHomeDestination.SCHEDULE, "My Schedule", TablerIcons.Calendar, HomeTone.SUCCESS),
+    HomeAction(TeacherHomeDestination.NOTIFICATIONS, "Notifications", TablerIcons.Bell, HomeTone.ACCENT),
 )
 
 @Composable

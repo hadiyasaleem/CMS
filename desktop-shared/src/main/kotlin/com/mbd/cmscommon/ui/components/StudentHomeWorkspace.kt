@@ -1,5 +1,10 @@
 package com.mbd.cmscommon.ui.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Calendar
+import compose.icons.tablericons.ClipboardCheck
+import compose.icons.tablericons.CreditCard
+import compose.icons.tablericons.Report
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -19,11 +24,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.FactCheck
-import androidx.compose.material.icons.filled.Grading
-import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -61,10 +61,10 @@ enum class StudentHomeDestination { ATTENDANCE, MARKS, TIMETABLE, FEES }
 private data class StudentHomeAction(val title: String, val icon: ImageVector, val destination: StudentHomeDestination)
 
 private val STUDENT_HOME_ACTIONS = listOf(
-    StudentHomeAction("Attendance", Icons.Filled.FactCheck, StudentHomeDestination.ATTENDANCE),
-    StudentHomeAction("Marks", Icons.Filled.Grading, StudentHomeDestination.MARKS),
-    StudentHomeAction("Timetable", Icons.Filled.CalendarMonth, StudentHomeDestination.TIMETABLE),
-    StudentHomeAction("Fee Challan", Icons.Filled.Payments, StudentHomeDestination.FEES),
+    StudentHomeAction("Attendance", TablerIcons.ClipboardCheck, StudentHomeDestination.ATTENDANCE),
+    StudentHomeAction("Marks", TablerIcons.Report, StudentHomeDestination.MARKS),
+    StudentHomeAction("Timetable", TablerIcons.Calendar, StudentHomeDestination.TIMETABLE),
+    StudentHomeAction("Fee Challan", TablerIcons.CreditCard, StudentHomeDestination.FEES),
 )
 
 @Composable

@@ -1,5 +1,13 @@
 package com.mbd.cmscommon.ui.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Calendar
+import compose.icons.tablericons.CalendarEvent
+import compose.icons.tablericons.ChartBar
+import compose.icons.tablericons.Clock
+import compose.icons.tablericons.CreditCard
+import compose.icons.tablericons.TrendingUp
+import compose.icons.tablericons.UserCheck
 import com.mbd.cmscommon.controller.ScopeFilterOptions
 import com.mbd.cmscommon.domain.model.ShiftScope
 import androidx.compose.foundation.BorderStroke
@@ -20,15 +28,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Assessment
-import androidx.compose.material.icons.outlined.CalendarMonth
-import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material.icons.outlined.EventAvailable
-import androidx.compose.material.icons.outlined.HowToReg
-import androidx.compose.material.icons.outlined.Payments
-import androidx.compose.material.icons.outlined.Schedule
-import androidx.compose.material.icons.outlined.TrendingUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -156,43 +155,43 @@ private fun recordsCards(snapshot: RecordsHubSnapshot): List<RecordsCard> = list
     RecordsCard(
         RecordsDestination.ATTENDANCE, "Attendance Records",
         "${snapshot.activeSessions} active session(s)",
-        Icons.Outlined.HowToReg, RecordsBlue, RecordsSummarySource.SESSIONS,
+        TablerIcons.UserCheck, RecordsBlue, RecordsSummarySource.SESSIONS,
         RecordsSummarySource.SESSIONS in snapshot.unavailableSources,
     ),
     RecordsCard(
         RecordsDestination.CALENDAR, "Calendar",
         "${snapshot.upcomingEvents} upcoming",
-        Icons.Outlined.EventAvailable, RecordsGreen, RecordsSummarySource.CALENDAR,
+        TablerIcons.CalendarEvent, RecordsGreen, RecordsSummarySource.CALENDAR,
         RecordsSummarySource.CALENDAR in snapshot.unavailableSources,
     ),
     RecordsCard(
         RecordsDestination.DATESHEETS, "Datesheets",
         "${snapshot.publishedDatesheets} published · ${snapshot.draftDatesheets} draft",
-        Icons.Outlined.CalendarMonth, RecordsGold, RecordsSummarySource.DATESHEETS,
+        TablerIcons.Calendar, RecordsGold, RecordsSummarySource.DATESHEETS,
         RecordsSummarySource.DATESHEETS in snapshot.unavailableSources,
     ),
     RecordsCard(
         RecordsDestination.TIMETABLE, "Master Timetable",
         "${snapshot.activeSessions} session(s) in scope",
-        Icons.Outlined.Schedule, RecordsBlue, RecordsSummarySource.SESSIONS,
+        TablerIcons.Clock, RecordsBlue, RecordsSummarySource.SESSIONS,
         RecordsSummarySource.SESSIONS in snapshot.unavailableSources,
     ),
     RecordsCard(
         RecordsDestination.FEES, "Fee Structures",
         "${snapshot.activeSessions} session(s) in scope",
-        Icons.Outlined.Payments, RecordsGold, RecordsSummarySource.SESSIONS,
+        TablerIcons.CreditCard, RecordsGold, RecordsSummarySource.SESSIONS,
         RecordsSummarySource.SESSIONS in snapshot.unavailableSources,
     ),
     RecordsCard(
         RecordsDestination.INSIGHTS, "Academic Insights",
         "${snapshot.atRiskStudents} student(s) flagged",
-        Icons.Outlined.Assessment, if (snapshot.atRiskStudents > 0) RecordsRed else RecordsGreen, RecordsSummarySource.INSIGHTS,
+        TablerIcons.ChartBar, if (snapshot.atRiskStudents > 0) RecordsRed else RecordsGreen, RecordsSummarySource.INSIGHTS,
         RecordsSummarySource.INSIGHTS in snapshot.unavailableSources,
     ),
     RecordsCard(
         RecordsDestination.SEMESTER_RESULTS, "Semester Results",
         "${snapshot.activeSessions} session(s) in scope",
-        Icons.Outlined.TrendingUp, RecordsGreen, RecordsSummarySource.SESSIONS,
+        TablerIcons.TrendingUp, RecordsGreen, RecordsSummarySource.SESSIONS,
         RecordsSummarySource.SESSIONS in snapshot.unavailableSources,
     ),
 )

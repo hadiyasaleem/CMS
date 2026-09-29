@@ -1,8 +1,10 @@
 package com.mbd.cmscommon.ui.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Check
+import compose.icons.tablericons.ChevronDown
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Checkbox
 import androidx.compose.foundation.BorderStroke
@@ -22,8 +24,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -276,7 +276,7 @@ private fun TopicsPicker(topics: List<String>, taught: String, locked: Boolean, 
                             modifier = Modifier.weight(1f),
                             maxLines = 3,
                         )
-                        Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
+                        Icon(TablerIcons.ChevronDown, contentDescription = null)
                     }
                     CmsDropdownMenu(expanded = open, onDismissRequest = { open = false }, maxHeight = 320.dp) {
                         topics.forEach { t ->
@@ -346,7 +346,7 @@ private fun StudentAttendanceCard(
                     onClick = onToggleLate,
                     enabled = !locked,
                     label = { Text("Late") },
-                    leadingIcon = if (isLate) { { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(16.dp)) } } else null,
+                    leadingIcon = if (isLate) { { Icon(TablerIcons.Check, contentDescription = null, modifier = Modifier.size(16.dp)) } } else null,
                 )
                 Spacer(Modifier.width(6.dp))
                 FilterChip(

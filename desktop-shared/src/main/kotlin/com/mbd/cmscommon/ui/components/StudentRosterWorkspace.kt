@@ -1,5 +1,7 @@
 package com.mbd.cmscommon.ui.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.DotsVertical
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.controller.addStudentError
 import com.mbd.cmscommon.controller.defaultShiftForNewStudent
@@ -31,8 +33,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -269,7 +269,7 @@ private fun StudentProfileCard(student: SessionStudent, showShift: Boolean, onOp
                     Text("Roll ${student.rollNumber}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
                 Box {
-                    IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Filled.MoreVert, contentDescription = "More") }
+                    IconButton(onClick = { menuExpanded = true }) { Icon(TablerIcons.DotsVertical, contentDescription = "More") }
                     CmsDropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                         DropdownMenuItem(
                             text = { Text("Remove", color = CmsTheme.colors.accent) },

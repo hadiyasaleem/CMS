@@ -1,5 +1,7 @@
 package com.mbd.cmscommon.ui.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.AlertTriangle
 import com.mbd.cmscommon.controller.cascadeScope
 import com.mbd.cmscommon.controller.toCascade
 import com.mbd.cmscommon.controller.departmentScopeOptions
@@ -29,8 +31,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
@@ -822,7 +822,7 @@ private fun DatesheetIssuesCard(issues: List<String>) {
     Surface(shape = RoundedCornerShape(14.dp), color = DatesheetGold.copy(alpha = 0.1f), border = BorderStroke(1.dp, DatesheetGold.copy(alpha = 0.3f))) {
         Column(Modifier.padding(14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Outlined.WarningAmber, contentDescription = null, tint = DatesheetGold)
+                Icon(TablerIcons.AlertTriangle, contentDescription = null, tint = DatesheetGold)
                 Spacer(Modifier.width(8.dp))
                 Text("NEEDS REVIEW", color = DatesheetGold, style = CmsTextStyles.eyebrow)
             }

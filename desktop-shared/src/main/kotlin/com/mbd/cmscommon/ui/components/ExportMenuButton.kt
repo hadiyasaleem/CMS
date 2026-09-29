@@ -1,11 +1,11 @@
 package com.mbd.cmscommon.ui.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Download
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.FileDownload
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -32,7 +32,7 @@ fun ExportMenuButton(
     var open by remember { mutableStateOf(false) }
     Box(modifier) {
         TextButton(onClick = { open = true }, enabled = enabled) {
-            Icon(Icons.Outlined.FileDownload, contentDescription = null, tint = tint)
+            Icon(TablerIcons.Download, contentDescription = null, tint = tint)
             Text(" Export", color = tint)
         }
         CmsDropdownMenu(expanded = open, onDismissRequest = { open = false }) {

@@ -1,5 +1,10 @@
 package com.mbd.cmscommon.ui.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.CalendarStats
+import compose.icons.tablericons.Clipboard
+import compose.icons.tablericons.TrendingUp
+import compose.icons.tablericons.Upload
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -21,11 +26,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Assignment
-import androidx.compose.material.icons.outlined.EventNote
-import androidx.compose.material.icons.outlined.TrendingUp
-import androidx.compose.material.icons.outlined.UploadFile
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -83,22 +83,22 @@ fun ExamsHubWorkspace(
         ExamAction(
             ExamsDestination.MARKS, "Marks Entry",
             "${snapshot.assignedClasses} assigned class(es)",
-            Icons.Outlined.Assignment, ExamBlue,
+            TablerIcons.Clipboard, ExamBlue,
         ),
         ExamAction(
             ExamsDestination.EXAM_PAPER, "Submit Exam Paper",
             "${snapshot.classesWithPapers}/${snapshot.assignedClasses} covered · ${snapshot.paperSubmissions} file(s)",
-            Icons.Outlined.UploadFile, if (snapshot.paperCoveragePercent >= 100) ExamGreen else ExamGold,
+            TablerIcons.Upload, if (snapshot.paperCoveragePercent >= 100) ExamGreen else ExamGold,
         ),
         ExamAction(
             ExamsDestination.RESULTS, "Semester Results",
             "${snapshot.assignedSessions} assigned session(s)",
-            Icons.Outlined.TrendingUp, ExamGreen,
+            TablerIcons.TrendingUp, ExamGreen,
         ),
         ExamAction(
             ExamsDestination.DATESHEETS, "Datesheets",
             "${snapshot.publishedDatesheets} published · ${snapshot.upcomingInvigilationSlots} duty",
-            Icons.Outlined.EventNote, if (snapshot.upcomingInvigilationSlots > 0) ExamRed else ExamBlue,
+            TablerIcons.CalendarStats, if (snapshot.upcomingInvigilationSlots > 0) ExamRed else ExamBlue,
         ),
     )
 

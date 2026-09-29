@@ -1,5 +1,13 @@
 package com.mbd.cmscommon.ui.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.AlertCircle
+import compose.icons.tablericons.AlertTriangle
+import compose.icons.tablericons.CircleCheck
+import compose.icons.tablericons.CloudOff
+import compose.icons.tablericons.Inbox
+import compose.icons.tablericons.InfoCircle
+import compose.icons.tablericons.X
 import androidx.compose.runtime.collectAsState
 import kotlinx.coroutines.flow.StateFlow
 import androidx.compose.animation.core.RepeatMode
@@ -20,14 +28,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.outlined.Close
-import androidx.compose.material.icons.outlined.CloudOff
-import androidx.compose.material.icons.outlined.ErrorOutline
-import androidx.compose.material.icons.outlined.Inbox
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -58,7 +58,7 @@ fun LoadingIndicator(modifier: Modifier = Modifier) {
 fun EmptyState(
     message: String,
     modifier: Modifier = Modifier,
-    icon: ImageVector = Icons.Outlined.Inbox,
+    icon: ImageVector = TablerIcons.Inbox,
     actionLabel: String? = null,
     onAction: (() -> Unit)? = null,
 ) {
@@ -90,7 +90,7 @@ fun ErrorBanner(message: String, modifier: Modifier = Modifier, onRetry: (() -> 
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Icon(Icons.Outlined.CloudOff, contentDescription = null, modifier = Modifier.size(40.dp), tint = MaterialTheme.colorScheme.error)
+        Icon(TablerIcons.CloudOff, contentDescription = null, modifier = Modifier.size(40.dp), tint = MaterialTheme.colorScheme.error)
         Spacer(Modifier.height(12.dp))
         Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
         if (onRetry != null) {
@@ -108,7 +108,7 @@ fun InlineErrorCard(message: String, actionLabel: String? = null, onAction: (() 
             modifier = Modifier.fillMaxWidth().padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(Icons.Outlined.ErrorOutline, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+            Icon(TablerIcons.AlertCircle, contentDescription = null, tint = MaterialTheme.colorScheme.error)
             Spacer(Modifier.width(10.dp))
             Text(message, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
             if (actionLabel != null && onAction != null) {
@@ -164,10 +164,10 @@ private fun NoticeTone.color(): Color = when (this) {
 }
 
 private fun NoticeTone.icon(): ImageVector = when (this) {
-    NoticeTone.Info -> Icons.Outlined.Info
-    NoticeTone.Success -> Icons.Outlined.CheckCircle
-    NoticeTone.Warning -> Icons.Outlined.WarningAmber
-    NoticeTone.Error -> Icons.Outlined.ErrorOutline
+    NoticeTone.Info -> TablerIcons.InfoCircle
+    NoticeTone.Success -> TablerIcons.CircleCheck
+    NoticeTone.Warning -> TablerIcons.AlertTriangle
+    NoticeTone.Error -> TablerIcons.AlertCircle
 }
 
 /**
@@ -205,7 +205,7 @@ fun CmsNotice(
             }
             if (onDismiss != null) {
                 IconButton(onClick = onDismiss) {
-                    Icon(Icons.Outlined.Close, contentDescription = "Dismiss", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Icon(TablerIcons.X, contentDescription = "Dismiss", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -248,7 +248,7 @@ fun CmsErrorDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = modifier,
-        icon = { Icon(Icons.Outlined.ErrorOutline, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+        icon = { Icon(TablerIcons.AlertCircle, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
         title = { Text(title) },
         text = { Text(message) },
         confirmButton = {

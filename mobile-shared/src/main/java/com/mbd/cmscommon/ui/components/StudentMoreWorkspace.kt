@@ -1,5 +1,10 @@
 package com.mbd.cmscommon.ui.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Bell
+import compose.icons.tablericons.Calendar
+import compose.icons.tablericons.CreditCard
+import compose.icons.tablericons.User
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -19,12 +24,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CalendarMonth
-import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.Payments
-import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -131,10 +130,10 @@ private fun studentMoreCards(snapshot: StudentMoreSnapshot): List<StudentPortalC
     }
 
     return listOf(
-        StudentPortalCard(StudentMoreDestination.CALENDAR, "Calendar", snapshot.upcomingEvents.toString(), "upcoming items", calendarSubtitle, calendarBadge, if (snapshot.nextEvent == null) BadgeTone.Neutral else BadgeTone.Success, Icons.Outlined.CalendarMonth),
-        StudentPortalCard(StudentMoreDestination.FEES, "Fee challan", feeMetric, "configured total", feeSubtitle, if (snapshot.feeConfigured) "Configured" else "Not configured", if (snapshot.feeConfigured) BadgeTone.Success else BadgeTone.Neutral, Icons.Outlined.Payments),
-        StudentPortalCard(StudentMoreDestination.NOTIFICATIONS, "Notifications", snapshot.unreadNotifications.toString(), "unread notices", null, if (snapshot.unreadNotifications == 0) "All caught up" else "Needs attention", if (snapshot.unreadNotifications == 0) BadgeTone.Success else BadgeTone.Warning, Icons.Outlined.Notifications),
-        StudentPortalCard(StudentMoreDestination.PROFILE, "Profile", "${snapshot.profileCompletion}%", "essential details", profileSubtitle, if (snapshot.profileCompletion == 100) "Complete" else "${missing.size} missing", if (snapshot.profileCompletion == 100) BadgeTone.Success else BadgeTone.Warning, Icons.Outlined.Person),
+        StudentPortalCard(StudentMoreDestination.CALENDAR, "Calendar", snapshot.upcomingEvents.toString(), "upcoming items", calendarSubtitle, calendarBadge, if (snapshot.nextEvent == null) BadgeTone.Neutral else BadgeTone.Success, TablerIcons.Calendar),
+        StudentPortalCard(StudentMoreDestination.FEES, "Fee challan", feeMetric, "configured total", feeSubtitle, if (snapshot.feeConfigured) "Configured" else "Not configured", if (snapshot.feeConfigured) BadgeTone.Success else BadgeTone.Neutral, TablerIcons.CreditCard),
+        StudentPortalCard(StudentMoreDestination.NOTIFICATIONS, "Notifications", snapshot.unreadNotifications.toString(), "unread notices", null, if (snapshot.unreadNotifications == 0) "All caught up" else "Needs attention", if (snapshot.unreadNotifications == 0) BadgeTone.Success else BadgeTone.Warning, TablerIcons.Bell),
+        StudentPortalCard(StudentMoreDestination.PROFILE, "Profile", "${snapshot.profileCompletion}%", "essential details", profileSubtitle, if (snapshot.profileCompletion == 100) "Complete" else "${missing.size} missing", if (snapshot.profileCompletion == 100) BadgeTone.Success else BadgeTone.Warning, TablerIcons.User),
     )
 }
 

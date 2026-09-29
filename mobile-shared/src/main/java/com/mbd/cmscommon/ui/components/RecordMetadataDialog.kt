@@ -1,12 +1,12 @@
 package com.mbd.cmscommon.ui.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.InfoCircle
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -31,7 +31,7 @@ fun RecordMetadataInfoButton(title: String, entity: BaseEntity) {
     var open by remember(entity.createdAt) { mutableStateOf(false) }
 
     IconButton(onClick = { open = true }) {
-        Icon(Icons.Outlined.Info, contentDescription = "$title information")
+        Icon(TablerIcons.InfoCircle, contentDescription = "$title information")
     }
     if (open) {
         RecordMetadataDialog(title, entity, onDismiss = { open = false })

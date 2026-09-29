@@ -1,5 +1,12 @@
 package com.mbd.cmscommon.ui.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Bell
+import compose.icons.tablericons.Calendar
+import compose.icons.tablericons.ChartBar
+import compose.icons.tablericons.School
+import compose.icons.tablericons.User
+import compose.icons.tablericons.UserCheck
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -19,14 +26,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Assessment
-import androidx.compose.material.icons.outlined.CalendarMonth
-import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material.icons.outlined.HowToReg
-import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.School
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -91,14 +90,14 @@ fun TeacherMenuWorkspace(
         TeacherMenuItem(
             "My Students",
             "${snapshot.assignmentCount} assigned ${if (snapshot.assignmentCount == 1) "class" else "classes"} across ${snapshot.sessionCount} ${if (snapshot.sessionCount == 1) "session" else "sessions"}",
-            Icons.Outlined.School, null, null, onOpenMyStudents,
+            TablerIcons.School, null, null, onOpenMyStudents,
         ),
-        TeacherMenuItem("Calendar", null, Icons.Outlined.CalendarMonth, null, null, onOpenCalendar),
-        TeacherMenuItem("Insights", null, Icons.Outlined.Assessment, null, null, onOpenInsights),
-        TeacherMenuItem("Link Requests", null, Icons.Outlined.HowToReg, linkBadge, linkTone, onOpenLinkRequests),
-        TeacherMenuItem("Notifications", null, Icons.Outlined.Notifications, notificationBadge, if (snapshot.unreadNotifications > 0) BadgeTone.Warning else BadgeTone.Success, onOpenNotifications),
+        TeacherMenuItem("Calendar", null, TablerIcons.Calendar, null, null, onOpenCalendar),
+        TeacherMenuItem("Insights", null, TablerIcons.ChartBar, null, null, onOpenInsights),
+        TeacherMenuItem("Link Requests", null, TablerIcons.UserCheck, linkBadge, linkTone, onOpenLinkRequests),
+        TeacherMenuItem("Notifications", null, TablerIcons.Bell, notificationBadge, if (snapshot.unreadNotifications > 0) BadgeTone.Warning else BadgeTone.Success, onOpenNotifications),
         TeacherMenuItem(
-            "Profile", null, Icons.Outlined.Person,
+            "Profile", null, TablerIcons.User,
             "${snapshot.profileCompleteness}% complete", if (snapshot.profileCompleteness == 100) BadgeTone.Success else BadgeTone.Neutral, onOpenProfile,
         ),
     )

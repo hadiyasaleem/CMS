@@ -1,5 +1,8 @@
 package com.mbd.cmscommon.ui.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.ArrowDown
+import compose.icons.tablericons.ArrowUp
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
 import androidx.compose.foundation.background
@@ -20,9 +23,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDownward
-import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -92,7 +92,7 @@ fun <T> DataTable(
                     if (isSortColumn) {
                         Spacer(Modifier.width(2.dp))
                         Icon(
-                            if (sortAscending) Icons.Filled.ArrowUpward else Icons.Filled.ArrowDownward,
+                            if (sortAscending) TablerIcons.ArrowUp else TablerIcons.ArrowDown,
                             contentDescription = null,
                             modifier = Modifier.heightIn(max = 12.dp),
                             tint = CmsTheme.colors.accent,

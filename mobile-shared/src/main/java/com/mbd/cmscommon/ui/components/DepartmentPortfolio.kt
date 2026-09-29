@@ -1,5 +1,7 @@
 package com.mbd.cmscommon.ui.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.DotsVertical
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -25,8 +27,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -203,7 +203,7 @@ private fun DepartmentPortfolioCard(
                     Text("Code ${department.code}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
                 Box {
-                    IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Filled.MoreVert, contentDescription = "More") }
+                    IconButton(onClick = { menuExpanded = true }) { Icon(TablerIcons.DotsVertical, contentDescription = "More") }
                     CmsDropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                         DropdownMenuItem(text = { Text("Edit") }, onClick = { menuExpanded = false; onEdit() })
                         DropdownMenuItem(text = { Text("Delete") }, onClick = { menuExpanded = false; onDelete() })

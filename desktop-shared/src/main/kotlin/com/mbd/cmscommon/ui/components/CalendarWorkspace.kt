@@ -1,5 +1,8 @@
 package com.mbd.cmscommon.ui.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.ChevronLeft
+import compose.icons.tablericons.ChevronRight
 import com.mbd.cmscommon.controller.inScope
 import com.mbd.cmscommon.controller.departmentScopeOptions
 import com.mbd.cmscommon.domain.model.ShiftScope
@@ -26,9 +29,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChevronLeft
-import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -265,8 +265,8 @@ private fun MonthCalendarGrid(
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.titleMedium,
                 )
-                IconButton(onClick = onPreviousMonth) { Icon(Icons.Filled.ChevronLeft, contentDescription = "Previous month") }
-                IconButton(onClick = onNextMonth) { Icon(Icons.Filled.ChevronRight, contentDescription = "Next month") }
+                IconButton(onClick = onPreviousMonth) { Icon(TablerIcons.ChevronLeft, contentDescription = "Previous month") }
+                IconButton(onClick = onNextMonth) { Icon(TablerIcons.ChevronRight, contentDescription = "Next month") }
             }
             Spacer(Modifier.height(8.dp))
             Row(Modifier.fillMaxWidth()) {

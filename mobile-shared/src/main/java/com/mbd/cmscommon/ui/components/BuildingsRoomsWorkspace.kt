@@ -1,5 +1,7 @@
 package com.mbd.cmscommon.ui.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.DotsVertical
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,8 +17,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenuItem
@@ -200,7 +200,7 @@ private fun BuildingCard(
                     building.code?.let { Text(it, color = ModMuted, style = MaterialTheme.typography.bodySmall) }
                 }
                 Box {
-                    IconButton(onClick = { menuOpen = true }) { Icon(Icons.Filled.MoreVert, contentDescription = "Building options") }
+                    IconButton(onClick = { menuOpen = true }) { Icon(TablerIcons.DotsVertical, contentDescription = "Building options") }
                     CmsDropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                         DropdownMenuItem(text = { Text("Edit") }, onClick = { menuOpen = false; onEdit() })
                         DropdownMenuItem(text = { Text("Delete") }, onClick = { menuOpen = false; onDelete() })
@@ -245,7 +245,7 @@ private fun RoomRow(room: Room, onEdit: () -> Unit, onDelete: () -> Unit) {
             if (subtitle.isNotBlank()) Text(subtitle, color = ModMuted, style = MaterialTheme.typography.bodySmall)
         }
         Box {
-            IconButton(onClick = { menuOpen = true }) { Icon(Icons.Filled.MoreVert, contentDescription = "Room options") }
+            IconButton(onClick = { menuOpen = true }) { Icon(TablerIcons.DotsVertical, contentDescription = "Room options") }
             CmsDropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                 DropdownMenuItem(text = { Text("Edit") }, onClick = { menuOpen = false; onEdit() })
                 DropdownMenuItem(text = { Text("Delete") }, onClick = { menuOpen = false; onDelete() })
