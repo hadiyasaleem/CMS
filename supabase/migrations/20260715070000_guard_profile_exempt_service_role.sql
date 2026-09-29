@@ -27,5 +27,8 @@ begin
 end
 $$;
 
+-- 20260714000002_rls.sql already creates this trigger; dropping first keeps a from-scratch replay working
+-- (a no-op on the live database, where this migration is already recorded as applied).
+drop trigger if exists trg_guard_profile on profiles;
 create trigger trg_guard_profile before update on profiles
   for each row execute function fn_guard_profile_update();

@@ -15,10 +15,11 @@
 --   fn_check_timetable_conflict, fn_enforce_roster_cap, fn_check_datesheet_conflict,
 --   approve_link_request, approve_attendance_edit_request, record_semester_result,
 --   fn_check_student_shift, fn_guard_session_shift_change, fn_check_row_shift_allowed,
---   fn_check_period_link_shift, fn_guard_profile_update, fn_guard_exam_paper_review.
+--   fn_check_period_link_shift, fn_guard_profile_update.
 -- New helpers (security invoker, so RLS still applies to the lookups they perform):
 --   msg_session_label, msg_class_label, msg_teacher_label.
--- Deliberately untouched: roll_block_error (already plain), the one-off "expects empty session tables"
+-- Deliberately untouched: roll_block_error (already plain; live carries a newer single-shift fix), the exam-paper
+-- review guard (dropped by exam_paper_rework, not to be resurrected), the one-off "expects empty session tables"
 -- guard in session_shift_consolidation (a migration-time check, never seen by users).
 
 -- ── Helpers: names instead of ids ─────────────────────────────────────────────────────────────────────
@@ -124,7 +125,7 @@ end $$;
 -- Old: "Session isl_2026 is full (50 students max)"
 -- New: "ENG 2023–2027 is full (limit 50 students). Increase the session's student limit or remove a student first."
 create or replace function fn_enforce_roster_cap() returns trigger
-language plpgsql as $$
+language plpgsql set search_path = public as $$
 declare cap int; n int;
 begin
   select max_students into cap from academic_sessions where session_id = new.session_id;
@@ -473,42 +474,6 @@ begin
      or new.linked_session_id is distinct from old.linked_session_id
      or new.linked_roll is distinct from old.linked_roll then
     raise exception 'You can''t change an account''s role, email, status or class link. Ask an admin.';
-  end if;
-  return new;
-end
-$$;
-
--- Old: "not allowed to set exam paper review columns on insert" / "not allowed to modify exam paper review columns"
--- New: "Review status, notes and the answer key are set by an admin, not when submitting a paper." /
---      "Only an admin can change an exam paper's review status, notes or answer key."
--- Body identical to 20260902190508_guard_exam_paper_review_columns.sql.
-create or replace function fn_guard_exam_paper_review()
-returns trigger
-language plpgsql
-security definer
-set search_path to 'public'
-as $$
-begin
-  if coalesce(auth.jwt() ->> 'role', '') = 'service_role' then return new; end if;
-  if is_admin() then return new; end if;
-
-  if tg_op = 'INSERT' then
-    if new.review_status is distinct from 'SUBMITTED'
-       or new.reviewed_by is not null
-       or new.reviewed_at is not null
-       or new.teacher_notes is not null
-       or new.key_storage_path is not null then
-      raise exception 'Review status, notes and the answer key are set by an admin, not when submitting a paper.';
-    end if;
-    return new;
-  end if;
-
-  if new.review_status is distinct from old.review_status
-     or new.reviewed_by is distinct from old.reviewed_by
-     or new.reviewed_at is distinct from old.reviewed_at
-     or new.teacher_notes is distinct from old.teacher_notes
-     or new.key_storage_path is distinct from old.key_storage_path then
-    raise exception 'Only an admin can change an exam paper''s review status, notes or answer key.';
   end if;
   return new;
 end
