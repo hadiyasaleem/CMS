@@ -105,6 +105,14 @@ class SemesterSubjectsController(
         }
         requireValid(!conflict) { "Course code $normalizedCode already exists in this semester." }
 
+        val renamed = originalCourseCode != null && !originalCourseCode.equals(normalizedCode, ignoreCase = true)
+        if (renamed) {
+            // The course code is changing: retire the old row *before* creating the new one, so a
+            // subject with existing attendance/marks/timetable data (blocked by deleteSemesterSubject)
+            // fails cleanly instead of leaving both the old and new codes behind as duplicates.
+            repo.deleteSemesterSubject(sessionId, semester, originalCourseCode!!)
+        }
+
         val subject = SemesterSubject(
             sessionId = sessionId,
             semester = semester,

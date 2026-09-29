@@ -8,8 +8,12 @@ import com.mbd.cmscommon.data.local.entity.SemesterTermEntity
 import com.mbd.cmscommon.data.mapper.AcademicStructureMapper
 import com.mbd.cmscommon.data.remote.PgTime
 import com.mbd.cmscommon.data.remote.SupabaseTables
+import com.mbd.cmscommon.data.remote.dto.AttendanceRowDto
+import com.mbd.cmscommon.data.remote.dto.MarkRowDto
 import com.mbd.cmscommon.data.remote.dto.SemesterSubjectDto
 import com.mbd.cmscommon.data.remote.dto.SemesterTermDto
+import com.mbd.cmscommon.data.remote.dto.TimetablePeriodDto
+import com.mbd.cmscommon.util.CmsException
 import com.mbd.cmscommon.data.sync.SyncCheckpoint
 import com.mbd.cmscommon.data.sync.SyncCheckpointDefaults
 import com.mbd.cmscommon.data.sync.SyncCheckpointStore
@@ -96,6 +100,12 @@ class CurriculumRepositoryImpl @Inject constructor(
     }
 
     override suspend fun deleteSemesterSubject(sessionId: String, semester: Int, courseCode: String) {
+        val blocker = firstDependencyBlocking(sessionId, semester, courseCode)
+        if (blocker != null) {
+            throw CmsException.Conflict(
+                "Can't remove $courseCode: it already has $blocker on record. Remove those first, or keep the subject.",
+            )
+        }
         postgrest.from(SupabaseTables.SESSION_SUBJECTS).update({ set("is_deleted", true) }) {
             filter {
                 eq("session_id", sessionId)
@@ -104,6 +114,40 @@ class CurriculumRepositoryImpl @Inject constructor(
             }
         }
         subjectDao.deleteByCourseCode(sessionId, semester, courseCode)
+    }
+
+    /** Names the first kind of record still referencing [courseCode], or null if it's safe to delete. */
+    private suspend fun firstDependencyBlocking(sessionId: String, semester: Int, courseCode: String): String? {
+        val hasAttendance = postgrest.from(SupabaseTables.SESSION_ATTENDANCE).select {
+            filter {
+                eq("session_id", sessionId)
+                eq("semester", semester)
+                eq("course_code", courseCode)
+            }
+            range(0, 0)
+        }.decodeList<AttendanceRowDto>().isNotEmpty()
+        if (hasAttendance) return "attendance records"
+
+        val hasMarks = postgrest.from(SupabaseTables.SESSION_MARKS).select {
+            filter {
+                eq("session_id", sessionId)
+                eq("semester", semester)
+                eq("course_code", courseCode)
+            }
+            range(0, 0)
+        }.decodeList<MarkRowDto>().isNotEmpty()
+        if (hasMarks) return "marks"
+
+        val hasPeriods = postgrest.from(SupabaseTables.TIMETABLE_PERIODS).select {
+            filter {
+                eq("primary_session_id", sessionId)
+                eq("course_code", courseCode)
+            }
+            range(0, 0)
+        }.decodeList<TimetablePeriodDto>().isNotEmpty()
+        if (hasPeriods) return "timetable periods"
+
+        return null
     }
 
     override suspend fun getSemesterTerm(sessionId: String, semester: Int): SemesterTerm? =
