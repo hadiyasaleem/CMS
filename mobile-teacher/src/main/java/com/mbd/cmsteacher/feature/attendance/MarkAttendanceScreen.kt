@@ -1,5 +1,6 @@
 package com.mbd.cmsteacher.feature.attendance
 
+import com.mbd.cmscommon.ui.components.ControllerErrorDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -26,6 +27,8 @@ fun MarkAttendanceScreen(onOpenHistory: (String) -> Unit, viewModel: MarkAttenda
     val submitState by controller.submitState.collectAsState()
     val date by controller.date.collectAsState()
     val topics by controller.topics.collectAsState()
+
+    ControllerErrorDialog(controller.error, "Couldn't complete the attendance action", controller::clearError)
 
     MarkAttendanceWorkspace(
         heroPainter = painterResource(R.drawable.teacher_attendance_hero),

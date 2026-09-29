@@ -1,5 +1,6 @@
 package com.mbd.cmsadmin.feature.exampapers
 
+import com.mbd.cmscommon.ui.components.ControllerErrorDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -44,6 +45,8 @@ fun SubmittedPapersScreen(viewModel: SubmittedPapersViewModel = hiltViewModel())
     val filters by controller.filters.collectAsState()
     val loading by controller.loading.collectAsState()
     val notice by controller.notice.collectAsState()
+
+    ControllerErrorDialog(controller.error, "Couldn't refresh submitted papers", controller::clearError)
 
     SubmittedPapersWorkspace(
         grouped = grouped,

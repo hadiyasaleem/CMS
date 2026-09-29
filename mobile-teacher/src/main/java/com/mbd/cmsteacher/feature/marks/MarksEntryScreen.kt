@@ -1,5 +1,6 @@
 package com.mbd.cmsteacher.feature.marks
 
+import com.mbd.cmscommon.ui.components.ControllerErrorDialog
 import com.mbd.cmscommon.util.rememberDocumentExport
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -21,6 +22,8 @@ fun MarksEntryScreen(viewModel: MarksEntryViewModel = hiltViewModel()) {
     val savedAbsentRolls by controller.savedAbsentRolls.collectAsState()
     val saveState by controller.saveState.collectAsState()
     val requestState by controller.requestState.collectAsState()
+
+    ControllerErrorDialog(controller.error, "Couldn't load the marks screen", controller::clearError)
 
     MarksEntryWorkspace(
 

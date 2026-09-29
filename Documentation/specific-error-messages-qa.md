@@ -62,6 +62,10 @@ report unless the check says otherwise.
 | 2.11 | Admin **Student Record** with one area unreadable | Record opens; message names the missing areas |
 | 2.12 | **Mark Attendance** for a past date offline | "Couldn't load the saved register for <date> (no connection). Check your connection before marking this register." (the register must not silently look unmarked) |
 | 2.13 | Student **Link request** → pick a session offline | "Couldn't load the available roll numbers." (mobile and desktop) |
+| 2.14 | Teacher **Marks entry** → pick a class while the local cache is unreadable / offline first-run | "Couldn't load the marks screen" dialog naming why pending edit requests could not load |
+| 2.15 | Admin **Submitted papers** page opened offline | "Couldn't refresh submitted papers" dialog with the reason (list still shows saved papers) |
+| 2.16 | **Semester results** (admin and teacher) → pick a class offline with nothing cached | "Couldn't load semester results" dialog with the reason |
+| 2.17 | **Mark attendance** hits any unexpected failure loading or submitting | "Couldn't complete the attendance action" dialog, or the inline outcome notice — never nothing |
 
 ## 3. Admin — create / edit / delete
 
@@ -126,6 +130,7 @@ report unless the check says otherwise.
 
 ## 8. Cross-cutting
 
+- [ ] Launching offline does **not** pop an error dialog: the startup data load (`refreshAll` in the mobile AppRootViewModels and desktop `Main.kt`) is deliberately silent — the app is offline-first, and the hubs/screens then name what could not load. Only the manual refresh button reports a "Refresh incomplete" dialog.
 - [ ] No dialog anywhere is titled just "Something went wrong" (titles say what you were doing, e.g. "Couldn't update buildings and rooms").
 - [ ] Error dialogs on desktop and mobile scroll when the message is long and never fill the full window height.
 - [ ] No message contains a URL, SQL, JSON, a stack trace, an exception class name, a UUID or someone else's email.

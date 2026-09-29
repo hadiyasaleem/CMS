@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.ui.teacher
 
+import com.mbd.cmscommon.ui.components.ControllerErrorDialog
 import com.mbd.cmscommon.domain.model.Session
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -43,6 +44,8 @@ fun MarkAttendanceScreen(
     val submitState by controller.submitState.collectAsState()
     val date by controller.date.collectAsState()
     val topics by controller.topics.collectAsState()
+
+    ControllerErrorDialog(controller.error, "Couldn't complete the attendance action", controller::clearError)
 
     MarkAttendanceWorkspace(
         heroPainter = painterResource("teacher-attendance-hero.jpg"),

@@ -1,5 +1,7 @@
 package com.mbd.cmscommon.ui.components
 
+import androidx.compose.runtime.collectAsState
+import kotlinx.coroutines.flow.StateFlow
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -258,4 +260,14 @@ fun CmsErrorDialog(
             null
         },
     )
+}
+
+/**
+ * Shows a controller's `error` flow as a dialog. For screens whose workspace has no error slot of its own: without
+ * this, a failure the controller reports through `launch(...)` would never be seen.
+ */
+@Composable
+fun ControllerErrorDialog(error: StateFlow<String?>, title: String, onDismiss: () -> Unit) {
+    val message by error.collectAsState()
+    message?.let { CmsErrorDialog(message = it, title = title, onDismiss = onDismiss) }
 }

@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.ui.teacher
 
+import com.mbd.cmscommon.ui.components.ControllerErrorDialog
 import com.mbd.cmscommon.controller.ScopeFilterOptions
 import com.mbd.cmscommon.controller.scopeDepartments
 import com.mbd.cmscommon.controller.scopeSessions
@@ -50,6 +51,8 @@ fun SemesterResultsScreen(
     val loadState by controller.loadState.collectAsState()
     val saveState by controller.saveState.collectAsState()
     val semesterRange by controller.semesterRange.collectAsState()
+
+    ControllerErrorDialog(controller.error, "Couldn't load semester results", controller::clearError)
 
     SemesterResultsWorkspace(
 
