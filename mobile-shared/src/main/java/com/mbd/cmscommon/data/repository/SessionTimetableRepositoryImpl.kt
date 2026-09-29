@@ -7,6 +7,7 @@ import com.mbd.cmscommon.data.local.entity.SessionPeriodEntity
 import com.mbd.cmscommon.data.mapper.AcademicStructureMapper
 import com.mbd.cmscommon.data.remote.PgTime
 import com.mbd.cmscommon.data.remote.SupabaseTables
+import com.mbd.cmscommon.data.remote.dto.PeriodSessionDto
 import com.mbd.cmscommon.data.remote.dto.TimetablePeriodDto
 import com.mbd.cmscommon.data.sync.SyncCheckpoint
 import com.mbd.cmscommon.data.sync.SyncCheckpointDefaults
@@ -21,6 +22,7 @@ import java.time.DayOfWeek
 import java.time.Instant
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 class SessionTimetableRepositoryImpl @Inject constructor(
@@ -38,9 +40,10 @@ class SessionTimetableRepositoryImpl @Inject constructor(
     private fun periodLocalId(dto: TimetablePeriodDto, fallbackSessionId: String): String =
         dto.id ?: "${dto.sessionId ?: fallbackSessionId}_${dto.shift}_${dto.day}_${dto.startTime}"
 
-    private fun TimetablePeriodDto.toEntity(sessionId: String, deptId: String): SessionPeriodEntity = SessionPeriodEntity(
+    private fun TimetablePeriodDto.toEntity(sessionId: String, deptId: String, linked: String = ""): SessionPeriodEntity = SessionPeriodEntity(
         id = periodLocalId(this, sessionId),
         sessionId = this.sessionId ?: sessionId,
+        linkedSessionIds = linked,
         shift = shift ?: Session.MORNING.name,
         deptId = deptId,
         day = day ?: DayOfWeek.MONDAY.name,
@@ -107,7 +110,11 @@ class SessionTimetableRepositoryImpl @Inject constructor(
             select()
         }.decodeList<TimetablePeriodDto>().first()
         periodDao.deleteForSlot(period.sessionId, period.shift.name, period.day.name, period.startTime)
-        periodDao.upsertAll(listOf(saved.toEntity(period.sessionId, deptOf(period.sessionId))))
+        val remoteId = saved.id
+        // Editing an already-merged period's fields must keep (and refresh) its merge, not silently drop it.
+        val linked = remoteId?.let { linkedSessionIdsFor(it) }.orEmpty()
+        periodDao.upsertAll(listOf(saved.toEntity(period.sessionId, deptOf(period.sessionId), linked.joinToString(","))))
+        linked.forEach { linkedSessionId -> upsertShadowRow(saved, linkedSessionId, (linked - linkedSessionId) + period.sessionId) }
     }
 
     override suspend fun removePeriod(period: SessionPeriod) {
@@ -119,7 +126,46 @@ class SessionTimetableRepositoryImpl @Inject constructor(
                 eq("start_time", period.startTime)
             }
         }
+        // A merged lecture is one row shared by several sessions -- removing it must clear every linked
+        // session's share of it too, both remotely (their period_sessions rows) and locally (their shadow rows).
+        postgrest.from(SupabaseTables.PERIOD_SESSIONS).update({ set("is_deleted", true) }) {
+            filter { eq("period_id", period.id) }
+        }
         periodDao.deleteForSlot(period.sessionId, period.shift.name, period.day.name, period.startTime)
+        periodDao.deleteAllRowsForRemotePeriod(period.id)
+    }
+
+    /** The sessions (besides the lecture's own primary) currently linked to remote period [periodId]. */
+    private suspend fun linkedSessionIdsFor(periodId: String): Set<String> =
+        postgrest.from(SupabaseTables.PERIOD_SESSIONS).select {
+            filter { eq("period_id", periodId); eq("is_deleted", false) }
+        }.decodeList<PeriodSessionDto>().mapNotNull { it.sessionId }.toSet()
+
+    /**
+     * Refreshes [viewSessionId]'s local "shadow" view of [dto]'s lecture -- letting a session that's merely
+     * linked into a merged lecture see it occupying that slot on its own grid, read-only. [othersFromHere] is
+     * every OTHER session sharing the lecture as seen from [viewSessionId] (excludes [viewSessionId] itself).
+     */
+    private suspend fun upsertShadowRow(dto: TimetablePeriodDto, viewSessionId: String, othersFromHere: Set<String>) {
+        val remoteId = dto.id ?: return
+        val entity = dto.toEntity(viewSessionId, deptOf(viewSessionId), othersFromHere.filter { it.isNotBlank() }.joinToString(","))
+            .copy(id = "$remoteId::$viewSessionId", sessionId = viewSessionId, remotePeriodId = remoteId)
+        periodDao.upsertAll(listOf(entity))
+    }
+
+    override suspend fun setPeriodLink(period: SessionPeriod, sessionId: String, link: Boolean) {
+        if (link) {
+            postgrest.from(SupabaseTables.PERIOD_SESSIONS).upsert(
+                PeriodSessionDto(periodId = period.id, sessionId = sessionId),
+            ) { onConflict = "period_id,session_id" }
+        } else {
+            postgrest.from(SupabaseTables.PERIOD_SESSIONS).update({ set("is_deleted", true) }) {
+                filter { eq("period_id", period.id); eq("session_id", sessionId) }
+            }
+        }
+        // Refresh locally: the primary's own row's chip list, and the target session's shadow row (added or removed).
+        syncSession(period.sessionId)
+        syncSession(sessionId)
     }
 
     override suspend fun syncSession(sessionId: String) {
@@ -152,6 +198,40 @@ class SessionTimetableRepositoryImpl @Inject constructor(
         }
 
         checkpointStore.upsert(SyncCheckpoint(ownerKey, SupabaseTables.TIMETABLE_PERIODS, scopeKey, maxUpdatedAt, PgTime.format(Instant.now()) ?: since))
+        syncPeriodLinksFor(sessionId)
+    }
+
+    /**
+     * Merged-lecture links for [sessionId], not checkpointed (bounded to this one session's periods/links, so
+     * a fresh fetch each time is cheap): (a) refreshes [sessionId]'s own periods' `linkedSessionIds` chip
+     * list, and (b) refreshes the shadow rows for any lecture [sessionId] is merely linked into elsewhere,
+     * dropping any that are no longer current.
+     */
+    private suspend fun syncPeriodLinksFor(sessionId: String) {
+        // (a) This session's own (primary) periods.
+        for (row in periodDao.observeForSession(sessionId).first().filter { it.id == it.remotePeriodId }) {
+            val linked = linkedSessionIdsFor(row.remotePeriodId).joinToString(",")
+            if (linked != row.linkedSessionIds) periodDao.setLinkedSessionIds(row.remotePeriodId, linked)
+        }
+
+        // (b) Lectures this session is linked into (shadow rows).
+        val linksAsGuest = postgrest.from(SupabaseTables.PERIOD_SESSIONS).select {
+            filter { eq("session_id", sessionId); eq("is_deleted", false) }
+        }.decodeList<PeriodSessionDto>()
+        val guestPeriodIds = linksAsGuest.mapNotNull { it.periodId }.distinct()
+        // A merge is a rare, occasional admin action, so one query per linked period (typically 0-2) is fine.
+        val guestPeriods = guestPeriodIds.mapNotNull { pid ->
+            postgrest.from(SupabaseTables.TIMETABLE_PERIODS).select {
+                filter { eq("id", pid); eq("is_deleted", false) }
+            }.decodeList<TimetablePeriodDto>().firstOrNull()
+        }
+        for (dto in guestPeriods) {
+            val remoteId = dto.id ?: continue
+            val others = (linkedSessionIdsFor(remoteId) + (dto.sessionId ?: "") - sessionId).filter { it.isNotBlank() }.toSet()
+            upsertShadowRow(dto, sessionId, others)
+        }
+        val stillValidShadowIds = guestPeriods.mapNotNull { it.id }.map { "$it::$sessionId" }
+        periodDao.deleteStaleShadowsForSession(sessionId, stillValidShadowIds)
     }
 
     override suspend fun syncAll() {
@@ -180,6 +260,37 @@ class SessionTimetableRepositoryImpl @Inject constructor(
         }
 
         checkpointStore.upsert(SyncCheckpoint(ownerKey, SupabaseTables.TIMETABLE_PERIODS, scopeKey, maxUpdatedAt, PgTime.format(Instant.now()) ?: since))
+        syncAllPeriodLinks()
+    }
+
+    /**
+     * Global merged-lecture link sync, run after [syncAll]'s own period pagination: the admin timetable
+     * editor reads its grid from the local cache built by [syncAll] (not per-session [syncSession]), so
+     * shadow rows and linked-session chips must be kept current here too. Not checkpointed -- college-wide
+     * merges are expected to be few, so refetching them in full each time is simplest and cheap enough.
+     */
+    private suspend fun syncAllPeriodLinks() {
+        var offset = 0L
+        val allLinks = mutableListOf<PeriodSessionDto>()
+        while (true) {
+            val page = postgrest.from(SupabaseTables.PERIOD_SESSIONS).select {
+                filter { eq("is_deleted", false) }
+                range(offset, offset + PAGE_SIZE - 1)
+            }.decodeList<PeriodSessionDto>()
+            if (page.isEmpty()) break
+            allLinks += page
+            if (page.size < PAGE_SIZE) break
+            offset += PAGE_SIZE
+        }
+        val linkedPeriodIds = allLinks.mapNotNull { it.periodId }.distinct()
+        val primarySessionIds = linkedPeriodIds.mapNotNull { pid ->
+            postgrest.from(SupabaseTables.TIMETABLE_PERIODS).select { filter { eq("id", pid) } }
+                .decodeList<TimetablePeriodDto>().firstOrNull()?.sessionId
+        }
+        // Every session that currently has a link, plus every session whose LOCAL cache still remembers one
+        // (so a merge dropped entirely since the last sync gets its stale chip/shadow rows cleared too).
+        val sessionsToRefresh = (primarySessionIds + allLinks.mapNotNull { it.sessionId } + periodDao.getSessionIdsWithLinks()).distinct()
+        sessionsToRefresh.forEach { sid -> syncPeriodLinksFor(sid) }
     }
 
     private companion object {

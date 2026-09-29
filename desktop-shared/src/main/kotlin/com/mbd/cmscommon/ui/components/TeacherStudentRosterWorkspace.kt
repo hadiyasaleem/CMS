@@ -90,7 +90,7 @@ fun TeacherStudentRosterWorkspace(
     val avgCgpa = students.mapNotNull { it.cgpa }.takeIf { it.isNotEmpty() }?.average()
 
     val filtered = students.filter { student ->
-        val tally = tallies[student.rollNumber]
+        val tally = tallies[student.id]
         val matchesQuery = query.isBlank() || student.name.contains(query, ignoreCase = true) || student.rollNumber.contains(query, ignoreCase = true)
         val matchesFilter = when (filter) {
             TeacherRosterFilter.ALL -> true
@@ -104,7 +104,7 @@ fun TeacherStudentRosterWorkspace(
     val visible = when (sort) {
         TeacherRosterSort.NAME -> filtered.sortedBy { it.name.lowercase() }
         TeacherRosterSort.ROLL -> filtered.sortedBy { it.rollNumber }
-        TeacherRosterSort.ATTENDANCE -> filtered.sortedBy { tallies[it.rollNumber]?.percentage ?: 100f }
+        TeacherRosterSort.ATTENDANCE -> filtered.sortedBy { tallies[it.id]?.percentage ?: 100f }
     }
 
     val listState = rememberLazyListState()
@@ -153,7 +153,7 @@ fun TeacherStudentRosterWorkspace(
             } else if (visible.isEmpty()) {
                 item { TeacherRosterEmpty("No matching students", "Try a different search or filter.") }
             } else {
-                items(visible, key = { it.rollNumber }) { student -> TeacherStudentCard(student, tallies[student.rollNumber]) }
+                items(visible, key = { it.id }) { student -> TeacherStudentCard(student, tallies[student.id]) }
             }
         } else {
             item { TeacherRosterEmpty("Class roster", "Choose a class to review student progress") }

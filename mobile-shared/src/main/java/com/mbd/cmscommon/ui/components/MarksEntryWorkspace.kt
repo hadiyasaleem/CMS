@@ -81,7 +81,7 @@ fun MarksEntryWorkspace(
     onToggleAbsent: (String) -> Unit,
     onSave: () -> Unit,
     onClearRequestState: () -> Unit,
-    onRequestEdit: (String, Int, String) -> Unit,
+    onRequestEdit: (SessionStudent, Int, String) -> Unit,
     onExport: ((ExportDocument, ExportFormat) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -89,15 +89,15 @@ fun MarksEntryWorkspace(
     val maxMarks = examType.maxMarks
 
     val validScores = roster.count { student ->
-        val raw = scores[student.rollNumber]
+        val raw = scores[student.id]
         val n = raw?.toIntOrNull()
-        (n != null && n in 0..maxMarks) || absentRolls.contains(student.rollNumber)
+        (n != null && n in 0..maxMarks) || absentRolls.contains(student.id)
     }
-    val locked = roster.count { lockedRolls.contains(it.rollNumber) }
+    val locked = roster.count { lockedRolls.contains(it.id) }
     val pending = pendingByRoll.size
     val invalid = roster.size - validScores - locked
 
-    val average = roster.mapNotNull { scores[it.rollNumber]?.toIntOrNull() }.takeIf { it.isNotEmpty() }?.average()
+    val average = roster.mapNotNull { scores[it.id]?.toIntOrNull() }.takeIf { it.isNotEmpty() }?.average()
 
     LazyColumn(
         modifier = modifier.fillMaxWidth().background(MarksCanvas),
@@ -126,17 +126,17 @@ fun MarksEntryWorkspace(
                 }
             }
         } else {
-            items(roster, key = { it.rollNumber }) { student ->
+            items(roster, key = { it.id }) { student ->
                 StudentMarkCard(
                     student = student,
-                    rawScore = scores[student.rollNumber] ?: "",
+                    rawScore = scores[student.id] ?: "",
                     maxMarks = maxMarks,
-                    locked = lockedRolls.contains(student.rollNumber),
-                    pending = pendingByRoll[student.rollNumber],
-                    absent = absentRolls.contains(student.rollNumber),
-                    savedAbsent = savedAbsentRolls.contains(student.rollNumber),
-                    onScore = { onScore(student.rollNumber, it) },
-                    onToggleAbsent = { onToggleAbsent(student.rollNumber) },
+                    locked = lockedRolls.contains(student.id),
+                    pending = pendingByRoll[student.id],
+                    absent = absentRolls.contains(student.id),
+                    savedAbsent = savedAbsentRolls.contains(student.id),
+                    onScore = { onScore(student.id, it) },
+                    onToggleAbsent = { onToggleAbsent(student.id) },
                     onRequestEdit = { editTarget = student },
                 )
             }
@@ -150,10 +150,10 @@ fun MarksEntryWorkspace(
     editTarget?.let { student ->
         RequestMarkEditDialog(
             student = student,
-            currentScore = scores[student.rollNumber]?.toIntOrNull(),
+            currentScore = scores[student.id]?.toIntOrNull(),
             maxMarks = maxMarks,
             onDismiss = { editTarget = null },
-            onSubmit = { newScore, reason -> onRequestEdit(student.rollNumber, newScore, reason); editTarget = null },
+            onSubmit = { newScore, reason -> onRequestEdit(student, newScore, reason); editTarget = null },
         )
     }
 }

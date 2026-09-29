@@ -133,14 +133,15 @@ fun scopeTeacherInsights(
     examStats: List<ExamStat>,
     assignments: List<ResolvedAssignment>,
 ): TeacherInsightsScope {
-    val classKeys = assignments.map { it.sessionId to it.courseCode.uppercase() }.toSet()
+    // A merged lecture's class spans every linked session too, not just its primary.
+    val classKeys = assignments.flatMap { a -> a.sessionIds.map { it to a.courseCode.uppercase() } }.toSet()
     val sessionIds = classKeys.map { it.first }.toSet()
     // A class is one shift of a session; a null shift (unknown) keeps the whole session.
-    val taught = assignments.map { it.sessionId to it.classShift }.toSet()
+    val taught = assignments.flatMap { a -> a.sessionIds.map { it to a.classShift } }.toSet()
     fun teaches(sessionId: String, shift: Session?): Boolean =
         (sessionId to null) in taught || shift == null || (sessionId to shift) in taught ||
             taught.none { it.first == sessionId && it.second != null }
-    val classShifts = assignments.map { Triple(it.sessionId, it.courseCode.uppercase(), it.classShift) }.toSet()
+    val classShifts = assignments.flatMap { a -> a.sessionIds.map { Triple(it, a.courseCode.uppercase(), a.classShift) } }.toSet()
 
     return TeacherInsightsScope(
         overviews = overviews.filter { it.sessionId in sessionIds && teaches(it.sessionId, it.shift) },

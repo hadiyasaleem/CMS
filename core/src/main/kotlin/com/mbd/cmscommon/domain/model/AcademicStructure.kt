@@ -138,8 +138,15 @@ data class SessionPeriod(
     override val createdBy: String? = null,
     override val updatedAt: Instant = Instant.EPOCH,
     override val updatedBy: String? = null,
+    /** Sessions -- other than [sessionId], the one this object was read for -- that share this exact lecture
+     * (a merged lecture, via the database's period_sessions link). Empty for an unmerged period. */
+    val linkedSessionIds: Set<String> = emptySet(),
+    /** True for the lecture's own row (owned by [sessionId]); false when this object represents another
+     * session's merged-in view of a lecture owned elsewhere -- that view is read-only except for unmerging. */
+    val isOwnRow: Boolean = true,
 ) : BaseEntity() {
     val timeRange: String get() = "${clockDisplay(startTime)}–${clockDisplay(endTime)}"
+    val isMergedLecture: Boolean get() = linkedSessionIds.isNotEmpty()
 
     companion object {
         /** One slot per session, shift, day and start time (the database's uq_session_slot). */

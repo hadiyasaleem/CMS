@@ -73,7 +73,8 @@ class NotificationsController(
             sessions.map { list -> list.filter { it.isActive } }.stateIn(scope, SharingStarted.Eagerly, emptyList())
         NotificationPublisherKind.TEACHER ->
             combine(sessions, teacherAssignments) { allSessions, assignments ->
-                val allowed = assignments.map { it.sessionId }.toSet()
+                // A merged lecture's linked sessions are also ones this teacher may notify, not just the primary.
+                val allowed = assignments.flatMap { it.sessionIds }.toSet()
                 allSessions.filter { it.isActive && it.sessionId in allowed }.sortedByDescending { it.startYear }
             }.stateIn(scope, SharingStarted.Eagerly, emptyList())
         NotificationPublisherKind.NONE -> MutableStateFlow(emptyList())
@@ -81,7 +82,12 @@ class NotificationsController(
 
     /** The shifts a teacher teaches in each session; a teacher may narrow a notice only to one of those. */
     val teachingShifts: StateFlow<Map<String, Set<Session>>> = teacherAssignments
-        .map { list -> list.filter { it.classShift != null }.groupBy { it.sessionId }.mapValues { (_, a) -> a.mapNotNull { it.classShift }.toSet() } }
+        .map { list ->
+            list.filter { it.classShift != null }
+                .flatMap { a -> a.sessionIds.map { sid -> sid to a.classShift!! } }
+                .groupBy({ it.first }, { it.second })
+                .mapValues { (_, shifts) -> shifts.toSet() }
+        }
         .stateIn(scope, SharingStarted.Eagerly, emptyMap())
 
     private val _publishAccess = MutableStateFlow(

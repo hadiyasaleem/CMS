@@ -34,18 +34,26 @@ class MarksEntryController(
     private val _examType = MutableStateFlow(ExamType.MIDTERM)
     val examType: StateFlow<ExamType> = _examType.asStateFlow()
 
+    // Keyed by SessionStudent.id ("${sessionId}_$rollNumber"), never bare roll numbers -- a merged class's two
+    // sessions may otherwise reuse the same roll number and silently collide.
     private val _absentRolls = MutableStateFlow<Set<String>>(emptySet())
     val absentRolls: StateFlow<Set<String>> = _absentRolls.asStateFlow()
 
-    fun toggleAbsent(rollNumber: String) {
-        if (isLocked(rollNumber)) return
-        _absentRolls.value = if (_absentRolls.value.contains(rollNumber)) _absentRolls.value - rollNumber else _absentRolls.value + rollNumber
+    fun toggleAbsent(studentId: String) {
+        if (isLocked(studentId)) return
+        _absentRolls.value = if (_absentRolls.value.contains(studentId)) _absentRolls.value - studentId else _absentRolls.value + studentId
     }
 
+    /** The combined roster of every session sharing this lecture, for a merged class. */
     val roster: StateFlow<List<SessionStudent>> = _selected
         .flatMapLatest { assignment ->
-            // A class is one shift of a session: only that shift's students are on its register.
-            if (assignment == null) flowOf(emptyList()) else sessionRepository.observeStudents(assignment.sessionId).map { studentsForTab(it, assignment.classShift) }
+            if (assignment == null) {
+                flowOf(emptyList())
+            } else {
+                combine(assignment.sessionIds.map { sid -> sessionRepository.observeStudents(sid).map { studentsForTab(it, assignment.classShift) } }) {
+                    it.toList().flatten()
+                }
+            }
         }
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -54,7 +62,15 @@ class MarksEntryController(
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), null)
 
     val savedScores: StateFlow<Map<String, Int>> = combine(_selected, _examType) { a, t -> a to t }
-        .flatMapLatest { (assignment, type) -> if (assignment == null) flowOf(emptyMap()) else marksRepository.observeScores(assignment.sessionId, assignment.courseCode, type) }
+        .flatMapLatest { (assignment, type) ->
+            if (assignment == null) {
+                flowOf(emptyMap())
+            } else {
+                combine(assignment.sessionIds.map { sid -> marksRepository.observeScores(sid, assignment.courseCode, type).map { scores -> sid to scores } }) { pairs ->
+                    pairs.toList().flatMap { (sid, scores) -> scores.map { (roll, score) -> SessionStudent.buildId(sid, roll) to score } }.toMap()
+                }
+            }
+        }
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
     val lockedRolls: StateFlow<Set<String>> = savedScores
@@ -62,7 +78,15 @@ class MarksEntryController(
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptySet())
 
     val savedAbsentRolls: StateFlow<Set<String>> = combine(_selected, _examType) { a, t -> a to t }
-        .flatMapLatest { (assignment, type) -> if (assignment == null) flowOf(emptySet()) else marksRepository.observeAbsentRolls(assignment.sessionId, assignment.courseCode, type) }
+        .flatMapLatest { (assignment, type) ->
+            if (assignment == null) {
+                flowOf(emptySet())
+            } else {
+                combine(assignment.sessionIds.map { sid -> marksRepository.observeAbsentRolls(sid, assignment.courseCode, type).map { rolls -> sid to rolls } }) { pairs ->
+                    pairs.toList().flatMap { (sid, rolls) -> rolls.map { roll -> SessionStudent.buildId(sid, roll) } }.toSet()
+                }
+            }
+        }
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptySet())
 
     private val _edits = MutableStateFlow<Map<String, String>>(emptyMap())
@@ -95,11 +119,11 @@ class MarksEntryController(
         loadPendingRequests()
     }
 
-    fun isLocked(rollNumber: String): Boolean = savedScores.value.containsKey(rollNumber)
+    fun isLocked(studentId: String): Boolean = savedScores.value.containsKey(studentId)
 
-    fun setScore(rollNumber: String, raw: String) {
-        if (isLocked(rollNumber)) return
-        _edits.value = _edits.value + (rollNumber to raw)
+    fun setScore(studentId: String, raw: String) {
+        if (isLocked(studentId)) return
+        _edits.value = _edits.value + (studentId to raw)
     }
 
     fun save() {
@@ -111,12 +135,12 @@ class MarksEntryController(
         val absent = _absentRolls.value
 
         val invalidScore = roster.value.firstOrNull { student ->
-            if (saved.containsKey(student.rollNumber) || absent.contains(student.rollNumber)) return@firstOrNull false
-            val raw = display[student.rollNumber]?.trim().orEmpty()
+            if (saved.containsKey(student.id) || absent.contains(student.id)) return@firstOrNull false
+            val raw = display[student.id]?.trim().orEmpty()
             raw.isNotEmpty() && raw.toIntOrNull()?.let { it !in 0..type.maxMarks } != false
         }
         if (invalidScore != null) {
-            val raw = display[invalidScore.rollNumber]?.trim().orEmpty()
+            val raw = display[invalidScore.id]?.trim().orEmpty()
             val entered = raw.toIntOrNull()
             val message = when {
                 entered == null -> "'$raw' isn't a whole number for ${invalidScore.rollNumber}. Enter a score from 0 to ${type.maxMarks}."
@@ -127,12 +151,12 @@ class MarksEntryController(
             return
         }
         val parsed = roster.value.mapNotNull { student ->
-            if (saved.containsKey(student.rollNumber)) return@mapNotNull null
-            if (absent.contains(student.rollNumber)) {
-                student.rollNumber to 0
+            if (saved.containsKey(student.id)) return@mapNotNull null
+            if (absent.contains(student.id)) {
+                student.id to 0
             } else {
-                val score = display[student.rollNumber]?.trim()?.toIntOrNull()
-                if (score != null && score in 0..type.maxMarks) student.rollNumber to score else null
+                val score = display[student.id]?.trim()?.toIntOrNull()
+                if (score != null && score in 0..type.maxMarks) student.id to score else null
             }
         }.toMap()
 
@@ -140,7 +164,14 @@ class MarksEntryController(
         launch("save the marks") {
             try {
                 val absentToSave = absent.filter { parsed.containsKey(it) }.toSet()
-                marksRepository.saveScores(assignment.sessionId, assignment.courseCode, type, teacherId, parsed, absentToSave)
+                val bySession = roster.value.groupBy { it.sessionId }
+                for (sid in assignment.sessionIds) {
+                    val sessionStudents = bySession[sid].orEmpty()
+                    val sessionScores = sessionStudents.mapNotNull { s -> parsed[s.id]?.let { s.rollNumber to it } }.toMap()
+                    if (sessionScores.isEmpty()) continue
+                    val sessionAbsent = sessionStudents.filter { it.id in absentToSave }.map { it.rollNumber }.toSet()
+                    marksRepository.saveScores(sid, assignment.courseCode, type, teacherId, sessionScores, sessionAbsent)
+                }
                 _saveState.value = Outcome.Success(Unit)
                 _edits.value = emptyMap()
                 _absentRolls.value = emptySet()
@@ -158,16 +189,23 @@ class MarksEntryController(
         val assignment = _selected.value ?: return
         val type = _examType.value
         launch("load pending edit requests") {
-            val pending = markEditRequestRepository.getPendingForAssignment(assignment.sessionId, assignment.courseCode, type)
-            _pendingByRoll.value = pending.associateBy { it.rollNumber }
+            val pending = mutableMapOf<String, MarkEditRequest>()
+            for (sid in assignment.sessionIds) {
+                markEditRequestRepository.getPendingForAssignment(sid, assignment.courseCode, type)
+                    .forEach { pending[SessionStudent.buildId(sid, it.rollNumber)] = it }
+            }
+            _pendingByRoll.value = pending
         }
     }
 
-    fun requestMarkEdit(rollNumber: String, requestedScore: Int, reason: String?) {
+    fun requestMarkEdit(student: SessionStudent, requestedScore: Int, reason: String?) {
+        val studentId = student.id
+        val sessionId = student.sessionId
+        val rollNumber = student.rollNumber
         val assignment = _selected.value ?: return
         val type = _examType.value
         val semester = session.value?.currentSemester ?: 1
-        val currentScore = savedScores.value[rollNumber]
+        val currentScore = savedScores.value[studentId]
 
         if (currentScore == null) {
             _requestState.value = Outcome.Error("$rollNumber has no saved ${examLabel(type)} score yet, so there is nothing to change. Enter the score directly.", IllegalStateException("no saved score"))
@@ -181,7 +219,7 @@ class MarksEntryController(
             _requestState.value = Outcome.Error("$rollNumber's ${examLabel(type)} score is already $currentScore, so there is nothing to change.", IllegalArgumentException("same score"))
             return
         }
-        _pendingByRoll.value[rollNumber]?.let { pending ->
+        _pendingByRoll.value[studentId]?.let { pending ->
             _requestState.value = Outcome.Error("A change of $rollNumber's ${examLabel(type)} score to ${pending.requestedScore} is already waiting for the admin's review.", IllegalStateException("pending request"))
             return
         }
@@ -195,7 +233,7 @@ class MarksEntryController(
             try {
                 _requestState.value = Outcome.Loading
                 markEditRequestRepository.submitRequest(
-                    sessionId = assignment.sessionId,
+                    sessionId = sessionId,
                     semester = semester,
                     courseCode = assignment.courseCode,
                     examType = type,

@@ -124,7 +124,9 @@ object AcademicStructureMapper {
     )
 
     fun periodEntityToDomain(e: SessionPeriodEntity): SessionPeriod = SessionPeriod(
-        id = e.id,
+        // The true remote period id -- for a shadow row (a merged lecture as seen from a linked session)
+        // this differs from the local Room row's own [SessionPeriodEntity.id], which is a synthetic key.
+        id = e.remotePeriodId,
         sessionId = e.sessionId,
         shift = parseShift(e.shift) ?: Session.MORNING,
         day = runCatching { DayOfWeek.valueOf(e.day) }.getOrDefault(DayOfWeek.MONDAY),
@@ -145,5 +147,7 @@ object AcademicStructureMapper {
         createdBy = e.createdBy,
         updatedAt = Instant.ofEpochMilli(e.updatedAt),
         updatedBy = e.updatedBy,
+        linkedSessionIds = e.linkedSessionIds.split(',').filter { it.isNotBlank() }.toSet(),
+        isOwnRow = e.id == e.remotePeriodId,
     )
 }

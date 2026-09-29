@@ -162,9 +162,9 @@ fun marksSheetExport(
     absentRolls: Set<String>,
 ): ExportDocument {
     val header = listOf("Roll", "Name", "Score", "Out of", "Status")
-    val rows = roster.sortedBy { it.rollNumber }.map { s ->
-        val absent = s.rollNumber in absentRolls
-        val score = scores[s.rollNumber].orEmpty()
+    val rows = roster.sortedWith(compareBy({ it.sessionId }, { it.rollNumber })).map { s ->
+        val absent = s.id in absentRolls
+        val score = scores[s.id].orEmpty()
         listOf(s.rollNumber, s.name, if (absent) "" else score, examType.maxMarks.toString(), when {
             absent -> "Absent"
             score.isBlank() -> "Not entered"
@@ -172,8 +172,8 @@ fun marksSheetExport(
         })
     }
     return ExportDocument(
-        fileBase = listOfNotNull("marks", assignment.courseCode, assignment.classShift?.name?.lowercase(Locale.ROOT), examType.name).joinToString("_"),
-        title = listOf("Marks Sheet", "${assignment.courseCode} · ${assignment.subjectLabel}", "${assignment.sessionLabel} · ${titleCase(examType.name)} (out of ${examType.maxMarks})"),
+        fileBase = listOfNotNull("marks", assignment.courseCode, assignment.classShift?.name?.lowercase(Locale.ROOT), examType.name, if (assignment.isMerged) "combined" else null).joinToString("_"),
+        title = listOf("Marks Sheet", "${assignment.courseCode} · ${assignment.subjectLabel}", "${assignment.sessionLabel}${if (assignment.isMerged) " (combined)" else ""} · ${titleCase(examType.name)} (out of ${examType.maxMarks})"),
         sections = listOf(ExportSection("Marks", header, rows)),
     )
 }
@@ -205,8 +205,8 @@ fun myStudentsExport(
     tallies: Map<String, AttendanceTally>,
 ): ExportDocument {
     val header = listOf("Roll", "Name", "Shift", "Student account", "Present", "Absent", "Leave", "Attendance %")
-    val rows = roster.sortedBy { it.rollNumber }.map { s ->
-        val t = tallies[s.rollNumber]
+    val rows = roster.sortedWith(compareBy({ it.sessionId }, { it.rollNumber })).map { s ->
+        val t = tallies[s.id]
         listOf(
             s.rollNumber, s.name, s.shift.label, s.linkedEmail.ifBlank { "Not linked" },
             (t?.present ?: 0).toString(), (t?.absent ?: 0).toString(), (t?.leave ?: 0).toString(),
@@ -214,8 +214,8 @@ fun myStudentsExport(
         )
     }
     return ExportDocument(
-        fileBase = "students_${assignment.courseCode}_${assignment.sessionLabel}",
-        title = listOf("Student Roster", "${assignment.courseCode} · ${assignment.subjectLabel}", assignment.sessionLabel),
+        fileBase = "students_${assignment.courseCode}_${assignment.sessionLabel}${if (assignment.isMerged) "_combined" else ""}",
+        title = listOf("Student Roster", "${assignment.courseCode} · ${assignment.subjectLabel}", assignment.sessionLabel + if (assignment.isMerged) " (combined)" else ""),
         sections = listOf(ExportSection("Students", header, rows)),
     )
 }

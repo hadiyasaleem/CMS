@@ -126,8 +126,17 @@ data class SessionMarkEntity(
 
 @Entity(tableName = "session_periods")
 data class SessionPeriodEntity(
+    /** The primary session's row keeps its own remote period id. A "shadow" row -- letting a session that
+     * merely shares a merged lecture see it on its own grid -- uses a synthetic "$remotePeriodId::$sessionId"
+     * id instead, since Room's primary key must be unique per (period, viewing session). */
     @PrimaryKey val id: String,
     val sessionId: String,
+    /** The true remote `timetable_periods.id`. Equal to [id] for the primary row; for a shadow row this is
+     * the row that edits/removes must actually target. */
+    val remotePeriodId: String = id,
+    /** Comma-joined ids of every OTHER session sharing this lecture (empty when unmerged). Carried on both
+     * the primary row and every shadow row so any view can render merge chips without an extra join. */
+    val linkedSessionIds: String = "",
     val shift: String,
     val deptId: String,
     val day: String,

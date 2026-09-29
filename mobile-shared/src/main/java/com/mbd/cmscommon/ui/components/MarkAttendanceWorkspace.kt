@@ -101,8 +101,11 @@ fun MarkAttendanceWorkspace(
     onDate: (LocalDate) -> Unit = {},
     topics: List<String> = emptyList(),
     onToggleTopic: (String) -> Unit = {},
+    // A merged class's linked sessions may already be marked for this date while others aren't -- those
+    // students' cards stay read-only even though the register as a whole isn't "locked" yet.
+    lockedStudentIds: Set<String> = emptySet(),
 ) {
-    var noteRoll by remember { mutableStateOf<String?>(null) }
+    var noteId by remember { mutableStateOf<String?>(null) }
     val locked = alreadyMarked
     val summary = attendanceRegisterSummary(roster, statuses, lateRolls, termPercents)
 
@@ -127,17 +130,18 @@ fun MarkAttendanceWorkspace(
         if (roster.isEmpty()) {
             item { RegisterEmpty("No students are enrolled in ${selected?.subjectLabel ?: "this class"}.") }
         } else {
-            items(roster, key = { it.rollNumber }) { student ->
+            items(roster, key = { it.id }) { student ->
+                val cardLocked = locked || student.id in lockedStudentIds
                 StudentAttendanceCard(
                     student = student,
-                    status = statuses[student.rollNumber],
-                    percent = termPercents[student.rollNumber],
-                    isLate = lateRolls.contains(student.rollNumber),
-                    remark = remarks[student.rollNumber],
-                    locked = locked,
-                    onStatus = { status -> onStatus(student.rollNumber, status) },
-                    onToggleLate = { onToggleLate(student.rollNumber) },
-                    onNote = { noteRoll = student.rollNumber },
+                    status = statuses[student.id],
+                    percent = termPercents[student.id],
+                    isLate = lateRolls.contains(student.id),
+                    remark = remarks[student.id],
+                    locked = cardLocked,
+                    onStatus = { status -> onStatus(student.id, status) },
+                    onToggleLate = { onToggleLate(student.id) },
+                    onNote = { noteId = student.id },
                 )
             }
         }
@@ -156,15 +160,15 @@ fun MarkAttendanceWorkspace(
         item { Spacer(Modifier.height(72.dp)) }
     }
 
-    noteRoll?.let { roll ->
-        val student = roster.firstOrNull { it.rollNumber == roll }
-        var text by remember(roll) { mutableStateOf(remarks[roll] ?: "") }
+    noteId?.let { id ->
+        val student = roster.firstOrNull { it.id == id }
+        var text by remember(id) { mutableStateOf(remarks[id] ?: "") }
         androidx.compose.material3.AlertDialog(
-            onDismissRequest = { noteRoll = null },
-            title = { Text("Note: ${student?.name ?: roll}", style = MaterialTheme.typography.headlineSmall) },
+            onDismissRequest = { noteId = null },
+            title = { Text("Note: ${student?.name ?: id}", style = MaterialTheme.typography.headlineSmall) },
             text = { DialogScrollBody { OutlinedTextField(value = text, onValueChange = { text = it }, modifier = Modifier.fillMaxWidth(), minLines = 2) }},
-            confirmButton = { TextButton(onClick = { onRemark(roll, text); noteRoll = null }) { Text("Add note") } },
-            dismissButton = { TextButton(onClick = { noteRoll = null }) { Text("Cancel") } },
+            confirmButton = { TextButton(onClick = { onRemark(id, text); noteId = null }) { Text("Add note") } },
+            dismissButton = { TextButton(onClick = { noteId = null }) { Text("Cancel") } },
         )
     }
 }

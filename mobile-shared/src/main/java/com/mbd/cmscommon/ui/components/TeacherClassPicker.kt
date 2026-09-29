@@ -53,14 +53,14 @@ fun TeacherClassPicker(
         Spacer(Modifier.height(8.dp))
         Box(Modifier.fillMaxWidth()) {
             OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) {
-                Text(selected?.let { "${it.subjectLabel} · ${it.sessionLabel}" } ?: "Select a class", modifier = Modifier.weight(1f))
+                Text(selected?.let { "${it.subjectLabel} · ${it.sessionLabel}${if (it.isMerged) " (combined)" else ""}" } ?: "Select a class", modifier = Modifier.weight(1f))
                 Icon(TablerIcons.ChevronDown, contentDescription = null)
             }
             CmsDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                 if (visible.isEmpty()) DropdownMenuItem(text = { Text("No classes match these filters") }, onClick = { expanded = false }, enabled = false)
                 visible.forEach { assignment ->
                     DropdownMenuItem(
-                        text = { Text("${assignment.subjectLabel} · ${assignment.sessionLabel}") },
+                        text = { Text("${assignment.subjectLabel} · ${assignment.sessionLabel}${if (assignment.isMerged) " (combined)" else ""}") },
                         onClick = { onSelect(assignment); expanded = false },
                     )
                 }

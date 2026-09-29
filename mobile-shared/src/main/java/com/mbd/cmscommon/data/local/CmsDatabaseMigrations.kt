@@ -1773,6 +1773,19 @@ val MIGRATION_47_48: Migration = object : Migration(47, 48) {
     }
 }
 
+/**
+ * 48 -> 49: session_periods gains remotePeriodId (the true timetable_periods row a local row maps to) and
+ * linkedSessionIds (denormalized merge membership), supporting merged-lecture "shadow" rows so a session
+ * merely linked to another session's lecture can still see it on its own grid.
+ */
+val MIGRATION_48_49: Migration = object : Migration(48, 49) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `session_periods` ADD COLUMN `remotePeriodId` TEXT NOT NULL DEFAULT ''")
+        db.execSQL("UPDATE `session_periods` SET `remotePeriodId` = `id` WHERE `remotePeriodId` = ''")
+        db.execSQL("ALTER TABLE `session_periods` ADD COLUMN `linkedSessionIds` TEXT NOT NULL DEFAULT ''")
+    }
+}
+
 val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_18_19,
     MIGRATION_19_20,
@@ -1804,4 +1817,5 @@ val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_45_46,
     MIGRATION_46_47,
     MIGRATION_47_48,
+    MIGRATION_48_49,
 )

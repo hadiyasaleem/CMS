@@ -69,6 +69,15 @@ class SessionTimetableController(
     val periods: StateFlow<List<SessionPeriod>> =
         timetableRepository.observeWeek(sessionId).stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    /** Every active session, for the "merge with an existing class"/"add another session" pickers. */
+    val allSessions: StateFlow<List<AcademicSession>> =
+        sessionRepository.observeAllSessions().stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /** All colleges' periods, for the "merge with an existing class" picker (an empty-slot merge target may
+     * belong to any session, not just this one). */
+    val allPeriods: StateFlow<List<SessionPeriod>> =
+        timetableRepository.observeAll().stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     val subjects: StateFlow<List<SemesterSubject>> = session
         .flatMapLatest { s -> if (s == null) flowOf(emptyList()) else curriculumRepository.observeSemesterSubjects(s.sessionId, s.currentSemester) }
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -150,4 +159,26 @@ class SessionTimetableController(
     fun removePeriod(period: SessionPeriod) = launch("remove the period") {
         timetableRepository.removePeriod(period)
     }
+
+    /** Sessions that could still be merged into [period]'s lecture. */
+    fun eligibleMergeSessions(period: SessionPeriod): List<AcademicSession> =
+        com.mbd.cmscommon.controller.eligibleMergeSessions(period, allSessions.value)
+
+    /** Other sessions' existing lectures (this session's own shift tab) that this empty slot could be merged into. */
+    fun existingPeriodsForMerge(): List<SessionPeriod> =
+        describeExistingPeriodsForMerge(allPeriods.value, sessionId, shift.value)
+
+    /** Merges [targetSessionId] into [period]'s lecture, or removes it from the merge ([link] = false). Only
+     * meaningful when [period] is this session's own row ([SessionPeriod.isOwnRow]); a guest view's only
+     * valid call is unmerging its own session. */
+    fun setPeriodLink(period: SessionPeriod, targetSessionId: String, link: Boolean) =
+        launch(if (link) "merge the class" else "remove the class from the merge") {
+            timetableRepository.setPeriodLink(period, targetSessionId, link)
+        }
+
+    /** Attaches this session to an already-existing lecture elsewhere, instead of creating a new period. */
+    fun mergeExistingPeriod(existingElsewhere: SessionPeriod) =
+        launch("merge with the existing class") {
+            timetableRepository.setPeriodLink(existingElsewhere, sessionId, link = true)
+        }
 }

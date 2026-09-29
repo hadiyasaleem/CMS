@@ -155,6 +155,13 @@ interface SessionTimetableRepository {
     suspend fun savePeriod(period: SessionPeriod)
     suspend fun syncSession(sessionId: String)
     suspend fun syncAll()
+
+    /**
+     * Merges [sessionId] into [period]'s lecture ([link] = true), or removes it from the merge ([link] =
+     * false). Writes one `period_sessions` row and refreshes the local cache for the primary session and
+     * [sessionId]. Only meaningful when called against [period]'s own primary session's editor.
+     */
+    suspend fun setPeriodLink(period: SessionPeriod, sessionId: String, link: Boolean)
 }
 
 interface SessionFeeRepository {

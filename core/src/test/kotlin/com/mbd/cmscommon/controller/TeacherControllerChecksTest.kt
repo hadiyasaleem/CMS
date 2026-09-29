@@ -94,7 +94,7 @@ class TeacherControllerChecksTest {
     @Test
     fun aNonNumericScoreNamesTheStudentAndTheRange() {
         val controller = marksController()
-        controller.setScore("IT-22-01", "abc")
+        controller.setScore(students[0].id, "abc")
         controller.save()
         assertEquals("'abc' isn't a whole number for IT-22-01. Enter a score from 0 to 25.", controller.saveError())
     }
@@ -102,7 +102,7 @@ class TeacherControllerChecksTest {
     @Test
     fun aScoreAboveTheMaximumSaysWhichExamAndTheLimit() {
         val controller = marksController()
-        controller.setScore("IT-22-02", "30")
+        controller.setScore(students[1].id, "30")
         controller.save()
         assertEquals("IT-22-02's score of 30 is above the Midterm maximum of 25.", controller.saveError())
     }
@@ -110,7 +110,7 @@ class TeacherControllerChecksTest {
     @Test
     fun aNegativeScoreIsExplained() {
         val controller = marksController()
-        controller.setScore("IT-22-02", "-3")
+        controller.setScore(students[1].id, "-3")
         controller.save()
         assertEquals("IT-22-02's score can't be negative. Enter a score from 0 to 25.", controller.saveError())
     }
@@ -118,35 +118,35 @@ class TeacherControllerChecksTest {
     @Test
     fun anEditRequestForAnUnsavedScoreSaysThereIsNothingToChange() {
         val controller = marksController()
-        controller.requestMarkEdit("IT-22-01", 12, null)
+        controller.requestMarkEdit(students[0], 12, null)
         assertEquals("IT-22-01 has no saved Midterm score yet, so there is nothing to change. Enter the score directly.", controller.requestError())
     }
 
     @Test
     fun anEditRequestToTheSameScoreIsRefused() {
         val controller = marksController(saved = mapOf("IT-22-01" to 10))
-        controller.requestMarkEdit("IT-22-01", 10, null)
+        controller.requestMarkEdit(students[0], 10, null)
         assertEquals("IT-22-01's Midterm score is already 10, so there is nothing to change.", controller.requestError())
     }
 
     @Test
     fun anEditRequestOutsideTheRangeNamesTheRange() {
         val controller = marksController(saved = mapOf("IT-22-01" to 10))
-        controller.requestMarkEdit("IT-22-01", 40, null)
+        controller.requestMarkEdit(students[0], 40, null)
         assertEquals("40 is outside the Midterm range of 0 to 25.", controller.requestError())
     }
 
     @Test
     fun aSecondEditRequestWhileOneIsPendingSaysSo() {
         val controller = marksController(saved = mapOf("IT-22-01" to 10), pending = listOf(pendingRequest("IT-22-01", 12)))
-        controller.requestMarkEdit("IT-22-01", 15, null)
+        controller.requestMarkEdit(students[0], 15, null)
         assertEquals("A change of IT-22-01's Midterm score to 12 is already waiting for the admin's review.", controller.requestError())
     }
 
     @Test
     fun aValidEditRequestIsSubmitted() {
         val controller = marksController(saved = mapOf("IT-22-01" to 10))
-        controller.requestMarkEdit("IT-22-01", 15, "typo")
+        controller.requestMarkEdit(students[0], 15, "typo")
         assertTrue(controller.requestState.value is Outcome.Success<*>)
     }
 
@@ -183,7 +183,7 @@ class TeacherControllerChecksTest {
     @Test
     fun submittingWithUnmarkedStudentsNamesThem() {
         val controller = attendanceController { emptyList() }
-        controller.setStatus("IT-22-01", AttendanceStatus.PRESENT)
+        controller.setStatus(students[0].id, AttendanceStatus.PRESENT)
         controller.submit()
         assertEquals("1 of 2 students still need a status: IT-22-02.", controller.submitError())
     }
@@ -192,7 +192,7 @@ class TeacherControllerChecksTest {
     fun submittingAlreadyMarkedAttendanceSaysSoAndOverwritesNothing() {
         var existing = emptyList<DailyAttendanceMark>()
         val controller = attendanceController { existing }
-        students.forEach { controller.setStatus(it.rollNumber, AttendanceStatus.PRESENT) }
+        students.forEach { controller.setStatus(it.id, AttendanceStatus.PRESENT) }
         // Another device marks the register after this one opened it.
         existing = students.map { DailyAttendanceMark(it.rollNumber, java.time.LocalDate.now(), AttendanceStatus.PRESENT) }
 
@@ -206,7 +206,7 @@ class TeacherControllerChecksTest {
     @Test
     fun aFullyMarkedRegisterSubmitsCleanly() {
         val controller = attendanceController { emptyList() }
-        students.forEach { controller.setStatus(it.rollNumber, AttendanceStatus.PRESENT) }
+        students.forEach { controller.setStatus(it.id, AttendanceStatus.PRESENT) }
         controller.submit()
         assertTrue(controller.submitState.value is Outcome.Success<*>)
         assertNull(controller.error.value)

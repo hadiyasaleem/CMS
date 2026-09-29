@@ -59,6 +59,10 @@ class SessionTimetableViewModel @Inject constructor(
     val error = controller.error
     val shift = controller.shift
     val shifts = controller.shifts
+    val allSessions = controller.allSessions
+    val allPeriods = controller.allPeriods
+    fun setPeriodLink(period: SessionPeriod, sessionId: String, link: Boolean) = controller.setPeriodLink(period, sessionId, link)
+    fun mergeExistingPeriod(period: SessionPeriod) = controller.mergeExistingPeriod(period)
 
     fun selectShift(shift: com.mbd.cmscommon.domain.model.Session) = controller.selectShift(shift)
 
@@ -93,6 +97,8 @@ fun SessionTimetableScreen(viewModel: SessionTimetableViewModel = hiltViewModel(
     val errorMessage by viewModel.error.collectAsState()
     val shift by viewModel.shift.collectAsState()
     val shifts by viewModel.shifts.collectAsState()
+    val allSessions by viewModel.allSessions.collectAsState()
+    val allPeriods by viewModel.allPeriods.collectAsState()
 
     SessionTimetableWorkspace(
 
@@ -111,5 +117,9 @@ fun SessionTimetableScreen(viewModel: SessionTimetableViewModel = hiltViewModel(
         shift = shift,
         shifts = shifts,
         onSelectShift = viewModel::selectShift,
+        allSessions = allSessions,
+        allPeriods = allPeriods,
+        onSetLink = viewModel::setPeriodLink,
+        onMergeExisting = viewModel::mergeExistingPeriod,
     )
 }

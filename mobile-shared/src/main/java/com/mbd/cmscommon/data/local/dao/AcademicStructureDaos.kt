@@ -157,19 +157,23 @@ interface SessionStudentDao {
 
 @Dao
 interface SessionPeriodDao {
-    @Query("SELECT * FROM session_periods WHERE isDeleted = 0")
+    // Excludes shadow rows (id != remotePeriodId): a cross-session/teacher-wide view must see a merged
+    // lecture exactly once, under its own owning row, not once more per linked session.
+    @Query("SELECT * FROM session_periods WHERE isDeleted = 0 AND id = remotePeriodId")
     fun observeAll(): Flow<List<SessionPeriodEntity>>
 
+    // Per-session views DO include shadow rows: a session merely linked to another session's lecture must
+    // still see it occupying that slot on its own grid.
     @Query("SELECT * FROM session_periods WHERE sessionId = :sessionId AND day = :day AND isDeleted = 0")
     fun observeForSessionDay(sessionId: String, day: String): Flow<List<SessionPeriodEntity>>
 
     @Query("SELECT * FROM session_periods WHERE sessionId = :sessionId AND isDeleted = 0")
     fun observeForSession(sessionId: String): Flow<List<SessionPeriodEntity>>
 
-    @Query("SELECT * FROM session_periods WHERE teacherId = :teacherId AND isDeleted = 0")
+    @Query("SELECT * FROM session_periods WHERE teacherId = :teacherId AND isDeleted = 0 AND id = remotePeriodId")
     fun observeForTeacher(teacherId: String): Flow<List<SessionPeriodEntity>>
 
-    @Query("SELECT * FROM session_periods WHERE day = :day AND isDeleted = 0")
+    @Query("SELECT * FROM session_periods WHERE day = :day AND isDeleted = 0 AND id = remotePeriodId")
     fun observeForDay(day: String): Flow<List<SessionPeriodEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -189,6 +193,27 @@ interface SessionPeriodDao {
 
     @Query("DELETE FROM session_periods WHERE sessionId = :sessionId AND shift = :shift AND day = :day AND startTime = :startTime")
     suspend fun deleteForSlot(sessionId: String, shift: String, day: String, startTime: String?)
+
+    /** Removes a period's own row AND every shadow row of it (one per session merged into it), by the true
+     * remote period id -- used when a merged lecture is fully removed, not just unmerged from one session. */
+    @Query("DELETE FROM session_periods WHERE remotePeriodId = :remotePeriodId")
+    suspend fun deleteAllRowsForRemotePeriod(remotePeriodId: String)
+
+    /** Updates the linked-session CSV on a period's own (primary) row without touching its other fields. */
+    @Query("UPDATE session_periods SET linkedSessionIds = :csv WHERE remotePeriodId = :remotePeriodId AND id = remotePeriodId")
+    suspend fun setLinkedSessionIds(remotePeriodId: String, csv: String)
+
+    /** Drops [sessionId]'s shadow rows that are no longer current (the lecture was unmerged elsewhere since
+     * this session last synced), keeping only [keepIds]. Never touches [sessionId]'s own (primary) rows. */
+    @Query("DELETE FROM session_periods WHERE sessionId = :sessionId AND id != remotePeriodId AND id NOT IN (:keepIds)")
+    suspend fun deleteStaleShadowsForSession(sessionId: String, keepIds: List<String>)
+
+    /** Every session that currently has a merge chip or a shadow row locally, so a global sync can revisit
+     * and clear any that are no longer actually merged. */
+    @Query(
+        "SELECT sessionId FROM session_periods WHERE (linkedSessionIds != '' AND id = remotePeriodId) OR id != remotePeriodId GROUP BY sessionId",
+    )
+    suspend fun getSessionIdsWithLinks(): List<String>
 
     suspend fun applyDelta(upserts: List<SessionPeriodEntity>, deletedIds: List<String>) {
         if (upserts.isNotEmpty()) upsertAll(upserts)

@@ -149,6 +149,20 @@ data class TimetablePeriodDto(
     val deletedBy: String? = null,
 )
 
+/** One row of `period_sessions`: a merged lecture's period linked to one of the sessions that shares it. */
+@Serializable
+data class PeriodSessionDto(
+    val periodId: String? = null,
+    val sessionId: String? = null,
+    val createdAt: String? = null,
+    val createdBy: String? = null,
+    val updatedAt: String? = null,
+    val updatedBy: String? = null,
+    val isDeleted: Boolean = false,
+    val deletedAt: String? = null,
+    val deletedBy: String? = null,
+)
+
 @Serializable
 data class AttendanceRowDto(
     val entityId: Long? = null,

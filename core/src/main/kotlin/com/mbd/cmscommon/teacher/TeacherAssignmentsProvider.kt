@@ -53,6 +53,9 @@ fun resolveAssignments(
             val department = departments.firstOrNull { it.deptId == session?.deptId }
             val deptName = department?.code ?: session?.deptId?.uppercase(Locale.ROOT) ?: sessionId
             val sessionLabel = if (session != null) "$deptName · ${session.label} (${shift.shortLabel})" else sessionId
+            // A merged lecture's own session row and its shadow rows (one per linked session, see
+            // SessionTimetableRepositoryImpl) all carry the same linked-session set; union them defensively.
+            val linkedSessionIds = group.flatMap { it.linkedSessionIds }.toSet() - sessionId
             ResolvedAssignment(
                 sessionId = sessionId,
                 sessionLabel = sessionLabel,
@@ -64,6 +67,7 @@ fun resolveAssignments(
                 classShift = shift,
                 deptId = session?.deptId ?: "",
                 session = session,
+                linkedSessionIds = linkedSessionIds,
             )
         }
         .sortedWith(compareBy({ it.sessionLabel }, { it.courseCode }))

@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -26,19 +27,29 @@ class MyStudentsController(
     private val _selected = MutableStateFlow<ResolvedAssignment?>(null)
     val selected: StateFlow<ResolvedAssignment?> = _selected.asStateFlow()
 
+    /** The combined roster of every session sharing this lecture, for a merged class. */
     val roster: StateFlow<List<SessionStudent>> = _selected
         .flatMapLatest { assignment ->
-            if (assignment == null) flowOf(emptyList()) else sessionRepository.observeStudents(assignment.sessionId).map { studentsForTab(it, assignment.classShift) }
+            if (assignment == null) {
+                flowOf(emptyList())
+            } else {
+                combine(assignment.sessionIds.map { sid -> sessionRepository.observeStudents(sid).map { studentsForTab(it, assignment.classShift) } }) {
+                    it.toList().flatten()
+                }
+            }
         }
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    // Keyed by SessionStudent.id ("${sessionId}_$rollNumber"), never bare roll numbers -- a merged class's two
+    // sessions may otherwise reuse the same roll number and silently collide.
     val tallies: StateFlow<Map<String, AttendanceTally>> = _selected
         .flatMapLatest { assignment ->
             if (assignment == null) {
                 flowOf(emptyMap())
             } else {
-                attendanceRepository.observeTallies(assignment.sessionId, assignment.courseCode)
-                    .map { list -> list.associateBy { it.rollNumber } }
+                combine(assignment.sessionIds.map { sid -> attendanceRepository.observeTallies(sid, assignment.courseCode).map { tallies -> sid to tallies } }) { pairs ->
+                    pairs.toList().flatMap { (sid, tallies) -> tallies.map { SessionStudent.buildId(sid, it.rollNumber) to it } }.toMap()
+                }
             }
         }
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyMap())
@@ -50,12 +61,13 @@ class MyStudentsController(
     fun refresh() {
         val assignment = _selected.value ?: return
         launch("refresh the class list") {
-            val failures = FailureSummary.of(
+            val labelled = assignment.sessionIds.flatMap { sid ->
                 listOf(
-                    "the student list" to runCatching { sessionRepository.syncStudents(assignment.sessionId) },
-                    "attendance summary" to runCatching { attendanceRepository.syncSummary(assignment.sessionId, assignment.courseCode) },
-                ),
-            )
+                    "the student list" to runCatching { sessionRepository.syncStudents(sid) },
+                    "attendance summary" to runCatching { attendanceRepository.syncSummary(sid, assignment.courseCode) },
+                )
+            }
+            val failures = FailureSummary.of(labelled)
             showError(FailureSummary.describe(failures, "MyStudentsController", prefix = "Couldn't refresh"))
         }
     }

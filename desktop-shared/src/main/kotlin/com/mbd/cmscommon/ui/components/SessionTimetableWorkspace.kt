@@ -20,8 +20,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import com.mbd.cmscommon.controller.eligibleMergeSessions
+import com.mbd.cmscommon.controller.describeExistingPeriodsForMerge
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
@@ -84,6 +88,13 @@ fun SessionTimetableWorkspace(
     onClearError: () -> Unit,
     onExport: ((ExportDocument, ExportFormat) -> Unit)? = null,
     modifier: Modifier = Modifier,
+    /** Every session and every session's periods, for merging this class with another session's lecture. */
+    allSessions: List<AcademicSession> = emptyList(),
+    allPeriods: List<SessionPeriod> = emptyList(),
+    /** (period, sessionId, link): merge/unmerge [sessionId] into/from [period]'s lecture. */
+    onSetLink: (SessionPeriod, String, Boolean) -> Unit = { _, _, _ -> },
+    /** Attach this session to another session's existing lecture. */
+    onMergeExisting: (SessionPeriod) -> Unit = {},
     /** The Morning/Evening tab shown; [periods] holds every shift and only this shift's grid is shown. */
     shift: Session = Session.MORNING,
     shifts: List<Session> = listOf(shift),
@@ -95,6 +106,10 @@ fun SessionTimetableWorkspace(
     var addingPeriodDay by remember { mutableStateOf<DayOfWeek?>(null) }
     var pendingRemove by remember { mutableStateOf<SessionPeriod?>(null) }
     var detailPeriod by remember { mutableStateOf<SessionPeriod?>(null) }
+    var choosingSlotDay by remember { mutableStateOf<DayOfWeek?>(null) }
+    var mergingExisting by remember { mutableStateOf(false) }
+    var linkedDetail by remember { mutableStateOf<SessionPeriod?>(null) }
+    val mergeCandidates = describeExistingPeriodsForMerge(allPeriods, session?.sessionId.orEmpty(), shift)
 
     val roomsConfigured = shown.count { !it.roomNo.isNullOrBlank() }
     val teacherIds = shown.filter { it.periodType != PeriodType.BREAK }.map { it.teacherId }.filter { it.isNotBlank() }.distinct()
@@ -144,7 +159,7 @@ fun SessionTimetableWorkspace(
                                         GridCell(
                                             title = if (isBreak) "BREAK" else period.subjectName.ifBlank { period.courseCode },
                                             subtitle = if (isBreak) "" else period.teacherName.ifBlank { "Unassigned" },
-                                            meta = if (isBreak) "" else period.roomNo?.ifBlank { null } ?: "No room",
+                                            meta = if (isBreak) "" else (period.roomNo?.ifBlank { null } ?: "No room") + if (period.isMergedLecture || !period.isOwnRow) " · Merged" else "",
                                             isBreak = isBreak,
                                             isAlert = period.id in conflictIds,
                                         )
@@ -156,7 +171,9 @@ fun SessionTimetableWorkspace(
                         onCellClick = { dayKey, slot ->
                             val day = DayOfWeek.valueOf(dayKey)
                             val period = periodByDayAndSlot[day to slot]
-                            if (period != null) detailPeriod = period else addingPeriodDay = day
+                            if (period == null) {
+                                if (mergeCandidates.isEmpty()) addingPeriodDay = day else choosingSlotDay = day
+                            } else if (period.isOwnRow) detailPeriod = period else linkedDetail = period
                         },
                     )
                 }
@@ -166,7 +183,7 @@ fun SessionTimetableWorkspace(
         }
         }
         CmsFab(
-            onClick = { addingPeriodDay = DayOfWeek.MONDAY },
+            onClick = { if (mergeCandidates.isEmpty()) addingPeriodDay = DayOfWeek.MONDAY else choosingSlotDay = DayOfWeek.MONDAY },
             contentDescription = "Add period",
             modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
         )
@@ -175,7 +192,9 @@ fun SessionTimetableWorkspace(
     if (addingPeriodDay != null || editorState != null) {
         PeriodEditorDialog(
             day = editorState?.day ?: addingPeriodDay ?: DayOfWeek.MONDAY,
-            existing = editorState,
+            existing = editorState?.let { e -> periods.firstOrNull { it.id == e.id && it.isOwnRow } ?: e },
+            allSessions = allSessions,
+            onSetLink = onSetLink,
             subjects = subjects,
             teachers = teachers,
             buildings = buildings,
@@ -204,6 +223,50 @@ fun SessionTimetableWorkspace(
                 addingPeriodDay = null
                 editorState = null
             },
+        )
+    }
+
+    choosingSlotDay?.let { day ->
+        AlertDialog(
+            onDismissRequest = { choosingSlotDay = null },
+            title = { Text("Add to timetable") },
+            text = { Text("Create a new period, or merge this class into a lecture that another session already has (same teacher, room and time).") },
+            confirmButton = { TextButton(onClick = { choosingSlotDay = null; addingPeriodDay = day }) { Text("New period") } },
+            dismissButton = { TextButton(onClick = { choosingSlotDay = null; mergingExisting = true }) { Text("Merge existing class") } },
+        )
+    }
+
+    if (mergingExisting) {
+        SearchPickDialog(
+            title = "Merge with an existing class",
+            hint = "Search by subject, session, teacher, day or time",
+            options = mergeCandidates.map { p ->
+                val owner = allSessions.firstOrNull { it.sessionId == p.sessionId }?.label ?: p.sessionId
+                p.id to "${p.subjectName.ifBlank { p.courseCode }} · $owner · ${p.day.getDisplayName(TextStyle.SHORT, Locale.ENGLISH)} ${p.timeRange} · ${p.teacherName.ifBlank { "Unassigned" }}"
+            },
+            onPick = { id -> mergeCandidates.firstOrNull { it.id == id }?.let(onMergeExisting); mergingExisting = false },
+            onDismiss = { mergingExisting = false },
+        )
+    }
+
+    linkedDetail?.let { period ->
+        val owner = allSessions.firstOrNull { it.sessionId == period.sessionId }?.label ?: period.sessionId
+        AlertDialog(
+            onDismissRequest = { linkedDetail = null },
+            title = { Text(period.subjectName.ifBlank { period.courseCode }) },
+            text = { DialogScrollBody {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    StatusBadge("MERGED CLASS", BadgeTone.Neutral)
+                    DetailRow("Owned by", owner)
+                    DetailRow("Day", period.day.getDisplayName(TextStyle.FULL, Locale.ENGLISH))
+                    DetailRow("Time", period.timeRange)
+                    DetailRow("Teacher", period.teacherName.ifBlank { "Unassigned" })
+                    DetailRow("Room", period.roomNo?.ifBlank { null } ?: "Not assigned")
+                    Text("This lecture is shared with $owner. Edit it from that session's timetable.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                }
+            }},
+            confirmButton = { TextButton(onClick = { onSetLink(period, session?.sessionId.orEmpty(), false); linkedDetail = null }) { Text("Leave merge", color = CmsTheme.colors.accent) } },
+            dismissButton = { TextButton(onClick = { linkedDetail = null }) { Text("Close") } },
         )
     }
 
@@ -306,6 +369,7 @@ private fun SessionPeriodDetailDialog(
                 }
                 DetailRow("Day", period.day.getDisplayName(TextStyle.FULL, Locale.ENGLISH))
                 DetailRow("Time", period.timeRange)
+                if (period.isMergedLecture) DetailRow("Merged with", period.linkedSessionIds.joinToString(", "))
                 if (!isBreak) {
                     DetailRow("Subject code", period.courseCode)
                     DetailRow("Teacher", period.teacherName.ifBlank { "Unassigned" })
@@ -361,6 +425,9 @@ fun PeriodEditorDialog(
      * exact lecture, so editing one day of a Mon/Tue/Wed block shows all three checked, not just
      * the one that was clicked. Defaults to just [day] for a brand-new period. */
     initialDays: Set<DayOfWeek> = setOf(day),
+    /** Sessions that can be merged into this lecture, and the merge/unmerge callback; hidden when empty. */
+    allSessions: List<AcademicSession> = emptyList(),
+    onSetLink: (SessionPeriod, String, Boolean) -> Unit = { _, _, _ -> },
 ) {
     var selectedDays by remember { mutableStateOf(initialDays) }
     var start by remember { mutableStateOf(existing?.startTime ?: "") }
@@ -460,6 +527,28 @@ fun PeriodEditorDialog(
                         roomLabel = "Room (optional)",
                     )
                 }
+                if (existing != null && existing.isOwnRow && type == PeriodType.LECTURE && allSessions.isNotEmpty()) {
+                    Spacer(Modifier.height(10.dp))
+                    Text("MERGED WITH", color = ModMuted, style = CmsTextStyles.eyebrow)
+                    existing.linkedSessionIds.forEach { sid ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(allSessions.firstOrNull { it.sessionId == sid }?.label ?: sid, modifier = Modifier.weight(1f))
+                            TextButton(onClick = { onSetLink(existing, sid, false) }) { Text("Remove", color = TimetableRed) }
+                        }
+                    }
+                    val addable = eligibleMergeSessions(existing, allSessions)
+                    var addingSession by remember { mutableStateOf(false) }
+                    if (addable.isNotEmpty()) TextButton(onClick = { addingSession = true }) { Text("Add another session") }
+                    if (addingSession) {
+                        SearchPickDialog(
+                            title = "Merge another session",
+                            hint = "Search sessions",
+                            options = addable.map { it.sessionId to it.label },
+                            onPick = { id -> onSetLink(existing, id, true); addingSession = false },
+                            onDismiss = { addingSession = false },
+                        )
+                    }
+                }
                 Spacer(Modifier.height(10.dp))
                 OutlinedTextField(value = notes, onValueChange = { notes = it }, label = { Text("Notes (optional)") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
                 Spacer(Modifier.height(10.dp))
@@ -496,6 +585,40 @@ fun PeriodEditorDialog(
                 enabled = selectedDays.isNotEmpty() && timeValid && !isDateRangeReversed(effectiveFrom, effectiveTo) && (!needsSubject || subjectCode.isNotBlank()),
             ) { Text(if (existing == null) "Add period" else "Save") }
         },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
+}
+
+/** A searchable single-choice list in a dialog: options are (id, label); typing filters by label. */
+@Composable
+private fun SearchPickDialog(
+    title: String,
+    hint: String,
+    options: List<Pair<String, String>>,
+    onPick: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var query by remember { mutableStateOf("") }
+    val shown = options.filter { query.isBlank() || it.second.contains(query.trim(), ignoreCase = true) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            Column {
+                OutlinedTextField(value = query, onValueChange = { query = it }, label = { Text(hint) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                Spacer(Modifier.height(8.dp))
+                if (shown.isEmpty()) {
+                    Text("Nothing matches.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                } else {
+                    LazyColumn(Modifier.heightIn(max = 320.dp)) {
+                        items(shown, key = { it.first }) { (id, label) ->
+                            Text(label, modifier = Modifier.fillMaxWidth().clickable { onPick(id) }.padding(vertical = 12.dp), style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {},
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     )
 }

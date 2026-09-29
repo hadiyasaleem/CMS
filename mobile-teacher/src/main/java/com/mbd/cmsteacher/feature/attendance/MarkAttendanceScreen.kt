@@ -22,6 +22,7 @@ fun MarkAttendanceScreen(onOpenHistory: (String) -> Unit, viewModel: MarkAttenda
     val lateRolls by controller.late.collectAsState()
     val remarks by controller.remarks.collectAsState()
     val alreadyMarked by controller.alreadyMarked.collectAsState()
+    val lockedStudentIds by controller.lockedStudentIds.collectAsState()
     val allMarked by controller.allMarked.collectAsState()
     val lectureTopic by controller.lectureTopic.collectAsState()
     val submitState by controller.submitState.collectAsState()
@@ -40,6 +41,7 @@ fun MarkAttendanceScreen(onOpenHistory: (String) -> Unit, viewModel: MarkAttenda
         lateRolls = lateRolls,
         remarks = remarks,
         alreadyMarked = alreadyMarked,
+        lockedStudentIds = lockedStudentIds,
         allMarked = allMarked,
         lectureTopic = lectureTopic,
         outcome = submitState,

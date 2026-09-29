@@ -244,3 +244,24 @@ private fun parseTimetableDate(value: String): LocalDate? {
     val trimmed = value.trim().takeIf { it.isNotBlank() } ?: return null
     return runCatching { LocalDate.parse(trimmed) }.getOrNull()
 }
+
+/** Sessions that could be merged into [period]'s lecture: run its shift, active, not the primary, and not
+ * already linked. Used for the "add another session" control on an already-merged period. */
+fun eligibleMergeSessions(period: SessionPeriod, allSessions: List<AcademicSession>): List<AcademicSession> =
+    allSessions.filter {
+        it.isActive && it.sessionId != period.sessionId && it.sessionId !in period.linkedSessionIds && it.runs(period.shift)
+    }.sortedByDescending { it.startYear }
+
+/**
+ * Other sessions' existing LECTURE periods that run [shift] -- candidates for the "merge with an existing
+ * class" picker shown when adding a period to an empty slot. [currentSessionId] is excluded (there's nothing
+ * to merge with on your own grid this way; use "add another session" on an existing period instead).
+ */
+fun describeExistingPeriodsForMerge(
+    allPeriods: List<SessionPeriod>,
+    currentSessionId: String,
+    shift: Session,
+): List<SessionPeriod> =
+    allPeriods.filter {
+        it.periodType == PeriodType.LECTURE && it.sessionId != currentSessionId && it.shift == shift && it.isOwnRow
+    }

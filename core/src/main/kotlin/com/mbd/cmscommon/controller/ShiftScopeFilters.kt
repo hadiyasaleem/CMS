@@ -36,7 +36,8 @@ fun ShiftScope.matchesSessionItem(sessionId: String?, shift: Session?, sessions:
 
 /** A teacher's class (one shift of a session) inside the scope. */
 fun ShiftScope.matches(assignment: ResolvedAssignment): Boolean =
-    matches(assignment.deptId.ifBlank { null } ?: StudentIdCodec.deptIdOf(assignment.sessionId), assignment.sessionId, assignment.classShift)
+    // A merged class matches the scope if ANY of its sessions (primary or linked) does.
+    assignment.sessionIds.any { sid -> matches(assignment.deptId.ifBlank { null } ?: StudentIdCodec.deptIdOf(sid), sid, assignment.classShift) }
 
 @JvmName("assignmentsInScope")
 fun List<ResolvedAssignment>.inScope(scope: ShiftScope): List<ResolvedAssignment> =
@@ -198,4 +199,4 @@ fun List<TeacherPaperSlot>.inScope(scope: ShiftScope, sessions: Collection<Acade
 
 /** The sessions and shifts a teacher teaches, for event and notification targeting. */
 fun List<ResolvedAssignment>.taughtClasses(): Set<TaughtClass> =
-    mapNotNull { a -> a.classShift?.let { TaughtClass(a.sessionId, a.deptId.ifBlank { StudentIdCodec.deptIdOf(a.sessionId) }, it) } }.toSet()
+    flatMap { a -> a.sessionIds.mapNotNull { sid -> a.classShift?.let { TaughtClass(sid, a.deptId.ifBlank { StudentIdCodec.deptIdOf(sid) }, it) } } }.toSet()

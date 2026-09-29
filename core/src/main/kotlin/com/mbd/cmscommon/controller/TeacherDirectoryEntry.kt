@@ -9,5 +9,6 @@ data class TeacherDirectoryEntry(
     val profileCompleteness: Int,
     val permissionCount: Int,
 ) {
-    val sessionCount: Int get() = assignments.distinctBy { it.sessionId }.size
+    // A merged lecture's linked sessions count too, not just each assignment's own primary session.
+    val sessionCount: Int get() = assignments.flatMap { it.sessionIds }.distinct().size
 }

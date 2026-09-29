@@ -19,8 +19,10 @@ fun attendanceRegisterSummary(
     lateRolls: Set<String>,
     termPercents: Map<String, Float>,
 ): AttendanceRegisterSummary {
-    val rolls = roster.map { it.rollNumber }.toSet()
-    val validStatuses = statuses.filterKeys { it in rolls }
+    // Keyed by SessionStudent.id ("${sessionId}_$rollNumber"), never bare roll numbers -- a merged class's two
+    // sessions may otherwise reuse the same roll number and silently collide.
+    val ids = roster.map { it.id }.toSet()
+    val validStatuses = statuses.filterKeys { it in ids }
 
     return AttendanceRegisterSummary(
         total = roster.size,
@@ -28,7 +30,7 @@ fun attendanceRegisterSummary(
         present = validStatuses.values.count { it == AttendanceStatus.PRESENT },
         absent = validStatuses.values.count { it == AttendanceStatus.ABSENT },
         leave = validStatuses.values.count { it == AttendanceStatus.LEAVE },
-        late = lateRolls.count { it in rolls },
-        atRisk = termPercents.count { (roll, percent) -> roll in rolls && percent < 65f },
+        late = lateRolls.count { it in ids },
+        atRisk = termPercents.count { (id, percent) -> id in ids && percent < 65f },
     )
 }

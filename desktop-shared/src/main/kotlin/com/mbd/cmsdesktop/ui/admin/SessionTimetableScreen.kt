@@ -41,6 +41,8 @@ fun SessionTimetableScreen(
     val errorMessage by controller.error.collectAsState()
     val shift by controller.shift.collectAsState()
     val shifts by controller.shifts.collectAsState()
+    val allSessions by controller.allSessions.collectAsState()
+    val allPeriods by controller.allPeriods.collectAsState()
 
     SessionTimetableWorkspace(
 
@@ -59,5 +61,9 @@ fun SessionTimetableScreen(
         shift = shift,
         shifts = shifts,
         onSelectShift = controller::selectShift,
+        allSessions = allSessions,
+        allPeriods = allPeriods,
+        onSetLink = controller::setPeriodLink,
+        onMergeExisting = controller::mergeExistingPeriod,
     )
 }

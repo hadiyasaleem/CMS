@@ -60,33 +60,57 @@ class MarkAttendanceController(
         _late.value = emptySet()
         _remarks.value = emptyMap()
         _lectureTopic.value = ""
-        _alreadyMarked.value = false
+        _markedSessionIds.value = emptySet()
         _submitState.value = null
         launch("load the register") {
-            val classRollsLoad = runCatching { studentsForTab(sessionRepository.observeStudents(assignment.sessionId).first(), assignment.classShift) }
-            val classRolls = classRollsLoad.getOrDefault(emptyList()).map { it.rollNumber }.toSet()
-            // Attendance rows carry no shift, so keep this class's students only: the other shift's register
-            // for the same subject and day must not read as already marked here.
-            val marksLoad = runCatching { attendanceRepository.marksBetween(assignment.sessionId, assignment.courseCode, day, day) }
-            val marks = marksLoad.getOrDefault(emptyList())
-                .filter { assignment.classShift == null || it.rollNumber in classRolls }
+            val statuses = mutableMapOf<String, AttendanceStatus>()
+            val late = mutableSetOf<String>()
+            val remarks = mutableMapOf<String, String>()
+            var topic = ""
+            val marked = mutableSetOf<String>()
+            val labelledFailures = mutableListOf<Pair<String, Result<*>>>()
+            // A merged lecture's register spans every linked session: each is fetched and checked on its own,
+            // since a saved attendance row carries no shift/merge info of its own.
+            for (sid in assignment.sessionIds) {
+                val classRollsLoad = runCatching { studentsForTab(sessionRepository.observeStudents(sid).first(), assignment.classShift) }
+                val classRolls = classRollsLoad.getOrDefault(emptyList()).map { it.rollNumber }.toSet()
+                // Attendance rows carry no shift, so keep this class's students only: the other shift's register
+                // for the same subject and day must not read as already marked here.
+                val marksLoad = runCatching { attendanceRepository.marksBetween(sid, assignment.courseCode, day, day) }
+                val marks = marksLoad.getOrDefault(emptyList())
+                    .filter { assignment.classShift == null || it.rollNumber in classRolls }
+                labelledFailures += "$sid's saved register for $day" to marksLoad
+                labelledFailures += "$sid's student list" to classRollsLoad
+                if (marks.isEmpty()) continue
+                marked += sid
+                marks.forEach { m ->
+                    val id = SessionStudent.buildId(sid, m.rollNumber)
+                    statuses[id] = m.status
+                    if (m.isLate) late += id
+                    m.remark?.takeIf { it.isNotBlank() }?.let { remarks[id] = it }
+                }
+                if (topic.isBlank()) topic = marks.firstNotNullOfOrNull { it.lectureTopic?.takeIf { t -> t.isNotBlank() } }.orEmpty()
+            }
             if (token != loadToken) return@launch // stale: another date/class was picked meanwhile
             // An empty register is only trustworthy if the check itself worked -- otherwise the teacher would mark a day that is already marked.
-            val failures = FailureSummary.of(listOf("the saved register for $day" to marksLoad, "this class's student list" to classRollsLoad))
+            val failures = FailureSummary.of(labelledFailures)
             FailureSummary.describe(failures, "MarkAttendanceController")?.let { message ->
                 _submitState.value = Outcome.Error("$message Check your connection before marking this register.", failures.first().cause)
             }
-            if (marks.isEmpty()) return@launch
-            _statuses.value = marks.associate { it.rollNumber to it.status }
-            _late.value = marks.filter { it.isLate }.map { it.rollNumber }.toSet()
-            _remarks.value = marks.mapNotNull { m -> m.remark?.takeIf { it.isNotBlank() }?.let { m.rollNumber to it } }.toMap()
-            _lectureTopic.value = marks.firstNotNullOfOrNull { it.lectureTopic?.takeIf { t -> t.isNotBlank() } }.orEmpty()
-            _alreadyMarked.value = true
+            _statuses.value = statuses
+            _late.value = late
+            _remarks.value = remarks
+            _lectureTopic.value = topic
+            _markedSessionIds.value = marked
         }
     }
 
-    private val _alreadyMarked = MutableStateFlow(false)
-    val alreadyMarked: StateFlow<Boolean> = _alreadyMarked.asStateFlow()
+    private val _markedSessionIds = MutableStateFlow<Set<String>>(emptySet())
+
+    /** True only once every linked session's register is already marked for the picked day. */
+    val alreadyMarked: StateFlow<Boolean> = combine(_selected, _markedSessionIds) { assignment, marked ->
+        assignment != null && assignment.sessionIds.isNotEmpty() && marked.containsAll(assignment.sessionIds)
+    }.stateIn(scope, SharingStarted.WhileSubscribed(5000), false)
 
     private val _lectureTopic = MutableStateFlow("")
     val lectureTopic: StateFlow<String> = _lectureTopic.asStateFlow()
@@ -102,7 +126,7 @@ class MarkAttendanceController(
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun toggleTopic(topic: String) {
-        if (_alreadyMarked.value) return
+        if (alreadyMarked.value) return
         setLectureTopic(com.mbd.cmscommon.domain.model.toggleTopic(_lectureTopic.value, topic))
     }
 
@@ -110,18 +134,38 @@ class MarkAttendanceController(
         _lectureTopic.value = text.take(TOPIC_MAX)
     }
 
+    /** The combined roster of every session sharing this lecture, for a merged class. */
     val roster: StateFlow<List<SessionStudent>> = _selected
         .flatMapLatest { assignment ->
-            // A class is one shift of a session: only that shift's students are on its register.
-            if (assignment == null) flowOf(emptyList()) else sessionRepository.observeStudents(assignment.sessionId).map { studentsForTab(it, assignment.classShift) }
+            if (assignment == null) {
+                flowOf(emptyList())
+            } else {
+                combine(assignment.sessionIds.map { sid -> sessionRepository.observeStudents(sid).map { studentsForTab(it, assignment.classShift) } }) {
+                    it.toList().flatten()
+                }
+            }
         }
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    /** Students whose own session is already marked for the picked day -- read-only, even mid-merge. */
+    val lockedStudentIds: StateFlow<Set<String>> = combine(roster, _markedSessionIds) { students, marked ->
+        students.filter { it.sessionId in marked }.map { it.id }.toSet()
+    }.stateIn(scope, SharingStarted.WhileSubscribed(5000), emptySet())
+
     val termPercents: StateFlow<Map<String, Float>> = _selected
-        .flatMapLatest { assignment -> if (assignment == null) flowOf(emptyList()) else attendanceRepository.observeTallies(assignment.sessionId, assignment.courseCode) }
-        .map { tallies -> tallies.filter { it.total > 0 }.associate { it.rollNumber to it.percentage } }
+        .flatMapLatest { assignment ->
+            if (assignment == null) {
+                flowOf(emptyMap())
+            } else {
+                combine(assignment.sessionIds.map { sid -> attendanceRepository.observeTallies(sid, assignment.courseCode).map { tallies -> sid to tallies } }) { pairs ->
+                    pairs.toList().flatMap { (sid, tallies) -> tallies.filter { it.total > 0 }.map { SessionStudent.buildId(sid, it.rollNumber) to it.percentage } }.toMap()
+                }
+            }
+        }
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
+    // Keyed by SessionStudent.id ("${sessionId}_$rollNumber"), never bare roll numbers -- a merged class's two
+    // sessions may otherwise reuse the same roll number and silently collide.
     private val _statuses = MutableStateFlow<Map<String, AttendanceStatus>>(emptyMap())
     val statuses: StateFlow<Map<String, AttendanceStatus>> = _statuses.asStateFlow()
 
@@ -132,7 +176,7 @@ class MarkAttendanceController(
     val remarks: StateFlow<Map<String, String>> = _remarks.asStateFlow()
 
     val allMarked: StateFlow<Boolean> = combine(roster, _statuses) { students, statuses ->
-        students.isNotEmpty() && students.all { statuses.containsKey(it.rollNumber) }
+        students.isNotEmpty() && students.all { statuses.containsKey(it.id) }
     }.stateIn(scope, SharingStarted.WhileSubscribed(5000), false)
 
     private val _submitState = MutableStateFlow<Outcome<Unit>?>(null)
@@ -143,19 +187,19 @@ class MarkAttendanceController(
         loadDay(assignment)
     }
 
-    fun setStatus(rollNumber: String, status: AttendanceStatus) {
-        if (_alreadyMarked.value) return
-        _statuses.value = _statuses.value + (rollNumber to status)
+    fun setStatus(studentId: String, status: AttendanceStatus) {
+        if (studentId in lockedStudentIds.value) return
+        _statuses.value = _statuses.value + (studentId to status)
     }
 
-    fun toggleLate(rollNumber: String) {
-        if (_alreadyMarked.value) return
-        _late.value = if (_late.value.contains(rollNumber)) _late.value - rollNumber else _late.value + rollNumber
+    fun toggleLate(studentId: String) {
+        if (studentId in lockedStudentIds.value) return
+        _late.value = if (_late.value.contains(studentId)) _late.value - studentId else _late.value + studentId
     }
 
-    fun setRemark(rollNumber: String, text: String) {
-        if (_alreadyMarked.value) return
-        _remarks.value = _remarks.value + (rollNumber to text.take(500))
+    fun setRemark(studentId: String, text: String) {
+        if (studentId in lockedStudentIds.value) return
+        _remarks.value = _remarks.value + (studentId to text.take(500))
     }
 
     fun consumeSubmitState() {
@@ -164,7 +208,7 @@ class MarkAttendanceController(
 
     fun submit() {
         val assignment = _selected.value ?: return
-        if (_alreadyMarked.value) return
+        if (alreadyMarked.value) return
         if (_submitState.value is Outcome.Loading) return // single-flight: block a double-tap
 
         val statuses = _statuses.value
@@ -173,7 +217,7 @@ class MarkAttendanceController(
             _submitState.value = Outcome.Error("This class has no students on its register, so there is nothing to submit.", IllegalStateException("empty roster"))
             return
         }
-        val unmarked = students.filter { !statuses.containsKey(it.rollNumber) }
+        val unmarked = students.filter { !statuses.containsKey(it.id) }
         if (unmarked.isNotEmpty()) {
             _submitState.value = Outcome.Error(
                 "${unmarked.size} of ${students.size} students still need a status: ${unmarked.map { it.rollNumber }.previewText()}.",
@@ -188,59 +232,74 @@ class MarkAttendanceController(
             return
         }
         val remarks = _remarks.value
-        remarks.entries.firstOrNull { it.value.trim().length > 500 }?.let { (roll, text) ->
+        remarks.entries.firstOrNull { it.value.trim().length > 500 }?.let { (id, text) ->
+            val roll = students.firstOrNull { it.id == id }?.rollNumber ?: id
             _submitState.value = Outcome.Error("The remark for $roll is ${text.trim().length} characters; the limit is 500.", IllegalArgumentException("remark length"))
             return
         }
 
         val late = _late.value
-        val records = students.associate { student ->
-            student.rollNumber to AttendanceEntry(
-                status = statuses.getValue(student.rollNumber),
-                isLate = late.contains(student.rollNumber),
-                remark = remarks[student.rollNumber],
+        val recordsByStudentId = students.associate { student ->
+            student.id to AttendanceEntry(
+                status = statuses.getValue(student.id),
+                isLate = late.contains(student.id),
+                remark = remarks[student.id],
             )
         }
         _submitState.value = Outcome.Loading // set before launch so the guard above sees it synchronously
-        submitRecords(assignment, records)
+        submitRecords(assignment, students, recordsByStudentId)
     }
 
-    private fun submitRecords(assignment: ResolvedAssignment, records: Map<String, AttendanceEntry>) = launch("submit attendance") {
+    private fun submitRecords(assignment: ResolvedAssignment, students: List<SessionStudent>, recordsByStudentId: Map<String, AttendanceEntry>) = launch("submit attendance") {
+        val day = _date.value
+        val bySession = students.groupBy { it.sessionId }
+        val toWrite = assignment.sessionIds - _markedSessionIds.value
+        val newlyMarked = mutableSetOf<String>()
         try {
             _submitState.value = Outcome.Loading
-            // Another device (or the other shift's teacher) may have marked this register since it was opened; the insert would
-            // then fail on a duplicate key. Say so plainly and reload what was saved.
-            val day = _date.value
-            val alreadySaved = attendanceRepository.marksBetween(assignment.sessionId, assignment.courseCode, day, day)
-                .filter { it.rollNumber in records.keys }
-            if (alreadySaved.isNotEmpty()) {
-                loadDay(assignment)
-                throw CmsException.Conflict("Attendance for ${assignment.subjectLabel} on $day was already marked for ${alreadySaved.size} of ${records.size} students. It has been reloaded; nothing was overwritten.")
-            }
-            attendanceRepository.markAttendance(
-                sessionId = assignment.sessionId,
-                courseCode = assignment.courseCode,
-                date = _date.value,
-                teacherEmail = teacherId,
-                entries = records,
-                lectureTopic = _lectureTopic.value.trim().takeIf { it.isNotBlank() },
-            )
-            runCatching {
-                notificationRepository.send(
-                    title = "Attendance marked",
-                    body = "${assignment.subjectLabel} · ${assignment.sessionLabel}",
-                    targetRole = NotificationTargetRole.ADMIN,
-                    targetOfferingId = assignment.sessionId,
-                    createdByUid = teacherId,
-                    // The class this register belongs to: its department, session and shift.
-                    targetDeptId = assignment.deptId.ifBlank { null },
-                    targetShift = assignment.classShift,
+            for (sid in toWrite) {
+                val sessionStudents = bySession[sid].orEmpty()
+                if (sessionStudents.isEmpty()) continue
+                val sessionRecords = sessionStudents.associate { it.rollNumber to recordsByStudentId.getValue(it.id) }
+                // Another device (or the other shift's/session's teacher) may have marked this register since it was
+                // opened; the insert would then fail on a duplicate key. Say so plainly and reload what was saved.
+                val alreadySaved = attendanceRepository.marksBetween(sid, assignment.courseCode, day, day)
+                    .filter { it.rollNumber in sessionRecords.keys }
+                if (alreadySaved.isNotEmpty()) {
+                    val classLabel = if (assignment.isMerged) "one of the merged classes" else assignment.subjectLabel
+                    throw CmsException.Conflict("Attendance for $classLabel on $day was already marked for ${alreadySaved.size} of ${sessionRecords.size} students. It has been reloaded; nothing was overwritten.")
+                }
+                attendanceRepository.markAttendance(
+                    sessionId = sid,
+                    courseCode = assignment.courseCode,
+                    date = day,
+                    teacherEmail = teacherId,
+                    entries = sessionRecords,
+                    lectureTopic = _lectureTopic.value.trim().takeIf { it.isNotBlank() },
                 )
-            }.orLogCritical("MarkAttendanceController.notifyAdmin") // the register is already saved; a failed heads-up to admins must not undo that
-            _alreadyMarked.value = true
+                newlyMarked += sid
+            }
+            if (newlyMarked.isNotEmpty()) {
+                runCatching {
+                    notificationRepository.send(
+                        title = "Attendance marked",
+                        body = "${assignment.subjectLabel} · ${assignment.sessionLabel}",
+                        targetRole = NotificationTargetRole.ADMIN,
+                        targetOfferingId = assignment.sessionId,
+                        createdByUid = teacherId,
+                        // The class this register belongs to: its department, session and shift.
+                        targetDeptId = assignment.deptId.ifBlank { null },
+                        targetShift = assignment.classShift,
+                    )
+                }.orLogCritical("MarkAttendanceController.notifyAdmin") // the register is already saved; a failed heads-up to admins must not undo that
+            }
+            _markedSessionIds.value = _markedSessionIds.value + newlyMarked
             _submitState.value = Outcome.Success(Unit)
         } catch (t: Throwable) {
-            _submitState.value = Outcome.Error(t.userMessageLogged("Couldn't submit attendance for ${assignment.subjectLabel} on ${_date.value}."), t)
+            // Sessions already written in this pass stay written -- only the failing/remaining ones are retried later.
+            _markedSessionIds.value = _markedSessionIds.value + newlyMarked
+            if (t is CmsException.Conflict) loadDay(assignment)
+            _submitState.value = Outcome.Error(t.userMessageLogged("Couldn't submit attendance for ${assignment.subjectLabel} on $day."), t)
         }
     }
 }
