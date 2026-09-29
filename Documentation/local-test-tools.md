@@ -37,10 +37,12 @@ node supabase/tests/local/scenarios.mjs
 - `supabase/tests/local/shim.sql` stands in for the Supabase-managed objects the migrations depend on (`auth.*`,
   `storage.*`, `cron.schedule`, the `anon` / `authenticated` / `service_role` roles).
 - `apply.mjs` stops at the first failing migration unless `CONTINUE=1` is set.
-- **Known replay failures (pre-existing):** `20260715070000_guard_profile_exempt_service_role.sql` (trigger
-  already exists) and `20260729180000_mark_edit_requests_baseline.sql` (`updated_at` column missing). Both are
-  backfilled copies of migrations applied live, so a from-scratch replay is not faithful for them; the new
-  migrations after them apply cleanly.
+- **Replay is clean.** All 40 migrations apply from scratch with no failures. Two backfilled copies of
+  live-applied migrations used to fail and were made replayable with statements that are no-ops on the live
+  database: `20260715070000_guard_profile_exempt_service_role.sql` (`drop trigger if exists` before creating
+  `trg_guard_profile`) and `20260729180000_mark_edit_requests_baseline.sql` (`add column if not exists updated_at`,
+  `drop trigger if exists`, `create index if not exists`). A replayed `mark_edit_requests` has the same columns,
+  indexes and triggers as production. If `apply.mjs` prints a `FAIL` line, a new migration is not replayable.
 - `scenarios.mjs` writes `.testtools/run/scenario-results.json` (and `db-names.txt`, every constraint/index/table
   name). `DatabaseScenarioMessagesTest` reads them and is **skipped** when they are absent, so it costs nothing on a
   machine without the tools. It checks that every provoked error reads as a plain sentence, that raised trigger text
