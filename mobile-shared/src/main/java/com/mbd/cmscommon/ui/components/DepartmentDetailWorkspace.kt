@@ -63,7 +63,7 @@ fun DepartmentDetailWorkspace(
     errorMessage: String?,
     actionMessage: String?,
     onOpenSession: (String) -> Unit,
-    onCreateSession: (Int, Set<Session>, Int, ProgramType) -> Unit,
+    onCreateSession: (Int, Set<Session>, Int, ProgramType, String?) -> Unit,
     onUpdateDepartment: (String, String, String?, String?) -> Unit,
     onClearError: () -> Unit,
     onConsumeNotice: () -> Unit,
@@ -192,7 +192,7 @@ fun DepartmentDetailWorkspace(
         AddDepartmentSessionDialog(
             existing = sessions,
             onDismiss = { showAddSession = false },
-            onConfirm = { year, shifts, capacity, programType -> onCreateSession(year, shifts, capacity, programType); showAddSession = false },
+            onConfirm = { year, shifts, capacity, programType, copyFrom -> onCreateSession(year, shifts, capacity, programType, copyFrom); showAddSession = false },
         )
     }
 
@@ -335,11 +335,12 @@ private fun SessionEmptyState(filtered: Boolean, onAction: () -> Unit) {
 }
 
 @Composable
-private fun AddDepartmentSessionDialog(existing: List<AcademicSession>, onDismiss: () -> Unit, onConfirm: (Int, Set<Session>, Int, ProgramType) -> Unit) {
+private fun AddDepartmentSessionDialog(existing: List<AcademicSession>, onDismiss: () -> Unit, onConfirm: (Int, Set<Session>, Int, ProgramType, String?) -> Unit) {
     var year by remember { mutableStateOf<Int?>(null) }
     var shifts by remember { mutableStateOf(setOf(Session.MORNING)) }
     var capacity by remember { mutableStateOf(AcademicSession.defaultMaxStudents(ShiftMode.MORNING).toString()) }
     var programType by remember { mutableStateOf(ProgramType.BS) }
+    var copyFromSessionId by remember { mutableStateOf<String?>(null) }
     // Years already taken by a session of the SAME program type -- a BS and an MA-Replacement
     // session can share an intake year in the same department.
     val takenYears = existing.filter { it.programType == programType }.map { it.startYear }.toSet()
@@ -379,11 +380,29 @@ private fun AddDepartmentSessionDialog(existing: List<AcademicSession>, onDismis
                     Spacer(Modifier.height(6.dp))
                     Text(error, color = CmsTheme.colors.accent, style = MaterialTheme.typography.bodySmall)
                 }
+                if (existing.isNotEmpty()) {
+                    Spacer(Modifier.height(10.dp))
+                    Text("SPEED UP SETUP", color = ModMuted, style = CmsTextStyles.eyebrow)
+                    Spacer(Modifier.height(4.dp))
+                    CmsEntityPicker(
+                        label = "Copy subjects from (optional)",
+                        selectedId = copyFromSessionId,
+                        options = existing.sortedByDescending { it.startYear }.map { CmsEntityOption(it.sessionId, "${it.label} · ${it.shiftMode.label}") },
+                        onSelected = { copyFromSessionId = it },
+                        optional = true,
+                        emptyLabel = "Don't copy",
+                    )
+                    Text(
+                        "Links every semester's subjects from the picked session into this new one, so you don't have to add them again.",
+                        color = ModMuted,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
             }
         }},
         confirmButton = {
             TextButton(
-                onClick = { year?.let { y -> capacity.toIntOrNull()?.let { onConfirm(y, shifts, it, programType) } } },
+                onClick = { year?.let { y -> capacity.toIntOrNull()?.let { onConfirm(y, shifts, it, programType, copyFromSessionId) } } },
                 enabled = error == null,
             ) { Text("Create session") }
         },

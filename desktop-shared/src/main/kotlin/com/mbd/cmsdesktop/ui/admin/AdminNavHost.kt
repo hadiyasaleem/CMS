@@ -379,6 +379,7 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         deptId = current.deptId,
                         departmentRepository = component.departmentRepository(),
                         sessionRepository = component.academicSessionRepository(),
+                        curriculumRepository = component.curriculumRepository(),
                         teacherRepository = component.teacherRepository(),
                         editedBy = accountKey,
                         onOpenSession = { sessionId -> push(AdminScreen.SessionDetail(sessionId)) },

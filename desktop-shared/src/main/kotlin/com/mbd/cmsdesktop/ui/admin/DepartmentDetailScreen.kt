@@ -7,6 +7,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import com.mbd.cmscommon.controller.DepartmentDetailController
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
+import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
 import com.mbd.cmscommon.ui.components.DepartmentDetailWorkspace
@@ -18,13 +19,14 @@ fun DepartmentDetailScreen(
     deptId: String,
     departmentRepository: DepartmentRepository,
     sessionRepository: AcademicSessionRepository,
+    curriculumRepository: CurriculumRepository,
     teacherRepository: TeacherRepository,
     editedBy: String?,
     onOpenSession: (String) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    val controller = remember(deptId, departmentRepository, sessionRepository, editedBy) {
-        DepartmentDetailController(deptId, departmentRepository, sessionRepository, editedBy.orEmpty(), scope)
+    val controller = remember(deptId, departmentRepository, sessionRepository, curriculumRepository, editedBy) {
+        DepartmentDetailController(deptId, departmentRepository, sessionRepository, curriculumRepository, editedBy.orEmpty(), scope)
     }
     val department by controller.department.collectAsState()
     val departmentName by controller.deptName.collectAsState()

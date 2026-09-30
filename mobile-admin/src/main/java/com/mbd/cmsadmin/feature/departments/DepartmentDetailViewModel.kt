@@ -8,6 +8,7 @@ import com.mbd.cmscommon.controller.DepartmentDetailController
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.ProgramType
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
+import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -20,6 +21,7 @@ class DepartmentDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     departmentRepository: DepartmentRepository,
     private val sessionRepository: AcademicSessionRepository,
+    curriculumRepository: CurriculumRepository,
     teacherRepository: TeacherRepository,
     sessionManager: SessionManager,
 ) : ViewModel() {
@@ -28,6 +30,7 @@ class DepartmentDetailViewModel @Inject constructor(
         deptId = checkNotNull(savedStateHandle["deptId"]),
         departmentRepository = departmentRepository,
         sessionRepository = sessionRepository,
+        curriculumRepository = curriculumRepository,
         editedBy = sessionManager.accountKey.orEmpty(),
         scope = viewModelScope,
     )
@@ -41,8 +44,8 @@ class DepartmentDetailViewModel @Inject constructor(
     val teachers = teacherRepository.observeActiveTeachers()
         .stateIn(viewModelScope, kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    fun createSession(startYear: Int, shifts: Set<Session>, maxStudents: Int, programType: ProgramType) =
-        controller.createSession(startYear, shifts, maxStudents, programType)
+    fun createSession(startYear: Int, shifts: Set<Session>, maxStudents: Int, programType: ProgramType, copyFromSessionId: String?) =
+        controller.createSession(startYear, shifts, maxStudents, programType, copyFromSessionId)
     fun observeStudentCount(sessionId: String) =
         sessionRepository.observeStudents(sessionId).map { it.size }
 

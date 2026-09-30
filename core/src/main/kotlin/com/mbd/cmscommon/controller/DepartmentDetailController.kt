@@ -6,6 +6,7 @@ import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.Department
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
+import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.util.CmsException
 import com.mbd.cmscommon.util.FieldValidators
@@ -25,6 +26,7 @@ class DepartmentDetailController(
     val deptId: String,
     private val departmentRepository: DepartmentRepository,
     private val sessionRepository: AcademicSessionRepository,
+    private val curriculumRepository: CurriculumRepository,
     private val editedBy: String,
     scope: CoroutineScope,
 ) : ScreenController(scope) {
@@ -58,15 +60,30 @@ class DepartmentDetailController(
      * Creates one session for the intake year serving the ticked [shifts] (Morning, Evening or both), with
      * [maxStudents] seats in total. A department has at most one session per intake year and program type.
      */
-    fun createSession(startYear: Int, shifts: Set<Session>, maxStudents: Int, programType: ProgramType = ProgramType.BS) = launch("create the session") {
+    /** [copyFromSessionId] -- an existing session (any department, but normally this one's previous intake) whose
+     * whole semester 1-8 curriculum is copied into the new session, so setting up a new intake doesn't mean
+     * re-adding the same subjects one by one. */
+    fun createSession(
+        startYear: Int,
+        shifts: Set<Session>,
+        maxStudents: Int,
+        programType: ProgramType = ProgramType.BS,
+        copyFromSessionId: String? = null,
+    ) = launch("create the session") {
         // The UI only ever offers full 4-digit years (see intakeYearOptions() in
         // DepartmentDetailWorkspace); this guards the controller boundary in case anything else
         // ever calls this directly with a 2-digit year like 21 instead of 2021.
         requireValid(startYear in 1900..9999) { "Enter a valid 4-digit intake year." }
         createSessionError(startYear, shifts, maxStudents.toString(), sessions.value, programType).orThrowValidation()
         val mode = ShiftMode.of(shifts) ?: return@launch
-        sessionRepository.createSession(deptId, startYear, mode, maxStudents, programType)
-        _notice.value = "Session created."
+        val created = sessionRepository.createSession(deptId, startYear, mode, maxStudents, programType)
+        if (copyFromSessionId != null) {
+            curriculumRepository.copyAllSemesterSubjects(copyFromSessionId, created.sessionId)
+            val fromLabel = sessions.value.firstOrNull { it.sessionId == copyFromSessionId }?.label ?: copyFromSessionId
+            _notice.value = "Session created with subjects copied from $fromLabel."
+        } else {
+            _notice.value = "Session created."
+        }
     }
 
     fun updateDetails(name: String, code: String, hodEmail: String?, description: String?) {

@@ -100,6 +100,12 @@ interface CurriculumRepository {
      * (skipping ones already linked there). */
     suspend fun copySemesterSubjects(fromSessionId: String, fromSemester: Int, toSessionId: String, toSemester: Int)
 
+    /** [copySemesterSubjects], semester 1 through 8, for a brand-new session copying a previous intake's
+     * whole curriculum in one go. */
+    suspend fun copyAllSemesterSubjects(fromSessionId: String, toSessionId: String) {
+        for (semester in 1..8) copySemesterSubjects(fromSessionId, semester, toSessionId, semester)
+    }
+
     suspend fun saveSemesterTerm(sessionId: String, semester: Int, startDate: LocalDate?, endDate: LocalDate?)
     suspend fun syncSession(sessionId: String)
     /** Global delta sync (all sessions in one paginated query) for a full system-wide refresh. */
