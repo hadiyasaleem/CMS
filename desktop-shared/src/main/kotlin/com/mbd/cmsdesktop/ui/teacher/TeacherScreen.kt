@@ -13,7 +13,7 @@ sealed interface TeacherScreen {
     data object Attendance : TeacherScreen
     /** [shift] is the class's shift: the register lists that shift's students only (null = whole session). */
     data class AttendanceHistory(val sessionId: String, val courseCode: String, val month: YearMonth? = null, val shift: Session? = null) : TeacherScreen
-    data class AttendanceStudentSummary(val sessionId: String, val courseCode: String, val rollNumber: String, val returnMonth: YearMonth, val returnShift: Session? = null) : TeacherScreen
+    data class AttendanceStudentSummary(val sessionId: String, val courseCode: String, val rollNumber: String, val returnMonth: YearMonth, val returnShift: Session? = null, val historySessionIds: String = sessionId) : TeacherScreen
     data object ExamsHub : TeacherScreen
     data object Marks : TeacherScreen
     data object ExamPaper : TeacherScreen

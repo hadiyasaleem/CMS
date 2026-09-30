@@ -49,10 +49,14 @@ fun AttendanceHistoryScreen(
     curriculumRepository: CurriculumRepository,
     timetableRepository: SessionTimetableRepository,
     window: ComposeWindow,
-    onOpenStudent: (rollNumber: String, month: YearMonth) -> Unit,
+    onOpenStudent: (studentSessionId: String, rollNumber: String, month: YearMonth) -> Unit,
 ) {
-    val roster by remember(sessionId, shift) { sessionRepository.observeStudents(sessionId).map { studentsForTab(it, shift) } }
-        .collectAsState(initial = emptyList())
+    // [sessionId] is the primary session, or a comma-joined list of every session of a merged class.
+    val sessionIds = remember(sessionId) { sessionId.split(',').filter { it.isNotBlank() } }
+    val primaryId = sessionIds.first()
+    val roster by remember(sessionId, shift) {
+        kotlinx.coroutines.flow.combine(sessionIds.map { sid -> sessionRepository.observeStudents(sid).map { studentsForTab(it, shift) } }) { it.toList().flatten() }
+    }.collectAsState(initial = emptyList())
     var month by remember { mutableStateOf(initialMonth ?: YearMonth.now()) }
     var pendingCells by remember { mutableStateOf<Set<Pair<String, LocalDate>>>(emptySet()) }
     var requestState by remember { mutableStateOf<Outcome<Unit>?>(null) }
@@ -61,7 +65,7 @@ fun AttendanceHistoryScreen(
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    val session by sessionRepository.observeSession(sessionId).collectAsState(initial = null)
+    val session by sessionRepository.observeSession(primaryId).collectAsState(initial = null)
     val monthLabel = remember(month) { "${month.month.getDisplayName(TextStyle.SHORT, Locale.ENGLISH)} ${month.year}" }
 
 
@@ -71,17 +75,23 @@ fun AttendanceHistoryScreen(
         try {
             val from = month.atDay(1)
             val to = month.atEndOfMonth()
-            val classRolls = studentsForTab(sessionRepository.observeStudents(sessionId).first(), shift).map { it.rollNumber }.toSet()
-            val dailyMarks = attendanceRepository.marksBetween(sessionId, courseCode, from, to)
-                .filter { shift == null || it.rollNumber in classRolls }
-            marks = dailyMarks.groupBy { it.rollNumber }.mapValues { (_, ms) -> ms.associateBy { it.date } }
-            pendingCells = runCatching { editRequestRepository.getPendingFor(sessionId, courseCode, from, to) }
-                .getOrElse {
-                    error = it.userMessageLogged("AttendanceHistoryScreen.loadPending", "Couldn't load the pending attendance edit requests for $courseCode.")
-                    emptyList()
-                }
-                .map { it.rollNumber to it.date }
-                .toSet()
+            val loaded = mutableMapOf<String, Map<LocalDate, DailyAttendanceMark>>()
+            val pending = mutableSetOf<Pair<String, LocalDate>>()
+            for (sid in sessionIds) {
+                val classRolls = studentsForTab(sessionRepository.observeStudents(sid).first(), shift).map { it.rollNumber }.toSet()
+                attendanceRepository.marksBetween(sid, courseCode, from, to)
+                    .filter { shift == null || it.rollNumber in classRolls }
+                    .groupBy { it.rollNumber }
+                    .forEach { (roll, ms) -> loaded[com.mbd.cmscommon.domain.model.SessionStudent.buildId(sid, roll)] = ms.associateBy { it.date } }
+                runCatching { editRequestRepository.getPendingFor(sid, courseCode, from, to) }
+                    .getOrElse {
+                        error = it.userMessageLogged("AttendanceHistoryScreen.loadPending", "Couldn't load the pending attendance edit requests for $courseCode.")
+                        emptyList()
+                    }
+                    .forEach { pending += com.mbd.cmscommon.domain.model.SessionStudent.buildId(sid, it.rollNumber) to it.date }
+            }
+            marks = loaded
+            pendingCells = pending
         } catch (t: Throwable) {
             error = t.userMessageLogged("AttendanceHistoryScreen.load", "Couldn't load the $courseCode attendance history for ${month.month.name.lowercase().replaceFirstChar { it.uppercase() }} ${month.year}.")
         } finally {
@@ -98,16 +108,17 @@ fun AttendanceHistoryScreen(
         marks = marks,
         pendingCells = pendingCells,
         requestState = requestState,
-        onOpenStudent = { roll -> onOpenStudent(roll, month) },
-        onSubmitEditRequest = { roll, date, current, status, late, reason ->
+        onOpenStudent = { student -> onOpenStudent(student.sessionId, student.rollNumber, month) },
+        onSubmitEditRequest = { student, date, current, status, late, reason ->
+            val roll = student.rollNumber
             if (requestState !is Outcome.Loading) {
                 requestState = Outcome.Loading
                 scope.launch {
                     requestState = try {
-                        val semester = sessionRepository.observeSession(sessionId).first()?.currentSemester
+                        val semester = sessionRepository.observeSession(student.sessionId).first()?.currentSemester
                             ?: throw CmsException.NotFound("This session could not be found. Refresh and try again.")
                         editRequestRepository.submitRequest(
-                            sessionId = sessionId,
+                            sessionId = student.sessionId,
                             semester = semester,
                             courseCode = courseCode,
                             date = date,
@@ -118,7 +129,7 @@ fun AttendanceHistoryScreen(
                             requestedIsLate = late,
                             reason = reason,
                         )
-                        pendingCells = pendingCells + (roll to date)
+                        pendingCells = pendingCells + (student.id to date)
                         Outcome.Success(Unit)
                     } catch (t: Throwable) {
                         Outcome.Error(t.userMessageLogged("AttendanceHistoryScreen.submitEditRequest", "Couldn't send the attendance edit request for $roll on $date."), t)

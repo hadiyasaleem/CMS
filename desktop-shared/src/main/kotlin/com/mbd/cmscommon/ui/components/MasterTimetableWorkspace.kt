@@ -177,7 +177,7 @@ fun MasterTimetableWorkspace(
     detailContext?.let { (period, semester) ->
         PeriodDetailDialog(
             period,
-            conflicts = periodConflicts[period.id].orEmpty(),
+            conflicts = periodConflicts[period.id.substringBefore("::")].orEmpty(),
             sessionLabel = { sessionId ->
                 grids.flatMap { it.rows }.firstOrNull { it.session.sessionId == sessionId }
                     ?.let { row -> "${row.department?.code ?: row.session.deptId} ${row.session.label}" }
@@ -186,7 +186,11 @@ fun MasterTimetableWorkspace(
             onDismiss = { detailContext = null },
             onEdit = {
                 detailContext = null
-                editingContext = period to semester
+                // A linked session's copy of a merged lecture is edited through the session that owns it.
+                val ownerId = period.id.substringBefore("::")
+                val owner = if (period.isOwnRow) null else grids.flatMap { g -> g.rows.map { g to it } }
+                    .firstNotNullOfOrNull { (g, row) -> row.periods.firstOrNull { it.id == ownerId && it.isOwnRow }?.let { it to g.semester } }
+                editingContext = owner ?: (period to semester)
             },
         )
     }
@@ -356,12 +360,12 @@ private fun MasterGridSection(
                         val isBreak = period.periodType == PeriodType.BREAK
                         val codeLine = period.courseCode + (period.creditHours?.let { "($it+0)" } ?: "")
                         val location = listOfNotNull(period.building?.ifBlank { null }, period.roomNo?.ifBlank { null }).joinToString(" ").ifBlank { "No room" }
-                        val hasConflict = !isBreak && periodConflicts[period.id].orEmpty().isNotEmpty()
+                        val hasConflict = !isBreak && periodConflicts[period.id.substringBefore("::")].orEmpty().isNotEmpty()
                         val incomplete = !isBreak && (period.teacherId.isBlank() || period.roomNo.isNullOrBlank())
                         GridCell(
                             title = if (isBreak) "BREAK" else period.subjectName,
                             subtitle = if (isBreak) "" else listOfNotNull(codeLine.takeIf { it.isNotBlank() }, period.teacherName.ifBlank { "Unassigned" }).joinToString(" · "),
-                            meta = if (isBreak) "" else location,
+                            meta = if (isBreak) "" else location + mergedTag(period, grid),
                             isBreak = isBreak,
                             isAlert = hasConflict,
                             isWarning = incomplete && !hasConflict,
@@ -622,4 +626,12 @@ private fun MasterEmptyCard(title: String, detail: String) {
             Text(detail, color = ModMuted, style = MaterialTheme.typography.bodySmall)
         }
     }
+}
+
+/** " · MERGED with IT, CS": the other departments sharing this lecture. */
+private fun mergedTag(period: SessionPeriod, grid: MasterGrid): String {
+    if (period.linkedSessionIds.isEmpty()) return ""
+    val rows = grid.rows
+    val codes = period.linkedSessionIds.map { sid -> rows.firstOrNull { it.session.sessionId == sid }?.department?.code ?: sid.substringBefore('_').uppercase() }
+    return " · MERGED with " + codes.distinct().joinToString(", ")
 }

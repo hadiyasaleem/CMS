@@ -176,6 +176,61 @@ class SessionTimetableController(
             timetableRepository.setPeriodLink(period, targetSessionId, link)
         }
 
+    /**
+     * Detaches this session from the shared lecture [shared] by giving it its own period(s). The new period must
+     * differ from the shared one in teacher or time slot -- otherwise it would just be the same class twice.
+     */
+    fun leaveMerge(
+        shared: SessionPeriod,
+        days: Set<DayOfWeek>,
+        start: String,
+        end: String,
+        subject: SemesterSubject?,
+        teacher: Teacher?,
+        periodType: PeriodType,
+        roomNo: String?,
+        building: String?,
+        notes: String?,
+        effectiveFrom: LocalDate?,
+        effectiveTo: LocalDate?,
+    ) = launch("unmerge the class") {
+        requireValid(days.isNotEmpty()) { "Choose at least one day." }
+        requireValid(periodType == PeriodType.BREAK || subject != null) { "Choose a subject for this period." }
+        val sameSlot = days == setOf(shared.day) && clockDisplay(start.trim()) == clockDisplay(shared.startTime) && clockDisplay(end.trim()) == clockDisplay(shared.endTime)
+        requireValid(!sameSlot || teacher?.teacherId != shared.teacherId) {
+            "To unmerge, change the teacher or the time slot for this class."
+        }
+        val all = timetableRepository.observeAll().first()
+        val sessionList = sessionRepository.observeAllSessions().first()
+        val deptList = departmentRepository?.observeActiveDepartments()?.first().orEmpty()
+        val newPeriods = days.map { day ->
+            SessionPeriod(
+                id = SessionPeriod.buildId(sessionId, shared.shift, day, start.trim()),
+                sessionId = sessionId,
+                shift = shared.shift,
+                day = day,
+                startTime = start.trim(),
+                endTime = end.trim(),
+                courseCode = subject?.courseCode ?: "BREAK",
+                subjectName = subject?.name ?: "Break",
+                teacherId = if (periodType != PeriodType.BREAK) teacher?.teacherId ?: "" else "",
+                teacherName = if (periodType != PeriodType.BREAK) teacher?.name ?: "" else "",
+                periodType = periodType,
+                creditHours = subject?.creditHours,
+                roomNo = roomNo?.trim()?.takeIf { it.isNotBlank() },
+                building = building?.trim()?.takeIf { it.isNotBlank() },
+                notes = notes?.trim()?.takeIf { it.isNotBlank() },
+                effectiveFrom = effectiveFrom,
+                effectiveTo = effectiveTo,
+            )
+        }
+        // The shared lecture is still in force until the link is removed, so it must not count as an overlap.
+        newPeriods.forEach { validateTimetablePeriod(it, shared, periods.value).orThrowValidation() }
+        newPeriods.forEach { p -> describeTimetableConflict(p, all, sessionList, deptList)?.let { throw CmsException.Conflict(it) } }
+        newPeriods.forEach { timetableRepository.savePeriod(it) }
+        timetableRepository.setPeriodLink(shared, sessionId, false)
+    }
+
     /** Attaches this session to an already-existing lecture elsewhere, instead of creating a new period. */
     fun mergeExistingPeriod(existingElsewhere: SessionPeriod) =
         launch("merge with the existing class") {

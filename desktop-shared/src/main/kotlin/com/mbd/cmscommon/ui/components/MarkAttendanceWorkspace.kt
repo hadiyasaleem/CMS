@@ -126,7 +126,7 @@ fun MarkAttendanceWorkspace(
                 locked = locked,
                 date = date,
                 onDate = onDate,
-                onHistory = { selected?.let { onHistory(it.sessionId, it.courseCode) } },
+                onHistory = { selected?.let { onHistory(it.sessionIds.joinToString(","), it.courseCode) } },
             )
         }
 

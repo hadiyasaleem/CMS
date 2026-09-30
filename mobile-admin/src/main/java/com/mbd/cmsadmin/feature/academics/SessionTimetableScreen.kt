@@ -63,6 +63,20 @@ class SessionTimetableViewModel @Inject constructor(
     val allPeriods = controller.allPeriods
     fun setPeriodLink(period: SessionPeriod, sessionId: String, link: Boolean) = controller.setPeriodLink(period, sessionId, link)
     fun mergeExistingPeriod(period: SessionPeriod) = controller.mergeExistingPeriod(period)
+    fun leaveMerge(
+        shared: SessionPeriod,
+        days: Set<java.time.DayOfWeek>,
+        start: String,
+        end: String,
+        subject: com.mbd.cmscommon.domain.model.SemesterSubject?,
+        teacher: com.mbd.cmscommon.domain.model.Teacher?,
+        type: com.mbd.cmscommon.domain.model.PeriodType,
+        room: String,
+        building: String,
+        notes: String,
+        from: java.time.LocalDate?,
+        to: java.time.LocalDate?,
+    ) = controller.leaveMerge(shared, days, start, end, subject, teacher, type, room, building, notes, from, to)
 
     fun selectShift(shift: com.mbd.cmscommon.domain.model.Session) = controller.selectShift(shift)
 
@@ -121,5 +135,6 @@ fun SessionTimetableScreen(viewModel: SessionTimetableViewModel = hiltViewModel(
         allPeriods = allPeriods,
         onSetLink = viewModel::setPeriodLink,
         onMergeExisting = viewModel::mergeExistingPeriod,
+        onLeaveMerge = viewModel::leaveMerge,
     )
 }

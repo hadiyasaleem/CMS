@@ -31,7 +31,7 @@ fun attendanceHistorySummary(
     marks: Map<String, Map<LocalDate, DailyAttendanceMark>>,
 ): AttendanceHistorySummary {
     val students = roster.map { student ->
-        val studentMarks = marks[student.rollNumber].orEmpty().values.sortedBy { it.date }
+        val studentMarks = marks[student.id].orEmpty().values.sortedBy { it.date }
         StudentAttendanceHistorySummary(
             student = student,
             marks = studentMarks,

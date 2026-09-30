@@ -185,8 +185,8 @@ fun TeacherNavHost(role: UserRole.Teacher, component: DesktopAppComponent, windo
                     curriculumRepository = component.curriculumRepository(),
                     timetableRepository = component.sessionTimetableRepository(),
                     window = window,
-                    onOpenStudent = { roll, month ->
-                        screen = TeacherScreen.AttendanceStudentSummary(currentScreen.sessionId, currentScreen.courseCode, roll, month, currentScreen.shift)
+                    onOpenStudent = { studentSessionId, roll, month ->
+                        screen = TeacherScreen.AttendanceStudentSummary(studentSessionId, currentScreen.courseCode, roll, month, currentScreen.shift, currentScreen.sessionId)
                     },
                 )
 
@@ -198,7 +198,7 @@ fun TeacherNavHost(role: UserRole.Teacher, component: DesktopAppComponent, windo
                     curriculumRepository = component.curriculumRepository(),
                     attendanceRepository = component.sessionAttendanceRepository(),
                     window = window,
-                    onBack = { screen = TeacherScreen.AttendanceHistory(currentScreen.sessionId, currentScreen.courseCode, currentScreen.returnMonth, currentScreen.returnShift) },
+                    onBack = { screen = TeacherScreen.AttendanceHistory(currentScreen.historySessionIds, currentScreen.courseCode, currentScreen.returnMonth, currentScreen.returnShift) },
                 )
 
                 TeacherScreen.ExamsHub -> ExamsHubScreen(

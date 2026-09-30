@@ -108,8 +108,8 @@ fun AttendanceHistoryWorkspace(
     requestState: Outcome<Unit>?,
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit,
-    onOpenStudent: (rollNumber: String) -> Unit,
-    onSubmitEditRequest: (rollNumber: String, date: LocalDate, current: DailyAttendanceMark?, status: AttendanceStatus, late: Boolean, reason: String) -> Unit,
+    onOpenStudent: (SessionStudent) -> Unit,
+    onSubmitEditRequest: (student: SessionStudent, date: LocalDate, current: DailyAttendanceMark?, status: AttendanceStatus, late: Boolean, reason: String) -> Unit,
     onRequestStateConsumed: () -> Unit,
     onExport: (ExportFormat) -> Unit,
     errorMessage: String?,
@@ -175,7 +175,7 @@ fun AttendanceHistoryWorkspace(
                         datesWithMarks = datesWithMarks,
                         pendingCells = pendingCells,
                         today = today,
-                        onOpenStudent = { onOpenStudent(it.student.rollNumber) },
+                        onOpenStudent = { onOpenStudent(it.student) },
                         onCell = { student, date, mark -> selectedCell = RegisterCellRef(student.student, date, mark) },
                     )
                 }
@@ -187,9 +187,9 @@ fun AttendanceHistoryWorkspace(
     selectedCell?.let { cell ->
         CellDetailDialog(
             cell = cell,
-            pending = (cell.student.rollNumber to cell.date) in pendingCells,
+            pending = (cell.student.id to cell.date) in pendingCells,
             requestState = requestState,
-            onSubmit = { status, late, reason -> onSubmitEditRequest(cell.student.rollNumber, cell.date, cell.mark, status, late, reason) },
+            onSubmit = { status, late, reason -> onSubmitEditRequest(cell.student, cell.date, cell.mark, status, late, reason) },
             onDismiss = {
                 selectedCell = null
                 if (requestState is Outcome.Error) onRequestStateConsumed()
@@ -356,7 +356,7 @@ private fun AttendanceRegister(
                                     Box(Modifier.fillMaxWidth().height(RegisterRowHeight).background(stripe(index)), contentAlignment = Alignment.Center) {
                                         RegisterCell(
                                             mark = marksByStudent[index][date],
-                                            pending = (student.student.rollNumber to date) in pendingCells,
+                                            pending = (student.student.id to date) in pendingCells,
                                             enabled = !date.isAfter(today),
                                             onClick = { onCell(student, date, marksByStudent[index][date]) },
                                         )

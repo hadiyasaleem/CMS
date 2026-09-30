@@ -70,8 +70,8 @@ fun attendanceRegisterExport(
     val datesWithMarks = marks.values.flatMap { it.keys }.toSet()
     val holidayColumns = days.withIndex().filter { (_, d) -> isRegisterHoliday(d, datesWithMarks) }.map { 2 + it.index }.toSet()
     val header = listOf("Roll", "Name") + days.map { it.dayOfMonth.toString().padStart(2, '0') } + listOf("P", "A", "L", "Late", "%")
-    val rows = roster.sortedBy { it.rollNumber }.map { student ->
-        val byDate = marks[student.rollNumber].orEmpty()
+    val rows = roster.sortedWith(compareBy({ it.sessionId }, { it.rollNumber })).map { student ->
+        val byDate = marks[student.id].orEmpty()
         val counts = attendanceCounts(byDate.values)
         listOf(student.rollNumber, student.name) +
             days.map { d -> if (isRegisterHoliday(d, datesWithMarks)) "" else byDate[d]?.let { letter(it.status) + if (it.isLate) "*" else "" } ?: "" } +

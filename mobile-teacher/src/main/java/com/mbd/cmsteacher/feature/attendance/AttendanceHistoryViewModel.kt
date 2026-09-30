@@ -53,7 +53,9 @@ class AttendanceHistoryViewModel @Inject constructor(
     private val timetableRepository: SessionTimetableRepository,
 ) : ViewModel() {
 
-    val sessionId: String = checkNotNull(savedStateHandle["sessionId"])
+    /** A comma-joined list when the class is a merged lecture; the first id is the primary session. */
+    private val sessionIds: List<String> = checkNotNull(savedStateHandle.get<String>("sessionId")).split(',').filter { it.isNotBlank() }
+    val sessionId: String = sessionIds.first()
     val courseCode: String = checkNotNull(savedStateHandle["courseCode"])
     /** The class's shift; null (legacy "ALL") shows the whole session. */
     val shift: Session? = parseShift(savedStateHandle.get<String>("shift"))
@@ -68,7 +70,8 @@ class AttendanceHistoryViewModel @Inject constructor(
     private val _loading = MutableStateFlow(true)
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
 
-    val roster: StateFlow<List<SessionStudent>> = sessionRepository.observeStudents(sessionId).map { studentsForTab(it, shift) }
+    val roster: StateFlow<List<SessionStudent>> =
+        kotlinx.coroutines.flow.combine(sessionIds.map { sid -> sessionRepository.observeStudents(sid).map { studentsForTab(it, shift) } }) { it.toList().flatten() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val session: StateFlow<AcademicSession?> = sessionRepository.observeSession(sessionId)
@@ -96,11 +99,15 @@ class AttendanceHistoryViewModel @Inject constructor(
         try {
             val from = _month.value
             val to = from.withDayOfMonth(from.lengthOfMonth())
-            val classRolls = studentsForTab(sessionRepository.observeStudents(sessionId).first(), shift).map { it.rollNumber }.toSet()
-            val dailyMarks = attendanceRepository.marksBetween(sessionId, courseCode, from, to)
-                .filter { shift == null || it.rollNumber in classRolls }
-            _marks.value = dailyMarks.groupBy { it.rollNumber }
-                .mapValues { (_, marks) -> marks.associateBy { it.date } }
+            val loaded = mutableMapOf<String, Map<LocalDate, DailyAttendanceMark>>()
+            for (sid in sessionIds) {
+                val classRolls = studentsForTab(sessionRepository.observeStudents(sid).first(), shift).map { it.rollNumber }.toSet()
+                attendanceRepository.marksBetween(sid, courseCode, from, to)
+                    .filter { shift == null || it.rollNumber in classRolls }
+                    .groupBy { it.rollNumber }
+                    .forEach { (roll, marks) -> loaded[SessionStudent.buildId(sid, roll)] = marks.associateBy { it.date } }
+            }
+            _marks.value = loaded
             loadPending(from, to)
         } catch (t: Throwable) {
             // Keep the previously loaded marks on screen (offline-first) but still surface and log it.
@@ -111,17 +118,18 @@ class AttendanceHistoryViewModel @Inject constructor(
     }
 
     private suspend fun loadPending(from: LocalDate, to: LocalDate) {
-        _pendingCells.value = runCatching { editRequestRepository.getPendingFor(sessionId, courseCode, from, to) }
-            .getOrElse {
-                _error.value = it.userMessageLogged("AttendanceHistoryViewModel.loadPending", "Couldn't load the pending attendance edit requests for $courseCode.")
-                emptyList()
-            }
-            .map { it.rollNumber to it.date }
-            .toSet()
+        _pendingCells.value = sessionIds.flatMap { sid ->
+            runCatching { editRequestRepository.getPendingFor(sid, courseCode, from, to) }
+                .getOrElse {
+                    _error.value = it.userMessageLogged("AttendanceHistoryViewModel.loadPending", "Couldn't load the pending attendance edit requests for $courseCode.")
+                    emptyList()
+                }
+                .map { SessionStudent.buildId(sid, it.rollNumber) to it.date }
+        }.toSet()
     }
 
     fun submitEditRequest(
-        rollNumber: String,
+        student: SessionStudent,
         date: LocalDate,
         current: DailyAttendanceMark?,
         status: AttendanceStatus,
@@ -132,10 +140,11 @@ class AttendanceHistoryViewModel @Inject constructor(
         viewModelScope.launch {
             _requestState.value = Outcome.Loading
             try {
-                val semester = sessionRepository.observeSession(sessionId).first()?.currentSemester
+                val rollNumber = student.rollNumber
+                val semester = sessionRepository.observeSession(student.sessionId).first()?.currentSemester
                     ?: throw CmsException.NotFound("This session could not be found. Refresh and try again.")
                 editRequestRepository.submitRequest(
-                    sessionId = sessionId,
+                    sessionId = student.sessionId,
                     semester = semester,
                     courseCode = courseCode,
                     date = date,
@@ -146,10 +155,10 @@ class AttendanceHistoryViewModel @Inject constructor(
                     requestedIsLate = late,
                     reason = reason,
                 )
-                _pendingCells.value = _pendingCells.value + (rollNumber to date)
+                _pendingCells.value = _pendingCells.value + (student.id to date)
                 _requestState.value = Outcome.Success(Unit)
             } catch (t: Throwable) {
-                _requestState.value = Outcome.Error(t.userMessageLogged("AttendanceHistoryViewModel.submitEditRequest", "Couldn't send the attendance edit request for $rollNumber on $date."), t)
+                _requestState.value = Outcome.Error(t.userMessageLogged("AttendanceHistoryViewModel.submitEditRequest", "Couldn't send the attendance edit request for ${student.rollNumber} on $date."), t)
             }
         }
     }

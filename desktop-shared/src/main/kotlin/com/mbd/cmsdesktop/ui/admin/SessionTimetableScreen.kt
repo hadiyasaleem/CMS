@@ -65,5 +65,6 @@ fun SessionTimetableScreen(
         allPeriods = allPeriods,
         onSetLink = controller::setPeriodLink,
         onMergeExisting = controller::mergeExistingPeriod,
+        onLeaveMerge = controller::leaveMerge,
     )
 }

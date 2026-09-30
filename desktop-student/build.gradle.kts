@@ -33,7 +33,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi)
             packageName = "CMS Student Desktop"
-            packageVersion = "1.0.69"
+            packageVersion = "1.0.70"
 
             windows {
                 iconFile.set(project.file("src/main/resources/icon.ico"))

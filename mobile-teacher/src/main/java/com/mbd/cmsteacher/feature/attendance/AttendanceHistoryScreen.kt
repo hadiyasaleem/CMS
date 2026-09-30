@@ -31,7 +31,7 @@ fun AttendanceHistoryScreen(
         marks = marks,
         pendingCells = pendingCells,
         requestState = requestState,
-        onOpenStudent = { roll -> onOpenStudent(viewModel.sessionId, viewModel.courseCode, roll) },
+        onOpenStudent = { student -> onOpenStudent(student.sessionId, viewModel.courseCode, student.rollNumber) },
         onSubmitEditRequest = viewModel::submitEditRequest,
         onRequestStateConsumed = viewModel::consumeRequestState,
         onPreviousMonth = viewModel::previousMonth,

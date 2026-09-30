@@ -104,7 +104,13 @@ fun buildMasterGrids(
     periods: List<SessionPeriod>,
 ): List<MasterGrid> {
     val deptById = deptList.associateBy { it.deptId }
-    val periodsBySessionShift = periods.groupBy { it.sessionId to it.shift }
+    // A merged lecture is stored once, under its owning session; every linked session's row shows it too.
+    val withMerged = periods + periods.filter { it.isOwnRow && it.linkedSessionIds.isNotEmpty() }.flatMap { p ->
+        p.linkedSessionIds.map { linked ->
+            p.copy(id = "${p.id}::$linked", sessionId = linked, isOwnRow = false, linkedSessionIds = p.linkedSessionIds - linked + p.sessionId)
+        }
+    }
+    val periodsBySessionShift = withMerged.groupBy { it.sessionId to it.shift }
     return sessionList
         .flatMap { session -> session.shifts.map { shift -> session to shift } }
         .groupBy({ (session, shift) -> Triple(session.currentSemester, session.programType, shift) }) { (session, shift) ->
@@ -326,6 +332,7 @@ class MasterTimetableController(
             val (newS, newE) = newKeyPair
             for (row in grid.rows) {
                 for (period in row.periods) {
+                    if (!period.isOwnRow) continue // a linked session's view moves with its owner's row
                     val key = clockDisplay(period.startTime) to clockDisplay(period.endTime)
                     if (key != oldKey) continue
                     val updated = period.copy(

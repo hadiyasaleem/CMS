@@ -95,6 +95,8 @@ fun SessionTimetableWorkspace(
     onSetLink: (SessionPeriod, String, Boolean) -> Unit = { _, _, _ -> },
     /** Attach this session to another session's existing lecture. */
     onMergeExisting: (SessionPeriod) -> Unit = {},
+    /** Gives this session its own period in place of the shared one it leaves: (shared, days, ...same as a save). */
+    onLeaveMerge: (SessionPeriod, Set<DayOfWeek>, String, String, SemesterSubject?, Teacher?, PeriodType, String, String, String, LocalDate?, LocalDate?) -> Unit = { _, _, _, _, _, _, _, _, _, _, _, _ -> },
     /** The Morning/Evening tab shown; [periods] holds every shift and only this shift's grid is shown. */
     shift: Session = Session.MORNING,
     shifts: List<Session> = listOf(shift),
@@ -109,6 +111,7 @@ fun SessionTimetableWorkspace(
     var choosingSlotDay by remember { mutableStateOf<DayOfWeek?>(null) }
     var mergingExisting by remember { mutableStateOf(false) }
     var linkedDetail by remember { mutableStateOf<SessionPeriod?>(null) }
+    var unmerging by remember { mutableStateOf<SessionPeriod?>(null) }
     val mergeCandidates = describeExistingPeriodsForMerge(allPeriods, session?.sessionId.orEmpty(), shift)
 
     val roomsConfigured = shown.count { !it.roomNo.isNullOrBlank() }
@@ -262,11 +265,29 @@ fun SessionTimetableWorkspace(
                     DetailRow("Time", period.timeRange)
                     DetailRow("Teacher", period.teacherName.ifBlank { "Unassigned" })
                     DetailRow("Room", period.roomNo?.ifBlank { null } ?: "Not assigned")
-                    Text("This lecture is shared with $owner. Edit it from that session's timetable.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                    Text("This lecture is shared with $owner. Edit it from that session's timetable. To unmerge, give this class its own teacher or time slot.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
             }},
-            confirmButton = { TextButton(onClick = { onSetLink(period, session?.sessionId.orEmpty(), false); linkedDetail = null }) { Text("Leave merge", color = CmsTheme.colors.accent) } },
+            confirmButton = { TextButton(onClick = { linkedDetail = null; unmerging = period }) { Text("Unmerge...", color = CmsTheme.colors.accent) } },
             dismissButton = { TextButton(onClick = { linkedDetail = null }) { Text("Close") } },
+        )
+    }
+
+    unmerging?.let { shared ->
+        PeriodEditorDialog(
+            day = shared.day,
+            existing = shared,
+            subjects = subjects,
+            teachers = teachers,
+            buildings = buildings,
+            rooms = rooms,
+            currentSemesterTerm = currentSemesterTerm,
+            requireChangeFrom = shared,
+            onDismiss = { unmerging = null },
+            onSave = { days, start, end, subject, teacher, type, room, building, notes, from, to ->
+                onLeaveMerge(shared, days, start, end, subject, teacher, type, room, building, notes, from, to)
+                unmerging = null
+            },
         )
     }
 
@@ -428,6 +449,9 @@ fun PeriodEditorDialog(
     /** Sessions that can be merged into this lecture, and the merge/unmerge callback; hidden when empty. */
     allSessions: List<AcademicSession> = emptyList(),
     onSetLink: (SessionPeriod, String, Boolean) -> Unit = { _, _, _ -> },
+    /** When set, [existing] is a shared lecture this class is leaving: it can only be saved with a different
+     * teacher or time slot, since the result is a separate class of its own. */
+    requireChangeFrom: SessionPeriod? = null,
 ) {
     var selectedDays by remember { mutableStateOf(initialDays) }
     var start by remember { mutableStateOf(existing?.startTime ?: "") }
@@ -449,11 +473,15 @@ fun PeriodEditorDialog(
     val endTime = runCatching { LocalTime.parse(end.trim()) }
     val timeValid = startTime.isSuccess && endTime.isSuccess && startTime.getOrNull()!! < endTime.getOrNull()
     val needsSubject = type != PeriodType.BREAK
+    val changedFromShared = requireChangeFrom == null || teacherId != requireChangeFrom.teacherId ||
+        selectedDays != setOf(requireChangeFrom.day) ||
+        clockDisplay(start.trim()) != clockDisplay(requireChangeFrom.startTime) ||
+        clockDisplay(end.trim()) != clockDisplay(requireChangeFrom.endTime)
     val hasSemesterTerm = currentSemesterTerm?.startDate != null && currentSemesterTerm.endDate != null
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (existing == null) "Timetable period" else "Edit period", style = MaterialTheme.typography.headlineSmall) },
+        title = { Text(if (requireChangeFrom != null) "Unmerge from shared class" else if (existing == null) "Timetable period" else "Edit period", style = MaterialTheme.typography.headlineSmall) },
         text = {
             DialogScrollBody(maxHeight = 460.dp) {
                 Text("DAYS", color = ModMuted, style = CmsTextStyles.eyebrow)
@@ -475,6 +503,10 @@ fun PeriodEditorDialog(
                             Text(option.getDisplayName(TextStyle.SHORT, Locale.ENGLISH))
                         }
                     }
+                }
+                if (requireChangeFrom != null) {
+                    Text("This class currently shares its lecture with another session. Change the teacher or the time slot to separate it.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(6.dp))
                 }
                 if (selectedDays.isEmpty()) {
                     Text("Select at least one day.", color = TimetableRed, style = MaterialTheme.typography.bodySmall)
@@ -531,11 +563,9 @@ fun PeriodEditorDialog(
                     Spacer(Modifier.height(10.dp))
                     Text("MERGED WITH", color = ModMuted, style = CmsTextStyles.eyebrow)
                     existing.linkedSessionIds.forEach { sid ->
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(allSessions.firstOrNull { it.sessionId == sid }?.label ?: sid, modifier = Modifier.weight(1f))
-                            TextButton(onClick = { onSetLink(existing, sid, false) }) { Text("Remove", color = TimetableRed) }
-                        }
+                        Text(allSessions.firstOrNull { it.sessionId == sid }?.label ?: sid, style = MaterialTheme.typography.bodyMedium)
                     }
+                    Text("A merged session can only leave by being given its own teacher or time slot from its own timetable.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                     val addable = eligibleMergeSessions(existing, allSessions)
                     var addingSession by remember { mutableStateOf(false) }
                     if (addable.isNotEmpty()) TextButton(onClick = { addingSession = true }) { Text("Add another session") }
@@ -582,8 +612,8 @@ fun PeriodEditorDialog(
                         runCatching { LocalDate.parse(effectiveTo.trim()) }.getOrNull(),
                     )
                 },
-                enabled = selectedDays.isNotEmpty() && timeValid && !isDateRangeReversed(effectiveFrom, effectiveTo) && (!needsSubject || subjectCode.isNotBlank()),
-            ) { Text(if (existing == null) "Add period" else "Save") }
+                enabled = changedFromShared && selectedDays.isNotEmpty() && timeValid && !isDateRangeReversed(effectiveFrom, effectiveTo) && (!needsSubject || subjectCode.isNotBlank()),
+            ) { Text(if (requireChangeFrom != null) "Unmerge" else if (existing == null) "Add period" else "Save") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     )
