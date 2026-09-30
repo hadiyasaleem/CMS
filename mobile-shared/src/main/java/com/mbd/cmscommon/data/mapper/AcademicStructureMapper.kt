@@ -1,13 +1,16 @@
 package com.mbd.cmscommon.data.mapper
 
 import com.mbd.cmscommon.data.local.entity.AcademicSessionEntity
+import com.mbd.cmscommon.data.local.entity.PoolSubjectEntity
 import com.mbd.cmscommon.data.local.entity.SemesterSubjectEntity
 import com.mbd.cmscommon.data.local.entity.SemesterTermEntity
 import com.mbd.cmscommon.data.local.entity.SessionPeriodEntity
 import com.mbd.cmscommon.data.local.entity.SessionStudentEntity
 import com.mbd.cmscommon.data.remote.dto.StudentProfileDto
 import com.mbd.cmscommon.domain.model.AcademicSession
+import com.mbd.cmscommon.domain.model.CourseCategory
 import com.mbd.cmscommon.domain.model.PeriodType
+import com.mbd.cmscommon.domain.model.PoolSubject
 import com.mbd.cmscommon.domain.model.SemesterSubject
 import com.mbd.cmscommon.domain.model.SemesterTerm
 import com.mbd.cmscommon.domain.model.Session
@@ -71,6 +74,7 @@ object AcademicStructureMapper {
         name = e.name,
         creditHours = e.creditHours,
         subjectType = runCatching { SubjectType.valueOf(e.subjectType) }.getOrDefault(SubjectType.THEORY),
+        courseType = runCatching { CourseCategory.valueOf(e.courseType) }.getOrDefault(CourseCategory.MAJOR),
         isElective = e.isElective,
         outline = e.outline,
         createdAt = Instant.ofEpochMilli(e.createdAt),
@@ -87,12 +91,39 @@ object AcademicStructureMapper {
         name = s.name,
         creditHours = s.creditHours,
         subjectType = s.subjectType.name,
+        courseType = s.courseType.name,
         isElective = s.isElective,
         outline = s.outline,
         createdAt = s.createdAt.toEpochMilli(),
         createdBy = s.createdBy,
         updatedAt = s.updatedAt.toEpochMilli(),
         updatedBy = s.updatedBy,
+    )
+
+    fun poolEntityToDomain(e: PoolSubjectEntity): PoolSubject = PoolSubject(
+        courseCode = e.courseCode,
+        name = e.name,
+        creditHours = e.creditHours,
+        subjectType = runCatching { SubjectType.valueOf(e.subjectType) }.getOrDefault(SubjectType.THEORY),
+        courseType = runCatching { CourseCategory.valueOf(e.courseType) }.getOrDefault(CourseCategory.MAJOR),
+        outline = e.outline,
+        createdAt = Instant.ofEpochMilli(e.createdAt),
+        createdBy = e.createdBy,
+        updatedAt = Instant.ofEpochMilli(e.updatedAt),
+        updatedBy = e.updatedBy,
+    )
+
+    fun poolDomainToEntity(p: PoolSubject): PoolSubjectEntity = PoolSubjectEntity(
+        courseCode = p.courseCode,
+        name = p.name,
+        creditHours = p.creditHours,
+        subjectType = p.subjectType.name,
+        courseType = p.courseType.name,
+        outline = p.outline,
+        createdAt = p.createdAt.toEpochMilli(),
+        createdBy = p.createdBy,
+        updatedAt = p.updatedAt.toEpochMilli(),
+        updatedBy = p.updatedBy,
     )
 
     fun termEntityToDomain(e: SemesterTermEntity): SemesterTerm = SemesterTerm(

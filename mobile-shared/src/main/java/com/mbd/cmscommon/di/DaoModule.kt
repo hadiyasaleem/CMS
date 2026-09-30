@@ -13,6 +13,7 @@ import com.mbd.cmscommon.data.local.dao.FineDao
 import com.mbd.cmscommon.data.local.dao.InsightsDao
 import com.mbd.cmscommon.data.local.dao.MarkEditRequestDao
 import com.mbd.cmscommon.data.local.dao.NotificationDao
+import com.mbd.cmscommon.data.local.dao.PoolSubjectDao
 import com.mbd.cmscommon.data.local.dao.RoomDao
 import com.mbd.cmscommon.data.local.dao.SemesterSubjectDao
 import com.mbd.cmscommon.data.local.dao.SemesterTermDao
@@ -90,6 +91,9 @@ object DaoModule {
 
     @Provides
     fun provideSemesterSubjectDao(db: CmsDatabase): SemesterSubjectDao = db.semesterSubjectDao()
+
+    @Provides
+    fun providePoolSubjectDao(db: CmsDatabase): PoolSubjectDao = db.poolSubjectDao()
 
     @Provides
     fun provideSemesterTermDao(db: CmsDatabase): SemesterTermDao = db.semesterTermDao()

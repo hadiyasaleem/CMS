@@ -77,7 +77,7 @@ abstract class LocalSyncSupport {
     protected lateinit var dbFile: File
     protected var report7 = ""
 
-    protected val truncateAll = "truncate period_sessions, timetable_periods, session_attendance, session_marks, student_semester_gpa, session_fee_heads, session_fees, fines, exam_paper_submissions, datesheet_slots, datesheets, mark_edit_requests, student_link_requests, notifications, calendar_events, semester_terms, session_subjects, session_students, academic_sessions, teachers, rooms, buildings, departments, profiles, auth.users cascade"
+    protected val truncateAll = "truncate period_sessions, timetable_periods, session_attendance, session_marks, student_semester_gpa, session_fee_heads, session_fees, fines, exam_paper_submissions, datesheet_slots, datesheets, mark_edit_requests, student_link_requests, notifications, calendar_events, semester_terms, session_subjects, subject_pool, session_students, academic_sessions, teachers, rooms, buildings, departments, profiles, auth.users cascade"
 
     /** A brand-new app instance (own Room file, own Dagger graph) pointed at the local shim. */
     protected fun startApp(): com.mbd.cmscommon.data.sync.AdminDataBootstrapper {

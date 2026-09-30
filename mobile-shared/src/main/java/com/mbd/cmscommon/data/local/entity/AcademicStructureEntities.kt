@@ -35,7 +35,26 @@ data class SemesterSubjectEntity(
     val name: String,
     val creditHours: Int,
     val subjectType: String,
+    val courseType: String = "MAJOR",
     val isElective: Boolean = false,
+    val outline: String?,
+    val createdAt: Long = 0L,
+    val createdBy: String? = null,
+    val updatedAt: Long = 0L,
+    val updatedBy: String? = null,
+    val isDeleted: Boolean = false,
+    val deletedAt: Long? = null,
+    val deletedBy: String? = null,
+)
+
+/** The reusable, college-wide course pool (subject_pool), cached locally for an "add from pool" picker. */
+@Entity(tableName = "subject_pool")
+data class PoolSubjectEntity(
+    @PrimaryKey val courseCode: String,
+    val name: String,
+    val creditHours: Int,
+    val subjectType: String,
+    val courseType: String = "MAJOR",
     val outline: String?,
     val createdAt: Long = 0L,
     val createdBy: String? = null,

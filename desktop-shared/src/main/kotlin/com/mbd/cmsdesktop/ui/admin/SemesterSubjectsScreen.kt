@@ -22,6 +22,8 @@ fun SemesterSubjectsScreen(
         SemesterSubjectsController(sessionId, semester, curriculumRepository, sessionRepository, scope)
     }
     val subjects by controller.subjects.collectAsState()
+    val pool by controller.pool.collectAsState()
+    val allSessions by controller.allSessions.collectAsState()
     val session by controller.session.collectAsState()
     val term by controller.term.collectAsState()
     val loading by controller.loading.collectAsState()
@@ -45,5 +47,9 @@ fun SemesterSubjectsScreen(
         onConsumeNotice = controller::consumeNotice,
         termError = termError,
         onClearTermError = controller::clearTermError,
+        pool = pool,
+        allSessions = allSessions,
+        onAddFromPool = controller::addFromPool,
+        onCopyFrom = controller::copyFrom,
     )
 }

@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.mbd.cmscommon.data.local.entity.AcademicSessionEntity
+import com.mbd.cmscommon.data.local.entity.PoolSubjectEntity
 import com.mbd.cmscommon.data.local.entity.SemesterSubjectEntity
 import com.mbd.cmscommon.data.local.entity.SemesterTermEntity
 import com.mbd.cmscommon.data.local.entity.SessionAttendanceRowEntity
@@ -85,6 +86,26 @@ interface SemesterSubjectDao {
     suspend fun applyDelta(upserts: List<SemesterSubjectEntity>, deletedIds: List<String>) {
         if (upserts.isNotEmpty()) upsertAll(upserts)
         if (deletedIds.isNotEmpty()) deleteByIds(deletedIds)
+    }
+}
+
+@Dao
+interface PoolSubjectDao {
+    @Query("SELECT * FROM subject_pool WHERE isDeleted = 0 ORDER BY courseCode")
+    fun observeAll(): Flow<List<PoolSubjectEntity>>
+
+    @Query("SELECT * FROM subject_pool WHERE courseCode = :courseCode LIMIT 1")
+    suspend fun getByCode(courseCode: String): PoolSubjectEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertAll(items: List<PoolSubjectEntity>)
+
+    @Query("DELETE FROM subject_pool WHERE courseCode IN (:codes)")
+    suspend fun deleteByCodes(codes: List<String>)
+
+    suspend fun applyDelta(upserts: List<PoolSubjectEntity>, deletedCodes: List<String>) {
+        if (upserts.isNotEmpty()) upsertAll(upserts)
+        if (deletedCodes.isNotEmpty()) deleteByCodes(deletedCodes)
     }
 }
 

@@ -116,6 +116,14 @@ enum class SubjectType {
     LAB,
 }
 
+/** PU's own course categories (general education / major / compulsory religious course / interdisciplinary). */
+enum class CourseCategory {
+    GENERAL,
+    MAJOR,
+    COMPULSORY,
+    INTERDISCIPLINARY,
+}
+
 data class SessionPeriod(
     val id: String,
     val sessionId: String,
@@ -156,6 +164,13 @@ data class SessionPeriod(
 }
 
 
+/**
+ * A semester's link to a course. The course's own definition (name, credit hours, subject type, category,
+ * outline) lives once in the reusable [PoolSubject] pool, keyed by [courseCode] -- this row only says that
+ * [sessionId]'s [semester] teaches it, and whether it's an elective there. [name]/[creditHours]/[subjectType]/
+ * [courseType]/[outline] are the pool's current values, denormalized here for callers that only care about one
+ * semester's subjects and don't want to join against the pool themselves.
+ */
 data class SemesterSubject(
     val sessionId: String,
     val semester: Int,
@@ -163,7 +178,25 @@ data class SemesterSubject(
     val name: String,
     val creditHours: Int,
     val subjectType: SubjectType = SubjectType.THEORY,
+    val courseType: CourseCategory = CourseCategory.MAJOR,
     val isElective: Boolean = false,
+    val outline: String? = null,
+    override val createdAt: Instant = Instant.EPOCH,
+    override val createdBy: String? = null,
+    override val updatedAt: Instant = Instant.EPOCH,
+    override val updatedBy: String? = null,
+) : BaseEntity()
+
+/**
+ * One reusable course definition, shared college-wide by [courseCode]. A semester attaches to it (see
+ * [SemesterSubject]) rather than copying its fields, so editing a pool subject updates it everywhere it's linked.
+ */
+data class PoolSubject(
+    val courseCode: String,
+    val name: String,
+    val creditHours: Int,
+    val subjectType: SubjectType = SubjectType.THEORY,
+    val courseType: CourseCategory = CourseCategory.MAJOR,
     val outline: String? = null,
     override val createdAt: Instant = Instant.EPOCH,
     override val createdBy: String? = null,

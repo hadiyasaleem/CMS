@@ -5,6 +5,7 @@ import com.mbd.cmscommon.domain.model.AttendanceEntry
 import com.mbd.cmscommon.domain.model.AttendanceTally
 import com.mbd.cmscommon.domain.model.DailyAttendanceMark
 import com.mbd.cmscommon.domain.model.ExamType
+import com.mbd.cmscommon.domain.model.PoolSubject
 import com.mbd.cmscommon.domain.model.SemesterGpa
 import com.mbd.cmscommon.domain.model.SemesterSubject
 import com.mbd.cmscommon.domain.model.SemesterTerm
@@ -80,9 +81,25 @@ interface CurriculumRepository {
     fun observeSemesterSubjects(sessionId: String, semester: Int): Flow<List<SemesterSubject>>
     fun observeSessionSubjects(sessionId: String): Flow<List<SemesterSubject>>
 
+    /** Every reusable course in the college-wide pool, for an "add from pool" / "copy from" picker. */
+    fun observePoolSubjects(): Flow<List<PoolSubject>>
+
     suspend fun getSemesterTerm(sessionId: String, semester: Int): SemesterTerm?
+
+    /** Creates or edits a course's own definition in the pool, and links it to [subject]'s session+semester. */
     suspend fun saveSemesterSubject(subject: SemesterSubject)
+
+    /** Attaches an existing pool subject to a session+semester without touching the pool's own fields. */
+    suspend fun linkSemesterSubject(sessionId: String, semester: Int, courseCode: String, isElective: Boolean)
+
+    /** Removes [courseCode] from [sessionId]'s [semester]; the pool definition (and any other semester's link
+     * to it) is untouched. */
     suspend fun deleteSemesterSubject(sessionId: String, semester: Int, courseCode: String)
+
+    /** Links every course [fromSessionId]'s [fromSemester] teaches into [toSessionId]'s [toSemester] too
+     * (skipping ones already linked there). */
+    suspend fun copySemesterSubjects(fromSessionId: String, fromSemester: Int, toSessionId: String, toSemester: Int)
+
     suspend fun saveSemesterTerm(sessionId: String, semester: Int, startDate: LocalDate?, endDate: LocalDate?)
     suspend fun syncSession(sessionId: String)
     /** Global delta sync (all sessions in one paginated query) for a full system-wide refresh. */

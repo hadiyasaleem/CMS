@@ -8,6 +8,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.controller.SemesterSubjectsController
+import com.mbd.cmscommon.domain.model.CourseCategory
 import com.mbd.cmscommon.domain.model.SubjectType
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
@@ -32,6 +33,8 @@ class SemesterSubjectsViewModel @Inject constructor(
     val sessionId = controller.sessionId
     val semester = controller.semester
     val subjects = controller.subjects
+    val pool = controller.pool
+    val allSessions = controller.allSessions
     val session = controller.session
     val term = controller.term
     val loading = controller.loading
@@ -40,8 +43,10 @@ class SemesterSubjectsViewModel @Inject constructor(
     val termError = controller.termError
 
     fun saveTerm(start: String, end: String, onDone: (Boolean) -> Unit) = controller.saveTerm(start, end, onDone)
-    fun saveSubject(originalCode: String?, code: String, name: String, credits: Int, type: SubjectType, elective: Boolean, outline: String?) =
-        controller.saveSubject(originalCode, code, name, credits, type, elective, outline)
+    fun saveSubject(originalCode: String?, code: String, name: String, credits: Int, type: SubjectType, courseType: CourseCategory, elective: Boolean, outline: String?) =
+        controller.saveSubject(originalCode, code, name, credits, type, courseType, elective, outline)
+    fun addFromPool(courseCode: String, elective: Boolean) = controller.addFromPool(courseCode, elective)
+    fun copyFrom(fromSessionId: String) = controller.copyFrom(fromSessionId)
     fun removeSubject(courseCode: String) = controller.removeSubject(courseCode)
     fun clearError() = controller.clearError()
     fun clearTermError() = controller.clearTermError()
@@ -51,6 +56,8 @@ class SemesterSubjectsViewModel @Inject constructor(
 @Composable
 fun SemesterSubjectsScreen(viewModel: SemesterSubjectsViewModel = hiltViewModel()) {
     val subjects by viewModel.subjects.collectAsState()
+    val pool by viewModel.pool.collectAsState()
+    val allSessions by viewModel.allSessions.collectAsState()
     val session by viewModel.session.collectAsState()
     val term by viewModel.term.collectAsState()
     val loading by viewModel.loading.collectAsState()
@@ -74,5 +81,9 @@ fun SemesterSubjectsScreen(viewModel: SemesterSubjectsViewModel = hiltViewModel(
         onConsumeNotice = viewModel::consumeNotice,
         termError = termError,
         onClearTermError = viewModel::clearTermError,
+        pool = pool,
+        allSessions = allSessions,
+        onAddFromPool = viewModel::addFromPool,
+        onCopyFrom = viewModel::copyFrom,
     )
 }

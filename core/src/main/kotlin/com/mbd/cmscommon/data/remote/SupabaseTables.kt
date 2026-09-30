@@ -8,6 +8,7 @@ object SupabaseTables {
     const val PROFILES = "profiles"
     const val ACADEMIC_SESSIONS = "academic_sessions"
     const val SESSION_SUBJECTS = "session_subjects"
+    const val SUBJECT_POOL = "subject_pool"
     const val SEMESTER_TERMS = "semester_terms"
     const val SESSION_STUDENTS = "session_students"
     const val TIMETABLE_PERIODS = "timetable_periods"

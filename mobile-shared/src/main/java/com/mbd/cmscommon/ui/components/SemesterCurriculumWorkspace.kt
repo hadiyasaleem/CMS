@@ -1,6 +1,7 @@
 package com.mbd.cmscommon.ui.components
 
 import com.mbd.cmscommon.controller.termDatesError
+import androidx.compose.foundation.clickable
 import com.mbd.cmscommon.controller.sharedCurriculumNote
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -39,6 +40,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.domain.model.AcademicSession
+import com.mbd.cmscommon.domain.model.CourseCategory
+import com.mbd.cmscommon.domain.model.PoolSubject
 import com.mbd.cmscommon.domain.model.SemesterSubject
 import com.mbd.cmscommon.domain.model.SemesterTerm
 import com.mbd.cmscommon.domain.model.SubjectType
@@ -66,7 +69,7 @@ fun SemesterCurriculumWorkspace(
     loading: Boolean,
     errorMessage: String?,
     notice: String?,
-    onSaveSubject: (String, String, String, Int, SubjectType, Boolean, String) -> Unit,
+    onSaveSubject: (String, String, String, Int, SubjectType, CourseCategory, Boolean, String) -> Unit,
     onRemoveSubject: (String) -> Unit,
     onSaveTerm: (String, String, (Boolean) -> Unit) -> Unit,
     onClearError: () -> Unit,
@@ -74,11 +77,20 @@ fun SemesterCurriculumWorkspace(
     /** Why the last term-date save failed, from the controller (bad date, end before start, or the server's reason). */
     termError: String? = null,
     onClearTermError: () -> Unit = {},
+    /** The reusable, college-wide course pool, for "Add existing". */
+    pool: List<PoolSubject> = emptyList(),
+    /** Every active session, for "Copy From" (another session's same semester). */
+    allSessions: List<AcademicSession> = emptyList(),
+    onAddFromPool: (String, Boolean) -> Unit = { _, _ -> },
+    onCopyFrom: (String) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var query by remember { mutableStateOf("") }
     var subjectEditor by remember { mutableStateOf<SemesterSubject?>(null) }
     var addingSubject by remember { mutableStateOf(false) }
+    var showAddChoice by remember { mutableStateOf(false) }
+    var showPoolPicker by remember { mutableStateOf(false) }
+    var showCopyFrom by remember { mutableStateOf(false) }
     var showTermEditor by remember { mutableStateOf(false) }
     var pendingRemove by remember { mutableStateOf<SemesterSubject?>(null) }
 
@@ -114,7 +126,7 @@ fun SemesterCurriculumWorkspace(
 
         when {
             loading -> fullSpanItems(3) { SkeletonRow() }
-            subjects.isEmpty() -> fullSpanItem { CurriculumEmptyState(hasSubjects = false, onAdd = { addingSubject = true }, onClear = {}) }
+            subjects.isEmpty() -> fullSpanItem { CurriculumEmptyState(hasSubjects = false, onAdd = { showAddChoice = true }, onClear = {}) }
             visible.isEmpty() -> fullSpanItem { CurriculumEmptyState(hasSubjects = true, onAdd = {}, onClear = { query = "" }) }
             else -> items(visible, key = { it.courseCode }) { subject ->
                 SubjectCurriculumCard(subject, onEdit = { subjectEditor = subject }, onRemove = { pendingRemove = subject })
@@ -124,9 +136,25 @@ fun SemesterCurriculumWorkspace(
         fullSpanItem { Spacer(Modifier.height(72.dp)) }
     }
         CmsFab(
-            onClick = { addingSubject = true },
+            onClick = { showAddChoice = true },
             contentDescription = "Add subject",
             modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+        )
+    }
+
+    if (showAddChoice) {
+        AlertDialog(
+            onDismissRequest = { showAddChoice = false },
+            title = { Text("Add subject") },
+            text = {
+                Column {
+                    TextButton(onClick = { showAddChoice = false; addingSubject = true }, modifier = Modifier.fillMaxWidth()) { Text("Create a new subject", modifier = Modifier.fillMaxWidth()) }
+                    TextButton(onClick = { showAddChoice = false; showPoolPicker = true }, modifier = Modifier.fillMaxWidth()) { Text("Add an existing subject", modifier = Modifier.fillMaxWidth()) }
+                    TextButton(onClick = { showAddChoice = false; showCopyFrom = true }, modifier = Modifier.fillMaxWidth()) { Text("Copy from another session", modifier = Modifier.fillMaxWidth()) }
+                }
+            },
+            confirmButton = {},
+            dismissButton = { TextButton(onClick = { showAddChoice = false }) { Text("Cancel") } },
         )
     }
 
@@ -135,11 +163,28 @@ fun SemesterCurriculumWorkspace(
             existing = subjectEditor,
             existingCodes = subjects.map { it.courseCode.uppercase() }.toSet(),
             onDismiss = { addingSubject = false; subjectEditor = null },
-            onSave = { code, name, credits, type, elective, outline ->
-                onSaveSubject(subjectEditor?.courseCode ?: code, code, name, credits, type, elective, outline)
+            onSave = { code, name, credits, type, courseType, elective, outline ->
+                onSaveSubject(subjectEditor?.courseCode ?: code, code, name, credits, type, courseType, elective, outline)
                 addingSubject = false
                 subjectEditor = null
             },
+        )
+    }
+
+    if (showPoolPicker) {
+        val existingCodes = subjects.map { it.courseCode.uppercase() }.toSet()
+        PoolPickerDialog(
+            options = pool.filter { it.courseCode.uppercase() !in existingCodes },
+            onDismiss = { showPoolPicker = false },
+            onPick = { code, elective -> onAddFromPool(code, elective); showPoolPicker = false },
+        )
+    }
+
+    if (showCopyFrom) {
+        CopyFromDialog(
+            options = allSessions.filter { it.sessionId != sessionId },
+            onDismiss = { showCopyFrom = false },
+            onPick = { fromSessionId -> onCopyFrom(fromSessionId); showCopyFrom = false },
         )
     }
 
@@ -271,12 +316,13 @@ private fun SubjectEditorDialog(
     existing: SemesterSubject?,
     existingCodes: Set<String>,
     onDismiss: () -> Unit,
-    onSave: (String, String, Int, SubjectType, Boolean, String) -> Unit,
+    onSave: (String, String, Int, SubjectType, CourseCategory, Boolean, String) -> Unit,
 ) {
     var code by remember { mutableStateOf(existing?.courseCode ?: "") }
     var name by remember { mutableStateOf(existing?.name ?: "") }
     var credits by remember { mutableStateOf(existing?.creditHours?.toString() ?: "") }
     var type by remember { mutableStateOf(existing?.subjectType ?: SubjectType.THEORY) }
+    var courseType by remember { mutableStateOf(existing?.courseType ?: CourseCategory.MAJOR) }
     var elective by remember { mutableStateOf(existing?.isElective ?: false) }
     var outline by remember { mutableStateOf(existing?.outline ?: "") }
 
@@ -309,6 +355,15 @@ private fun SubjectEditorDialog(
                     SubjectType.entries.forEach { option -> CmsChip(option.name, selected = type == option, onClick = { type = option }) }
                 }
                 Spacer(Modifier.height(10.dp))
+                Text("COURSE TYPE", color = ModMuted, style = CmsTextStyles.eyebrow)
+                Spacer(Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    CourseCategory.entries.forEach { option -> CmsChip(option.name, selected = courseType == option, onClick = { courseType = option }) }
+                }
+                Spacer(Modifier.height(10.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Elective", modifier = Modifier.weight(1f))
                     Switch(checked = elective, onCheckedChange = { elective = it })
@@ -323,7 +378,7 @@ private fun SubjectEditorDialog(
         }},
         confirmButton = {
             TextButton(
-                onClick = { parsedCredits?.let { onSave(code.trim().uppercase(), name.trim(), it, type, elective, outline.trim()) } },
+                onClick = { parsedCredits?.let { onSave(code.trim().uppercase(), name.trim(), it, type, courseType, elective, outline.trim()) } },
                 enabled = code.isNotBlank() && name.isNotBlank() && error == null,
             ) { Text(if (existing == null) "Add" else "Save") }
         },
@@ -381,5 +436,96 @@ private fun TermDatesEditorDialog(
             ) { Text("Save") }
         },
         dismissButton = { TextButton(onClick = onDismiss, enabled = !saving) { Text("Cancel") } },
+    )
+}
+
+@Composable
+private fun PoolPickerDialog(
+    options: List<PoolSubject>,
+    onDismiss: () -> Unit,
+    onPick: (String, Boolean) -> Unit,
+) {
+    var query by remember { mutableStateOf("") }
+    var selected by remember { mutableStateOf<PoolSubject?>(null) }
+    var elective by remember { mutableStateOf(false) }
+    val shown = options.filter { query.isBlank() || it.name.contains(query, ignoreCase = true) || it.courseCode.contains(query, ignoreCase = true) }
+        .sortedBy { it.courseCode }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add an existing subject") },
+        text = {
+            DialogScrollBody {
+                Column {
+                    OutlinedTextField(value = query, onValueChange = { query = it }, label = { Text("Search the course pool") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    Spacer(Modifier.height(8.dp))
+                    if (shown.isEmpty()) {
+                        Text("Nothing matches.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                    } else {
+                        Column {
+                            shown.forEach { p ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().clickable { selected = p }.padding(vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Column(Modifier.weight(1f)) {
+                                        Text(p.name, fontWeight = if (selected == p) FontWeight.Bold else FontWeight.Normal, style = MaterialTheme.typography.bodyMedium)
+                                        Text(p.courseCode + " . " + p.creditHours + " credit(s) . " + p.courseType.name, color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                                    }
+                                    if (selected == p) StatusBadge("SELECTED", BadgeTone.Neutral)
+                                }
+                            }
+                        }
+                    }
+                    selected?.let {
+                        Spacer(Modifier.height(8.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Elective", modifier = Modifier.weight(1f))
+                            Switch(checked = elective, onCheckedChange = { elective = it })
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { selected?.let { onPick(it.courseCode, elective) } }, enabled = selected != null) { Text("Add") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
+}
+
+@Composable
+private fun CopyFromDialog(
+    options: List<AcademicSession>,
+    onDismiss: () -> Unit,
+    onPick: (String) -> Unit,
+) {
+    var query by remember { mutableStateOf("") }
+    val shown = options.filter { query.isBlank() || it.label.contains(query, ignoreCase = true) }.sortedByDescending { it.startYear }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Copy from another session") },
+        text = {
+            DialogScrollBody {
+                Column {
+                    OutlinedTextField(value = query, onValueChange = { query = it }, label = { Text("Search sessions") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    Spacer(Modifier.height(8.dp))
+                    if (shown.isEmpty()) {
+                        Text("No other sessions.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                    } else {
+                        shown.forEach { s ->
+                            Text(
+                                s.label,
+                                modifier = Modifier.fillMaxWidth().clickable { onPick(s.sessionId) }.padding(vertical = 12.dp),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     )
 }

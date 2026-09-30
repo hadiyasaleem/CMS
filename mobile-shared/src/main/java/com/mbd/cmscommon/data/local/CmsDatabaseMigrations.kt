@@ -1786,6 +1786,25 @@ val MIGRATION_48_49: Migration = object : Migration(48, 49) {
     }
 }
 
+/**
+ * 49 -> 50: session_subjects gains courseType (denormalized from the server's new subject_pool, since a
+ * course's own definition is now shared college-wide instead of copied per session+semester -- see
+ * CourseCategory), and a new subject_pool table caches that pool locally for an "add from pool" picker.
+ */
+val MIGRATION_49_50: Migration = object : Migration(49, 50) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `semester_subjects` ADD COLUMN `courseType` TEXT NOT NULL DEFAULT 'MAJOR'")
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `subject_pool` (" +
+                "`courseCode` TEXT NOT NULL, `name` TEXT NOT NULL, `creditHours` INTEGER NOT NULL, " +
+                "`subjectType` TEXT NOT NULL, `courseType` TEXT NOT NULL DEFAULT 'MAJOR', `outline` TEXT, " +
+                "`createdAt` INTEGER NOT NULL, `createdBy` TEXT, `updatedAt` INTEGER NOT NULL, `updatedBy` TEXT, " +
+                "`isDeleted` INTEGER NOT NULL, `deletedAt` INTEGER, `deletedBy` TEXT, " +
+                "PRIMARY KEY(`courseCode`))",
+        )
+    }
+}
+
 val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_18_19,
     MIGRATION_19_20,
@@ -1818,4 +1837,5 @@ val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_46_47,
     MIGRATION_47_48,
     MIGRATION_48_49,
+    MIGRATION_49_50,
 )

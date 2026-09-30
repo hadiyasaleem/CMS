@@ -89,6 +89,35 @@ function whereFrom(params, values) {
 
 const readBody = (req) => new Promise((res) => { let b = ""; req.on("data", (d) => (b += d)); req.on("end", () => res(b)); });
 
+// select=col,col,embed_table(*)  ->  { mainPart: "col,col", embeds: [{ name: "embed_table", cols: "*" }] }
+// (PostgREST's "resource embedding": nests the related row via its foreign key, one level, no nested embeds.)
+function parseSelect(sel) {
+  const embeds = [];
+  const re = /([a-zA-Z_][a-zA-Z0-9_]*)\(([^()]*)\)/g;
+  const mainPart = sel.replace(re, (_, name, cols) => { embeds.push({ name, cols: cols || "*" }); return ""; })
+    .split(",").map((s) => s.trim()).filter(Boolean).join(",") || "*";
+  return { mainPart, embeds };
+}
+
+const fkCache = new Map();
+// The one foreign key from `table`'s own columns to `refTable`'s primary key (what PostgREST embeds on).
+async function resolveFk(table, refTable) {
+  const key = `${table}->${refTable}`;
+  if (fkCache.has(key)) return fkCache.get(key);
+  const r = await pool.query(
+    `select kcu.column_name as fk_col, ccu.column_name as pk_col
+     from information_schema.table_constraints tc
+     join information_schema.key_column_usage kcu on kcu.constraint_name = tc.constraint_name and kcu.constraint_schema = tc.constraint_schema
+     join information_schema.constraint_column_usage ccu on ccu.constraint_name = tc.constraint_name and ccu.constraint_schema = tc.constraint_schema
+     where tc.constraint_type = 'FOREIGN KEY' and tc.table_name = $1 and ccu.table_name = $2
+     limit 1`,
+    [table, refTable],
+  );
+  if (!r.rows[0]) throw new Error(`no foreign key from ${table} to ${refTable} (for embedded select)`);
+  fkCache.set(key, r.rows[0]);
+  return r.rows[0];
+}
+
 http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
   const send = (code, body, headers = {}) => { res.writeHead(code, { "content-type": "application/json", ...headers }); res.end(body === undefined ? "" : JSON.stringify(body)); };
@@ -150,7 +179,16 @@ http.createServer(async (req, res) => {
       let limit = url.searchParams.get("limit");
       const range = req.headers["range"];
       if (range && /^\d+-\d+$/.test(range)) { const [a, b] = range.split("-").map(Number); offset = a; limit = b - a + 1; }
-      const sql = `select row_to_json(t) as r from (select * from ${table}${where}${order}${limit ? ` limit ${Number(limit)}` : ""} offset ${offset}) t`;
+      const { mainPart, embeds } = parseSelect(url.searchParams.get("select") || "*");
+      const mainAlias = embeds.length ? "m" : "";
+      const mainCols = mainPart.split(",").map((c) => (c === "*" ? `${mainAlias ? "m." : ""}*` : `${mainAlias ? "m." : ""}${ident(c)}`)).join(", ");
+      let embedSql = "";
+      for (const em of embeds) {
+        const fk = await resolveFk(m[1], em.name);
+        embedSql += `, (select to_jsonb(e.*) from ${ident(em.name)} e where e.${ident(fk.pk_col)} = m.${ident(fk.fk_col)}) as ${ident(em.name)}`;
+      }
+      const from = `${table}${mainAlias ? " m" : ""}`;
+      const sql = `select row_to_json(t) as r from (select ${mainCols}${embedSql} from ${from}${where}${order}${limit ? ` limit ${Number(limit)}` : ""} offset ${offset}) t`;
       const rows = (await q(sql, values)).rows.map((x) => x.r);
       log.push({ method: "GET", table: m[1], query: url.search, returned: rows.length, ids: rows.map((r) => r.id ?? r.period_id ?? r.session_id ?? null) });
       return send(200, rows);

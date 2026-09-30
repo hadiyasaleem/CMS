@@ -1,6 +1,8 @@
 package com.mbd.cmscommon.controller
 
 import com.mbd.cmscommon.domain.model.AcademicSession
+import com.mbd.cmscommon.domain.model.CourseCategory
+import com.mbd.cmscommon.domain.model.PoolSubject
 import com.mbd.cmscommon.domain.model.SemesterSubject
 import com.mbd.cmscommon.domain.model.SemesterTerm
 import com.mbd.cmscommon.domain.model.SubjectType
@@ -30,8 +32,16 @@ class SemesterSubjectsController(
     val session: StateFlow<AcademicSession?> =
         sessionRepository.observeSession(sessionId).stateIn(scope, SharingStarted.WhileSubscribed(5000), null)
 
+    /** Every active session, for the "Copy From" picker (another session's same semester). */
+    val allSessions: StateFlow<List<AcademicSession>> =
+        sessionRepository.observeAllSessions().stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     val subjects: StateFlow<List<SemesterSubject>> =
         repo.observeSemesterSubjects(sessionId, semester).stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /** The reusable, college-wide course pool, for an "add existing" picker. */
+    val pool: StateFlow<List<PoolSubject>> =
+        repo.observePoolSubjects().stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _term = MutableStateFlow<SemesterTerm?>(null)
     val term: StateFlow<SemesterTerm?> = _term.asStateFlow()
@@ -94,6 +104,7 @@ class SemesterSubjectsController(
         name: String,
         creditHours: Int,
         subjectType: SubjectType,
+        courseType: CourseCategory,
         isElective: Boolean,
         outline: String?,
     ) = launch("save the subject") {
@@ -113,7 +124,7 @@ class SemesterSubjectsController(
 
         val renamed = originalCourseCode != null && !originalCourseCode.equals(normalizedCode, ignoreCase = true)
         if (renamed) {
-            // The course code is changing: retire the old row *before* creating the new one, so a
+            // The course code is changing: retire the old link *before* creating the new one, so a
             // subject with existing attendance/marks/timetable data (blocked by deleteSemesterSubject)
             // fails cleanly instead of leaving both the old and new codes behind as duplicates.
             repo.deleteSemesterSubject(sessionId, semester, originalCourseCode!!)
@@ -126,6 +137,7 @@ class SemesterSubjectsController(
             name = name.trim(),
             creditHours = creditHours,
             subjectType = subjectType,
+            courseType = courseType,
             isElective = isElective,
             outline = outline?.trim()?.takeIf { it.isNotBlank() },
         )
@@ -133,8 +145,23 @@ class SemesterSubjectsController(
         _notice.value = if (originalCourseCode != null) "$normalizedCode updated." else "$normalizedCode added."
     }
 
-    fun addSubject(courseCode: String, name: String, creditHours: Int, subjectType: SubjectType, isElective: Boolean, outline: String?) {
-        saveSubject(null, courseCode, name, creditHours, subjectType, isElective, outline)
+    fun addSubject(courseCode: String, name: String, creditHours: Int, subjectType: SubjectType, courseType: CourseCategory, isElective: Boolean, outline: String?) {
+        saveSubject(null, courseCode, name, creditHours, subjectType, courseType, isElective, outline)
+    }
+
+    /** Attaches an existing pool course to this semester, instead of defining a new one. */
+    fun addFromPool(courseCode: String, isElective: Boolean) = launch("add the subject") {
+        requireValid(subjects.value.none { it.courseCode.equals(courseCode, ignoreCase = true) }) {
+            "Course code $courseCode already exists in this semester."
+        }
+        repo.linkSemesterSubject(sessionId, semester, courseCode, isElective)
+        _notice.value = "$courseCode added."
+    }
+
+    /** Links every course [fromSessionId]'s [semester] teaches into this semester too (skipping ones already here). */
+    fun copyFrom(fromSessionId: String) = launch("copy the subjects") {
+        repo.copySemesterSubjects(fromSessionId, semester, sessionId, semester)
+        _notice.value = "Copied subjects from ${allSessions.value.firstOrNull { it.sessionId == fromSessionId }?.label ?: fromSessionId}."
     }
 
     fun removeSubject(courseCode: String) = launch("remove the subject") {

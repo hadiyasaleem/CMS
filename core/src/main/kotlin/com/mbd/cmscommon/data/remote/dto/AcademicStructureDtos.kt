@@ -27,15 +27,33 @@ data class AcademicSessionDto(
     val deletedBy: String? = null,
 )
 
+/** A session+semester's link to a course (session_subjects). The course's own fields (name, credit hours,
+ * subject type, category, outline) come from the embedded [subjectPool] resource when read via a
+ * `select("*, subject_pool(*)")` -- omitted (null) on a plain write, which only ever touches the link columns. */
 @Serializable
 data class SemesterSubjectDto(
     val sessionId: String? = null,
     val semester: Int = 0,
     val courseCode: String? = null,
+    val isElective: Boolean = false,
+    val createdAt: String? = null,
+    val createdBy: String? = null,
+    val updatedAt: String? = null,
+    val updatedBy: String? = null,
+    val isDeleted: Boolean = false,
+    val deletedAt: String? = null,
+    val deletedBy: String? = null,
+    val subjectPool: PoolSubjectDto? = null,
+)
+
+/** One reusable course definition, shared college-wide by [courseCode] (subject_pool). */
+@Serializable
+data class PoolSubjectDto(
+    val courseCode: String? = null,
     val name: String? = null,
     val creditHours: Int = 0,
     val subjectType: String? = null,
-    val isElective: Boolean = false,
+    val courseType: String? = null,
     val outline: String? = null,
     val createdAt: String? = null,
     val createdBy: String? = null,

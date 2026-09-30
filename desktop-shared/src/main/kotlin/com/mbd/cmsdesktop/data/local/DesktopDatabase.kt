@@ -21,6 +21,7 @@ import com.mbd.cmscommon.data.local.entity.InsightSessionOverviewEntity
 import com.mbd.cmscommon.data.local.entity.MarkEditRequestEntity
 import com.mbd.cmscommon.data.local.entity.NotificationEntity
 import com.mbd.cmscommon.data.local.entity.RoomEntity
+import com.mbd.cmscommon.data.local.entity.PoolSubjectEntity
 import com.mbd.cmscommon.data.local.entity.SemesterSubjectEntity
 import com.mbd.cmscommon.data.local.entity.SemesterTermEntity
 import com.mbd.cmscommon.data.local.entity.SessionAttendanceRowEntity
@@ -48,7 +49,7 @@ import com.mbd.cmsdesktop.data.local.entity.DesktopAuthSessionEntity
         NotificationViewStateEntity::class,
         DesktopAuthSessionEntity::class, DesktopAuthCodeVerifierEntity::class,
         SyncStateEntity::class, TableSyncStateEntity::class, AcademicSessionEntity::class,
-        SemesterSubjectEntity::class, SemesterTermEntity::class, SessionStudentEntity::class, SessionPeriodEntity::class,
+        SemesterSubjectEntity::class, PoolSubjectEntity::class, SemesterTermEntity::class, SessionStudentEntity::class, SessionPeriodEntity::class,
         SessionAttendanceTallyEntity::class, SessionAttendanceRowEntity::class, SessionMarkEntity::class,
         StudentSemesterGpaEntity::class, SessionFeeEntity::class, SessionFeeHeadEntity::class,
         FineEntity::class, CalendarEventEntity::class, MarkEditRequestEntity::class,
@@ -57,7 +58,7 @@ import com.mbd.cmsdesktop.data.local.entity.DesktopAuthSessionEntity
         BuildingEntity::class, RoomEntity::class,
         AppLogEntity::class,
     ],
-    version = 13,
+    version = 14,
     // Schema export is disabled: Room 2.8.4's schema-bundle serializers are incompatible with the
     // project's kotlinx-serialization 1.8.0 (KSP AbstractMethodError in SchemaBundle.deserialize).
     // The desktop DB is a local cache with no Room migration tests, so exported schemas aren't needed.
