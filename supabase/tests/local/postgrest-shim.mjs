@@ -13,6 +13,25 @@ const pool = new pg.Pool({ ...DB, database: "cms_test", max: 4 });
 // The shim acts as a trusted service role (no RLS, no profile guard) so tests can seed and change any row.
 pool.on("connect", (c) => c.query("set timezone='UTC'; select set_config('request.jwt.claims', '{\"role\":\"service_role\"}', false)"));
 let log = [];
+// null = trusted service role; otherwise every REST request runs as this signed-in user, with row-level security applied.
+let identity = null;
+async function q(sql, values = [], who = identity) {
+  if (!who) return pool.query(sql, values);
+  const c = await pool.connect();
+  try {
+    await c.query("begin");
+    await c.query("set local role authenticated");
+    await c.query("select set_config('request.jwt.claims', $1, true), set_config('request.jwt.claim.sub', $2, true)", [JSON.stringify({ email: who.email, sub: who.sub, role: "authenticated" }), who.sub]);
+    const r = await c.query(sql, values);
+    await c.query("commit");
+    return r;
+  } catch (e) {
+    await c.query("rollback").catch(() => {});
+    throw e;
+  } finally {
+    c.release();
+  }
+}
 let failing = new Set(); // tables that answer 503, to test how a refresh copes with a failing table
 
 const ident = (s) => {
@@ -75,9 +94,10 @@ http.createServer(async (req, res) => {
     if (url.pathname === "/__log") return send(200, log);
     if (url.pathname === "/__log/clear") { log = []; return send(200, {}); }
     if (url.pathname === "/__fail") { failing = new Set(JSON.parse((await readBody(req)) || "{}").tables ?? []); return send(200, {}); }
+    if (url.pathname === "/__as") { const b = JSON.parse((await readBody(req)) || "{}"); identity = b.email ? { email: b.email, sub: b.sub } : null; return send(200, {}); }
     if (url.pathname === "/__sql") {
-      const { sql, params } = JSON.parse(await readBody(req));
-      const r = await pool.query(sql, params ?? []);
+      const { sql, params, as } = JSON.parse(await readBody(req));
+      const r = await q(sql, params ?? [], as ?? null);
       return send(200, r.rows);
     }
     const m = url.pathname.match(/^\/rest\/v1\/([a-z_0-9]+)$/i);
@@ -98,7 +118,7 @@ http.createServer(async (req, res) => {
       const range = req.headers["range"];
       if (range && /^\d+-\d+$/.test(range)) { const [a, b] = range.split("-").map(Number); offset = a; limit = b - a + 1; }
       const sql = `select row_to_json(t) as r from (select * from ${table}${where}${order}${limit ? ` limit ${Number(limit)}` : ""} offset ${offset}) t`;
-      const rows = (await pool.query(sql, values)).rows.map((x) => x.r);
+      const rows = (await q(sql, values)).rows.map((x) => x.r);
       log.push({ method: "GET", table: m[1], query: url.search, returned: rows.length, ids: rows.map((r) => r.id ?? r.period_id ?? r.session_id ?? null) });
       return send(200, rows);
     }
@@ -117,7 +137,7 @@ http.createServer(async (req, res) => {
           sql += ` on conflict (${keys.map(ident).join(",")}) do ` + (updates.length ? `update set ${updates.map((c) => `${ident(c)} = excluded.${ident(c)}`).join(", ")}` : "nothing");
         }
         sql += " returning row_to_json(" + table + ".*) as r";
-        const r = await pool.query(sql, vals);
+        const r = await q(sql, vals);
         out.push(...r.rows.map((x) => x.r));
       }
       log.push({ method: "POST", table: m[1], query: url.search, wrote: items.length });
@@ -128,7 +148,7 @@ http.createServer(async (req, res) => {
       const values = [];
       const sets = Object.keys(body).map((k) => { values.push(body[k]); return `${ident(k)} = $${values.length}`; });
       const where = whereFrom(url.searchParams, values);
-      const r = await pool.query(`update ${table} set ${sets.join(", ")}${where} returning row_to_json(${table}.*) as r`, values);
+      const r = await q(`update ${table} set ${sets.join(", ")}${where} returning row_to_json(${table}.*) as r`, values);
       log.push({ method: "PATCH", table: m[1], query: url.search, wrote: r.rowCount });
       return wantRows ? send(200, r.rows.map((x) => x.r)) : send(204);
     }
