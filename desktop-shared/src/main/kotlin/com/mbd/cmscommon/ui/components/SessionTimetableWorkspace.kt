@@ -96,6 +96,8 @@ fun SessionTimetableWorkspace(
     /** Attach this session to another session's existing lecture. */
     onMergeExisting: (SessionPeriod) -> Unit = {},
     /** Gives this session its own period in place of the shared one it leaves: (shared, days, ...same as a save). */
+    /** Unmerges one linked session from this session's own lecture: (period, sessionId, days, ...same as a save). */
+    onUnmergeSession: (SessionPeriod, String, Set<DayOfWeek>, String, String, SemesterSubject?, Teacher?, PeriodType, String, String, String, LocalDate?, LocalDate?) -> Unit = { _, _, _, _, _, _, _, _, _, _, _, _, _ -> },
     onLeaveMerge: (SessionPeriod, Set<DayOfWeek>, String, String, SemesterSubject?, Teacher?, PeriodType, String, String, String, LocalDate?, LocalDate?) -> Unit = { _, _, _, _, _, _, _, _, _, _, _, _ -> },
     /** The Morning/Evening tab shown; [periods] holds every shift and only this shift's grid is shown. */
     shift: Session = Session.MORNING,
@@ -112,6 +114,7 @@ fun SessionTimetableWorkspace(
     var mergingExisting by remember { mutableStateOf(false) }
     var linkedDetail by remember { mutableStateOf<SessionPeriod?>(null) }
     var unmerging by remember { mutableStateOf<SessionPeriod?>(null) }
+    var ownerUnmerging by remember { mutableStateOf<Pair<SessionPeriod, String>?>(null) }
     val mergeCandidates = describeExistingPeriodsForMerge(allPeriods, session?.sessionId.orEmpty(), shift)
 
     val roomsConfigured = shown.count { !it.roomNo.isNullOrBlank() }
@@ -198,6 +201,7 @@ fun SessionTimetableWorkspace(
             existing = editorState?.let { e -> periods.firstOrNull { it.id == e.id && it.isOwnRow } ?: e },
             allSessions = allSessions,
             onSetLink = onSetLink,
+            onUnmergeSession = { sid -> ownerUnmerging = requireNotNull(editorState) to sid; addingPeriodDay = null; editorState = null },
             subjects = subjects,
             teachers = teachers,
             buildings = buildings,
@@ -270,6 +274,24 @@ fun SessionTimetableWorkspace(
             }},
             confirmButton = { TextButton(onClick = { linkedDetail = null; unmerging = period }) { Text("Unmerge...", color = CmsTheme.colors.accent) } },
             dismissButton = { TextButton(onClick = { linkedDetail = null }) { Text("Close") } },
+        )
+    }
+
+    ownerUnmerging?.let { (period, sid) ->
+        PeriodEditorDialog(
+            day = period.day,
+            existing = period.copy(linkedSessionIds = emptySet()),
+            subjects = subjects,
+            teachers = teachers,
+            buildings = buildings,
+            rooms = rooms,
+            currentSemesterTerm = currentSemesterTerm,
+            requireChangeFrom = period,
+            onDismiss = { ownerUnmerging = null },
+            onSave = { days, start, end, subject, teacher, type, room, building, notes, from, to ->
+                onUnmergeSession(period, sid, days, start, end, subject, teacher, type, room, building, notes, from, to)
+                ownerUnmerging = null
+            },
         )
     }
 
@@ -449,6 +471,8 @@ fun PeriodEditorDialog(
     /** Sessions that can be merged into this lecture, and the merge/unmerge callback; hidden when empty. */
     allSessions: List<AcademicSession> = emptyList(),
     onSetLink: (SessionPeriod, String, Boolean) -> Unit = { _, _, _ -> },
+    /** Unmerge one linked session: opens the change-required flow for this lecture. */
+    onUnmergeSession: (String) -> Unit = {},
     /** When set, [existing] is a shared lecture this class is leaving: it can only be saved with a different
      * teacher or time slot, since the result is a separate class of its own. */
     requireChangeFrom: SessionPeriod? = null,
@@ -481,7 +505,7 @@ fun PeriodEditorDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (requireChangeFrom != null) "Unmerge from shared class" else if (existing == null) "Timetable period" else "Edit period", style = MaterialTheme.typography.headlineSmall) },
+        title = { Text(if (requireChangeFrom != null) "Unmerge shared class" else if (existing == null) "Timetable period" else "Edit period", style = MaterialTheme.typography.headlineSmall) },
         text = {
             DialogScrollBody(maxHeight = 460.dp) {
                 Text("DAYS", color = ModMuted, style = CmsTextStyles.eyebrow)
@@ -505,7 +529,7 @@ fun PeriodEditorDialog(
                     }
                 }
                 if (requireChangeFrom != null) {
-                    Text("This class currently shares its lecture with another session. Change the teacher or the time slot to separate it.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                    Text("This lecture is shared with another session. Change the teacher or the time slot to separate the two classes.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(6.dp))
                 }
                 if (selectedDays.isEmpty()) {
@@ -563,9 +587,12 @@ fun PeriodEditorDialog(
                     Spacer(Modifier.height(10.dp))
                     Text("MERGED WITH", color = ModMuted, style = CmsTextStyles.eyebrow)
                     existing.linkedSessionIds.forEach { sid ->
-                        Text(allSessions.firstOrNull { it.sessionId == sid }?.label ?: sid, style = MaterialTheme.typography.bodyMedium)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(allSessions.firstOrNull { it.sessionId == sid }?.label ?: sid, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                            TextButton(onClick = { onUnmergeSession(sid) }) { Text("Unmerge...", color = TimetableRed) }
+                        }
                     }
-                    Text("A merged session can only leave by being given its own teacher or time slot from its own timetable.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                    Text("Unmerging needs a different teacher or time slot for one of the two classes.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                     val addable = eligibleMergeSessions(existing, allSessions)
                     var addingSession by remember { mutableStateOf(false) }
                     if (addable.isNotEmpty()) TextButton(onClick = { addingSession = true }) { Text("Add another session") }

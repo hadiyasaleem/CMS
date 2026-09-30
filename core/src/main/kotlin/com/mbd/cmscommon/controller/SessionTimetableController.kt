@@ -231,6 +231,82 @@ class SessionTimetableController(
         timetableRepository.setPeriodLink(shared, sessionId, false)
     }
 
+    /**
+     * Unmerges [unlinkSessionId] from this session's own merged lecture [period]. The other side must end up different:
+     * this session's lecture takes the new values (teacher/time slot must change) while [unlinkSessionId] keeps the
+     * lecture as it was, as its own period.
+     */
+    fun unmergeSession(
+        period: SessionPeriod,
+        unlinkSessionId: String,
+        days: Set<DayOfWeek>,
+        start: String,
+        end: String,
+        subject: SemesterSubject?,
+        teacher: Teacher?,
+        periodType: PeriodType,
+        roomNo: String?,
+        building: String?,
+        notes: String?,
+        effectiveFrom: LocalDate?,
+        effectiveTo: LocalDate?,
+    ) = launch("unmerge the class") {
+        requireValid(period.isOwnRow && unlinkSessionId in period.linkedSessionIds) { "That session is not merged into this lecture." }
+        requireValid(days.size == 1) { "Choose a single day to unmerge." }
+        requireValid(periodType == PeriodType.BREAK || subject != null) { "Choose a subject for this period." }
+        val day = days.first()
+        val normalizedStart = start.trim()
+        val normalizedEnd = end.trim()
+        val sameSlot = day == period.day && clockDisplay(normalizedStart) == clockDisplay(period.startTime) && clockDisplay(normalizedEnd) == clockDisplay(period.endTime)
+        requireValid(!sameSlot || teacher?.teacherId != period.teacherId) {
+            "To unmerge, change the teacher or the time slot for this class."
+        }
+        val updated = SessionPeriod(
+            id = SessionPeriod.buildId(sessionId, period.shift, day, normalizedStart),
+            sessionId = sessionId,
+            shift = period.shift,
+            day = day,
+            startTime = normalizedStart,
+            endTime = normalizedEnd,
+            courseCode = subject?.courseCode ?: "BREAK",
+            subjectName = subject?.name ?: "Break",
+            teacherId = if (periodType != PeriodType.BREAK) teacher?.teacherId ?: "" else "",
+            teacherName = if (periodType != PeriodType.BREAK) teacher?.name ?: "" else "",
+            periodType = periodType,
+            creditHours = subject?.creditHours,
+            roomNo = roomNo?.trim()?.takeIf { it.isNotBlank() },
+            building = building?.trim()?.takeIf { it.isNotBlank() },
+            notes = notes?.trim()?.takeIf { it.isNotBlank() },
+            effectiveFrom = effectiveFrom,
+            effectiveTo = effectiveTo,
+        )
+        val guest = period.copy(
+            id = SessionPeriod.buildId(unlinkSessionId, period.shift, period.day, period.startTime),
+            sessionId = unlinkSessionId,
+            linkedSessionIds = emptySet(),
+            isOwnRow = true,
+        )
+        validateTimetablePeriod(updated, period, periods.value).orThrowValidation()
+        val rest = timetableRepository.observeAll().first().filter { it.id != period.id }
+        val sessionList = sessionRepository.observeAllSessions().first()
+        val deptList = departmentRepository?.observeActiveDepartments()?.first().orEmpty()
+        describeTimetableConflict(updated, rest, sessionList, deptList)?.let { throw CmsException.Conflict(it) }
+        describeTimetableConflict(guest, rest + updated, sessionList, deptList)?.let { throw CmsException.Conflict(it) }
+
+        timetableRepository.setPeriodLink(period, unlinkSessionId, false)
+        timetableRepository.savePeriod(updated)
+        if (!sameSlot) {
+            // Moving the slot replaces the row (and drops its links), so re-attach the sessions that stay merged
+            // to the row it became.
+            timetableRepository.removePeriod(period)
+            val moved = timetableRepository.observeWeek(sessionId).first().firstOrNull {
+                it.isOwnRow && it.shift == updated.shift && it.day == day && clockDisplay(it.startTime) == clockDisplay(normalizedStart)
+            }
+            if (moved != null) (period.linkedSessionIds - unlinkSessionId).forEach { timetableRepository.setPeriodLink(moved, it, true) }
+        }
+        timetableRepository.savePeriod(guest)
+    }
+
     /** Attaches this session to an already-existing lecture elsewhere, instead of creating a new period. */
     fun mergeExistingPeriod(existingElsewhere: SessionPeriod) =
         launch("merge with the existing class") {
