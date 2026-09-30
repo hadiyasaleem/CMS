@@ -161,7 +161,7 @@ class SessionMarksRepositoryImpl @Inject constructor(
                     eq("session_id", sessionId)
                     eq("course_code", courseCode)
                     eq("exam_type", examType.name)
-                    gte("updated_at", since)
+                    gt("updated_at", since)
                 }
                 order("updated_at", Order.ASCENDING)
                 range(offset, offset + PAGE_SIZE - 1)
@@ -175,7 +175,7 @@ class SessionMarksRepositoryImpl @Inject constructor(
             postgrest.from(SupabaseTables.SESSION_MARKS).select {
                 filter {
                     eq("session_id", sessionId)
-                    gte("updated_at", since)
+                    gt("updated_at", since)
                 }
                 order("updated_at", Order.ASCENDING)
                 range(offset, offset + PAGE_SIZE - 1)
@@ -188,14 +188,14 @@ class SessionMarksRepositoryImpl @Inject constructor(
         val globalScope = SyncCheckpointDefaults.globalScope()
         syncMarksDelta(globalScope) { since, offset ->
             postgrest.from(SupabaseTables.SESSION_MARKS).select {
-                filter { gte("updated_at", since) }
+                filter { gt("updated_at", since) }
                 order("updated_at", Order.ASCENDING)
                 range(offset, offset + PAGE_SIZE - 1)
             }.decodeList<MarkRowDto>()
         }
         syncGpaDelta(globalScope) { since, offset ->
             postgrest.from(SupabaseTables.STUDENT_SEMESTER_GPA).select {
-                filter { gte("updated_at", since) }
+                filter { gt("updated_at", since) }
                 order("updated_at", Order.ASCENDING)
                 range(offset, offset + PAGE_SIZE - 1)
             }.decodeList<SemesterGpaDto>()
@@ -281,7 +281,7 @@ class SessionMarksRepositoryImpl @Inject constructor(
             postgrest.from(SupabaseTables.STUDENT_SEMESTER_GPA).select {
                 filter {
                     eq("session_id", sessionId)
-                    gte("updated_at", since)
+                    gt("updated_at", since)
                 }
                 order("updated_at", Order.ASCENDING)
                 range(offset, offset + PAGE_SIZE - 1)
@@ -296,7 +296,7 @@ class SessionMarksRepositoryImpl @Inject constructor(
                 filter {
                     eq("session_id", sessionId)
                     eq("roll_number", rollNumber)
-                    gte("updated_at", since)
+                    gt("updated_at", since)
                 }
                 order("updated_at", Order.ASCENDING)
                 range(offset, offset + PAGE_SIZE - 1)
@@ -311,7 +311,7 @@ class SessionMarksRepositoryImpl @Inject constructor(
                 filter {
                     eq("session_id", sessionId)
                     eq("semester", semester)
-                    gte("updated_at", since)
+                    gt("updated_at", since)
                 }
                 order("updated_at", Order.ASCENDING)
                 range(offset, offset + PAGE_SIZE - 1)

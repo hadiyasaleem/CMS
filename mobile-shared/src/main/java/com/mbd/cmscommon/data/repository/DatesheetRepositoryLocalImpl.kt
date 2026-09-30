@@ -208,7 +208,7 @@ class DatesheetRepositoryLocalImpl @Inject constructor(
         var offset = 0L
         while (true) {
             val page = postgrest.from(SupabaseTables.DATESHEETS).select {
-                filter { gte("updated_at", since) }
+                filter { gt("updated_at", since) }
                 order("updated_at", Order.ASCENDING)
                 range(offset, offset + PAGE_SIZE - 1)
             }.decodeList<DatesheetDto>()
@@ -236,7 +236,7 @@ class DatesheetRepositoryLocalImpl @Inject constructor(
         var offset = 0L
         while (true) {
             val page = postgrest.from(SupabaseTables.DATESHEET_SLOTS).select {
-                filter { gte("updated_at", since) }
+                filter { gt("updated_at", since) }
                 order("updated_at", Order.ASCENDING)
                 range(offset, offset + PAGE_SIZE - 1)
             }.decodeList<DatesheetSlotDto>()

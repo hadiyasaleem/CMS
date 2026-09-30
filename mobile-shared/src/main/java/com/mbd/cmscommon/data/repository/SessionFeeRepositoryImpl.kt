@@ -106,7 +106,7 @@ class SessionFeeRepositoryImpl @Inject constructor(
             },
         ) { since, from, to ->
             postgrest.from(SupabaseTables.SESSION_FEES).select {
-                filter { eq("session_id", sessionId); gte("updated_at", since) }
+                filter { eq("session_id", sessionId); gt("updated_at", since) }
                 order("updated_at", Order.ASCENDING)
                 range(from, to)
             }.decodeList()
@@ -124,7 +124,7 @@ class SessionFeeRepositoryImpl @Inject constructor(
             },
         ) { since, from, to ->
             postgrest.from(SupabaseTables.SESSION_FEE_HEADS).select {
-                filter { eq("session_id", sessionId); gte("updated_at", since) }
+                filter { eq("session_id", sessionId); gt("updated_at", since) }
                 order("updated_at", Order.ASCENDING)
                 range(from, to)
             }.decodeList()
@@ -147,7 +147,7 @@ class SessionFeeRepositoryImpl @Inject constructor(
             },
         ) { since, from, to ->
             postgrest.from(SupabaseTables.SESSION_FEES).select {
-                filter { gte("updated_at", since) }
+                filter { gt("updated_at", since) }
                 order("updated_at", Order.ASCENDING)
                 range(from, to)
             }.decodeList()
@@ -165,7 +165,7 @@ class SessionFeeRepositoryImpl @Inject constructor(
             },
         ) { since, from, to ->
             postgrest.from(SupabaseTables.SESSION_FEE_HEADS).select {
-                filter { gte("updated_at", since) }
+                filter { gt("updated_at", since) }
                 order("updated_at", Order.ASCENDING)
                 range(from, to)
             }.decodeList()

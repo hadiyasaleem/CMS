@@ -80,7 +80,7 @@ abstract class BaseNotificationRepository(
                         eq("target_role", role.name)
                         eq("target_role", "ALL")
                     }
-                    gte("updated_at", since)
+                    gt("updated_at", since)
                 }
                 order("updated_at", Order.ASCENDING)
                 range(offset, offset + PAGE_SIZE - 1)
@@ -106,7 +106,7 @@ abstract class BaseNotificationRepository(
             val page = postgrest.from(SupabaseTables.NOTIFICATIONS).select {
                 filter {
                     eq("created_by_email", uid)
-                    gte("updated_at", since)
+                    gt("updated_at", since)
                 }
                 order("updated_at", Order.ASCENDING)
                 range(offset, offset + PAGE_SIZE - 1)

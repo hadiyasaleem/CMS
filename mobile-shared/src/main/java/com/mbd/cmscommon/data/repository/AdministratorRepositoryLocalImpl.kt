@@ -74,7 +74,7 @@ class AdministratorRepositoryLocalImpl @Inject constructor(
             val page = postgrest.from(SupabaseTables.PROFILES).select {
                 filter {
                     eq("role", "ADMIN")
-                    gte("updated_at", since)
+                    gt("updated_at", since)
                 }
                 order("updated_at", Order.ASCENDING)
                 range(offset, offset + PAGE_SIZE - 1)

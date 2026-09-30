@@ -52,7 +52,7 @@ class LocalSupabaseAdminSyncTest {
         return log.filter { it["method"]?.jsonPrimitive?.content == "GET" }
             .groupBy { it["table"]!!.jsonPrimitive.content }
             .mapValues { (_, v) ->
-                val (inc, other) = v.partition { it["query"]!!.jsonPrimitive.content.contains("updated_at=gte") }
+                val (inc, other) = v.partition { it["query"]!!.jsonPrimitive.content.contains("updated_at=gt") }
                 inc.sumOf { it["returned"]!!.jsonPrimitive.int } to other.sumOf { it["returned"]!!.jsonPrimitive.int }
             }
     }
@@ -348,21 +348,22 @@ class LocalSupabaseAdminSyncTest {
 
         app.refreshAllReport()
         val idle = fetchedByTable()["fines"]?.first ?: 0
-        notes += "idle refresh right after a bulk import: fetched $idle rows (all 1200 share one updated_at, so the >= checkpoint keeps returning them)"
+        notes += "idle refresh right after a bulk import: fetched $idle rows (all 1200 share one updated_at)"
 
         sql("insert into fines(session_id,roll_number,category,amount,reason) values ('ch_2023','R-01','LIBRARY',1,'new')")
         app.refreshAllReport()
         val afterNew = fetchedByTable()["fines"]?.first ?: 0
-        notes += "after one new fine: fetched $afterNew rows -> cached ${activeCount("fines")}"
+        notes += "after one new fine: fetched $afterNew row(s) -> cached ${activeCount("fines")}"
         if (activeCount("fines") != 1201) problems += "bulk import: the new fine did not arrive"
+        if (afterNew != 1) problems += "bulk import: one new fine caused $afterNew rows to be fetched"
 
         app.refreshAllReport()
         val settled = fetchedByTable()["fines"]?.first ?: 0
         notes += "next idle refresh: fetched $settled rows"
         println("\n=== BULK IMPORT ===\n" + notes.joinToString("\n") + "\nproblems: $problems")
         File(System.getProperty("java.io.tmpdir"), "cms-bulk-sync-report.txt").writeText(notes.joinToString("\n") + "\nproblems: $problems")
-        // Known limitation, reported above rather than failed: rows sharing one updated_at are re-fetched by every idle refresh
-        // until any newer change moves the checkpoint (the ">=" is what keeps same-timestamp rows from being missed).
+        // Rows written together share one updated_at; the strict "> checkpoint" pull must not keep returning them.
+        if (idle > 0 || settled > 0) problems += "bulk import: idle refreshes re-downloaded $idle / $settled rows"
         assertTrue(problems.joinToString("\n"), problems.isEmpty())
     }
 

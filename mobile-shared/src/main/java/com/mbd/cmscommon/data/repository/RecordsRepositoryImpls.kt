@@ -79,7 +79,7 @@ class CalendarRepositoryLocalImpl @Inject constructor(
         var offset = 0L
         while (true) {
             val page = postgrest.from(SupabaseTables.CALENDAR_EVENTS).select {
-                filter { gte("updated_at", since) }
+                filter { gt("updated_at", since) }
                 order("updated_at", Order.ASCENDING)
                 range(offset, offset + RECORDS_DELTA_PAGE_SIZE - 1)
             }.decodeList<CalendarEventDto>()
@@ -146,7 +146,7 @@ class FineRepositoryLocalImpl @Inject constructor(
             val page = postgrest.from(SupabaseTables.FINES).select {
                 filter {
                     eq("session_id", sessionId)
-                    gte("updated_at", since)
+                    gt("updated_at", since)
                 }
                 order("updated_at", Order.ASCENDING)
                 range(offset, offset + RECORDS_DELTA_PAGE_SIZE - 1)
@@ -175,7 +175,7 @@ class FineRepositoryLocalImpl @Inject constructor(
         var offset = 0L
         while (true) {
             val page = postgrest.from(SupabaseTables.FINES).select {
-                filter { gte("updated_at", since) }
+                filter { gt("updated_at", since) }
                 order("updated_at", Order.ASCENDING)
                 range(offset, offset + RECORDS_DELTA_PAGE_SIZE - 1)
             }.decodeList<FineDto>()
@@ -206,7 +206,7 @@ class FineRepositoryLocalImpl @Inject constructor(
                 filter {
                     eq("session_id", sessionId)
                     eq("roll_number", rollNumber)
-                    gte("updated_at", since)
+                    gt("updated_at", since)
                 }
                 order("updated_at", Order.ASCENDING)
                 range(offset, offset + RECORDS_DELTA_PAGE_SIZE - 1)

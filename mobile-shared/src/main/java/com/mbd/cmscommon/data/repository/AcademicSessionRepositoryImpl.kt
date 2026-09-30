@@ -433,7 +433,7 @@ class AcademicSessionRepositoryImpl @Inject constructor(
             val page = postgrest.from(SupabaseTables.ACADEMIC_SESSIONS).select {
                 filter {
                     eq("dept_id", deptId)
-                    gte("updated_at", since)
+                    gt("updated_at", since)
                 }
                 order("updated_at", Order.ASCENDING)
                 range(offset, offset + PAGE_SIZE - 1)
@@ -467,7 +467,7 @@ class AcademicSessionRepositoryImpl @Inject constructor(
             val page = postgrest.from(SupabaseTables.SESSION_STUDENTS).select {
                 filter {
                     eq("session_id", sessionId)
-                    gte("updated_at", since)
+                    gt("updated_at", since)
                 }
                 order("updated_at", Order.ASCENDING)
                 range(offset, offset + PAGE_SIZE - 1)
@@ -496,7 +496,7 @@ class AcademicSessionRepositoryImpl @Inject constructor(
         var offset = 0L
         while (true) {
             val page = postgrest.from(SupabaseTables.ACADEMIC_SESSIONS).select {
-                filter { gte("updated_at", since) }
+                filter { gt("updated_at", since) }
                 order("updated_at", Order.ASCENDING)
                 range(offset, offset + PAGE_SIZE - 1)
             }.decodeList<AcademicSessionDto>()
@@ -526,7 +526,7 @@ class AcademicSessionRepositoryImpl @Inject constructor(
         var offset = 0L
         while (true) {
             val page = postgrest.from(SupabaseTables.SESSION_STUDENTS).select {
-                filter { gte("updated_at", since) }
+                filter { gt("updated_at", since) }
                 order("updated_at", Order.ASCENDING)
                 range(offset, offset + PAGE_SIZE - 1)
             }.decodeList<StudentProfileDto>()

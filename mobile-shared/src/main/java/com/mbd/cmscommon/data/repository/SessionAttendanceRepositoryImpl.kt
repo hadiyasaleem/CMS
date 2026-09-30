@@ -150,7 +150,7 @@ class SessionAttendanceRepositoryImpl @Inject constructor(
                 filter {
                     eq("session_id", sessionId)
                     eq("course_code", courseCode)
-                    gte("updated_at", since)
+                    gt("updated_at", since)
                 }
                 order("updated_at", Order.ASCENDING)
                 order("entity_id", Order.ASCENDING)
@@ -165,7 +165,7 @@ class SessionAttendanceRepositoryImpl @Inject constructor(
             postgrest.from(SupabaseTables.SESSION_ATTENDANCE).select {
                 filter {
                     eq("session_id", sessionId)
-                    gte("updated_at", since)
+                    gt("updated_at", since)
                 }
                 order("updated_at", Order.ASCENDING)
                 order("entity_id", Order.ASCENDING)
@@ -177,7 +177,7 @@ class SessionAttendanceRepositoryImpl @Inject constructor(
     override suspend fun syncAll() {
         syncAttendanceDelta(SyncCheckpointDefaults.globalScope()) { since, offset ->
             postgrest.from(SupabaseTables.SESSION_ATTENDANCE).select {
-                filter { gte("updated_at", since) }
+                filter { gt("updated_at", since) }
                 order("updated_at", Order.ASCENDING)
                 order("entity_id", Order.ASCENDING)
                 range(offset, offset + PAGE_SIZE - 1)
