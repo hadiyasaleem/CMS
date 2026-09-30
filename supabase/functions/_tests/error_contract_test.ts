@@ -328,3 +328,47 @@ Deno.test("set-status: a failed ban says the login can still sign in", async () 
   route("PUT auth/admin/users", 500, { code: "unexpected_failure", msg: "database error" });
   expectFailure(await call("set-teacher-status", { body: { email: "t@b.pk", status: "DISABLED" } }), 500, "AUTH_FAILED", "still sign in");
 });
+
+// --- tombstones: other devices only learn about a removal from a row with a newer updated_at -------------------------
+async function callOk(fn: string, body: unknown): Promise<{ status: number; json: Record<string, unknown> }> {
+  const handler = await load(fn);
+  const res = await handler(new Request("http://localhost/fn", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: "Bearer admin-token" },
+    body: JSON.stringify(body),
+  }));
+  return { status: res.status, json: await res.json() };
+}
+
+Deno.test("archive: after deleting the session it leaves a soft-deleted tombstone for other devices", async () => {
+  reset();
+  route("GET academic_sessions", 200, [{ session_id: "eng_2023", dept_id: "eng", is_active: false }]);
+  route("POST storage", 200, { Key: "documents/archives/x.json" });
+  const r = await callOk("archive-and-delete-session", { sessionId: "eng_2023" });
+  assertEquals(r.status, 200);
+  assertEquals(r.json.tombstone, true);
+  const del = calls.indexOf("DELETE academic_sessions");
+  const stub = calls.indexOf("POST academic_sessions");
+  assert(del >= 0 && stub > del, `expected the tombstone insert after the delete, got: ${calls.join(", ")}`);
+});
+
+Deno.test("archive: a failed tombstone is reported but does not undo the archive", async () => {
+  reset();
+  route("GET academic_sessions", 200, [{ session_id: "eng_2023", dept_id: "eng", is_active: false }]);
+  route("POST storage", 200, { Key: "documents/archives/x.json" });
+  dbFails("POST academic_sessions", "23505", "duplicate key value violates unique constraint", 409);
+  const r = await callOk("archive-and-delete-session", { sessionId: "eng_2023" });
+  assertEquals(r.status, 200);
+  assertEquals(r.json.tombstone, false);
+});
+
+Deno.test("promote: finished-semester exam papers are soft-deleted, never physically removed", async () => {
+  reset();
+  route("GET academic_sessions", 200, [{ current_semester: 3, is_active: true }]);
+  route("GET exam_paper_submissions", 200, [{ id: "p1", storage_path: "eng_2023/3/x.pdf", key_storage_path: null }]);
+  const r = await callOk("promote-session", { sessionId: "eng_2023" });
+  assertEquals(r.status, 200);
+  assertEquals(r.json.promotedTo, 4);
+  assert(calls.includes("PATCH exam_paper_submissions"), `expected a soft delete (PATCH), got: ${calls.join(", ")}`);
+  assert(!calls.includes("DELETE exam_paper_submissions"), "the papers must not be physically deleted");
+});
