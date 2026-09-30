@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.repository
 
+import com.mbd.cmscommon.util.requireAffected
 import com.mbd.cmscommon.util.orLogCritical
 import com.mbd.cmscommon.data.remote.PgTime
 import com.mbd.cmscommon.data.remote.SupabaseTables
@@ -75,6 +76,7 @@ class MarkEditRequestRepositoryImpl @Inject constructor(
         postgrest.from(SupabaseTables.SESSION_MARKS).update({
             set("score", request.requestedScore)
         }) {
+            select()
             filter {
                 eq("session_id", request.sessionId!!)
                 eq("semester", request.semester)
@@ -82,15 +84,16 @@ class MarkEditRequestRepositoryImpl @Inject constructor(
                 eq("exam_type", request.examType!!)
                 eq("roll_number", request.rollNumber!!)
             }
-        }
+        }.requireAffected("The marks record this request refers to could not be updated. It may have been removed; nothing was approved.")
 
         postgrest.from(SupabaseTables.MARK_EDIT_REQUESTS).update({
             set("status", "APPROVED")
             set("reviewed_by", reviewedBy)
             set("reviewed_at", Instant.now().toString())
         }) {
+            select()
             filter { eq("id", requestId) }
-        }
+        }.requireAffected("This request was already reviewed or removed. Refresh the list.")
     }
 
     override suspend fun rejectRequest(requestId: String, reviewedBy: String) {
@@ -99,8 +102,9 @@ class MarkEditRequestRepositoryImpl @Inject constructor(
             set("reviewed_by", reviewedBy)
             set("reviewed_at", Instant.now().toString())
         }) {
+            select()
             filter { eq("id", requestId) }
-        }
+        }.requireAffected("This request was already reviewed or removed. Refresh the list.")
     }
 
     private fun MarkEditRequestDto.toDomain() = MarkEditRequest(

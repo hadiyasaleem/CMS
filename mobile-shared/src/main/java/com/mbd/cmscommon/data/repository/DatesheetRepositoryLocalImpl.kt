@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.repository
 
+import com.mbd.cmscommon.util.requireAffected
 import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.local.dao.DatesheetDao
 import com.mbd.cmscommon.data.mapper.DatesheetMapper
@@ -107,8 +108,13 @@ class DatesheetRepositoryLocalImpl @Inject constructor(
 
     override suspend fun deleteDatesheet(id: String) {
         postgrest.from(SupabaseTables.DATESHEETS).update({ set("is_deleted", true) }) {
+            select()
             filter { eq("id", id) }
-        }
+        }.requireAffected(onNone = {
+            datesheetDao.deleteDatesheetById(id)
+            datesheetDao.deleteSlotsForDatesheet(id)
+        })
+        // (No guard here: a datesheet with no papers yet legitimately has no slot rows to mark.)
         postgrest.from(SupabaseTables.DATESHEET_SLOTS).update({ set("is_deleted", true) }) {
             filter { eq("datesheet_id", id) }
         }
@@ -181,8 +187,9 @@ class DatesheetRepositoryLocalImpl @Inject constructor(
 
     override suspend fun deleteSlot(id: String) {
         postgrest.from(SupabaseTables.DATESHEET_SLOTS).update({ set("is_deleted", true) }) {
+            select()
             filter { eq("id", id) }
-        }
+        }.requireAffected(onNone = { datesheetDao.deleteSlotById(id) })
         datesheetDao.deleteSlotById(id)
     }
 

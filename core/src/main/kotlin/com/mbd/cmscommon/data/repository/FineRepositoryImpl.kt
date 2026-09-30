@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.repository
 
+import com.mbd.cmscommon.util.requireAffected
 import com.mbd.cmscommon.data.remote.PgTime
 import com.mbd.cmscommon.data.remote.SupabaseTables
 import com.mbd.cmscommon.data.remote.dto.FineDto
@@ -45,8 +46,9 @@ class FineRepositoryImpl @Inject constructor(
 
     override suspend fun deleteFine(id: String) {
         postgrest.from(SupabaseTables.FINES).delete {
+            select()
             filter { eq("id", id) }
-        }
+        }.requireAffected()
     }
 
     private fun FineDto.toDomain() = Fine(

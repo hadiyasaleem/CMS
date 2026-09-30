@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.repository
 
+import com.mbd.cmscommon.util.requireAffected
 import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.local.dao.AcademicSessionDao
 import com.mbd.cmscommon.data.local.dao.SessionPeriodDao
@@ -119,13 +120,17 @@ class SessionTimetableRepositoryImpl @Inject constructor(
 
     override suspend fun removePeriod(period: SessionPeriod) {
         postgrest.from(SupabaseTables.TIMETABLE_PERIODS).update({ set("is_deleted", true) }) {
+            select()
             filter {
                 eq("primary_session_id", period.sessionId)
                 eq("shift", period.shift.name)
                 eq("day", period.day.name)
                 eq("start_time", period.startTime)
             }
-        }
+        }.requireAffected(onNone = {
+            periodDao.deleteForSlot(period.sessionId, period.shift.name, period.day.name, period.startTime)
+            periodDao.deleteAllRowsForRemotePeriod(period.id)
+        })
         // A merged lecture is one row shared by several sessions -- removing it must clear every linked
         // session's share of it too, both remotely (their period_sessions rows) and locally (their shadow rows).
         postgrest.from(SupabaseTables.PERIOD_SESSIONS).update({ set("is_deleted", true) }) {

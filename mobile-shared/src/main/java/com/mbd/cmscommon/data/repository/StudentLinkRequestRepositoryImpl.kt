@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.repository
 
+import com.mbd.cmscommon.util.requireAffected
 import com.mbd.cmscommon.util.orThrowValidation
 import com.mbd.cmscommon.util.CmsException
 import com.mbd.cmscommon.auth.SessionManager
@@ -186,8 +187,9 @@ class StudentLinkRequestRepositoryImpl @Inject constructor(
             set("reviewed_at", Instant.now().toString())
             set("rejection_reason", reason?.trim()?.takeIf { it.isNotBlank() })
         }) {
+            select()
             filter { eq("request_id", requestId) }
-        }
+        }.requireAffected("This link request was already handled or you no longer have permission to reject it. Refresh the list.")
 
         requestDao.getById(requestId)?.let { existing ->
             requestDao.upsert(existing.copy(status = "REJECTED", reviewedBy = reviewedByUid, rejectionReason = reason))

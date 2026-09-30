@@ -5,6 +5,15 @@ easy to hit: a row the caller can't update is silently filtered out, not refused
 cache and tell the user it worked. This audit reads every remote write in the repositories and checks it against the
 **production** policies (read-only queries, 2026-09-30).
 
+**Status (fixed in code, migration still to be applied):** both bugs and the false-success cases below are fixed in the apps.
+`supabase/migrations/20260930030000_delete_notification_and_ingest_app_logs.sql` adds `delete_notification` and `ingest_app_logs`; it is
+**not yet applied to production** and must be applied *before* the new app versions are released (until then notification delete and log
+upload report an out-of-date-app error). Guarded writes use `requireAffected` (`core/.../util/RowsAffected.kt`): the soft-deletes of
+calendar events, fines, buildings, rooms, departments, sessions, students, subjects, exam papers, datesheets/papers and timetable periods, the
+mark-edit approve/reject (an approval is no longer recorded unless the score changed), attendance-edit reject and link-request reject. A stale
+local copy is dropped when the server row is gone, and the user is told "That item was already changed or removed." `linkStudent` and
+`unlinkStudent` were deleted.
+
 **Scope:** 58 non-insert writes (44 `update`, 13 `upsert`, 1 `delete`) in `core`, `mobile-shared` and `desktop-shared`.
 Plain inserts are excluded: a rejected insert raises an error, so it can't fail silently.
 

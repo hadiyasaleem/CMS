@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.repository
 
+import com.mbd.cmscommon.util.requireAffected
 import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.local.dao.RoomDao
 import com.mbd.cmscommon.data.mapper.RoomMapper
@@ -77,8 +78,9 @@ class RoomRepositoryImpl @Inject constructor(
 
     override suspend fun deleteRoom(roomId: String) {
         postgrest.from(SupabaseTables.ROOMS).update({ set("is_deleted", true) }) {
+            select()
             filter { eq("room_id", roomId) }
-        }
+        }.requireAffected(onNone = { roomDao.deleteById(roomId) })
         roomDao.deleteById(roomId)
     }
 

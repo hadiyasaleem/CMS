@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.repository
 
+import com.mbd.cmscommon.util.requireAffected
 import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.local.dao.BuildingDao
 import com.mbd.cmscommon.data.mapper.BuildingMapper
@@ -77,8 +78,9 @@ class BuildingRepositoryImpl @Inject constructor(
 
     override suspend fun deleteBuilding(buildingId: String) {
         postgrest.from(SupabaseTables.BUILDINGS).update({ set("is_deleted", true) }) {
+            select()
             filter { eq("building_id", buildingId) }
-        }
+        }.requireAffected(onNone = { buildingDao.deleteById(buildingId) })
         buildingDao.deleteById(buildingId)
     }
 

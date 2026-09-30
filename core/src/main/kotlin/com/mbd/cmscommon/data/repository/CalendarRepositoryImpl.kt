@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.repository
 
+import com.mbd.cmscommon.util.requireAffected
 import com.mbd.cmscommon.domain.model.parseShift
 import com.mbd.cmscommon.data.remote.PgTime
 import com.mbd.cmscommon.data.remote.SupabaseTables
@@ -43,8 +44,9 @@ class CalendarRepositoryImpl @Inject constructor(
 
     override suspend fun deleteEvent(id: String) {
         postgrest.from(SupabaseTables.CALENDAR_EVENTS).update({ set("is_deleted", true) }) {
+            select()
             filter { eq("id", id) }
-        }
+        }.requireAffected()
     }
 
     private fun CalendarEventDto.toDomain() = CalendarEvent(

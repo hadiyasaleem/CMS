@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.repository
 
+import com.mbd.cmscommon.util.requireAffected
 import com.mbd.cmscommon.util.orLogCritical
 import com.mbd.cmscommon.data.remote.PgTime
 import com.mbd.cmscommon.data.remote.SupabaseTables
@@ -92,11 +93,12 @@ class AttendanceEditRequestRepositoryImpl @Inject constructor(
             set("reviewed_by", reviewedBy)
             set("reviewed_at", Instant.now().toString())
         }) {
+            select()
             filter {
                 eq("id", requestId)
                 eq("status", "PENDING")
             }
-        }
+        }.requireAffected("This attendance edit request was already reviewed or removed. Refresh the list.")
     }
 
     private fun AttendanceEditRequestDto.toDomain() = AttendanceEditRequest(

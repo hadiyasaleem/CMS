@@ -32,6 +32,8 @@ object SupabaseTables {
     const val RPC_AVAILABLE_ROLL_NUMBERS = "available_roll_numbers"
     const val RPC_APPROVE_LINK_REQUEST = "approve_link_request"
     const val RPC_APPROVE_ATTENDANCE_EDIT_REQUEST = "approve_attendance_edit_request"
+    const val RPC_DELETE_NOTIFICATION = "delete_notification"
+    const val RPC_INGEST_APP_LOGS = "ingest_app_logs"
     const val BUCKET_EXAM_PAPERS = "exam-papers"
     const val BUCKET_PHOTOS = "photos"
     const val FN_ADMIN_CREATE_USER = "admin-create-user"

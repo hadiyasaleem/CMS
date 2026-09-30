@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.repository
 
+import com.mbd.cmscommon.util.requireAffected
 import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.local.dao.DepartmentDao
 import com.mbd.cmscommon.data.mapper.DepartmentMapper
@@ -77,8 +78,9 @@ class DepartmentRepositoryImpl @Inject constructor(
 
     override suspend fun deleteDepartment(deptId: String) {
         postgrest.from(SupabaseTables.DEPARTMENTS).update({ set("is_deleted", true) }) {
+            select()
             filter { eq("dept_id", deptId) }
-        }
+        }.requireAffected(onNone = { departmentDao.deleteById(deptId) })
         departmentDao.deleteById(deptId)
     }
 

@@ -13,8 +13,6 @@ interface UserRepository {
     suspend fun provisionAdmin(uid: String)
     suspend fun provisionTeacher(uid: String, teacherId: String)
     suspend fun provisionUnlinkedStudent(uid: String)
-    suspend fun linkStudent(uid: String, studentId: String)
-    suspend fun unlinkStudent(uid: String)
     suspend fun touchLastLogin(uid: String)
     suspend fun deleteUser(uid: String)
     suspend fun clearLocalCache()

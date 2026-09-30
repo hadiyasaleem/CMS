@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.repository
 
+import com.mbd.cmscommon.util.requireAffected
 import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.local.dao.SemesterSubjectDao
 import com.mbd.cmscommon.data.local.dao.SemesterTermDao
@@ -107,12 +108,13 @@ class CurriculumRepositoryImpl @Inject constructor(
             )
         }
         postgrest.from(SupabaseTables.SESSION_SUBJECTS).update({ set("is_deleted", true) }) {
+            select()
             filter {
                 eq("session_id", sessionId)
                 eq("semester", semester)
                 eq("course_code", courseCode)
             }
-        }
+        }.requireAffected(onNone = { subjectDao.deleteByCourseCode(sessionId, semester, courseCode) })
         subjectDao.deleteByCourseCode(sessionId, semester, courseCode)
     }
 

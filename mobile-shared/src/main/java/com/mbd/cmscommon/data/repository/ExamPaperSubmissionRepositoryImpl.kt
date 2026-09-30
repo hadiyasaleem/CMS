@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.repository
 
+import com.mbd.cmscommon.util.requireAffected
 import com.mbd.cmscommon.util.orThrowValidation
 import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.local.dao.ExamPaperSubmissionDao
@@ -107,8 +108,9 @@ class ExamPaperSubmissionRepositoryImpl @Inject constructor(
         val existing = submissionDao.getById(id)
         val path = existing?.storagePath
         postgrest.from(SupabaseTables.EXAM_PAPER_SUBMISSIONS).update({ set("is_deleted", true) }) {
+            select()
             filter { eq("id", id) }
-        }
+        }.requireAffected(onNone = { submissionDao.deleteById(id) })
         if (!path.isNullOrBlank()) {
             // Best-effort: the record is already soft-deleted; a blob that could not be removed is only orphaned storage, not a failed delete.
             runCatching { storage.from(SupabaseTables.BUCKET_EXAM_PAPERS).delete(path) }

@@ -75,27 +75,6 @@ class UserRepositoryImpl @Inject constructor(
         resolveRole(uid)
     }
 
-    override suspend fun linkStudent(uid: String, studentId: String) {
-        val sessionId = studentId.substringBeforeLast('_')
-        val roll = studentId.substringAfterLast('_')
-        postgrest.from(SupabaseTables.PROFILES).update({
-            set("linked_session_id", sessionId)
-            set("linked_roll", roll)
-            set("is_deleted", false)
-        }) {
-            filter { eq("email", uid) }
-        }
-    }
-
-    override suspend fun unlinkStudent(uid: String) {
-        postgrest.from(SupabaseTables.PROFILES).update({
-            set("linked_session_id", null as String?)
-            set("linked_roll", null as String?)
-        }) {
-            filter { eq("email", uid) }
-        }
-    }
-
     override suspend fun deleteUser(uid: String) {
         runCatching {
             postgrest.from(SupabaseTables.PROFILES).update({ set("is_deleted", true) }) {

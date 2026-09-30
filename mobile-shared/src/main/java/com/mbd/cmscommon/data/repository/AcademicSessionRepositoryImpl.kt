@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.repository
 
+import com.mbd.cmscommon.util.requireAffected
 import com.mbd.cmscommon.util.orThrowValidation
 import com.mbd.cmscommon.util.CmsException
 import com.mbd.cmscommon.auth.SessionManager
@@ -237,12 +238,16 @@ class AcademicSessionRepositoryImpl @Inject constructor(
     }
 
     override suspend fun deleteSession(sessionId: String) {
-        postgrest.from(SupabaseTables.ACADEMIC_SESSIONS).update({ set("is_deleted", true) }) {
-            filter { eq("session_id", sessionId) }
+        val dropLocalCopy: suspend () -> Unit = {
+            studentDao.deleteForSession(sessionId)
+            periodDao.deleteForSession(sessionId)
+            sessionDao.deleteById(sessionId)
         }
-        studentDao.deleteForSession(sessionId)
-        periodDao.deleteForSession(sessionId)
-        sessionDao.deleteById(sessionId)
+        postgrest.from(SupabaseTables.ACADEMIC_SESSIONS).update({ set("is_deleted", true) }) {
+            select()
+            filter { eq("session_id", sessionId) }
+        }.requireAffected(onNone = dropLocalCopy)
+        dropLocalCopy()
     }
 
     override suspend fun addStudent(sessionId: String, rollNumber: String, name: String, shift: Session, gpa: Double?, cgpa: Double?) {
@@ -281,11 +286,12 @@ class AcademicSessionRepositoryImpl @Inject constructor(
         val sessionId = studentId.substringBeforeLast('_')
         val roll = studentId.substringAfterLast('_')
         postgrest.from(SupabaseTables.SESSION_STUDENTS).update({ set("is_deleted", true) }) {
+            select()
             filter {
                 eq("session_id", sessionId)
                 eq("roll_number", roll)
             }
-        }
+        }.requireAffected(onNone = { studentDao.deleteById(studentId) })
         studentDao.deleteById(studentId)
     }
 
@@ -437,6 +443,8 @@ class AcademicSessionRepositoryImpl @Inject constructor(
             val entities = page.map { it.toEntity(deptId) }
             val (deleted, active) = entities.partition { it.isDeleted }
             sessionDao.applyDelta(active, deleted.map { it.sessionId })
+            // A deleted session takes its roster and timetable with it (the server has removed those rows without tombstones).
+            deleted.forEach { studentDao.deleteForSession(it.sessionId); periodDao.deleteForSession(it.sessionId) }
             maxUpdatedAt = page.maxRemoteUpdatedAt(maxUpdatedAt) { it.updatedAt }
 
             if (page.size < PAGE_SIZE) break

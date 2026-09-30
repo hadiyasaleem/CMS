@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.repository
 
+import com.mbd.cmscommon.util.requireAffected
 import com.mbd.cmscommon.util.CmsException
 import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.local.dao.MarkEditRequestDao
@@ -99,7 +100,9 @@ class MarkEditRequestRepositoryLocalImpl @Inject constructor(
             ?: candidates.firstOrNull { it.semester == request.semester }?.semester
             ?: throw CmsException.NotFound("The marks record this request refers to could not be found. It may have been removed.")
 
+        // The request must not be marked APPROVED unless the score really changed (0 rows = the marks row is gone or not ours to edit).
         postgrest.from(SupabaseTables.SESSION_MARKS).update({ set("score", request.requestedScore) }) {
+            select()
             filter {
                 eq("session_id", request.sessionId)
                 eq("semester", targetSemester)
@@ -107,7 +110,7 @@ class MarkEditRequestRepositoryLocalImpl @Inject constructor(
                 eq("exam_type", request.examType)
                 eq("roll_number", request.rollNumber)
             }
-        }
+        }.requireAffected("The marks record this request refers to could not be updated. It may have been removed; nothing was approved.")
 
         // The remote score is now authoritative -- patch the local cache too, since nothing else
         // resyncs this student's marks after an approval and the reviewer would otherwise keep
@@ -132,8 +135,9 @@ class MarkEditRequestRepositoryLocalImpl @Inject constructor(
             set("reviewed_by", reviewedBy)
             set("reviewed_at", Instant.now().toString())
         }) {
+            select()
             filter { eq("id", requestId) }
-        }
+        }.requireAffected("This request was already reviewed or removed. Refresh the list.", onNone = { requestDao.deleteById(requestId) })
         requestDao.deleteById(requestId)
     }
 

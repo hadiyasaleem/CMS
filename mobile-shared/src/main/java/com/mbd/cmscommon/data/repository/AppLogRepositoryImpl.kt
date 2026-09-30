@@ -1,5 +1,9 @@
 package com.mbd.cmscommon.data.repository
 
+import com.mbd.cmscommon.data.remote.dto.AppLogDto
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import com.mbd.cmscommon.data.local.dao.AppLogDao
 import com.mbd.cmscommon.data.mapper.AppLogMapper
 import com.mbd.cmscommon.data.remote.SupabaseTables
@@ -25,14 +29,37 @@ class AppLogRepositoryImpl @Inject constructor(
                 val batch = appLogDao.pendingBatch(BATCH_SIZE)
                 if (batch.isEmpty()) break
                 val dtos = batch.map(AppLogMapper::entityToDto)
-                // Upsert on the PK (client-generated logId): a row re-queued after a delete that
-                // failed to commit locally must not throw a duplicate-key error on retry.
-                postgrest.from(SupabaseTables.APP_LOGS).upsert(dtos) { onConflict = "log_id" }
+                // Idempotent on the PK (client-generated logId): a row re-queued after a delete that failed to commit
+                // locally must not be refused on retry. `app_logs` has no UPDATE policy, so an upsert's conflict path
+                // hit RLS and blocked the whole batch; the function inserts with `on conflict do nothing` instead.
+                postgrest.rpc(SupabaseTables.RPC_INGEST_APP_LOGS, buildJsonObject { put("p_rows", dtos.toJsonRows()) })
                 appLogDao.deleteByIds(batch.map { it.logId })
                 batches++
                 if (batch.size < BATCH_SIZE) break
             }
             appLogDao.trimOldest(MAX_LOCAL_ROWS)
+        }
+    }
+
+    /** The batch as the JSON array `ingest_app_logs` expects (column names spelled out, independent of the client's naming strategy). */
+    private fun List<AppLogDto>.toJsonRows() = buildJsonArray {
+        forEach { log ->
+            add(
+                buildJsonObject {
+                    put("log_id", log.logId)
+                    put("occurred_at", log.occurredAt)
+                    put("severity", log.severity)
+                    put("message", log.message)
+                    log.kind?.let { put("kind", it) }
+                    log.tag?.let { put("tag", it) }
+                    log.stackTrace?.let { put("stack_trace", it) }
+                    log.accountEmail?.let { put("account_email", it) }
+                    log.appId?.let { put("app_id", it) }
+                    log.appVersion?.let { put("app_version", it) }
+                    log.platform?.let { put("platform", it) }
+                    log.deviceInfo?.let { put("device_info", it) }
+                },
+            )
         }
     }
 

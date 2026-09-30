@@ -1,5 +1,7 @@
 package com.mbd.cmscommon.data.repository
 
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.buildJsonObject
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.repository.notificationReaches
 import com.mbd.cmscommon.auth.SessionManager
@@ -149,9 +151,9 @@ abstract class BaseNotificationRepository(
     }
 
     override suspend fun delete(notificationId: String) {
-        postgrest.from(SupabaseTables.NOTIFICATIONS).update({ set("is_deleted", true) }) {
-            filter { eq("id", notificationId) }
-        }
+        // `notifications` has no UPDATE policy, so a plain soft-delete matched 0 rows for everyone; the function does the
+        // soft delete for the author or an admin and raises a readable error otherwise.
+        postgrest.rpc(SupabaseTables.RPC_DELETE_NOTIFICATION, buildJsonObject { put("p_id", notificationId) })
         notificationDao.deleteById(notificationId)
     }
 

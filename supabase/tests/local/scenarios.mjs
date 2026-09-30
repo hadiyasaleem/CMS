@@ -29,6 +29,7 @@ await seed(`
  insert into session_students(session_id,roll_number,name,shift) values ('eng_2023','ENG-23-01','Ali','MORNING');
  insert into timetable_periods(primary_session_id,day,start_time,end_time,course_code,subject_name,teacher_email,room_no,shift)
    values ('eng_2023','MONDAY','09:00','10:00','ENG-301','Poetry','jane@x.pk','R14','MORNING');
+ insert into notifications(id,title,body,created_by_email) values ('88888888-8888-4888-8888-888888888888','Exam notice','Bring your card','jane@x.pk');
  insert into datesheets(id,session_id,semester,shift) values ('11111111-1111-1111-1111-111111111111','eng_2023',3,'MORNING');
  insert into datesheet_slots(datesheet_id,exam_date,start_time,end_time,course_code,subject_name,room_id,invigilator_email)
    values ('11111111-1111-1111-1111-111111111111','2026-05-12','09:00','12:00','ENG-301','Poetry','r1','jane@x.pk');
@@ -88,6 +89,10 @@ await asUser("approve link request that no longer exists", "admin@example.com", 
 await asUser("approve attendance edit without being admin", "nobody@x.pk", `select approve_attendance_edit_request('${RID}', 'nobody@x.pk')`);
 await asUser("approve attendance edit that no longer exists", "admin@example.com", `select approve_attendance_edit_request('${RID}', 'admin@example.com')`);
 await asUser("record result without permission", "nobody@x.pk", `select record_semester_result('eng_2023','ENG-23-01',3,3.0,3.0)`);
+await asUser("delete a notification someone else sent", "nobody@x.pk", `select delete_notification('88888888-8888-4888-8888-888888888888')`);
+await asUser("delete a notification that no longer exists", "jane@x.pk", `select delete_notification('${RID}')`);
+await asUser("delete your own notification", "jane@x.pk", `select delete_notification('88888888-8888-4888-8888-888888888888')`);
+await asUser("upload app logs (idempotent)", "jane@x.pk", `select ingest_app_logs('[{"log_id":"L1","occurred_at":"2026-09-30T10:00:00Z","severity":"CRITICAL","message":"boom","account_email":"jane@x.pk"}]'::jsonb), ingest_app_logs('[{"log_id":"L1","occurred_at":"2026-09-30T10:00:00Z","severity":"CRITICAL","message":"boom","account_email":"jane@x.pk"}]'::jsonb)`);
 await c.query("rollback");
 fs.writeFileSync(path.join(OUT, "scenario-results.json"), JSON.stringify(results, null, 2));
 for (const r of results) console.log(r.ok ? `OK(no error)  ${r.name}` : `${r.code}  ${r.name}\n      msg: ${r.message}${r.detail ? "\n      detail: " + r.detail : ""}`);

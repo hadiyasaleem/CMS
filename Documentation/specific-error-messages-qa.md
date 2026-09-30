@@ -93,6 +93,8 @@ report unless the check says otherwise.
 | 3.15 | Approve a mark edit request whose marks row was removed | "The marks record this request refers to could not be found. It may have been removed." |
 | 3.16 | Create/delete anything as a user without permission | "You do not have permission to perform this action." |
 | 3.17 | **[needs migration]** Trigger a database constraint (e.g. duplicate via a second device) | Plain-words constraint message — no `violates … constraint` text |
+| 3.18 | Delete a notification you sent (needs migration `20260930030000` applied) | It disappears for other users too; a teacher trying to delete someone else's sees "You can only delete notifications you sent…" |
+| 3.19 | Delete, approve or reject something another device already handled (an event, a fine, a mark edit request, a link request) | "That item was already changed or removed. Refresh and try again." (or the request-specific version) — never a false success |
 
 ## 4. Teacher
 

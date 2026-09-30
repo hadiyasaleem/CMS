@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.data.repository
 
+import com.mbd.cmscommon.util.requireAffected
 import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.local.dao.CalendarEventDao
 import com.mbd.cmscommon.data.local.dao.FineDao
@@ -62,8 +63,9 @@ class CalendarRepositoryLocalImpl @Inject constructor(
 
     override suspend fun deleteEvent(id: String) {
         postgrest.from(SupabaseTables.CALENDAR_EVENTS).update({ set("is_deleted", true) }) {
+            select()
             filter { eq("id", id) }
-        }
+        }.requireAffected(onNone = { calendarEventDao.deleteById(id) })
         calendarEventDao.deleteById(id)
     }
 
@@ -126,8 +128,9 @@ class FineRepositoryLocalImpl @Inject constructor(
 
     override suspend fun deleteFine(id: String) {
         postgrest.from(SupabaseTables.FINES).update({ set("is_deleted", true) }) {
+            select()
             filter { eq("id", id) }
-        }
+        }.requireAffected(onNone = { fineDao.deleteById(id) })
         fineDao.deleteById(id)
     }
 
