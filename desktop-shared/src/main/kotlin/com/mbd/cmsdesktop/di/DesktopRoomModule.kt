@@ -42,11 +42,14 @@ import dagger.Provides
 /** Supplies the one durable Room database used by each desktop application identity. */
 @Module
 object DesktopRoomModule {
-    private fun databaseFile(): File {
+    /** This app's private folder (one per app id); holds the database and the saved login. */
+    fun appDirectory(): File {
         val appId = System.getProperty("cms.desktop.appId").orEmpty().ifBlank { "shared" }
         val root = System.getenv("APPDATA") ?: System.getProperty("user.home")
-        return File(root, "CMSDesktop/$appId/cms.db").also { it.parentFile.mkdirs() }
+        return File(root, "CMSDesktop/$appId").also { it.mkdirs() }
     }
+
+    private fun databaseFile(): File = File(appDirectory(), "cms.db")
 
     @Provides
     @Singleton

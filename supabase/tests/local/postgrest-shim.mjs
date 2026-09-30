@@ -32,6 +32,8 @@ async function q(sql, values = [], who = identity) {
     c.release();
   }
 }
+let authTtl = 3600; // seconds a minted access token stays valid
+const knownRefresh = new Map();
 let failing = new Set(); // tables that answer 503, to test how a refresh copes with a failing table
 
 const ident = (s) => {
@@ -94,11 +96,42 @@ http.createServer(async (req, res) => {
     if (url.pathname === "/__log") return send(200, log);
     if (url.pathname === "/__log/clear") { log = []; return send(200, {}); }
     if (url.pathname === "/__fail") { failing = new Set(JSON.parse((await readBody(req)) || "{}").tables ?? []); return send(200, {}); }
+    if (url.pathname === "/__authttl") { authTtl = Number(JSON.parse((await readBody(req)) || "{}").seconds ?? 3600); return send(200, {}); }
     if (url.pathname === "/__as") { const b = JSON.parse((await readBody(req)) || "{}"); identity = b.email ? { email: b.email, sub: b.sub } : null; return send(200, {}); }
     if (url.pathname === "/__sql") {
       const { sql, params, as } = JSON.parse(await readBody(req));
       const r = await q(sql, params ?? [], as ?? null);
       return send(200, r.rows);
+    }
+    // ---- minimal GoTrue: password sign-in, refresh, user, logout (any password is accepted; tests choose token lifetime)
+    if (url.pathname.startsWith("/auth/v1/")) {
+      const b64 = (o) => Buffer.from(JSON.stringify(o)).toString("base64url");
+      const mint = (email, id) => {
+        const exp = Math.floor(Date.now() / 1000) + authTtl;
+        const user = { id, aud: "authenticated", role: "authenticated", email, email_confirmed_at: new Date().toISOString(), created_at: new Date().toISOString(), updated_at: new Date().toISOString(), app_metadata: {}, user_metadata: {} };
+        const rt = `rt-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        knownRefresh.set(rt, email);
+        return { access_token: `${b64({ alg: "HS256", typ: "JWT" })}.${b64({ sub: id, email, role: "authenticated", aud: "authenticated", exp })}.sig`, token_type: "bearer", expires_in: authTtl, expires_at: exp, refresh_token: rt, user };
+      };
+      log.push({ method: req.method, table: "auth", query: url.pathname + url.search, returned: 0 });
+      if (url.pathname === "/auth/v1/token") {
+        if (failing.has("auth")) return send(503, { message: "injected failure" });
+        const body = JSON.parse((await readBody(req)) || "{}");
+        if (url.searchParams.get("grant_type") === "password") {
+          const u = (await pool.query("select id::text from auth.users where lower(email)=lower($1)", [body.email])).rows[0];
+          if (!u) return send(400, { error: "invalid_grant", error_description: "Invalid login credentials" });
+          return send(200, mint(body.email, u.id));
+        }
+        if (url.searchParams.get("grant_type") === "refresh_token") {
+          const u = (await pool.query("select id::text, email from auth.users limit 1 offset $1", [0])).rows[0];
+          const email = knownRefresh.get(body.refresh_token) ?? u?.email;
+          const id = (await pool.query("select id::text from auth.users where email=$1", [email])).rows[0]?.id ?? u?.id;
+          return send(200, mint(email, id));
+        }
+      }
+      if (url.pathname === "/auth/v1/user") return send(200, { id: "x", aud: "authenticated", email: identity?.email ?? null, app_metadata: {}, user_metadata: {} });
+      if (url.pathname === "/auth/v1/logout") return send(204);
+      return send(404, { message: "not found" });
     }
     const m = url.pathname.match(/^\/rest\/v1\/([a-z_0-9]+)$/i);
     if (!m) return send(404, { message: "not found" });

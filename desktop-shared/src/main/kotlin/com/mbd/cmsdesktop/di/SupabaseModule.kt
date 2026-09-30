@@ -66,7 +66,11 @@ object SupabaseModule {
             )
             install(Auth) {
                 val appId = this@SupabaseModule.appId()
-                sessionManager = RoomAuthSessionManager(database.desktopAuthSessionDao())
+                // Kept outside the wipeable Room database so a schema change or update does not sign everyone out.
+                sessionManager = com.mbd.cmsdesktop.auth.FileAuthSessionManager(
+                    file = java.io.File(DesktopRoomModule.appDirectory(), "auth-session.json"),
+                    legacy = RoomAuthSessionManager(database.desktopAuthSessionDao()),
+                )
                 codeVerifierCache = RoomAuthCodeVerifierCache(database.desktopAuthCodeVerifierDao())
             }
             install(Postgrest)

@@ -53,7 +53,7 @@ fun main() = application {
     LaunchedEffect(component) {
         val accountKey = withTimeoutOrNull(10_000) { component.sessionManager().awaitInitialization() }
         val cachedRole = accountKey?.let { key ->
-            (component.userRepository().getCachedRole(key)).takeIf { it is UserRole.LinkedStudent || it is UserRole.UnlinkedStudent }
+            runCatching { component.userRepository().getCachedRole(key) }.getOrNull()?.takeIf { it is UserRole.LinkedStudent || it is UserRole.UnlinkedStudent }
         }
         role = cachedRole
         authChecked = cachedRole != null
