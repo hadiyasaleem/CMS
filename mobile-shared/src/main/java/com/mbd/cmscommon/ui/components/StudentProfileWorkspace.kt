@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.controller.fineAmountError
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Camera
 import com.mbd.cmscommon.controller.rollBlockHint
@@ -461,7 +462,7 @@ private fun AddProfileFineDialog(onDismiss: () -> Unit, onConfirm: (String, Doub
     var reason by remember { mutableStateOf("") }
 
     val parsedAmount = amount.toDoubleOrNull()
-    val error = if (amount.isNotBlank() && (parsedAmount == null || parsedAmount <= 0.0)) "Enter an amount greater than zero." else null
+    val error = if (amount.isNotBlank()) fineAmountError(parsedAmount) else null
 
     AlertDialog(
         onDismissRequest = onDismiss,

@@ -1,5 +1,6 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.controller.termDatesError
 import com.mbd.cmscommon.controller.sharedCurriculumNote
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -343,8 +344,6 @@ private fun TermDatesEditorDialog(
     var error by remember { mutableStateOf<String?>(null) }
     var saving by remember { mutableStateOf(false) }
 
-    val parsedStart = runCatching { if (start.isBlank()) null else LocalDate.parse(start.trim()) }
-    val parsedEnd = runCatching { if (end.isBlank()) null else LocalDate.parse(end.trim()) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -366,12 +365,10 @@ private fun TermDatesEditorDialog(
             TextButton(
                 onClick = {
                     error = null
-                    if (parsedStart.isFailure) {
-                        error = "Use a valid YYYY-MM-DD start date."
-                    } else if (parsedEnd.isFailure) {
-                        error = "Use a valid YYYY-MM-DD end date."
-                    } else if (parsedStart.getOrNull() != null && parsedEnd.getOrNull() != null && parsedEnd.getOrNull()!!.isBefore(parsedStart.getOrNull())) {
-                        error = "End date cannot be before start date."
+                    // The same check the controller applies, so the message is identical wherever it is caught.
+                    val problem = termDatesError(start, end)
+                    if (problem != null) {
+                        error = problem
                     } else {
                         saving = true
                         onSave(start.trim(), end.trim()) { done ->

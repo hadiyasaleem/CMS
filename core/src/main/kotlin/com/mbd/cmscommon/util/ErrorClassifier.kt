@@ -76,6 +76,11 @@ object ErrorClassifier {
         }
 
         PostgresErrorParser.parse(error)?.let { pg ->
+            // The app asked for a table, column, relationship or function the server doesn't have: the two are out of step.
+            // Still a defect worth a reference code and a log line, but say so instead of a bare "Couldn't save."
+            if (pg.code in SCHEMA_MISMATCH_CODES) {
+                return unexpected(error, "$fallback The app may be out of date with the server; update the app and try again.")
+            }
             postgresMessage(pg)?.let { (kind, message) ->
                 return ClassifiedError(kind, Severity.EXPECTED, message, error)
             }
@@ -168,6 +173,9 @@ object ErrorClassifier {
         "22001" -> ErrorKind.VALIDATION to ConstraintMessages.tooLong(pg)
         "22P02", "22007", "22008", "22003" -> ErrorKind.VALIDATION to ConstraintMessages.invalidFormat()
         "42501" -> ErrorKind.PERMISSION to ConstraintMessages.permissionDenied(pg)
+        // PostgREST's own codes (the request was fine as SQL but not as an API call).
+        "PGRST116" -> ErrorKind.NOT_FOUND to "That record no longer exists. Refresh and try again."
+        "PGRST301", "PGRST302" -> ErrorKind.AUTH to "Your session has expired. Sign in again."
         // Transient database conditions: the same request usually works a moment later.
         "40001", "40P01" -> ErrorKind.CONFLICT to "Someone else changed this at the same time. Refresh and try again."
         "53300", "53400", "08000", "08003", "08006", "57P01", "57P03" ->
@@ -186,6 +194,8 @@ object ErrorClassifier {
         return if (UNSAFE_MARKERS.none { line.contains(it, ignoreCase = true) }) line else null
     }
 
+    /** PostgREST: relationship (200), function (202), column (204) or table/view (205) not found in the schema cache; plus SQLSTATE undefined table/column. */
+    private val SCHEMA_MISMATCH_CODES = setOf("PGRST200", "PGRST202", "PGRST204", "PGRST205", "42P01", "42703")
     private val PERMISSION_HINTS = listOf("don't have permission", "only an admin", "set by an admin", "ask an admin")
     private val CONFLICT_HINTS = listOf("already", "overlapping", "is full", "no longer", "still has", "still have")
     private val UNSAFE_MARKERS = listOf(

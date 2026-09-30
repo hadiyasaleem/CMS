@@ -68,23 +68,13 @@ class SemesterSubjectsController(
 
     fun saveTerm(startText: String, endText: String, onDone: (Boolean) -> Unit) {
         _termError.value = null
-        val (start, startInvalid) = parseDate(startText)
-        val (end, endInvalid) = parseDate(endText)
-        if (startInvalid) {
-            _termError.value = "Enter the start date as YYYY-MM-DD (for example 2026-09-01)."
+        termDatesError(startText, endText)?.let { problem ->
+            _termError.value = problem
             onDone(false)
             return
         }
-        if (endInvalid) {
-            _termError.value = "Enter the end date as YYYY-MM-DD (for example 2027-01-15)."
-            onDone(false)
-            return
-        }
-        if (start != null && end != null && start.isAfter(end)) {
-            _termError.value = "The term can't end ($end) before it starts ($start)."
-            onDone(false)
-            return
-        }
+        val start = parseDate(startText)
+        val end = parseDate(endText)
         launch("save the term dates") {
             try {
                 repo.saveSemesterTerm(sessionId, semester, start, end)
@@ -152,10 +142,6 @@ class SemesterSubjectsController(
         _notice.value = "$courseCode removed."
     }
 
-    private fun parseDate(text: String): Pair<LocalDate?, Boolean> {
-        val trimmed = text.trim()
-        if (trimmed.isEmpty()) return null to false
-        val parsed = runCatching { LocalDate.parse(trimmed) }.getOrNull()
-        return parsed to (parsed == null)
-    }
+    /** Already validated by [termDatesError]; blank means "not set". */
+    private fun parseDate(text: String): LocalDate? = text.trim().takeIf { it.isNotEmpty() }?.let(LocalDate::parse)
 }

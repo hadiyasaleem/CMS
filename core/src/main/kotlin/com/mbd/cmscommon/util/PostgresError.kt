@@ -54,7 +54,7 @@ data class PostgresError(
 }
 
 object PostgresErrorParser {
-    private val JSON_CODE = Regex(""""code"\s*:\s*"([0-9A-Za-z]{5})"""")
+    private val JSON_CODE = Regex(""""code"\s*:\s*"([0-9A-Za-z]{5,8})"""")
     private val JSON_MESSAGE = Regex(""""message"\s*:\s*"((?:[^"\\]|\\.)*)"""")
     private val JSON_DETAILS = Regex(""""details"\s*:\s*"((?:[^"\\]|\\.)*)"""")
     private val JSON_HINT = Regex(""""hint"\s*:\s*"((?:[^"\\]|\\.)*)"""")

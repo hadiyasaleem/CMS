@@ -194,6 +194,11 @@ internal object ConstraintMessages {
     fun invalidFormat(): String = "One of the entered values is in the wrong format. Check the details and try again."
 
     fun permissionDenied(pg: PostgresError): String {
+        // Only an admin may change a saved score (teachers correct it through a mark edit request), so a batch that includes
+        // a roll someone already saved is refused as a whole.
+        if (pg.table == "session_marks") {
+            return "Some of these scores were already saved and are locked. Reload the class, then request an edit for the ones that need changing."
+        }
         val entity = pg.table?.let(TABLE_LABELS::get)
         return if (entity != null) {
             "You don't have permission to change $entity records."

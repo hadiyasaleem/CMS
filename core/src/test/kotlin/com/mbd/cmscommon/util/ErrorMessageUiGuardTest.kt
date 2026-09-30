@@ -76,7 +76,7 @@ class ErrorMessageUiGuardTest {
     fun aCatchBlockNeverSwallowsAFailure() {
         // Anything that classifies (userMessageLogged / ErrorClassifier / FileReadErrors / describe), logs (CmsLog / orLogCritical),
         // hands the failure on (throw / reportFailure / reportPickFailure) or is a pure cancellation rethrow is fine.
-        val handled = Regex("""userMessageLogged|orLogCritical|isSuccessLogged|CmsLog|ErrorClassifier|FileReadErrors|describe\(|throw |reportFailure|reportPickFailure|reportPhotoPickFailure|userMessage\(|Outcome\.Error\([^"]*\b\w+\)|\.onFailure""")
+        val handled = Regex("""userMessageLogged|orLogCritical|isSuccessLogged|CmsLog|ErrorClassifier|FileReadErrors|describe\(|throw |reportFailure|reportPickFailure|reportPhotoPickFailure|userMessage\(|Outcome\.Error\([^"]*\b\w+\)""")
         val hits = mutableListOf<Hit>()
         for (file in uiSources()) {
             val lines = file.readLines()
@@ -109,6 +109,48 @@ class ErrorMessageUiGuardTest {
             }
         }
         assertNone("A catch block sets a fixed message that ignores the cause -- classify the exception instead", hits)
+    }
+
+    @Test
+    fun anOnFailureBlockActuallyUsesTheFailure() {
+        // `.onFailure { }`, `.onFailure { _ -> }` or a body that never looks at the exception swallows it just as surely as an
+        // empty catch. The block must use its parameter (`it` or the name given) -- to classify, log, store or rethrow it.
+        val hits = mutableListOf<Hit>()
+        for (file in sources()) {
+            val lines = file.readLines()
+            lines.forEachIndexed { i, line ->
+                if (isComment(line)) return@forEachIndexed
+                val at = line.indexOf(".onFailure")
+                if (at < 0) return@forEachIndexed
+                val open = line.indexOf('{', at)
+                if (open < 0) return@forEachIndexed // onFailure(function reference): the function receives the failure
+                // Collect the block text from the opening brace to its matching close, possibly across lines.
+                val text = StringBuilder()
+                var depth = 0
+                var done = false
+                var j = i
+                var col = open
+                while (j < lines.size && !done) {
+                    val current = lines[j]
+                    for (k in col until current.length) {
+                        val c = current[k]
+                        if (c == '{') depth++
+                        if (c == '}') depth--
+                        text.append(c)
+                        if (depth == 0) { done = true; break }
+                    }
+                    if (!done) text.append('\n')
+                    j++
+                    col = 0
+                }
+                val body = text.toString().removePrefix("{").removeSuffix("}").trim()
+                val declared = Regex("""^(\w+)\s*->""").find(body)
+                val param = declared?.groupValues?.get(1) ?: "it"
+                val usage = if (declared != null) body.removePrefix(declared.value) else body
+                if (param == "_" || !Regex("""\b$param\b""").containsMatchIn(usage)) hits += Hit(file, i + 1, line.trim())
+            }
+        }
+        assertNone("onFailure block never uses the failure -- classify it (userMessageLogged), log it (CmsLog/orLogCritical), store or rethrow it", hits)
     }
 
     @Test

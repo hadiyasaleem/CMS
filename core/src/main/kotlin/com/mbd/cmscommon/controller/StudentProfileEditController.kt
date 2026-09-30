@@ -67,7 +67,7 @@ class StudentProfileEditController(
         requireValid(normalizedCategory in setOf("LIBRARY", "ATTENDANCE", "EXAM", "DISCIPLINARY", "OTHER")) {
             "Choose a valid fine category."
         }
-        requireValid(amount > 0.0) { "Fine amount must be greater than zero." }
+        fineAmountError(amount).orThrowValidation("amount")
         requireValid(normalizedReason.isNotBlank()) { "Fine reason is required." }
         requireValid(normalizedReason.length <= 300) { "Fine reason must not exceed 300 characters." }
 
