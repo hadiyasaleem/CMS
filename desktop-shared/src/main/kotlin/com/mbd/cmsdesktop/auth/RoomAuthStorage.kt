@@ -100,11 +100,13 @@ class FileAuthSessionManager(
         readFile()?.let { return it }
         // First launch after the upgrade: bring the login over from the Room table, if it still has one.
         val old = runCatching { legacy?.loadSession() }.getOrNull() ?: return null
+        // Best-effort: the login is already in hand; failing to copy it to the file only means the next launch adopts it again.
         runCatching { saveSession(old) }
         return old
     }
 
     override suspend fun deleteSession() {
+        // Best-effort: signing out must succeed locally even if a file or the old Room row cannot be removed.
         runCatching { file.delete() }
         runCatching { legacy?.deleteSession() }
     }

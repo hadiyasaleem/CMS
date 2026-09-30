@@ -272,17 +272,21 @@ fun studentGridTimetableExport(periods: List<SessionPeriod>): ExportDocument {
 
 fun timetableExport(session: AcademicSession?, periods: List<SessionPeriod>, shift: Session? = null): ExportDocument {
     val dayOrder = DayOfWeek.entries
-    val header = listOf("Day", "Start", "End", "Course", "Subject", "Type", "Teacher", "Room", "Effective")
+    val header = listOf("Day", "Start", "End", "Course", "Subject", "Type", "Teacher", "Room (if different)", "Effective")
+    // The class's usual room is stated once in the title; a period only repeats its room when it is held elsewhere.
+    val usualRoom = periods.filter { it.periodType != PeriodType.BREAK }
+        .mapNotNull { listOfNotNull(it.building, it.roomNo).joinToString(" ").ifBlank { null } }
+        .groupingBy { it }.eachCount().let { counts -> counts.values.maxOrNull()?.let { best -> counts.entries.first { it.value == best }.key } }
     val rows = periods.sortedWith(compareBy({ dayOrder.indexOf(it.day) }, { it.startTime })).map { p ->
         listOf(
             titleCase(p.day.name), clockDisplay(p.startTime), clockDisplay(p.endTime), p.courseCode, p.subjectName, titleCase(p.periodType.name), p.teacherName,
-            listOfNotNull(p.building, p.roomNo).joinToString(" "),
+            listOfNotNull(p.building, p.roomNo).joinToString(" ").takeIf { it != usualRoom }.orEmpty(),
             listOfNotNull(p.effectiveFrom?.toString(), p.effectiveTo?.toString()).joinToString(" to "),
         )
     }
     return ExportDocument(
         fileBase = listOfNotNull("timetable", session?.sessionId ?: "session", shift?.name?.lowercase(Locale.ROOT)).joinToString("_"),
-        title = listOfNotNull("Class Timetable", sessionTitle(session, shift).ifBlank { null }),
+        title = listOfNotNull("Class Timetable", sessionTitle(session, shift).ifBlank { null }, usualRoom?.let { "Room: $it" }),
         sections = listOf(ExportSection("Timetable", header, rows)),
     )
 }

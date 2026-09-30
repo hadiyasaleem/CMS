@@ -27,7 +27,7 @@ private fun masterExportDayClusters(periods: List<SessionPeriod>): List<MasterEx
     if (byDay.isEmpty()) return emptyList()
     fun signature(dayPeriods: List<SessionPeriod>) = dayPeriods
         .sortedBy { it.startTime }
-        .joinToString("|") { "${it.courseCode}@${it.startTime}-${it.endTime}" }
+        .joinToString("|") { "${it.courseCode}@${it.startTime}-${it.endTime}@${periodLocation(it).orEmpty()}" } // a different room is a different row
     return byDay.entries
         .groupBy({ signature(it.value) }, { it.key to it.value })
         .values
@@ -80,8 +80,16 @@ fun masterGridTitleLines(grid: MasterGrid): List<String> {
     )
 }
 
-/** "R#12", "BS Block R#22", or null when neither is recorded -- shown on the period cell itself,
- * since a department can meet in a different room for each of its periods. */
+/** The room a department uses most, written once under its code; a period held elsewhere still prints its own room
+ * on the cell. Ties go to the room used first. */
+internal fun dominantLocation(periods: List<SessionPeriod>): String? =
+    periods.filter { it.periodType != PeriodType.BREAK }.mapNotNull { periodLocation(it) }
+        .groupingBy { it }.eachCount().let { counts ->
+            val best = counts.values.maxOrNull() ?: return null
+            periods.filter { it.periodType != PeriodType.BREAK }.mapNotNull { periodLocation(it) }.first { counts[it] == best }
+        }
+
+/** "R#12", "BS Block R#22", or null when neither is recorded. */
 private fun periodLocation(period: SessionPeriod): String? =
     listOfNotNull(period.building?.ifBlank { null }, period.roomNo?.ifBlank { null }).joinToString(" ").ifBlank { null }
 
@@ -96,19 +104,20 @@ fun masterGridLayout(grid: MasterGrid, breakSlot: Pair<String, String>? = null):
 
     val blocks = grid.rows.map { row ->
         val deptLabel = row.department?.code ?: row.session.deptId
+        val usualRoom = dominantLocation(row.periods)
         val subRows = masterExportDayClusters(row.periods).map { cluster ->
             val byKey = cluster.periods.associateBy { clockDisplay(it.startTime) to clockDisplay(it.endTime) }
             val cells = slotKeys.withIndex().mapNotNull { (i, key) ->
                 val period = byKey[key]
                 when {
-                    period != null -> i to TimetableGridPeriodCell(period.courseCode, period.creditHours, period.subjectName, period.teacherName, location = periodLocation(period), isBreak = period.periodType == PeriodType.BREAK)
+                    period != null -> i to TimetableGridPeriodCell(period.courseCode, period.creditHours, period.subjectName, period.teacherName, location = periodLocation(period)?.takeIf { it != usualRoom }, isBreak = period.periodType == PeriodType.BREAK)
                     key == breakSlot -> i to TimetableGridPeriodCell("", null, "", "", isBreak = true)
                     else -> null
                 }
             }.toMap()
             TimetableGridSubRow(masterExportDayRangeLabel(cluster.days), cells)
         }
-        TimetableGridBlock(listOf(deptLabel), subRows)
+        TimetableGridBlock(listOfNotNull(deptLabel, usualRoom), subRows)
     }
     return TimetableGridLayout(masterGridTitleLines(grid), columns, blocks)
 }

@@ -4,9 +4,8 @@ package com.mbd.cmscommon.export
  * "start-end" range shown under it. */
 data class TimetableGridColumn(val index: String, val timeLabel: String)
 
-/** [location] (room, and building when recorded) lives on the cell, not the department block --
- * a department can meet in a different room for each period, so it can't be merged with the dept
- * column the way a single fixed room could. */
+/** [location] (room, and building when recorded) is set on a cell only when it differs from the department's usual
+ * room, which is written once under the department code in [TimetableGridBlock.deptLines]. */
 data class TimetableGridPeriodCell(
     val courseCode: String,
     val creditHours: Int?,
@@ -19,7 +18,7 @@ data class TimetableGridPeriodCell(
 /** One printed row for a department: the days it covers and its periods, keyed by column index. */
 data class TimetableGridSubRow(val daysLabel: String, val cells: Map<Int, TimetableGridPeriodCell>)
 
-/** One department's block: [deptLines] (just the department code) is drawn once, merged vertically
+/** One department's block: [deptLines] (the department code, then its usual room) is drawn once, merged vertically
  * across all of [subRows] -- mirroring the printed timetable's merged first column. */
 data class TimetableGridBlock(val deptLines: List<String>, val subRows: List<TimetableGridSubRow>)
 
