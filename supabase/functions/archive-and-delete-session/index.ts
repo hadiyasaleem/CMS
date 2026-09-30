@@ -93,5 +93,17 @@ Deno.serve(handle(async (req) => {
     .delete().eq("session_id", sessionId);
   if (deleteErr) throw dbError(deleteErr, "The backup was saved, but the session couldn't be deleted. Try again.");
 
-  return ok({ sessionId, archivePath: path, papersDeleted: paperPaths.length });
+  // 3) Leave a tombstone. The apps sync "rows changed since last time", and a physically removed row never shows up in
+  // that, so other devices would keep the session (and its roster/timetable) in their caches forever. A soft-deleted
+  // stub of the session row is what tells them to drop it; the heavy data stays gone.
+  const { error: tombstoneErr } = await svc.from("academic_sessions").insert({
+    ...session,
+    is_active: false,
+    is_deleted: true,
+    deleted_at: new Date().toISOString(),
+    deleted_by: caller.email,
+  });
+  if (tombstoneErr) console.error("archive tombstone failed (session is deleted, other devices may keep a stale copy):", tombstoneErr);
+
+  return ok({ sessionId, archivePath: path, papersDeleted: paperPaths.length, tombstone: !tombstoneErr });
 }));

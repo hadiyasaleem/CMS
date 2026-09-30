@@ -1,5 +1,6 @@
-// promote-session — bumps a session's current_semester and deletes the completed
-// semester's exam papers (Storage objects + metadata rows). Marks/GPA/attendance
+// promote-session — bumps a session's current_semester and removes the completed
+// semester's exam papers (Storage objects + soft-deleted metadata rows, so every device's incremental sync
+// sees them go). Marks/GPA/attendance
 // history is NEVER touched — it is the longitudinal stats dataset.
 //
 // POST { sessionId }
@@ -7,7 +8,7 @@ import { dbError, handle, httpError, ok, readJson, requireAdmin, serviceClient }
 
 Deno.serve(handle(async (req) => {
   const svc = serviceClient();
-  await requireAdmin(req, svc);
+  const caller = await requireAdmin(req, svc);
 
   const { sessionId } = await readJson(req) as { sessionId?: string };
   if (!sessionId) throw httpError(400, "Choose a session to promote.");
@@ -22,7 +23,7 @@ Deno.serve(handle(async (req) => {
   // 1) Delete the completed semester's exam papers: Storage blobs first, then rows.
   const { data: papers, error: papersErr } = await svc.from("exam_paper_submissions")
     .select("id,storage_path,key_storage_path")
-    .eq("session_id", sessionId).eq("semester", completed);
+    .eq("session_id", sessionId).eq("semester", completed).eq("is_deleted", false);
   if (papersErr) {
     throw dbError(papersErr, `Couldn't check Semester ${completed}'s exam papers, so the session was not promoted. Try again.`);
   }
@@ -30,8 +31,11 @@ Deno.serve(handle(async (req) => {
     .flatMap((p) => [p.storage_path, p.key_storage_path])
     .filter((p): p is string => !!p);
   if (paths.length > 0) await svc.storage.from("exam-papers").remove(paths);
-  const { error: papersDeleteErr } = await svc.from("exam_paper_submissions").delete()
-    .eq("session_id", sessionId).eq("semester", completed);
+  // Soft delete: a physically removed row is invisible to the apps' "changed since last sync" pulls, so other devices
+  // would keep showing the paper forever. The tombstone (is_deleted) is what tells them to drop it.
+  const { error: papersDeleteErr } = await svc.from("exam_paper_submissions")
+    .update({ is_deleted: true, deleted_at: new Date().toISOString(), deleted_by: caller.email })
+    .eq("session_id", sessionId).eq("semester", completed).eq("is_deleted", false);
   if (papersDeleteErr) {
     throw dbError(papersDeleteErr, `Couldn't remove Semester ${completed}'s exam papers, so the session was not promoted. Try again.`);
   }

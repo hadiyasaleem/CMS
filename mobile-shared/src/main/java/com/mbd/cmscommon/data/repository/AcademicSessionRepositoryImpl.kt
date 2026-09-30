@@ -505,6 +505,8 @@ class AcademicSessionRepositoryImpl @Inject constructor(
             val entities = page.map { it.toEntity(it.deptId ?: "") }
             val (deleted, active) = entities.partition { it.isDeleted }
             sessionDao.applyDelta(active, deleted.map { it.sessionId })
+            // A deleted session takes its roster and timetable with it (the server has removed those rows without tombstones).
+            deleted.forEach { studentDao.deleteForSession(it.sessionId); periodDao.deleteForSession(it.sessionId) }
             maxUpdatedAt = page.maxRemoteUpdatedAt(maxUpdatedAt) { it.updatedAt }
 
             if (page.size < PAGE_SIZE) break
