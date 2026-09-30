@@ -6,7 +6,9 @@
 --   production:  paste into the Supabase SQL editor (read-only) and export the result
 --
 -- Not comparable on a scratch database (skipped here): grants/ACLs (the scratch shim lacks Supabase's default
--- privileges), storage buckets/policies, pg_cron jobs, triggers on auth.users, extension versions and data.
+-- privileges), storage buckets/policies, pg_cron jobs, triggers on auth.users, extension versions and data. Those were
+-- checked by reading production directly; see "Production snapshot vs. what the migrations intend" in
+-- Documentation/local-test-tools.md.
 select 'fn' as k, p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' as name,
        md5(regexp_replace(regexp_replace(pg_get_functiondef(p.oid), '--[^\n]*', '', 'g'), '\s+', ' ', 'g')) as h
   from pg_proc p where p.pronamespace = 'public'::regnamespace and p.prokind = 'f'

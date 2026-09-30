@@ -87,10 +87,45 @@ trigger, policy and index **except** the four items below, which existed only on
 | policy `mark_edit_requests.adm_mark_edit_requests` | not limited to `authenticated` (same effect) | `to authenticated` |
 | indexes `idx_session_attendance_updated_entity`, `ux_session_attendance_entity_id` | present (pagination tie-breaker on `entity_id`) | missing |
 
-Not comparable here, so not checked: grants/ACLs (the scratch shim lacks Supabase's default privileges), storage
-buckets and policies, `pg_cron` jobs, triggers on `auth.users`, extension versions, and data. Production also has a
-data-only migration, `bump_english_session_capacity` (`update academic_sessions set max_students = 100 where session_id
-in ('eng_2023','eng_2024')`), which is deliberately not replayed.
+Production also has a data-only migration, `bump_english_session_capacity` (`update academic_sessions set max_students
+= 100 where session_id in ('eng_2023','eng_2024')`), which is deliberately not replayed.
+
+### Production snapshot vs. what the migrations intend (grants, storage, cron, auth)
+
+The scratch database can't reproduce these (it lacks Supabase's default privileges and storage/cron internals), so
+they were checked by reading production directly (read-only queries) and comparing with
+`20260714000003_storage_cron.sql`, `20260714000004_harden_functions.sql` and the later revoke migrations.
+
+| Area | Result |
+|---|---|
+| Storage buckets | `documents` (10 MB, PDF+JSON), `exam-papers` (5 MB, PDF), `photos` (1 MB, JPEG/PNG/WebP), all private — **match** |
+| Storage policies (`storage.objects`) | All 8 exist and match the migration (papers ×4, photos ×2, documents ×2) — **match** |
+| `pg_cron` | `purge-expired-notifications` (02:15) and `flag-ended-sessions` (02:30), both active — **match** |
+| Trigger on `auth.users` | `trg_on_auth_user_created` → `fn_handle_new_user()` — **match** |
+| Row-level security | enabled on all 27 public tables — **match** |
+| Table grants | every public table grants Supabase's default privileges (including `TRUNCATE`) to `anon` and `authenticated`. Access is therefore governed entirely by RLS (which is on everywhere); PostgREST does not expose `TRUNCATE` — **standard Supabase, no action** |
+| Function grants | `approve_*`, `record_semester_result`, `available_roll_numbers`, the `my_*`/`teach*` RLS helpers: `authenticated` + `service_role` only, `anon` revoked — **match** (the advisor's "SECURITY DEFINER executable" warnings for these are intentional: policies call them and the `approve_*`/`record_*` functions check the caller inside) |
+
+Deviations from the migrations' *intent* (none is an exploitable exposure; nothing was changed on production):
+
+| Function | Intent | Production | Why it is harmless |
+|---|---|---|---|
+| `fn_touch_updated_at()`, `fn_enforce_roster_cap()`, `fn_check_timetable_conflict()` | revoke from `public, anon, authenticated` (0004) | still executable by `anon` and `authenticated` (they were re-created later and picked up Supabase's default grants) | trigger functions cannot be called through the API, and `EXECUTE` is only checked when a trigger is *created* |
+| `bootstrap_admin_email()` | revoke from `public, anon` | executable by `anon` and `authenticated` | returns the constant `admin@example.com` |
+| `audit_actor()`, `fn_cms_audit_row()` | (created in the audit-metadata migration without a revoke) | executable by `PUBLIC` | `audit_actor()` returns the caller's own JWT email; `fn_cms_audit_row()` is a trigger function. Do **not** revoke `audit_actor()` from `authenticated`: the audit trigger runs as the caller and needs it |
+
+If you want the intent enforced, this is safe to review and apply (it does not touch `audit_actor`):
+
+```sql
+revoke all on function fn_touch_updated_at(), fn_enforce_roster_cap(), fn_check_timetable_conflict() from public, anon, authenticated;
+revoke all on function bootstrap_admin_email() from public, anon;
+```
+
+**Bootstrap admin.** `is_admin()`, `requireAdmin` in the edge functions and the storage policies all treat the account
+`admin@example.com` as a permanent admin. That account exists and its email is confirmed, so nobody can register it
+again. `example.com` is a placeholder domain with no mailbox, so a forgotten password can't be reset by email — keep its
+password in a password manager, or replace the bootstrap address with a real one (it appears in
+`bootstrap_admin_email()` and in `supabase/functions/_shared/auth.ts`).
 
 **Migration versions.** Repo file names and the versions recorded on production differ for every migration (production
 uses the time it was applied, e.g. the humanize-errors migration is `20260929…` there and `20260930000000` here). Do not
