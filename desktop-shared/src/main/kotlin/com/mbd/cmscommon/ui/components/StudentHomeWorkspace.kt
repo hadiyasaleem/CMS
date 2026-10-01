@@ -174,7 +174,7 @@ private fun StudentClassRow(period: com.mbd.cmscommon.domain.model.SessionPeriod
         Column(Modifier.weight(1f)) {
             Text(period.subjectName, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
             val meta = listOfNotNull(
-                period.teacherName.ifBlank { null },
+                period.teacherLabel.ifBlank { null },
                 listOfNotNull(period.building?.ifBlank { null }, period.roomNo?.ifBlank { null }).joinToString(" / ").ifBlank { null },
             ).joinToString(" · ")
             if (meta.isNotBlank()) Text(meta, color = ModMuted, style = MaterialTheme.typography.bodySmall)

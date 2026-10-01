@@ -44,7 +44,7 @@ fun siblingDaysFor(period: SessionPeriod, periods: List<SessionPeriod>): Set<Day
     periods.asSequence()
         .filter {
             it.courseCode == period.courseCode && it.startTime == period.startTime &&
-                it.endTime == period.endTime && it.teacherId == period.teacherId
+                it.endTime == period.endTime && it.hasSameTeachersAs(period)
         }
         .map { it.day }
         .toSet() + period.day

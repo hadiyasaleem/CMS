@@ -81,14 +81,14 @@ class MasterTimetableViewModel @Inject constructor(
         start: String,
         end: String,
         subject: SemesterSubject?,
-        teacher: Teacher?,
+        teachers: List<Teacher>,
         periodType: PeriodType,
         roomNo: String,
         building: String,
         notes: String,
         effectiveFrom: LocalDate?,
         effectiveTo: LocalDate?,
-    ) = controller.savePeriod(replaces, days, start, end, subject, teacher, periodType, roomNo, building, notes, effectiveFrom, effectiveTo)
+    ) = controller.savePeriod(replaces, days, start, end, subject, teachers, periodType, roomNo, building, notes, effectiveFrom, effectiveTo)
 }
 
 @Composable

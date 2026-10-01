@@ -152,8 +152,34 @@ data class SessionPeriod(
     /** True for the lecture's own row (owned by [sessionId]); false when this object represents another
      * session's merged-in view of a lecture owned elsewhere -- that view is read-only except for unmerging. */
     val isOwnRow: Boolean = true,
+    /** Further teachers who share this lecture with [teacherId] (e.g. a project taught by several teachers in one
+     * slot); [coTeacherNames] lines up with it. Empty for a lecture with a single teacher. */
+    val coTeacherIds: List<String> = emptyList(),
+    val coTeacherNames: List<String> = emptyList(),
 ) : BaseEntity() {
     val timeRange: String get() = "${clockDisplay(startTime)}–${clockDisplay(endTime)}"
+
+    /** Every teacher on this period, the main one first. */
+    val teacherIds: List<String> get() = (listOf(teacherId) + coTeacherIds).filter { it.isNotBlank() }
+
+    /** "Ali Raza & Sana Malik": every teacher's name (their email when the name is missing), for display. */
+    val teacherLabel: String
+        get() = (listOf(teacherName.ifBlank { teacherId }) + coTeacherIds.mapIndexed { i, id -> coTeacherNames.getOrNull(i).orEmpty().ifBlank { id } })
+            .filter { it.isNotBlank() }
+            .joinToString(" & ")
+
+    fun isTaughtBy(teacherEmail: String): Boolean = teacherEmail.isNotBlank() && teacherIds.any { it.equals(teacherEmail, ignoreCase = true) }
+
+    /** The first teacher this period has in common with [other], as (email, name), or null. */
+    fun sharedTeacherWith(other: SessionPeriod): Pair<String, String>? {
+        val id = teacherIds.firstOrNull { other.isTaughtBy(it) } ?: return null
+        val name = if (id.equals(teacherId, ignoreCase = true)) teacherName else coTeacherNames.getOrNull(coTeacherIds.indexOfFirst { it.equals(id, ignoreCase = true) }).orEmpty()
+        return id to name.ifBlank { id }
+    }
+
+    /** The same teachers in the same roles (main teacher first, the rest in any order). */
+    fun hasSameTeachersAs(other: SessionPeriod): Boolean =
+        teacherId == other.teacherId && coTeacherIds.toSet() == other.coTeacherIds.toSet()
     val isMergedLecture: Boolean get() = linkedSessionIds.isNotEmpty()
 
     companion object {

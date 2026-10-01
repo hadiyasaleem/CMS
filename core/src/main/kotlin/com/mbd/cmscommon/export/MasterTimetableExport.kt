@@ -110,7 +110,7 @@ fun masterGridLayout(grid: MasterGrid, breakSlot: Pair<String, String>? = null):
             val cells = slotKeys.withIndex().mapNotNull { (i, key) ->
                 val period = byKey[key]
                 when {
-                    period != null -> i to TimetableGridPeriodCell(period.courseCode, period.creditHours, period.subjectName, period.teacherName, location = periodLocation(period)?.takeIf { it != usualRoom }, isBreak = period.periodType == PeriodType.BREAK)
+                    period != null -> i to TimetableGridPeriodCell(period.courseCode, period.creditHours, period.subjectName, period.teacherLabel, location = periodLocation(period)?.takeIf { it != usualRoom }, isBreak = period.periodType == PeriodType.BREAK)
                     key == breakSlot -> i to TimetableGridPeriodCell("", null, "", "", isBreak = true)
                     else -> null
                 }

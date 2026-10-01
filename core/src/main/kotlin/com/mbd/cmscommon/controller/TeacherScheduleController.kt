@@ -60,7 +60,7 @@ class TeacherScheduleController(
     val myGrids: StateFlow<List<TeacherGrid>> = allGrids.map { grids ->
         grids.mapNotNull { grid ->
             val myRows = grid.rows.mapNotNull { row ->
-                val mine = row.periods.filter { it.teacherId == teacherId }
+                val mine = row.periods.filter { it.isTaughtBy(teacherId) }
                 if (mine.isEmpty()) null else row.copy(periods = mine)
             }
             if (myRows.isEmpty()) null else TeacherGrid(grid.copy(rows = myRows), detectBreakSlot(grid.rows.flatMap { it.periods }))

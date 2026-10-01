@@ -258,7 +258,7 @@ fun studentGridTimetableExport(periods: List<SessionPeriod>): ExportDocument {
     val rows = StudentGridDays.map { day ->
         listOf(titleCase(day.name)) + timeSlots.map { slot ->
             byDayAndSlot[day to slot]?.let { p ->
-                listOfNotNull(p.subjectName, p.teacherName.ifBlank { null }, listOfNotNull(p.building, p.roomNo).joinToString(" ").ifBlank { null }).joinToString(" - ")
+                listOfNotNull(p.subjectName, p.teacherLabel.ifBlank { null }, listOfNotNull(p.building, p.roomNo).joinToString(" ").ifBlank { null }).joinToString(" - ")
             } ?: ""
         }
     }
@@ -278,7 +278,7 @@ fun timetableExport(session: AcademicSession?, periods: List<SessionPeriod>, shi
         .groupingBy { it }.eachCount().let { counts -> counts.values.maxOrNull()?.let { best -> counts.entries.first { it.value == best }.key } }
     val rows = periods.sortedWith(compareBy({ dayOrder.indexOf(it.day) }, { it.startTime })).map { p ->
         listOf(
-            titleCase(p.day.name), clockDisplay(p.startTime), clockDisplay(p.endTime), p.courseCode, p.subjectName, titleCase(p.periodType.name), p.teacherName,
+            titleCase(p.day.name), clockDisplay(p.startTime), clockDisplay(p.endTime), p.courseCode, p.subjectName, titleCase(p.periodType.name), p.teacherLabel,
             listOfNotNull(p.building, p.roomNo).joinToString(" ").takeIf { it != usualRoom }.orEmpty(),
             listOfNotNull(p.effectiveFrom?.toString(), p.effectiveTo?.toString()).joinToString(" to "),
         )
@@ -446,7 +446,7 @@ suspend fun resolveRegisterContext(
     val period = runCatching {
         // The teacher of this shift's class; each shift can have its own teacher for the subject.
         timetable.observeWeek(session.sessionId).first()
-            .firstOrNull { it.courseCode == courseCode && it.teacherName.isNotBlank() && (shift == null || it.shift == shift) }
+            .firstOrNull { it.courseCode == courseCode && it.teacherLabel.isNotBlank() && (shift == null || it.shift == shift) }
     }.getOrNull()
-    return RegisterContext(department, subject ?: period?.subjectName, period?.teacherName)
+    return RegisterContext(department, subject ?: period?.subjectName, period?.teacherLabel?.ifBlank { null })
 }

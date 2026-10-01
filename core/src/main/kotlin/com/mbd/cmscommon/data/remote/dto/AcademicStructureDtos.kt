@@ -1,5 +1,7 @@
 package com.mbd.cmscommon.data.remote.dto
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -139,6 +141,7 @@ data class StudentProfileDto(
     val deletedBy: String? = null,
 )
 
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class TimetablePeriodDto(
     val id: String? = null,
@@ -153,6 +156,9 @@ data class TimetablePeriodDto(
     val creditHours: Int? = null,
     val teacherEmail: String? = null,
     val teacherName: String? = null,
+    /** Other teachers sharing this lecture; always sent (even when empty) so an edit can clear them. */
+    @EncodeDefault val coTeacherEmails: List<String> = emptyList(),
+    @EncodeDefault val coTeacherNames: List<String> = emptyList(),
     val roomNo: String? = null,
     val building: String? = null,
     val notes: String? = null,

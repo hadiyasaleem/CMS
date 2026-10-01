@@ -1831,6 +1831,14 @@ val MIGRATION_51_52: Migration = object : Migration(51, 52) {
     }
 }
 
+/** 52 -> 53: a period can have co-teachers (several teachers sharing one slot). */
+val MIGRATION_52_53: Migration = object : Migration(52, 53) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `session_periods` ADD COLUMN `coTeacherIds` TEXT NOT NULL DEFAULT ''")
+        db.execSQL("ALTER TABLE `session_periods` ADD COLUMN `coTeacherNames` TEXT NOT NULL DEFAULT ''")
+    }
+}
+
 val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_18_19,
     MIGRATION_19_20,
@@ -1866,4 +1874,5 @@ val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_49_50,
     MIGRATION_50_51,
     MIGRATION_51_52,
+    MIGRATION_52_53,
 )

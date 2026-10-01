@@ -128,7 +128,7 @@ fun StudentTimetableWorkspace(
                                         byDayAndSlot[day to slot]?.let { item ->
                                             GridCell(
                                                 title = item.period.subjectName,
-                                                subtitle = item.period.teacherName.ifBlank { "Unassigned" },
+                                                subtitle = item.period.teacherLabel.ifBlank { "Unassigned" },
                                                 meta = listOfNotNull(item.period.building, item.period.roomNo).joinToString(" / ").ifBlank { "No room" },
                                             )
                                         }
@@ -235,7 +235,7 @@ private fun StudentPeriodDetailDialog(item: StudentScheduledPeriod, onDismiss: (
         title = { Text(item.period.subjectName) },
         text = { DialogScrollBody {
             Column {
-                DetailRow(TablerIcons.User, item.period.teacherName.ifBlank { "Teacher not assigned" })
+                DetailRow(TablerIcons.User, item.period.teacherLabel.ifBlank { "Teacher not assigned" })
                 DetailRow(TablerIcons.MapPin, listOfNotNull(item.period.building, item.period.roomNo).joinToString(" / ").ifBlank { "Location not assigned" })
                 Spacer(Modifier.height(6.dp))
                 Text("${item.date.format(DayFormat)} · ${item.period.timeRange}", color = TimetableBlue, style = MaterialTheme.typography.bodySmall)

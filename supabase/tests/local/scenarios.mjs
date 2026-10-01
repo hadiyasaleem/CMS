@@ -38,6 +38,12 @@ const tt = (extra) => `insert into timetable_periods(primary_session_id,day,star
 const ds = (extra) => `insert into datesheet_slots(datesheet_id,exam_date,start_time,end_time,course_code,subject_name,room_id,invigilator_email) values ${extra}`;
 // --- trigger messages ---
 await tryIt("timetable teacher clash", tt(`('eng_2023','MONDAY','09:30','10:30','ENG-302','Prose','jane@x.pk','R15','MORNING')`));
+const ttCo = (extra) => `insert into timetable_periods(primary_session_id,day,start_time,end_time,course_code,subject_name,teacher_email,room_no,shift,co_teacher_emails) values ${extra}`;
+await tryIt("timetable co-teacher clash", ttCo(`('eng_2023','MONDAY','09:30','10:30','ENG-303','Project','omar@x.pk','R15','MORNING',array['jane@x.pk'])`));
+await tryIt("timetable co-teacher ok", ttCo(`('eng_2023','TUESDAY','09:00','10:00','ENG-304','Project','omar@x.pk','R15','MORNING',array['jane@x.pk'])`));
+await tryIt("timetable co-teacher without main teacher", `insert into timetable_periods(primary_session_id,day,start_time,end_time,course_code,subject_name,shift,co_teacher_emails) values ('eng_2023','WEDNESDAY','09:00','10:00','ENG-305','Project','MORNING',array['jane@x.pk'])`);
+await tryIt("timetable co-teacher is the main teacher", ttCo(`('eng_2023','WEDNESDAY','11:00','12:00','ENG-306','Project','omar@x.pk','R15','MORNING',array['omar@x.pk'])`));
+await tryIt("timetable co-teacher not a teacher", ttCo(`('eng_2023','THURSDAY','09:00','10:00','ENG-307','Project','omar@x.pk','R15','MORNING',array['ghost@x.pk'])`));
 await tryIt("timetable room clash", tt(`('eng_2023','MONDAY','09:30','10:30','ENG-302','Prose','omar@x.pk','R14','MORNING')`));
 await seed("insert into session_students(session_id,roll_number,name,shift) values ('eng_2023','ENG-23-02','Filler','MORNING')");
 await tryIt("roster full", `insert into session_students(session_id,roll_number,name,shift) values ('eng_2023','ENG-23-02','Sara','MORNING')`);

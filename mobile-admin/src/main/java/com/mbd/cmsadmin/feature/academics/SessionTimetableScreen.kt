@@ -70,28 +70,28 @@ class SessionTimetableViewModel @Inject constructor(
         start: String,
         end: String,
         subject: com.mbd.cmscommon.domain.model.SemesterSubject?,
-        teacher: com.mbd.cmscommon.domain.model.Teacher?,
+        teachers: List<com.mbd.cmscommon.domain.model.Teacher>,
         type: com.mbd.cmscommon.domain.model.PeriodType,
         room: String,
         building: String,
         notes: String,
         from: java.time.LocalDate?,
         to: java.time.LocalDate?,
-    ) = controller.unmergeSession(period, sessionId, days, start, end, subject, teacher, type, room, building, notes, from, to)
+    ) = controller.unmergeSession(period, sessionId, days, start, end, subject, teachers, type, room, building, notes, from, to)
     fun leaveMerge(
         shared: SessionPeriod,
         days: Set<java.time.DayOfWeek>,
         start: String,
         end: String,
         subject: com.mbd.cmscommon.domain.model.SemesterSubject?,
-        teacher: com.mbd.cmscommon.domain.model.Teacher?,
+        teachers: List<com.mbd.cmscommon.domain.model.Teacher>,
         type: com.mbd.cmscommon.domain.model.PeriodType,
         room: String,
         building: String,
         notes: String,
         from: java.time.LocalDate?,
         to: java.time.LocalDate?,
-    ) = controller.leaveMerge(shared, days, start, end, subject, teacher, type, room, building, notes, from, to)
+    ) = controller.leaveMerge(shared, days, start, end, subject, teachers, type, room, building, notes, from, to)
 
     fun selectShift(shift: com.mbd.cmscommon.domain.model.Session) = controller.selectShift(shift)
 
@@ -100,7 +100,7 @@ class SessionTimetableViewModel @Inject constructor(
         start: String,
         end: String,
         subject: SemesterSubject?,
-        teacher: Teacher?,
+        teachers: List<Teacher>,
         type: PeriodType,
         room: String?,
         building: String?,
@@ -108,7 +108,7 @@ class SessionTimetableViewModel @Inject constructor(
         effectiveFrom: LocalDate?,
         effectiveTo: LocalDate?,
         replaces: SessionPeriod?,
-    ) = controller.savePeriod(day, start, end, subject, teacher, type, room, building, notes, effectiveFrom, effectiveTo, replaces)
+    ) = controller.savePeriod(day, start, end, subject, teachers, type, room, building, notes, effectiveFrom, effectiveTo, replaces)
 
     fun removePeriod(period: SessionPeriod) = controller.removePeriod(period)
     fun clearError() = controller.clearError()

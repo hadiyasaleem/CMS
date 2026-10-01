@@ -103,7 +103,7 @@ class SessionTimetableController(
         start: String,
         end: String,
         subject: SemesterSubject?,
-        teacher: Teacher?,
+        teachers: List<Teacher>,
         periodType: PeriodType,
         roomNo: String?,
         building: String?,
@@ -115,6 +115,7 @@ class SessionTimetableController(
         shift: Session = replaces?.shift ?: this.shift.value,
     ) = launch("save the period") {
         requireValid(periodType == PeriodType.BREAK || subject != null) { "Choose a subject for this period." }
+        requireValid(teachers.map { it.teacherId }.distinct().size == teachers.size) { "A teacher is listed twice on this period." }
 
         val normalizedStart = start.trim()
         val normalizedEnd = end.trim()
@@ -127,8 +128,10 @@ class SessionTimetableController(
             endTime = normalizedEnd,
             courseCode = subject?.courseCode ?: "BREAK",
             subjectName = subject?.name ?: "Break",
-            teacherId = if (periodType != PeriodType.BREAK) teacher?.teacherId ?: "" else "",
-            teacherName = if (periodType != PeriodType.BREAK) teacher?.name ?: "" else "",
+            teacherId = periodTeachers(periodType, teachers).firstOrNull()?.teacherId ?: "",
+            teacherName = periodTeachers(periodType, teachers).firstOrNull()?.name ?: "",
+            coTeacherIds = periodTeachers(periodType, teachers).drop(1).map { it.teacherId },
+            coTeacherNames = periodTeachers(periodType, teachers).drop(1).map { it.name },
             periodType = periodType,
             creditHours = subject?.creditHours,
             roomNo = roomNo?.trim()?.takeIf { it.isNotBlank() },
@@ -186,7 +189,7 @@ class SessionTimetableController(
         start: String,
         end: String,
         subject: SemesterSubject?,
-        teacher: Teacher?,
+        teachers: List<Teacher>,
         periodType: PeriodType,
         roomNo: String?,
         building: String?,
@@ -197,7 +200,7 @@ class SessionTimetableController(
         requireValid(days.isNotEmpty()) { "Choose at least one day." }
         requireValid(periodType == PeriodType.BREAK || subject != null) { "Choose a subject for this period." }
         val sameSlot = days == setOf(shared.day) && clockDisplay(start.trim()) == clockDisplay(shared.startTime) && clockDisplay(end.trim()) == clockDisplay(shared.endTime)
-        requireValid(!sameSlot || teacher?.teacherId != shared.teacherId) {
+        requireValid(!sameSlot || teachers.map { it.teacherId } != shared.teacherIds) {
             "To unmerge, change the teacher or the time slot for this class."
         }
         val all = timetableRepository.observeAll().first()
@@ -213,8 +216,10 @@ class SessionTimetableController(
                 endTime = end.trim(),
                 courseCode = subject?.courseCode ?: "BREAK",
                 subjectName = subject?.name ?: "Break",
-                teacherId = if (periodType != PeriodType.BREAK) teacher?.teacherId ?: "" else "",
-                teacherName = if (periodType != PeriodType.BREAK) teacher?.name ?: "" else "",
+                teacherId = periodTeachers(periodType, teachers).firstOrNull()?.teacherId ?: "",
+                teacherName = periodTeachers(periodType, teachers).firstOrNull()?.name ?: "",
+                coTeacherIds = periodTeachers(periodType, teachers).drop(1).map { it.teacherId },
+                coTeacherNames = periodTeachers(periodType, teachers).drop(1).map { it.name },
                 periodType = periodType,
                 creditHours = subject?.creditHours,
                 roomNo = roomNo?.trim()?.takeIf { it.isNotBlank() },
@@ -243,7 +248,7 @@ class SessionTimetableController(
         start: String,
         end: String,
         subject: SemesterSubject?,
-        teacher: Teacher?,
+        teachers: List<Teacher>,
         periodType: PeriodType,
         roomNo: String?,
         building: String?,
@@ -258,7 +263,7 @@ class SessionTimetableController(
         val normalizedStart = start.trim()
         val normalizedEnd = end.trim()
         val sameSlot = day == period.day && clockDisplay(normalizedStart) == clockDisplay(period.startTime) && clockDisplay(normalizedEnd) == clockDisplay(period.endTime)
-        requireValid(!sameSlot || teacher?.teacherId != period.teacherId) {
+        requireValid(!sameSlot || teachers.map { it.teacherId } != period.teacherIds) {
             "To unmerge, change the teacher or the time slot for this class."
         }
         val updated = SessionPeriod(
@@ -270,8 +275,10 @@ class SessionTimetableController(
             endTime = normalizedEnd,
             courseCode = subject?.courseCode ?: "BREAK",
             subjectName = subject?.name ?: "Break",
-            teacherId = if (periodType != PeriodType.BREAK) teacher?.teacherId ?: "" else "",
-            teacherName = if (periodType != PeriodType.BREAK) teacher?.name ?: "" else "",
+            teacherId = periodTeachers(periodType, teachers).firstOrNull()?.teacherId ?: "",
+            teacherName = periodTeachers(periodType, teachers).firstOrNull()?.name ?: "",
+            coTeacherIds = periodTeachers(periodType, teachers).drop(1).map { it.teacherId },
+            coTeacherNames = periodTeachers(periodType, teachers).drop(1).map { it.name },
             periodType = periodType,
             creditHours = subject?.creditHours,
             roomNo = roomNo?.trim()?.takeIf { it.isNotBlank() },

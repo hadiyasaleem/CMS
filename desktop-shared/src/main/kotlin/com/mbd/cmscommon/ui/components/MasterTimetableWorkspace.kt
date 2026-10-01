@@ -100,7 +100,7 @@ fun MasterTimetableWorkspace(
     buildings: List<Building> = emptyList(),
     rooms: List<Room> = emptyList(),
     onLoadSubjects: suspend (sessionId: String, semester: Int) -> List<SemesterSubject> = { _, _ -> emptyList() },
-    onSavePeriod: (SessionPeriod, Set<DayOfWeek>, String, String, SemesterSubject?, Teacher?, PeriodType, String, String, String, LocalDate?, LocalDate?) -> Unit = { _, _, _, _, _, _, _, _, _, _, _, _ -> },
+    onSavePeriod: (SessionPeriod, Set<DayOfWeek>, String, String, SemesterSubject?, List<Teacher>, PeriodType, String, String, String, LocalDate?, LocalDate?) -> Unit = { _, _, _, _, _, _, _, _, _, _, _, _ -> },
     modifier: Modifier = Modifier,
 ) {
     var detailContext by remember { mutableStateOf<Pair<SessionPeriod, Int>?>(null) }
@@ -364,7 +364,7 @@ private fun MasterGridSection(
                         val incomplete = !isBreak && (period.teacherId.isBlank() || period.roomNo.isNullOrBlank())
                         GridCell(
                             title = if (isBreak) "BREAK" else period.subjectName,
-                            subtitle = if (isBreak) "" else listOfNotNull(codeLine.takeIf { it.isNotBlank() }, period.teacherName.ifBlank { "Unassigned" }).joinToString(" · "),
+                            subtitle = if (isBreak) "" else listOfNotNull(codeLine.takeIf { it.isNotBlank() }, period.teacherLabel.ifBlank { "Unassigned" }).joinToString(" · "),
                             meta = if (isBreak) "" else location + mergedTag(period, grid),
                             isBreak = isBreak,
                             isAlert = hasConflict,
@@ -580,7 +580,7 @@ private fun PeriodDetailDialog(
                 DetailRow("Time", period.timeRange)
                 if (!isBreak) {
                     DetailRow("Subject code", period.courseCode)
-                    DetailRow("Teacher", period.teacherName.ifBlank { "Unassigned" })
+                    DetailRow("Teacher", period.teacherLabel.ifBlank { "Unassigned" })
                     DetailRow("Room", period.roomNo?.ifBlank { null } ?: "Not assigned")
                     period.building?.takeIf { it.isNotBlank() }?.let { DetailRow("Building", it) }
                     period.creditHours?.let { DetailRow("Credit hours", it.toString()) }
@@ -591,7 +591,7 @@ private fun PeriodDetailDialog(
                     Text("WHY THIS CONFLICTS", color = ModMuted, style = CmsTextStyles.eyebrow)
                     conflicts.forEach { conflict ->
                         val kindLabel = when (conflict.kind) {
-                            ConflictKind.TEACHER -> "Teacher ${conflict.other.teacherName.ifBlank { conflict.other.teacherId }} is also teaching"
+                            ConflictKind.TEACHER -> "Teacher ${period.sharedTeacherWith(conflict.other)?.second ?: conflict.other.teacherLabel} is also teaching"
                             ConflictKind.ROOM -> "Room ${conflict.other.roomNo.orEmpty()} is also booked for"
                         }
                         Text(

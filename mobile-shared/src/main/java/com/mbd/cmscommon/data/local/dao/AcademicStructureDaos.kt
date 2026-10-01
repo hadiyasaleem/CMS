@@ -191,7 +191,11 @@ interface SessionPeriodDao {
     @Query("SELECT * FROM session_periods WHERE sessionId = :sessionId AND isDeleted = 0")
     fun observeForSession(sessionId: String): Flow<List<SessionPeriodEntity>>
 
-    @Query("SELECT * FROM session_periods WHERE teacherId = :teacherId AND isDeleted = 0 AND id = remotePeriodId")
+    // A teacher teaches a period as its main teacher or as one of its co-teachers.
+    @Query(
+        "SELECT * FROM session_periods WHERE (teacherId = :teacherId OR (',' || coTeacherIds || ',') LIKE '%,' || :teacherId || ',%') " +
+            "AND isDeleted = 0 AND id = remotePeriodId",
+    )
     fun observeForTeacher(teacherId: String): Flow<List<SessionPeriodEntity>>
 
     @Query("SELECT * FROM session_periods WHERE day = :day AND isDeleted = 0 AND id = remotePeriodId")

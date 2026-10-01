@@ -5,6 +5,7 @@ import com.mbd.cmscommon.domain.model.Department
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.PeriodType
 import com.mbd.cmscommon.domain.model.SessionPeriod
+import com.mbd.cmscommon.domain.model.Teacher
 import com.mbd.cmscommon.util.clockDisplay
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -40,10 +41,14 @@ fun sessionTimetableSnapshot(periods: List<SessionPeriod>): SessionTimetableSnap
     val teachingDays = periods.map { it.day }.filter { it.value <= DayOfWeek.SATURDAY.value }.distinct().size
     val teacherAssigned = periods.count { it.periodType == PeriodType.BREAK || it.teacherId.isNotBlank() }
     val roomAssigned = periods.count { it.periodType == PeriodType.BREAK || !it.roomNo.isNullOrBlank() }
-    val uniqueTeachers = periods.map { it.teacherId }.filter { it.isNotBlank() }.distinct().size
+    val uniqueTeachers = periods.flatMap { it.teacherIds }.distinct().size
 
     return SessionTimetableSnapshot(teachingDays, teacherAssigned, roomAssigned, uniqueTeachers, conflicts, malformed)
 }
+
+/** The teachers a period of [periodType] keeps: none on a break, otherwise the chosen ones (the first is the main teacher). */
+fun periodTeachers(periodType: PeriodType, teachers: List<Teacher>): List<Teacher> =
+    if (periodType == PeriodType.BREAK) emptyList() else teachers.distinctBy { it.teacherId }
 
 enum class ConflictKind { TEACHER, ROOM }
 
@@ -68,7 +73,7 @@ fun masterTimetableConflicts(periods: List<SessionPeriod>): Map<String, List<Per
         dayPeriods.forEachIndexed { index, period ->
             dayPeriods.drop(index + 1).forEach { other ->
                 if (!periodsOverlap(period, other)) return@forEach
-                if (period.teacherId.isNotBlank() && period.teacherId == other.teacherId) {
+                if (period.sharedTeacherWith(other) != null) {
                     record(period.id, PeriodConflict(ConflictKind.TEACHER, other))
                     record(other.id, PeriodConflict(ConflictKind.TEACHER, period))
                 }
@@ -116,13 +121,14 @@ fun describeTimetableConflict(
         other.id != candidate.id && other.id != excludedId && other.periodType == PeriodType.LECTURE &&
             periodsOverlap(candidate, other) &&
             (
-                (candidate.teacherId.isNotBlank() && candidate.teacherId == other.teacherId) ||
+                candidate.sharedTeacherWith(other) != null ||
                     (!candidate.roomNo.isNullOrBlank() && candidate.roomNo == other.roomNo)
                 )
     } ?: return null
 
-    val who = if (candidate.teacherId.isNotBlank() && candidate.teacherId == other.teacherId) {
-        "Teacher ${candidate.teacherName.ifBlank { candidate.teacherId }}"
+    val shared = candidate.sharedTeacherWith(other)
+    val who = if (shared != null) {
+        "Teacher ${shared.second}"
     } else {
         "Room ${candidate.roomNo}"
     }

@@ -82,7 +82,7 @@ fun SessionTimetableWorkspace(
     rooms: List<Room>,
     currentSemesterTerm: SemesterTerm?,
     errorMessage: String?,
-    onSavePeriod: (DayOfWeek, String, String, SemesterSubject?, Teacher?, PeriodType, String, String, String, LocalDate?, LocalDate?, SessionPeriod?) -> Unit,
+    onSavePeriod: (DayOfWeek, String, String, SemesterSubject?, List<Teacher>, PeriodType, String, String, String, LocalDate?, LocalDate?, SessionPeriod?) -> Unit,
     onRemovePeriod: (SessionPeriod) -> Unit,
     onClearError: () -> Unit,
     onExport: ((ExportDocument, ExportFormat) -> Unit)? = null,
@@ -96,8 +96,8 @@ fun SessionTimetableWorkspace(
     onMergeExisting: (SessionPeriod) -> Unit = {},
     /** Gives this session its own period in place of the shared one it leaves: (shared, days, ...same as a save). */
     /** Unmerges one linked session from this session's own lecture: (period, sessionId, days, ...same as a save). */
-    onUnmergeSession: (SessionPeriod, String, Set<DayOfWeek>, String, String, SemesterSubject?, Teacher?, PeriodType, String, String, String, LocalDate?, LocalDate?) -> Unit = { _, _, _, _, _, _, _, _, _, _, _, _, _ -> },
-    onLeaveMerge: (SessionPeriod, Set<DayOfWeek>, String, String, SemesterSubject?, Teacher?, PeriodType, String, String, String, LocalDate?, LocalDate?) -> Unit = { _, _, _, _, _, _, _, _, _, _, _, _ -> },
+    onUnmergeSession: (SessionPeriod, String, Set<DayOfWeek>, String, String, SemesterSubject?, List<Teacher>, PeriodType, String, String, String, LocalDate?, LocalDate?) -> Unit = { _, _, _, _, _, _, _, _, _, _, _, _, _ -> },
+    onLeaveMerge: (SessionPeriod, Set<DayOfWeek>, String, String, SemesterSubject?, List<Teacher>, PeriodType, String, String, String, LocalDate?, LocalDate?) -> Unit = { _, _, _, _, _, _, _, _, _, _, _, _ -> },
     /** The Morning/Evening tab shown; [periods] holds every shift and only this shift's grid is shown. */
     shift: Session = Session.MORNING,
     shifts: List<Session> = listOf(shift),
@@ -117,7 +117,7 @@ fun SessionTimetableWorkspace(
     val mergeCandidates = describeExistingPeriodsForMerge(allPeriods, session?.sessionId.orEmpty(), shift)
 
     val roomsConfigured = shown.count { !it.roomNo.isNullOrBlank() }
-    val teacherIds = shown.filter { it.periodType != PeriodType.BREAK }.map { it.teacherId }.filter { it.isNotBlank() }.distinct()
+    val teacherIds = shown.filter { it.periodType != PeriodType.BREAK }.flatMap { it.teacherIds }.distinct()
     val conflictIds = conflictingPeriodIds(shown)
     val periodByDayAndSlot = shown.associateBy { it.day to it.timeRange }
     val timeSlots = shown.map { it.timeRange }.distinct().sortedBy { it.substringBefore('–') }
@@ -161,7 +161,7 @@ fun SessionTimetableWorkspace(
                                         val isBreak = period.periodType == PeriodType.BREAK
                                         GridCell(
                                             title = if (isBreak) "BREAK" else period.subjectName.ifBlank { period.courseCode },
-                                            subtitle = if (isBreak) "" else period.teacherName.ifBlank { "Unassigned" },
+                                            subtitle = if (isBreak) "" else period.teacherLabel.ifBlank { "Unassigned" },
                                             meta = if (isBreak) "" else (period.roomNo?.ifBlank { null } ?: "No room") + if (period.isMergedLecture || !period.isOwnRow) " · Merged" else "",
                                             isBreak = isBreak,
                                             isAlert = period.id in conflictIds,
@@ -245,7 +245,7 @@ fun SessionTimetableWorkspace(
             hint = "Search by subject, session, teacher, day or time",
             options = mergeCandidates.map { p ->
                 val owner = allSessions.firstOrNull { it.sessionId == p.sessionId }?.label ?: p.sessionId
-                p.id to "${p.subjectName.ifBlank { p.courseCode }} · $owner · ${p.day.getDisplayName(TextStyle.SHORT, Locale.ENGLISH)} ${p.timeRange} · ${p.teacherName.ifBlank { "Unassigned" }}"
+                p.id to "${p.subjectName.ifBlank { p.courseCode }} · $owner · ${p.day.getDisplayName(TextStyle.SHORT, Locale.ENGLISH)} ${p.timeRange} · ${p.teacherLabel.ifBlank { "Unassigned" }}"
             },
             onPick = { id -> mergeCandidates.firstOrNull { it.id == id }?.let(onMergeExisting); mergingExisting = false },
             onDismiss = { mergingExisting = false },
@@ -263,7 +263,7 @@ fun SessionTimetableWorkspace(
                     DetailRow("Owned by", owner)
                     DetailRow("Day", period.day.getDisplayName(TextStyle.FULL, Locale.ENGLISH))
                     DetailRow("Time", period.timeRange)
-                    DetailRow("Teacher", period.teacherName.ifBlank { "Unassigned" })
+                    DetailRow("Teacher", period.teacherLabel.ifBlank { "Unassigned" })
                     DetailRow("Room", period.roomNo?.ifBlank { null } ?: "Not assigned")
                     Text("This lecture is shared with $owner. Edit it from that session's timetable. To unmerge, give this class its own teacher or time slot.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
@@ -411,7 +411,7 @@ private fun SessionPeriodDetailDialog(
                 if (period.isMergedLecture) DetailRow("Merged with", period.linkedSessionIds.joinToString(", "))
                 if (!isBreak) {
                     DetailRow("Subject code", period.courseCode)
-                    DetailRow("Teacher", period.teacherName.ifBlank { "Unassigned" })
+                    DetailRow("Teacher", period.teacherLabel.ifBlank { "Unassigned" })
                     DetailRow("Room", period.roomNo?.ifBlank { null } ?: "Not assigned")
                     period.building?.takeIf { it.isNotBlank() }?.let { DetailRow("Building", it) }
                     period.notes?.takeIf { it.isNotBlank() }?.let { DetailRow("Notes", it) }
@@ -459,7 +459,7 @@ fun PeriodEditorDialog(
     rooms: List<Room>,
     currentSemesterTerm: SemesterTerm?,
     onDismiss: () -> Unit,
-    onSave: (Set<DayOfWeek>, String, String, SemesterSubject?, Teacher?, PeriodType, String, String, String, LocalDate?, LocalDate?) -> Unit,
+    onSave: (Set<DayOfWeek>, String, String, SemesterSubject?, List<Teacher>, PeriodType, String, String, String, LocalDate?, LocalDate?) -> Unit,
     /** Days already checked when the dialog opens -- every day (besides [day]) that repeats this
      * exact lecture, so editing one day of a Mon/Tue/Wed block shows all three checked, not just
      * the one that was clicked. Defaults to just [day] for a brand-new period. */
@@ -478,7 +478,8 @@ fun PeriodEditorDialog(
     var end by remember { mutableStateOf(existing?.endTime ?: "") }
     var type by remember { mutableStateOf(existing?.periodType ?: PeriodType.LECTURE) }
     var subjectCode by remember { mutableStateOf(existing?.courseCode ?: "") }
-    var teacherId by remember { mutableStateOf(existing?.teacherId ?: "") }
+    // The main teacher first, then any co-teachers sharing the slot (e.g. a project taught by several teachers).
+    var teacherIds by remember { mutableStateOf(existing?.teacherIds ?: emptyList()) }
     var room by remember { mutableStateOf(existing?.roomNo ?: "") }
     var building by remember { mutableStateOf(existing?.building ?: "") }
     var selectedBuildingId by remember { mutableStateOf(buildings.firstOrNull { it.name == existing?.building }?.buildingId) }
@@ -493,7 +494,7 @@ fun PeriodEditorDialog(
     val endTime = runCatching { LocalTime.parse(end.trim()) }
     val timeValid = startTime.isSuccess && endTime.isSuccess && startTime.getOrNull()!! < endTime.getOrNull()
     val needsSubject = type != PeriodType.BREAK
-    val changedFromShared = requireChangeFrom == null || teacherId != requireChangeFrom.teacherId ||
+    val changedFromShared = requireChangeFrom == null || teacherIds != requireChangeFrom.teacherIds ||
         selectedDays != setOf(requireChangeFrom.day) ||
         clockDisplay(start.trim()) != clockDisplay(requireChangeFrom.startTime) ||
         clockDisplay(end.trim()) != clockDisplay(requireChangeFrom.endTime)
@@ -557,12 +558,32 @@ fun PeriodEditorDialog(
                     Spacer(Modifier.height(10.dp))
                     CmsEntityPicker(
                         label = "Teacher (optional)",
-                        selectedId = teacherId.ifBlank { null },
+                        selectedId = teacherIds.firstOrNull(),
                         options = teachers.map { CmsEntityOption(it.teacherId, it.name) },
-                        onSelected = { teacherId = it ?: "" },
+                        onSelected = { picked ->
+                            // Changing the main teacher keeps the co-teachers; clearing it clears them too.
+                            teacherIds = if (picked == null) emptyList() else listOf(picked) + teacherIds.drop(1).filter { it != picked }
+                        },
                         optional = true,
                         emptyLabel = "Not assigned",
                     )
+                    if (teacherIds.isNotEmpty()) {
+                        teacherIds.drop(1).forEach { coId ->
+                            Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Text(teachers.firstOrNull { it.teacherId == coId }?.name ?: coId, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                                TextButton(onClick = { teacherIds = teacherIds - coId }) { Text("Remove") }
+                            }
+                        }
+                        Spacer(Modifier.height(6.dp))
+                        CmsEntityPicker(
+                            label = "Add another teacher (shared slot)",
+                            selectedId = null,
+                            options = teachers.filter { it.teacherId !in teacherIds }.map { CmsEntityOption(it.teacherId, it.name) },
+                            onSelected = { picked -> if (picked != null) teacherIds = teacherIds + picked },
+                            optional = true,
+                            emptyLabel = "Choose a teacher to add",
+                        )
+                    }
                     Spacer(Modifier.height(10.dp))
                     CmsBuildingRoomPicker(
                         buildings = buildings,
@@ -628,9 +649,9 @@ fun PeriodEditorDialog(
             TextButton(
                 onClick = {
                     val subject = subjects.firstOrNull { it.courseCode == subjectCode }
-                    val teacher = teachers.firstOrNull { it.teacherId == teacherId }
+                    val chosenTeachers = teacherIds.mapNotNull { id -> teachers.firstOrNull { it.teacherId == id } }
                     onSave(
-                        selectedDays, start.trim(), end.trim(), subject, teacher, type, room.trim(), building.trim(), notes.trim(),
+                        selectedDays, start.trim(), end.trim(), subject, chosenTeachers, type, room.trim(), building.trim(), notes.trim(),
                         runCatching { LocalDate.parse(effectiveFrom.trim()) }.getOrNull(),
                         runCatching { LocalDate.parse(effectiveTo.trim()) }.getOrNull(),
                     )

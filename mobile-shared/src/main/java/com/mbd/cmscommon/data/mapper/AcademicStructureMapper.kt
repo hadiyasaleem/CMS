@@ -167,6 +167,8 @@ object AcademicStructureMapper {
         subjectName = e.subjectName ?: "",
         teacherId = e.teacherId ?: "",
         teacherName = e.teacherName ?: "",
+        coTeacherIds = e.coTeacherIds.split(',').filter { it.isNotBlank() },
+        coTeacherNames = e.coTeacherNames.split('|').filter { it.isNotBlank() },
         periodType = runCatching { PeriodType.valueOf(e.periodType) }.getOrDefault(PeriodType.LECTURE),
         creditHours = e.creditHours,
         roomNo = e.roomNo,

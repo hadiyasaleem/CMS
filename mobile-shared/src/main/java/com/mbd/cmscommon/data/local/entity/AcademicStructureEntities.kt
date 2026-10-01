@@ -165,6 +165,9 @@ data class SessionPeriodEntity(
     val subjectName: String?,
     val teacherId: String?,
     val teacherName: String?,
+    /** Comma-joined emails / '|'-joined names of the other teachers sharing this lecture (empty when it has one teacher). */
+    val coTeacherIds: String = "",
+    val coTeacherNames: String = "",
     val periodType: String,
     val creditHours: Int?,
     val roomNo: String?,
