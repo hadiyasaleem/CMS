@@ -23,7 +23,7 @@ fun ProfileScreen(onSignedOut: () -> Unit, viewModel: ProfileViewModel = hiltVie
         errorMessage = error,
         actionMessage = actionMessage,
         onRetry = viewModel::refresh,
-        onResetPassword = viewModel::resetPassword,
+        onChangePassword = viewModel::changePassword,
         onSignOut = {
             viewModel.signOut()
             onSignedOut()

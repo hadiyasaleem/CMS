@@ -61,7 +61,7 @@ fun AdministratorProfileWorkspace(
     errorMessage: String?,
     actionMessage: String?,
     onRetry: () -> Unit,
-    onResetPassword: () -> Unit,
+    onChangePassword: (current: String, new: String, onResult: (String?) -> Unit) -> Unit,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -92,8 +92,8 @@ fun AdministratorProfileWorkspace(
             }
         }
         item {
-            ProfileSectionCard("Account security", "Recovery and session controls") {
-                ProfileActionCard(account?.email ?: accountKey, onResetPassword = { confirmReset = true }, onSignOut = { confirmSignOut = true })
+            ProfileSectionCard("Account security", "Password and session controls") {
+                ProfileActionCard(account?.email ?: accountKey, onChangePassword = { confirmReset = true }, onSignOut = { confirmSignOut = true })
             }
         }
         item { Spacer(Modifier.height(72.dp)) }
@@ -101,14 +101,7 @@ fun AdministratorProfileWorkspace(
     }
 
     if (confirmReset) {
-        ConfirmDestructiveActionDialog(
-            title = "Send password reset",
-            dependentSummary = "GGC-MBD will email a secure reset link to ${account?.email ?: accountKey}.",
-            onConfirm = { onResetPassword(); confirmReset = false },
-            onDismiss = { confirmReset = false },
-            confirmLabel = "Send reset email",
-            showUndoWarning = false,
-        )
+        ChangePasswordDialog(onDismiss = { confirmReset = false }, onSubmit = onChangePassword)
     }
     if (confirmSignOut) {
         ConfirmDestructiveActionDialog(
@@ -131,7 +124,7 @@ fun TeacherProfileWorkspace(
     loading: Boolean,
     errorMessage: String?,
     actionMessage: String?,
-    onResetPassword: () -> Unit,
+    onChangePassword: (current: String, new: String, onResult: (String?) -> Unit) -> Unit,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -183,8 +176,8 @@ fun TeacherProfileWorkspace(
             }
         }
         item {
-            ProfileSectionCard("Account security", "Recovery and session controls") {
-                ProfileActionCard(profile?.email ?: accountKey, onResetPassword = { confirmReset = true }, onSignOut = { confirmSignOut = true })
+            ProfileSectionCard("Account security", "Password and session controls") {
+                ProfileActionCard(profile?.email ?: accountKey, onChangePassword = { confirmReset = true }, onSignOut = { confirmSignOut = true })
             }
         }
         item { Spacer(Modifier.height(72.dp)) }
@@ -192,14 +185,7 @@ fun TeacherProfileWorkspace(
     }
 
     if (confirmReset) {
-        ConfirmDestructiveActionDialog(
-            title = "Send password reset",
-            dependentSummary = "GGC-MBD will email a secure reset link to ${profile?.email ?: accountKey}.",
-            onConfirm = { onResetPassword(); confirmReset = false },
-            onDismiss = { confirmReset = false },
-            confirmLabel = "Send reset email",
-            showUndoWarning = false,
-        )
+        ChangePasswordDialog(onDismiss = { confirmReset = false }, onSubmit = onChangePassword)
     }
     if (confirmSignOut) {
         ConfirmDestructiveActionDialog(
@@ -228,7 +214,7 @@ fun StudentOwnProfileWorkspace(
     errorMessage: String?,
     actionMessage: String?,
     onRetry: () -> Unit,
-    onResetPassword: () -> Unit,
+    onChangePassword: (current: String, new: String, onResult: (String?) -> Unit) -> Unit,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -282,8 +268,8 @@ fun StudentOwnProfileWorkspace(
             }
         }
         item {
-            ProfileSectionCard("Account security", "Recovery and session controls") {
-                ProfileActionCard(linkedEmail ?: accountKey, onResetPassword = { confirmReset = true }, onSignOut = { confirmSignOut = true })
+            ProfileSectionCard("Account security", "Password and session controls") {
+                ProfileActionCard(linkedEmail ?: accountKey, onChangePassword = { confirmReset = true }, onSignOut = { confirmSignOut = true })
             }
         }
         item { Spacer(Modifier.height(72.dp)) }
@@ -291,14 +277,7 @@ fun StudentOwnProfileWorkspace(
     }
 
     if (confirmReset) {
-        ConfirmDestructiveActionDialog(
-            title = "Send password reset",
-            dependentSummary = "GGC-MBD will email a secure reset link to ${linkedEmail ?: accountKey}.",
-            onConfirm = { onResetPassword(); confirmReset = false },
-            onDismiss = { confirmReset = false },
-            confirmLabel = "Send reset email",
-            showUndoWarning = false,
-        )
+        ChangePasswordDialog(onDismiss = { confirmReset = false }, onSubmit = onChangePassword)
     }
     if (confirmSignOut) {
         ConfirmDestructiveActionDialog(
@@ -387,12 +366,12 @@ private fun ProfileEmptyLine(text: String) {
 }
 
 @Composable
-private fun ProfileActionCard(email: String, onResetPassword: () -> Unit, onSignOut: () -> Unit) {
+private fun ProfileActionCard(email: String, onChangePassword: () -> Unit, onSignOut: () -> Unit) {
     Column {
         Text(email, color = ModMuted, style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TextButton(onClick = onResetPassword) { Text("Send password reset") }
+            TextButton(onClick = onChangePassword) { Text("Change password") }
             TextButton(onClick = onSignOut) { Text("Sign out", color = ProfileBlue) }
         }
     }

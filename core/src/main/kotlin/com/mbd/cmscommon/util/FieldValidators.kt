@@ -42,6 +42,14 @@ object FieldValidators {
         return if (confirmation == password) null else "Passwords do not match."
     }
 
+    /** Why a password change can't go ahead (current/new/retyped new), or null. */
+    fun passwordChangeError(current: String, new: String, confirmation: String): String? {
+        if (current.isEmpty()) return "Enter your current password."
+        passwordError(new)?.let { return it }
+        if (new == current) return "The new password must be different from your current one."
+        return passwordConfirmationError(new, confirmation)
+    }
+
     fun nameError(value: String, label: String = "Name", required: Boolean = true, maxLength: Int = 100): String? {
         val clean = value.trim()
         if (clean.isEmpty()) return if (required) "$label is required." else null

@@ -3,6 +3,7 @@ package com.mbd.cmsadmin.feature.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.auth.SessionManager
+import com.mbd.cmscommon.auth.changePasswordMessage
 import com.mbd.cmscommon.domain.model.AdministratorAccount
 import com.mbd.cmscommon.domain.repository.AdministratorRepository
 import com.mbd.cmscommon.util.userMessageLogged
@@ -52,12 +53,8 @@ class ProfileViewModel @Inject constructor(
         _loading.value = false
     }
 
-    fun resetPassword() = viewModelScope.launch {
-        _error.value = null
-        _actionMessage.value = null
-        runCatching { sessionManager.sendPasswordReset(accountKey) }
-            .onSuccess { _actionMessage.value = "Password reset link sent to $accountKey." }
-            .onFailure { _error.value = it.userMessageLogged("AdminProfileViewModel.resetPassword", "Couldn't send the password reset email to $accountKey.") }
+    fun changePassword(current: String, new: String, onResult: (String?) -> Unit) {
+        viewModelScope.launch { onResult(sessionManager.changePasswordMessage(current, new)) }
     }
 
     fun signOut() = sessionManager.signOut()

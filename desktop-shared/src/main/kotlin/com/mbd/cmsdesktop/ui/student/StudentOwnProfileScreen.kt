@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.ui.student
 
+import com.mbd.cmscommon.auth.changePasswordMessage
 import kotlinx.coroutines.CancellationException
 import com.mbd.cmscommon.util.userMessageLogged
 import androidx.compose.runtime.Composable
@@ -62,19 +63,8 @@ fun StudentOwnProfileScreen(
         errorMessage = resetError ?: loadError,
         actionMessage = resetMessage,
         onRetry = controller::refresh,
-        onResetPassword = {
-            scope.launch {
-                try {
-                    sessionManager.sendPasswordReset(accountKey)
-                    resetError = null
-                    resetMessage = "Password reset email sent."
-                } catch (c: CancellationException) {
-                    throw c
-                } catch (t: Throwable) {
-                    resetMessage = null
-                    resetError = t.userMessageLogged("StudentOwnProfileScreen.resetPassword", "Couldn't send the password reset email to $accountKey.")
-                }
-            }
+        onChangePassword = { current, new, onResult ->
+            scope.launch { onResult(sessionManager.changePasswordMessage(current, new)) }
         },
         onSignOut = onSignOut,
     )

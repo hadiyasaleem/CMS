@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.ui.admin
 
+import com.mbd.cmscommon.auth.changePasswordMessage
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -56,17 +57,8 @@ fun AdminProfileScreen(
         errorMessage = error,
         actionMessage = actionMessage,
         onRetry = { scope.launch { refresh() } },
-        onResetPassword = {
-            scope.launch {
-                error = null
-                actionMessage = null
-                try {
-                    sessionManager.sendPasswordReset(accountKey)
-                    actionMessage = "Password reset email sent to $accountKey."
-                } catch (t: Throwable) {
-                    error = t.userMessageLogged("AdminProfileScreen.resetPassword", "Couldn't send the password reset email to $accountKey.")
-                }
-            }
+        onChangePassword = { current, new, onResult ->
+            scope.launch { onResult(sessionManager.changePasswordMessage(current, new)) }
         },
         onSignOut = onSignOut,
     )

@@ -1,5 +1,6 @@
 package com.mbd.cmsdesktop.ui.teacher
 
+import com.mbd.cmscommon.auth.changePasswordMessage
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -48,14 +49,8 @@ fun TeacherProfileScreen(
         loading = loading,
         errorMessage = error,
         actionMessage = actionMessage,
-        onResetPassword = {
-            scope.launch {
-                error = null
-                actionMessage = null
-                runCatching { sessionManager.sendPasswordReset(accountKey) }
-                    .onSuccess { actionMessage = "Password reset link sent to $accountKey." }
-                    .onFailure { error = it.userMessageLogged("TeacherProfileScreen.resetPassword", "Couldn't send the password reset email to $accountKey.") }
-            }
+        onChangePassword = { current, new, onResult ->
+            scope.launch { onResult(sessionManager.changePasswordMessage(current, new)) }
         },
         onSignOut = onSignOut,
     )

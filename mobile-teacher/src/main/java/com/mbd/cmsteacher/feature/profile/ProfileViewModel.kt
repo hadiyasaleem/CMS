@@ -3,6 +3,7 @@ package com.mbd.cmsteacher.feature.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.auth.SessionManager
+import com.mbd.cmscommon.auth.changePasswordMessage
 import com.mbd.cmscommon.domain.model.Teacher
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
@@ -56,16 +57,8 @@ class ProfileViewModel @Inject constructor(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
-    fun resetPassword() {
-        val email = sessionManager.accountKey ?: return
-        viewModelScope.launch {
-            try {
-                sessionManager.sendPasswordReset(email)
-                _actionMessage.value = "Password reset email sent."
-            } catch (t: Throwable) {
-                _error.value = t.userMessageLogged("TeacherProfileViewModel.resetPassword", "Couldn't send the password reset email to $email.")
-            }
-        }
+    fun changePassword(current: String, new: String, onResult: (String?) -> Unit) {
+        viewModelScope.launch { onResult(sessionManager.changePasswordMessage(current, new)) }
     }
 
     fun signOut() {

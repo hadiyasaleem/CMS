@@ -4,6 +4,7 @@ import com.mbd.cmscommon.util.FailureSummary
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.auth.SessionManager
+import com.mbd.cmscommon.auth.changePasswordMessage
 import com.mbd.cmscommon.domain.model.Department
 import com.mbd.cmscommon.domain.model.StudentProfile
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
@@ -71,16 +72,8 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch { _refreshTrigger.value += 1 }
     }
 
-    fun resetPassword() {
-        val email = sessionManager.accountKey ?: return
-        viewModelScope.launch {
-            try {
-                sessionManager.sendPasswordReset(email)
-                _actionMessage.value = "Password reset email sent."
-            } catch (t: Throwable) {
-                _error.value = t.userMessageLogged("StudentProfileViewModel.resetPassword", "Couldn't send the password reset email to $email.")
-            }
-        }
+    fun changePassword(current: String, new: String, onResult: (String?) -> Unit) {
+        viewModelScope.launch { onResult(sessionManager.changePasswordMessage(current, new)) }
     }
 
     fun signOut() {
