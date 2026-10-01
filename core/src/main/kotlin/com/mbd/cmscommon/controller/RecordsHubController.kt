@@ -6,7 +6,6 @@ import com.mbd.cmscommon.domain.model.AtRiskStudent
 import com.mbd.cmscommon.domain.model.CalendarEvent
 import com.mbd.cmscommon.domain.model.Datesheet
 import com.mbd.cmscommon.domain.model.ShiftScope
-import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.model.RecordsHubSnapshot
 import com.mbd.cmscommon.domain.model.RecordsSummarySource
 import com.mbd.cmscommon.domain.model.recordsHubSnapshot
@@ -30,22 +29,7 @@ class RecordsHubController(
     private val insightsRepository: InsightsRepository,
     scope: CoroutineScope,
     private val today: () -> LocalDate = { LocalDate.now() },
-    /** Department names for the filter; without it departments are shown by their code. */
-    private val departmentRepository: DepartmentRepository? = null,
 ) : ScreenController(scope) {
-
-    private val _filterScope = MutableStateFlow(ShiftScope.ALL)
-
-    /** The Department -> Session -> Shift filter the hub's counts follow. */
-    val filterScope: StateFlow<ShiftScope> = _filterScope.asStateFlow()
-
-    private val _filterOptions = MutableStateFlow(ScopeFilterOptions())
-    val filterOptions: StateFlow<ScopeFilterOptions> = _filterOptions.asStateFlow()
-
-    fun setFilterScope(scope: ShiftScope) {
-        _filterScope.value = scope
-        publish()
-    }
 
     private var sources: RecordsHubSources? = null
 
@@ -75,7 +59,6 @@ class RecordsHubController(
                 val eventsDeferred = async { runCatching { if (fetchRemote) calendarRepository.sync(); calendarRepository.getEvents() } }
                 val datesheetsDeferred = async { runCatching { if (fetchRemote) datesheetRepository.sync(); datesheetRepository.observeDatesheets().first() } }
                 val risksDeferred = async { runCatching { if (fetchRemote) insightsRepository.sync(); insightsRepository.getAtRiskStudents() } }
-                val departmentsDeferred = async { runCatching { departmentRepository?.observeActiveDepartments()?.first() } }
 
                 val sessionsResult = sessionsDeferred.await()
                 val eventsResult = eventsDeferred.await()
@@ -98,8 +81,6 @@ class RecordsHubController(
                         risksResult.getOrDefault(emptyList()),
                         unavailableSources,
                     )
-                    _filterOptions.value = departmentsDeferred.await().getOrNull()?.let { ScopeFilterOptions.of(it, sessions) }
-                        ?: ScopeFilterOptions(sessions.map { it.deptId to it.deptId.uppercase() }.distinct(), sessions)
                     publish()
                     _loadError.value = FailureSummary.describe(
                         FailureSummary.of(
@@ -120,7 +101,7 @@ class RecordsHubController(
 
     private fun publish() {
         val current = sources ?: return
-        _snapshot.value = recordsHubSnapshotInScope(current, _filterScope.value, today())
+        _snapshot.value = recordsHubSnapshotInScope(current, ShiftScope.ALL, today())
     }
 }
 

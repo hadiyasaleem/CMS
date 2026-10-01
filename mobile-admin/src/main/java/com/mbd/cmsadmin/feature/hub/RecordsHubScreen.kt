@@ -1,7 +1,5 @@
 package com.mbd.cmsadmin.feature.hub
 
-import com.mbd.cmscommon.domain.model.ShiftScope
-import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -26,7 +24,6 @@ class RecordsHubViewModel @Inject constructor(
     calendarRepository: CalendarRepository,
     datesheetRepository: DatesheetRepository,
     insightsRepository: InsightsRepository,
-    departmentRepository: DepartmentRepository,
 ) : ViewModel() {
     private val controller = RecordsHubController(
         sessionRepository,
@@ -34,16 +31,12 @@ class RecordsHubViewModel @Inject constructor(
         datesheetRepository,
         insightsRepository,
         viewModelScope,
-        departmentRepository = departmentRepository,
     )
 
     val snapshot = controller.snapshot
     val loading = controller.loading
     val error = controller.loadError
-    val filterScope = controller.filterScope
-    val filterOptions = controller.filterOptions
     fun refresh() = controller.refresh()
-    fun setFilterScope(scope: ShiftScope) = controller.setFilterScope(scope)
 }
 
 @Composable
@@ -54,8 +47,6 @@ fun RecordsHubScreen(
     val snapshot by viewModel.snapshot.collectAsState()
     val loading by viewModel.loading.collectAsState()
     val error by viewModel.error.collectAsState()
-    val filterScope by viewModel.filterScope.collectAsState()
-    val filterOptions by viewModel.filterOptions.collectAsState()
 
     RecordsHubWorkspace(
         heroPainter = painterResource(R.drawable.admin_records_hero),
@@ -63,9 +54,6 @@ fun RecordsHubScreen(
         loading = loading,
         errorMessage = error,
         onRetry = viewModel::refresh,
-        filterScope = filterScope,
-        filterOptions = filterOptions,
-        onFilterScope = viewModel::setFilterScope,
         onOpen = onOpen,
     )
 }

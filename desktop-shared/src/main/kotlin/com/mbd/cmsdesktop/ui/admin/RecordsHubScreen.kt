@@ -1,6 +1,5 @@
 package com.mbd.cmsdesktop.ui.admin
 
-import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -21,18 +20,15 @@ fun RecordsHubScreen(
     calendarRepository: CalendarRepository,
     datesheetRepository: DatesheetRepository,
     insightsRepository: InsightsRepository,
-    departmentRepository: DepartmentRepository? = null,
     onOpen: (RecordsDestination) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val controller = remember(sessionRepository, calendarRepository, datesheetRepository, insightsRepository) {
-        RecordsHubController(sessionRepository, calendarRepository, datesheetRepository, insightsRepository, scope, departmentRepository = departmentRepository)
+        RecordsHubController(sessionRepository, calendarRepository, datesheetRepository, insightsRepository, scope)
     }
     val snapshot by controller.snapshot.collectAsState()
     val loading by controller.loading.collectAsState()
     val errorMessage by controller.loadError.collectAsState()
-    val filterScope by controller.filterScope.collectAsState()
-    val filterOptions by controller.filterOptions.collectAsState()
 
     RecordsHubWorkspace(
         heroPainter = painterResource("admin-records-hero.jpg"),
@@ -40,9 +36,6 @@ fun RecordsHubScreen(
         loading = loading,
         errorMessage = errorMessage,
         onRetry = controller::refresh,
-        filterScope = filterScope,
-        filterOptions = filterOptions,
-        onFilterScope = controller::setFilterScope,
         onOpen = onOpen,
     )
 }

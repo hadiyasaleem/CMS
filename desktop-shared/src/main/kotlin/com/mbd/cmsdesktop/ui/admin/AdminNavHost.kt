@@ -211,7 +211,6 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         calendarRepository = component.calendarRepository(),
                         datesheetRepository = component.datesheetRepository(),
                         insightsRepository = component.insightsRepository(),
-                        departmentRepository = component.departmentRepository(),
                         onOpen = { destination ->
                             when (destination) {
                                 RecordsDestination.ATTENDANCE -> push(AdminScreen.AttendanceRecords)
