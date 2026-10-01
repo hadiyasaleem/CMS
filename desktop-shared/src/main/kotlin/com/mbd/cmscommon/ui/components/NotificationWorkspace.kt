@@ -292,7 +292,8 @@ private fun ComposeNotificationDialog(
                         modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        NotificationTargetRole.entries.forEach { role ->
+                        // Everyone first, then the narrower audiences.
+                        listOf(NotificationTargetRole.ALL, NotificationTargetRole.ADMIN, NotificationTargetRole.TEACHER, NotificationTargetRole.STUDENT).forEach { role ->
                             CmsChip(role.name, selected = targetRole == role, onClick = { targetRole = role })
                         }
                     }
