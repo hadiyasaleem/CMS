@@ -52,6 +52,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -80,7 +82,9 @@ import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
 import com.mbd.cmscommon.ui.components.EmptyState
+import com.mbd.cmscommon.ui.components.AttendanceRegisterBrowser
 import com.mbd.cmscommon.ui.components.AttendanceStudentReportCards
+import com.mbd.cmscommon.domain.model.parseShift
 import com.mbd.cmscommon.ui.components.ErrorBanner
 import com.mbd.cmscommon.ui.components.CmsChip
 import com.mbd.cmscommon.ui.components.SectionHeader
@@ -103,7 +107,7 @@ import java.util.Locale
 import javax.inject.Inject
 
 enum class ReportMode(val label: String, val short: String) {
-    SEMESTER("Semester summary", "Semester"), MONTHLY("Monthly summary", "Monthly"), FULL("Monthly full", "Full")
+    SEMESTER("Semester summary", "Semester"), MONTHLY("Monthly summary", "Monthly"), FULL("Attendance register", "Register")
 }
 
 private fun ReportMode.exportKind() = when (this) {
@@ -217,6 +221,11 @@ class AttendanceRecordsViewModel @Inject constructor(
     }
 }
 
+private val ShiftScopeSaver = listSaver<ShiftScope, String?>(
+    save = { listOf(it.deptId, it.sessionId, it.shift?.name) },
+    restore = { ShiftScope(it[0], it[1], parseShift(it[2])) },
+)
+
 private val ROLL_W = 74.dp
 private val NAME_W = 108.dp
 private val MON_W = 56.dp
@@ -224,7 +233,10 @@ private val DAY_W = 30.dp
 private val TOT_W = 38.dp
 
 @Composable
-fun AttendanceRecordsScreen(viewModel: AttendanceRecordsViewModel = hiltViewModel()) {
+fun AttendanceRecordsScreen(
+    onOpenStudent: (sessionId: String, rollNumber: String) -> Unit,
+    viewModel: AttendanceRecordsViewModel = hiltViewModel(),
+) {
     val departments by viewModel.departments.collectAsState()
     val sessions by viewModel.sessions.collectAsState()
     val raw by viewModel.raw.collectAsState()
@@ -236,17 +248,18 @@ fun AttendanceRecordsScreen(viewModel: AttendanceRecordsViewModel = hiltViewMode
     val full by viewModel.full.collectAsState()
     val fullLoading by viewModel.fullLoading.collectAsState()
 
-    var semester by remember { mutableStateOf<Int?>(null) }
-    var mode by remember { mutableStateOf(ReportMode.SEMESTER) }
-    var month by remember { mutableStateOf<YearMonth?>(null) }
-    var course by remember { mutableStateOf<String?>(null) }
+    // Saveable so the picks survive opening a student and coming back.
+    var semester by rememberSaveable { mutableStateOf<Int?>(null) }
+    var mode by rememberSaveable { mutableStateOf(ReportMode.FULL) }
+    var month by rememberSaveable { mutableStateOf<YearMonth?>(null) }
+    var course by rememberSaveable { mutableStateOf<String?>(null) }
     val exportScope = rememberCoroutineScope()
     var cellDetail by remember { mutableStateOf<Pair<String, DailyAttendanceMark>?>(null) }
     var actionError by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
 
     // Department -> Session -> Shift via the shared selector; no shift means both shifts of the session.
-    var reportScope by remember { mutableStateOf(ShiftScope.ALL) }
+    var reportScope by rememberSaveable(stateSaver = ShiftScopeSaver) { mutableStateOf(ShiftScope.ALL) }
     val selectedSession = sessions.firstOrNull { it.sessionId == reportScope.sessionId }
     val deptId = reportScope.deptId
     val year = selectedSession?.startYear
@@ -346,7 +359,7 @@ fun AttendanceRecordsScreen(viewModel: AttendanceRecordsViewModel = hiltViewMode
                     )
                     if (sessionId != null) PickRow("SEMESTER", (selectedSession?.semesterRange ?: 1..8).map { it to "Sem $it" }, semester) { semester = it; course = null; viewModel.clearFull() }
                     if (sessionId != null && semester != null) {
-                        Text("REPORT", style = CmsTextStyles.eyebrow, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 10.dp, bottom = 6.dp))
+                        Text("VIEW", style = CmsTextStyles.eyebrow, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 10.dp, bottom = 6.dp))
                         ModeSegmented(mode) { selectedMode -> viewModel.clearFull(); mode = selectedMode }
                         if (mode == ReportMode.FULL) PickRow("SUBJECT", subjects.map { it.courseCode to it.courseCode }, course) {
                             viewModel.clearFull(); course = it
@@ -368,13 +381,13 @@ fun AttendanceRecordsScreen(viewModel: AttendanceRecordsViewModel = hiltViewMode
             })
             mode == ReportMode.SEMESTER -> {
                 if (raw.isEmpty()) EmptyState("No attendance recorded for this semester yet.")
-                else AttendanceStudentReportCards(raw, roster, months)
+                else AttendanceStudentReportCards(raw, roster, months, onOpenStudent = { onOpenStudent(it.sessionId, it.rollNumber) })
             }
             mode == ReportMode.MONTHLY -> {
                 MonthNav(months, month) { month = it }
                 val m = month
                 if (m == null) EmptyState("No months in range.")
-                else AttendanceStudentReportCards(raw.filter { YearMonth.from(it.date) == m }, roster)
+                else AttendanceStudentReportCards(raw.filter { YearMonth.from(it.date) == m }, roster, onOpenStudent = { onOpenStudent(it.sessionId, it.rollNumber) })
             }
             mode == ReportMode.FULL -> {
                 if (subjects.isEmpty()) EmptyState("This semester has no subjects — add curriculum first.")
@@ -382,7 +395,13 @@ fun AttendanceRecordsScreen(viewModel: AttendanceRecordsViewModel = hiltViewMode
                 else {
                     MonthNav(months, month) { selectedMonth -> viewModel.clearFull(); month = selectedMonth }
                     val m = month
-                    if (m == null) EmptyState("No months in range.") else DayGrid(full, roster, m) { n, mk -> cellDetail = n to mk }
+                    if (m == null) EmptyState("No months in range.") else AttendanceRegisterBrowser(
+                        roster = roster,
+                        marks = full,
+                        month = m,
+                        onOpenStudent = { onOpenStudent(it.sessionId, it.rollNumber) },
+                        onCell = { student, _, mark -> if (mark != null) cellDetail = student.name to mark },
+                    )
                 }
             }
         }
@@ -477,14 +496,29 @@ private fun monthRange(term: SemesterTerm?, raw: List<DailyAttendanceMark>): Lis
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ModeSegmented(selected: ReportMode, onSelect: (ReportMode) -> Unit) {
+private fun SimpleSegmented(options: List<String>, selectedIndex: Int, onSelect: (Int) -> Unit) {
     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-        ReportMode.entries.forEachIndexed { i, m ->
+        options.forEachIndexed { index, text ->
             SegmentedButton(
-                selected = selected == m,
-                onClick = { onSelect(m) },
-                shape = SegmentedButtonDefaults.itemShape(i, ReportMode.entries.size),
-            ) { Text(m.short) }
+                selected = index == selectedIndex,
+                onClick = { onSelect(index) },
+                shape = SegmentedButtonDefaults.itemShape(index, options.size),
+            ) { Text(text) }
+        }
+    }
+}
+
+/** Register (the teacher-style month grid) or Summary; a summary is either per month or the full semester. */
+@Composable
+fun ModeSegmented(selected: ReportMode, onSelect: (ReportMode) -> Unit) {
+    var lastSummary by remember { mutableStateOf(ReportMode.MONTHLY) }
+    val summaryMode = if (selected == ReportMode.FULL) lastSummary else selected
+    SimpleSegmented(listOf("Register", "Summary"), if (selected == ReportMode.FULL) 0 else 1) { onSelect(if (it == 0) ReportMode.FULL else summaryMode) }
+    if (selected != ReportMode.FULL) {
+        Spacer(Modifier.height(6.dp))
+        SimpleSegmented(listOf("Per month", "Full semester"), if (selected == ReportMode.MONTHLY) 0 else 1) {
+            lastSummary = if (it == 0) ReportMode.MONTHLY else ReportMode.SEMESTER
+            onSelect(lastSummary)
         }
     }
 }
@@ -570,74 +604,9 @@ private fun MonthlySummaryGrid(monthMarks: List<DailyAttendanceMark>, roster: Li
     }
 }
 
-// ── Monthly full: day-by-day P/A/L grid for one subject ──
-@Composable
-private fun DayGrid(
-    full: Map<String, Map<LocalDate, DailyAttendanceMark>>,
-    roster: List<SessionStudent>,
-    month: YearMonth,
-    onCell: (String, DailyAttendanceMark) -> Unit,
-) {
-    val days = (1..month.lengthOfMonth()).map { month.atDay(it) }
-    val nameByRoll = roster.associate { it.rollNumber to it.name }
-    val rolls = (roster.map { it.rollNumber } + full.keys).distinct().sorted()
-    val presentC = CmsTheme.colors.success
-    val absentC = MaterialTheme.colorScheme.error
-    val leaveC = CmsTheme.colors.warn
-    val mutedC = CmsTheme.colors.muted
-    fun colorOf(s: AttendanceStatus?) = when (s) {
-        AttendanceStatus.PRESENT -> presentC
-        AttendanceStatus.ABSENT -> absentC
-        AttendanceStatus.LEAVE -> leaveC
-        null -> mutedC
-    }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).horizontalScroll(rememberScrollState())) {
-        Row(Modifier.height(56.dp).background(CmsTheme.colors.ink)) {
-            Head("ROLL", ROLL_W); Head("NAME", NAME_W)
-            days.forEach { d ->
-                Box(Modifier.width(DAY_W).height(56.dp), contentAlignment = Alignment.Center) {
-                    if (d.dayOfWeek == DayOfWeek.SUNDAY) Text("SUN", style = CmsTextStyles.eyebrow, color = CmsTheme.colors.accent, modifier = Modifier.rotate(-90f))
-                    else Text(d.dayOfMonth.toString(), style = MaterialTheme.typography.labelMedium, color = CmsTheme.colors.onInk)
-                }
-            }
-            Head("%", TOT_W)
-        }
-        rolls.forEach { roll ->
-            val byDate = full[roll].orEmpty()
-            val p = byDate.values.count { it.status == AttendanceStatus.PRESENT }
-            val marked = byDate.size
-            Row(Modifier.height(40.dp), verticalAlignment = Alignment.CenterVertically) {
-                val name = nameByRoll[roll] ?: roll
-                Cell(roll, ROLL_W, start = true, bold = true); Cell(name, NAME_W, start = true)
-                days.forEach { d ->
-                    val mark = byDate[d]
-                    val st = mark?.status
-                    Box(
-                        Modifier.width(DAY_W).height(40.dp)
-                            .background(if (d.dayOfWeek == DayOfWeek.SUNDAY) CmsTheme.colors.track else Color.Transparent)
-                            .then(if (mark != null) Modifier.clickable { onCell(name, mark) } else Modifier),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        // "*" flags a late mark; tap a cell for the full detail + comment.
-                        Text((st?.let(::letterOf) ?: "·") + if (mark?.isLate == true) "*" else "",
-                            style = MaterialTheme.typography.labelLarge, color = colorOf(st),
-                            fontWeight = if (st != null) FontWeight.Bold else FontWeight.Normal)
-                    }
-                }
-                Cell(pctText(p, marked), TOT_W, bold = true, color = riskColor(p, marked))
-            }
-            HorizontalDivider(color = CmsTheme.colors.rule.copy(alpha = 0.25f))
-        }
-    }
-}
-
 @Composable
 private fun riskColor(present: Int, marked: Int): Color =
     if (marked > 0 && pct(present, marked) < 75) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
-
-private fun letterOf(s: AttendanceStatus) = when (s) {
-    AttendanceStatus.PRESENT -> "P"; AttendanceStatus.ABSENT -> "A"; AttendanceStatus.LEAVE -> "L"
-}
 
 @Composable
 private fun Head(text: String, width: Dp) {

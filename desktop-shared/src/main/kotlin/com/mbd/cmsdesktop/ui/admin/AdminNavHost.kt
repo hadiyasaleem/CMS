@@ -68,6 +68,7 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
 
     var selectedTab by remember { mutableStateOf(AdminTab.Dashboard) }
     val backStack = remember { mutableStateListOf<AdminScreen>(AdminTab.Dashboard.root) }
+    val attendanceSelection = remember { AttendanceRecordsSelection() }
     val screen by remember { derivedStateOf { backStack.last() } }
 
     var shellRefreshing by remember { mutableStateOf(false) }
@@ -292,6 +293,8 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         attendanceRepository = component.sessionAttendanceRepository(),
                         curriculumRepository = component.curriculumRepository(),
                         window = window,
+                        onOpenStudent = { sessionId, roll -> push(AdminScreen.StudentRecord(sessionId, roll)) },
+                        selection = attendanceSelection,
                     )
 
                     AdminScreen.Calendar -> CalendarScreen(

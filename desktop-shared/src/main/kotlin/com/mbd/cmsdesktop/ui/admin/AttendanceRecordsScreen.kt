@@ -78,6 +78,7 @@ import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
+import com.mbd.cmscommon.ui.components.AttendanceRegisterBrowser
 import com.mbd.cmscommon.ui.components.AttendanceStudentReportCards
 import com.mbd.cmscommon.ui.components.CmsChip
 import com.mbd.cmscommon.ui.components.EmptyState
@@ -115,6 +116,8 @@ fun AttendanceRecordsScreen(
     attendanceRepository: SessionAttendanceRepository,
     curriculumRepository: CurriculumRepository,
     window: ComposeWindow,
+    onOpenStudent: (sessionId: String, rollNumber: String) -> Unit,
+    selection: AttendanceRecordsSelection = remember { AttendanceRecordsSelection() },
 ) {
     val scope = rememberCoroutineScope()
 
@@ -130,10 +133,10 @@ fun AttendanceRecordsScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var retryVersion by remember { mutableStateOf(0) }
 
-    var semester by remember { mutableStateOf<Int?>(null) }
-    var mode by remember { mutableStateOf(ReportMode.SEMESTER) }
-    var month by remember { mutableStateOf<YearMonth?>(null) }
-    var course by remember { mutableStateOf<String?>(null) }
+    var semester by selection::semester
+    var mode by selection::mode
+    var month by selection::month
+    var course by selection::course
     var cellDetail by remember { mutableStateOf<Pair<String, DailyAttendanceMark>?>(null) }
     var actionError by remember { mutableStateOf<String?>(null) }
 
@@ -146,7 +149,7 @@ fun AttendanceRecordsScreen(
     }
 
     // Department -> Session -> Shift via the shared selector; no shift means both shifts of the session.
-    var reportScope by remember { mutableStateOf(ShiftScope.ALL) }
+    var reportScope by selection::scope
     val selectedSession = sessions.firstOrNull { it.sessionId == reportScope.sessionId }
     val deptId = reportScope.deptId
     val year = selectedSession?.startYear
@@ -315,7 +318,7 @@ fun AttendanceRecordsScreen(
                     }
                     if (sessionId != null && semester != null) {
                         Text(
-                            "REPORT",
+                            "VIEW",
                             modifier = Modifier.padding(top = 10.dp, bottom = 6.dp),
                             color = CmsTheme.colors.muted,
                             style = CmsTextStyles.eyebrow,
@@ -356,7 +359,7 @@ fun AttendanceRecordsScreen(
                 if (raw.isEmpty()) {
                     EmptyState("No attendance recorded for this semester yet.")
                 } else {
-                    AttendanceStudentReportCards(raw, roster, months)
+                    AttendanceStudentReportCards(raw, roster, months, onOpenStudent = { onOpenStudent(it.sessionId, it.rollNumber) })
                 }
 
             mode == ReportMode.MONTHLY -> {
@@ -365,7 +368,7 @@ fun AttendanceRecordsScreen(
                 if (m == null) {
                     EmptyState("No months in range.")
                 } else {
-                    AttendanceStudentReportCards(raw.filter { YearMonth.from(it.date) == m }, roster)
+                    AttendanceStudentReportCards(raw.filter { YearMonth.from(it.date) == m }, roster, onOpenStudent = { onOpenStudent(it.sessionId, it.rollNumber) })
                 }
             }
 
@@ -380,7 +383,13 @@ fun AttendanceRecordsScreen(
                     if (m == null) {
                         EmptyState("No months in range.")
                     } else {
-                        DayGrid(full, roster, m) { rollName, mark -> cellDetail = rollName to mark }
+                        AttendanceRegisterBrowser(
+                            roster = roster,
+                            marks = full,
+                            month = m,
+                            onOpenStudent = { onOpenStudent(it.sessionId, it.rollNumber) },
+                            onCell = { student, _, mark -> if (mark != null) cellDetail = student.name to mark },
+                        )
                     }
                 }
         }
@@ -481,14 +490,29 @@ private fun monthRange(term: SemesterTerm?, raw: List<DailyAttendanceMark>): Lis
 }
 
 @Composable
-fun ModeSegmented(selected: ReportMode, onSelect: (ReportMode) -> Unit) {
+private fun SimpleSegmented(options: List<String>, selectedIndex: Int, onSelect: (Int) -> Unit) {
     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-        ReportMode.entries.forEachIndexed { index, m ->
+        options.forEachIndexed { index, text ->
             SegmentedButton(
-                selected = selected == m,
-                onClick = { onSelect(m) },
-                shape = SegmentedButtonDefaults.itemShape(index, ReportMode.entries.size),
-            ) { Text(m.short) }
+                selected = index == selectedIndex,
+                onClick = { onSelect(index) },
+                shape = SegmentedButtonDefaults.itemShape(index, options.size),
+            ) { Text(text) }
+        }
+    }
+}
+
+/** Register (the teacher-style month grid) or Summary; a summary is either per month or the full semester. */
+@Composable
+fun ModeSegmented(selected: ReportMode, onSelect: (ReportMode) -> Unit) {
+    var lastSummary by remember { mutableStateOf(ReportMode.MONTHLY) }
+    val summaryMode = if (selected == ReportMode.FULL) lastSummary else selected
+    SimpleSegmented(listOf("Register", "Summary"), if (selected == ReportMode.FULL) 0 else 1) { onSelect(if (it == 0) ReportMode.FULL else summaryMode) }
+    if (selected != ReportMode.FULL) {
+        Spacer(Modifier.height(6.dp))
+        SimpleSegmented(listOf("Per month", "Full semester"), if (selected == ReportMode.MONTHLY) 0 else 1) {
+            lastSummary = if (it == 0) ReportMode.MONTHLY else ReportMode.SEMESTER
+            onSelect(lastSummary)
         }
     }
 }
@@ -540,98 +564,9 @@ private fun pctText(present: Int, marked: Int): String {
     return if (p < 0) "–" else "$p%"
 }
 
-/** Day-by-day attendance register for the FULL report mode: one row per student, one column
- * per calendar day of [month], with an overall percentage column. Clicking a marked cell
- * invokes [onCell] to open the roll/day detail dialog. */
-@Composable
-private fun DayGrid(
-    full: Map<String, Map<LocalDate, DailyAttendanceMark>>,
-    roster: List<SessionStudent>,
-    month: YearMonth,
-    onCell: (String, DailyAttendanceMark) -> Unit,
-) {
-    val days = (1..month.lengthOfMonth()).map { month.atDay(it) }
-    val names = roster.associate { it.rollNumber to it.name }
-    val rolls = (roster.map { it.rollNumber } + full.keys).distinct().sorted()
-    val presentC = CmsTheme.colors.success
-    val absentC = MaterialTheme.colorScheme.error
-    val leaveC = CmsTheme.colors.warn
-    val mutedC = CmsTheme.colors.muted
-
-    val vScroll = rememberScrollState()
-    val hScroll = rememberScrollState()
-    Box(Modifier.fillMaxSize()) {
-    Column(Modifier.fillMaxSize().verticalScroll(vScroll).horizontalScroll(hScroll)) {
-        Row(Modifier.height(56.dp).background(CmsTheme.colors.ink)) {
-            Head("ROLL", ROLL_W)
-            Head("NAME", NAME_W)
-            days.forEach { d ->
-                Box(Modifier.width(DAY_W).height(56.dp), contentAlignment = Alignment.Center) {
-                    if (d.dayOfWeek == DayOfWeek.SUNDAY) {
-                        Text("SUN", modifier = Modifier.rotate(-90f), color = CmsTheme.colors.accent, style = CmsTextStyles.eyebrow)
-                    } else {
-                        Text(d.dayOfMonth.toString(), color = CmsTheme.colors.onInk, style = MaterialTheme.typography.labelMedium)
-                    }
-                }
-            }
-            Head("%", TOT_W)
-        }
-        rolls.forEach { roll ->
-            val marksByDate = full[roll].orEmpty()
-            val present = marksByDate.values.count { it.status == AttendanceStatus.PRESENT }
-            val marked = marksByDate.size
-            Row(Modifier.height(40.dp), verticalAlignment = Alignment.CenterVertically) {
-                Cell(roll, ROLL_W, start = true, bold = true)
-                Cell(names[roll] ?: roll, NAME_W, start = true)
-                days.forEach { d ->
-                    val mark = marksByDate[d]
-                    val cellBackground = if (d.dayOfWeek == DayOfWeek.SUNDAY) CmsTheme.colors.track else Color.Transparent
-                    val clickable = if (mark != null) Modifier.clickable { onCell(names[roll] ?: roll, mark) } else Modifier
-                    Box(
-                        modifier = Modifier.width(DAY_W).height(40.dp).background(cellBackground).then(clickable),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        val letter = mark?.status?.let { letterOf(it) } ?: "·"
-                        Text(
-                            text = letter + if (mark?.isLate == true) "*" else "",
-                            color = dayGridColorOf(presentC, absentC, leaveC, mutedC, mark?.status),
-                            fontWeight = if (mark?.status != null) FontWeight.Bold else FontWeight.Normal,
-                            style = MaterialTheme.typography.labelLarge,
-                        )
-                    }
-                }
-                Cell(pctText(present, marked), TOT_W, bold = true, color = riskColor(present, marked))
-            }
-            HorizontalDivider(color = CmsTheme.colors.rule.copy(alpha = 0.25f))
-        }
-    }
-        VerticalScrollbar(
-            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
-            adapter = rememberScrollbarAdapter(vScroll),
-        )
-        HorizontalScrollbar(
-            modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth(),
-            adapter = rememberScrollbarAdapter(hScroll),
-        )
-    }
-}
-
-private fun dayGridColorOf(presentC: Color, absentC: Color, leaveC: Color, mutedC: Color, s: AttendanceStatus?): Color = when (s) {
-    null -> mutedC
-    AttendanceStatus.PRESENT -> presentC
-    AttendanceStatus.ABSENT -> absentC
-    AttendanceStatus.LEAVE -> leaveC
-}
-
 @Composable
 private fun riskColor(present: Int, marked: Int): Color =
     if (marked <= 0 || pct(present, marked) >= 75) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error
-
-private fun letterOf(s: AttendanceStatus): String = when (s) {
-    AttendanceStatus.PRESENT -> "P"
-    AttendanceStatus.ABSENT -> "A"
-    AttendanceStatus.LEAVE -> "L"
-}
 
 @Composable
 private fun Head(text: String, width: Dp) {

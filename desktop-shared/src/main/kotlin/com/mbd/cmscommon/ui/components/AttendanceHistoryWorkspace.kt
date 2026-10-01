@@ -135,18 +135,7 @@ fun AttendanceHistoryWorkspace(
 
     val summary = attendanceHistorySummary(roster, marks)
     val datesWithMarks = remember(marks) { marks.values.flatMap { it.keys }.toSet() }
-    val visible = summary.students.filter { student ->
-        val matchesQuery = query.isBlank() ||
-            student.student.name.contains(query, ignoreCase = true) ||
-            student.student.rollNumber.contains(query, ignoreCase = true)
-        val matchesFilter = when (filter) {
-            AttendanceHistoryFilter.ALL -> true
-            AttendanceHistoryFilter.AT_RISK -> student.isAtRisk
-            AttendanceHistoryFilter.LATE -> student.late > 0
-            AttendanceHistoryFilter.NO_RECORD -> student.total == 0
-        }
-        matchesQuery && matchesFilter
-    }
+    val visible = filterRegisterStudents(summary.students, query, filter)
 
     val listState = rememberLazyListState()
     WithVerticalScrollbar(listState) {
@@ -206,6 +195,80 @@ fun AttendanceHistoryWorkspace(
 
     if (!errorMessage.isNullOrBlank()) {
         CmsErrorDialog(message = errorMessage, title = "Couldn't complete that attendance action", onDismiss = onClearError)
+    }
+}
+
+private fun filterRegisterStudents(
+    students: List<StudentAttendanceHistorySummary>,
+    query: String,
+    filter: AttendanceHistoryFilter,
+): List<StudentAttendanceHistorySummary> = students.filter { student ->
+    val matchesQuery = query.isBlank() ||
+        student.student.name.contains(query, ignoreCase = true) ||
+        student.student.rollNumber.contains(query, ignoreCase = true)
+    val matchesFilter = when (filter) {
+        AttendanceHistoryFilter.ALL -> true
+        AttendanceHistoryFilter.AT_RISK -> student.isAtRisk
+        AttendanceHistoryFilter.LATE -> student.late > 0
+        AttendanceHistoryFilter.NO_RECORD -> student.total == 0
+    }
+    matchesQuery && matchesFilter
+}
+
+/**
+ * The teacher's month register as a read-only browser for admins. [marks] is keyed by roll number;
+ * a name opens that student, a cell reports its day. Edits stay with the teacher's request flow.
+ */
+@Composable
+fun AttendanceRegisterBrowser(
+    roster: List<SessionStudent>,
+    marks: Map<String, Map<LocalDate, DailyAttendanceMark>>,
+    month: YearMonth,
+    onOpenStudent: (SessionStudent) -> Unit,
+    onCell: (SessionStudent, LocalDate, DailyAttendanceMark?) -> Unit,
+    modifier: Modifier = Modifier,
+    today: LocalDate = LocalDate.now(),
+) {
+    var query by remember { mutableStateOf("") }
+    var filter by remember { mutableStateOf(AttendanceHistoryFilter.ALL) }
+    val summary = remember(roster, marks) { attendanceHistorySummary(roster, roster.associate { it.id to marks[it.rollNumber].orEmpty() }) }
+    val datesWithMarks = remember(marks) { marks.values.flatMap { it.keys }.toSet() }
+    val visible = filterRegisterStudents(summary.students, query, filter)
+    val listState = rememberLazyListState()
+    WithVerticalScrollbar(listState) {
+    LazyColumn(
+        modifier = modifier.fillMaxWidth().background(HistoryCanvas),
+        state = listState,
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        item { HistoryFilters(query, { query = it }, filter, { filter = it }) }
+        if (roster.isEmpty()) {
+            item { HistoryEmpty("No students are enrolled in this session yet.") }
+        } else if (visible.isEmpty()) {
+            item { HistoryEmpty("No students match this search or filter.") }
+        } else {
+            item {
+                AttendanceRegister(
+                    students = visible,
+                    month = month,
+                    datesWithMarks = datesWithMarks,
+                    pendingCells = emptySet(),
+                    today = today,
+                    onOpenStudent = { onOpenStudent(it.student) },
+                    onCell = { student, date, mark -> onCell(student.student, date, mark) },
+                )
+            }
+            item {
+                Text(
+                    "P present · A absent · L leave · dark dot = late or has a remark. " +
+                        "Select a name to open the student's profile and attendance history, or a cell for that day's details.",
+                    color = ModMuted,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        }
+    }
     }
 }
 

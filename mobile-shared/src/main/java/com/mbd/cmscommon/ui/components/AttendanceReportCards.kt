@@ -10,6 +10,7 @@ import com.mbd.cmscommon.ui.theme.ModAccent
 import com.mbd.cmscommon.ui.theme.ModWarn
 import com.mbd.cmscommon.ui.theme.ModRedTint
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -32,6 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.domain.model.AttendanceMonthRate
 import com.mbd.cmscommon.domain.model.AttendanceStudentSummary
@@ -49,18 +51,23 @@ fun AttendanceStudentReportCards(
     roster: List<SessionStudent>,
     months: List<YearMonth> = emptyList(),
     modifier: Modifier = Modifier,
+    /** When set, tapping a card opens that student's profile. */
+    onOpenStudent: ((SessionStudent) -> Unit)? = null,
 ) {
     val summaries = attendanceStudentSummaries(marks, roster, months)
+    val byRoll = roster.associateBy { it.rollNumber }
     LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        items(summaries, key = { it.rollNumber }) { student -> AttendanceStudentReportCard(student) }
+        items(summaries, key = { it.rollNumber }) { student ->
+            AttendanceStudentReportCard(student, onClick = onOpenStudent?.let { open -> byRoll[student.rollNumber]?.let { found -> { open(found) } } })
+        }
     }
 }
 
 @Composable
-private fun AttendanceStudentReportCard(student: AttendanceStudentSummary, modifier: Modifier = Modifier) {
+private fun AttendanceStudentReportCard(student: AttendanceStudentSummary, modifier: Modifier = Modifier, onClick: (() -> Unit)? = null) {
     val risk = student.belowTarget
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
         shape = RoundedCornerShape(18.dp),
         color = ModSurface,
         border = BorderStroke(1.dp, if (risk) ModRedTint else ModTrack),
@@ -68,7 +75,7 @@ private fun AttendanceStudentReportCard(student: AttendanceStudentSummary, modif
         Column(Modifier.padding(18.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Column(Modifier.weight(1f)) {
-                    Text(student.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                    Text(student.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, textDecoration = if (onClick != null) TextDecoration.Underline else null)
                     Text("Roll ${student.rollNumber}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
                 Spacer(Modifier.width(8.dp))

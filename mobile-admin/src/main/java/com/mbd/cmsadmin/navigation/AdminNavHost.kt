@@ -105,7 +105,9 @@ fun AdminNavHost(navController: NavHostController, onSignedOut: () -> Unit, refr
             DepartmentsScreen(onOpenDepartment = { go(AdminRoutes.deptDetail(it)) })
         }
         composable(AdminLeaf.ATTENDANCE_RECORDS) {
-            com.mbd.cmsadmin.feature.records.AttendanceRecordsScreen()
+            com.mbd.cmsadmin.feature.records.AttendanceRecordsScreen(
+                onOpenStudent = { sid, roll -> go(AdminRoutes.studentRecord(sid, roll)) },
+            )
         }
         composable(AdminLeaf.CALENDAR) { com.mbd.cmsadmin.feature.calendar.CalendarScreen() }
         composable(AdminLeaf.DATESHEETS) {

@@ -16,8 +16,8 @@ android {
         applicationId = "com.mbd.cmsstudent"
         minSdk = 24
         targetSdk = 36
-        versionCode = 82
-        versionName = "1.0.81"
+        versionCode = 83
+        versionName = "1.0.82"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
