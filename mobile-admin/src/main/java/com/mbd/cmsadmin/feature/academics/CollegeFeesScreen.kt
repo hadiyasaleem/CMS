@@ -1,0 +1,72 @@
+package com.mbd.cmsadmin.feature.academics
+
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.mbd.cmscommon.auth.SessionManager
+import com.mbd.cmscommon.controller.CollegeFeesController
+import com.mbd.cmscommon.domain.model.Session
+import com.mbd.cmscommon.domain.model.parseShift
+import com.mbd.cmscommon.domain.repository.SessionFeeRepository
+import com.mbd.cmscommon.ui.components.SessionFeeWorkspace
+import com.mbd.cmscommon.util.FeeChallanPdfGenerator
+import com.mbd.cmscommon.util.FileOpener
+import dagger.hilt.android.lifecycle.HiltViewModel
+import java.io.File
+import javax.inject.Inject
+
+@HiltViewModel
+class CollegeFeesViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
+    feeRepository: SessionFeeRepository,
+    sessionManager: SessionManager,
+) : ViewModel() {
+    val controller = CollegeFeesController(
+        repo = feeRepository,
+        updatedBy = sessionManager.accountKey.orEmpty(),
+        scope = viewModelScope,
+        initialShift = parseShift(savedStateHandle["shift"]) ?: Session.MORNING,
+    )
+}
+
+/** The college-wide base fee structure for one shift (Morning and Evening are edited separately). */
+@Composable
+fun CollegeFeesScreen(viewModel: CollegeFeesViewModel = hiltViewModel()) {
+    val controller = viewModel.controller
+    val context = LocalContext.current
+    val structure by controller.structure.collectAsState()
+    val shift by controller.shift.collectAsState()
+    val loading by controller.loading.collectAsState()
+    val saving by controller.saving.collectAsState()
+    val saved by controller.saved.collectAsState()
+    val errorMessage by controller.error.collectAsState()
+
+    SessionFeeWorkspace(
+        sessionId = "",
+        session = null,
+        department = null,
+        structure = structure,
+        loading = loading,
+        saving = saving,
+        saved = saved,
+        errorMessage = errorMessage,
+        onSave = controller::save,
+        onConsumeSaved = controller::consumeSaved,
+        onClearError = controller::clearError,
+        onDownloadSamplePdf = { header, sampleStructure ->
+            val bytes = FeeChallanPdfGenerator.generate(header, sampleStructure)
+            val file = File(context.cacheDir, "${header.challanNumber}.pdf")
+            file.writeBytes(bytes)
+            FileOpener.open(context, file, "application/pdf")
+        },
+        shift = shift,
+        shifts = controller.shifts,
+        onSelectShift = controller::selectShift,
+        collegeBase = true,
+    )
+}

@@ -275,6 +275,8 @@ data class SessionFeeStructure(
     override val createdBy: String? = null,
     override val updatedAt: Instant = Instant.EPOCH,
     override val updatedBy: String? = null,
+    /** True when this session has no structure of its own and is following the college-wide base for its shift. */
+    val inherited: Boolean = false,
 ) : BaseEntity() {
     val totalAmount: Double get() = heads.sumOf { it.amount }
 }

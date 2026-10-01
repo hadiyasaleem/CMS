@@ -63,7 +63,7 @@ fun AdminNavHost(navController: NavHostController, onSignedOut: () -> Unit, refr
                         RecordsDestination.CALENDAR -> AdminLeaf.CALENDAR
                         RecordsDestination.DATESHEETS -> AdminLeaf.DATESHEETS
                         RecordsDestination.TIMETABLE -> AdminLeaf.MASTER_TIMETABLE
-                        RecordsDestination.FEES -> AdminLeaf.FEES_PICKER
+                        RecordsDestination.FEES -> AdminLeaf.FEE_STRUCTURES
                         RecordsDestination.INSIGHTS -> AdminLeaf.INSIGHTS
                         RecordsDestination.SEMESTER_RESULTS -> AdminLeaf.SEMESTER_RESULTS
                     },
@@ -100,10 +100,14 @@ fun AdminNavHost(navController: NavHostController, onSignedOut: () -> Unit, refr
         composable(AdminLeaf.MASTER_TIMETABLE) {
             MasterTimetableScreen(onOpenSession = { go(AdminRoutes.sessionTimetable(it)) })
         }
-        // "Fee Structures" drills department → session → that session's fee structure (fees are per-session).
-        composable(AdminLeaf.FEES_PICKER) {
-            DepartmentsScreen(onOpenDepartment = { go(AdminRoutes.deptDetail(it)) })
+        // "Fee Structures": the college-wide base per shift plus every class's fees in one grid; a row opens that class's fees.
+        composable(AdminLeaf.FEE_STRUCTURES) {
+            com.mbd.cmsadmin.feature.academics.FeeStructuresScreen(
+                onEditCollege = { shift -> go(AdminRoutes.collegeFees(shift)) },
+                onOpenClass = { sessionId, shift -> go(AdminRoutes.sessionFees(sessionId, shift)) },
+            )
         }
+        composable(AdminRoutes.COLLEGE_FEES) { com.mbd.cmsadmin.feature.academics.CollegeFeesScreen() }
         composable(AdminLeaf.ATTENDANCE_RECORDS) {
             com.mbd.cmsadmin.feature.records.AttendanceRecordsScreen(
                 onOpenStudent = { sid, roll -> go(AdminRoutes.studentRecord(sid, roll)) },
@@ -137,6 +141,7 @@ fun AdminNavHost(navController: NavHostController, onSignedOut: () -> Unit, refr
             )
         }
         composable(AdminRoutes.SESSION_FEES) { com.mbd.cmsadmin.feature.academics.SessionFeesScreen() }
+        composable(AdminRoutes.SESSION_FEES_SHIFT) { com.mbd.cmsadmin.feature.academics.SessionFeesScreen() }
         composable(AdminRoutes.SEMESTER_SUBJECTS) { SemesterSubjectsScreen() }
         composable(AdminRoutes.SESSION_STUDENTS) {
             SessionStudentsScreen(onOpenStudent = { sid, roll -> go(AdminRoutes.studentProfile(sid, roll)) })

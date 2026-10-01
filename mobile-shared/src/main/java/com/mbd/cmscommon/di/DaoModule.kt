@@ -17,6 +17,7 @@ import com.mbd.cmscommon.data.local.dao.RoomDao
 import com.mbd.cmscommon.data.local.dao.SemesterSubjectDao
 import com.mbd.cmscommon.data.local.dao.SemesterTermDao
 import com.mbd.cmscommon.data.local.dao.SessionAttendanceDao
+import com.mbd.cmscommon.data.local.dao.CollegeFeeDao
 import com.mbd.cmscommon.data.local.dao.SessionFeeDao
 import com.mbd.cmscommon.data.local.dao.SessionMarkDao
 import com.mbd.cmscommon.data.local.dao.SessionPeriodDao
@@ -111,6 +112,9 @@ object DaoModule {
 
     @Provides
     fun provideSessionFeeDao(db: CmsDatabase): SessionFeeDao = db.sessionFeeDao()
+
+    @Provides
+    fun provideCollegeFeeDao(db: CmsDatabase): CollegeFeeDao = db.collegeFeeDao()
 
     @Provides
     fun provideSyncCheckpointStore(store: RoomSyncCheckpointStore): SyncCheckpointStore = store

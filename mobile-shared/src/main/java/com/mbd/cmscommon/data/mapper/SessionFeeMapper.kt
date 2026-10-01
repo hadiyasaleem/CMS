@@ -2,9 +2,13 @@ package com.mbd.cmscommon.data.mapper
 
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.parseShift
+import com.mbd.cmscommon.data.local.entity.CollegeFeeEntity
+import com.mbd.cmscommon.data.local.entity.CollegeFeeHeadEntity
 import com.mbd.cmscommon.data.local.entity.SessionFeeEntity
 import com.mbd.cmscommon.data.local.entity.SessionFeeHeadEntity
 import com.mbd.cmscommon.data.remote.PgTime
+import com.mbd.cmscommon.data.remote.dto.CollegeFeeDto
+import com.mbd.cmscommon.data.remote.dto.CollegeFeeHeadDto
 import com.mbd.cmscommon.data.remote.dto.SessionFeeDto
 import com.mbd.cmscommon.data.remote.dto.SessionFeeHeadDto
 import com.mbd.cmscommon.domain.model.FeeHead
@@ -72,6 +76,60 @@ object SessionFeeMapper {
             updatedBy = fee.updatedBy,
         )
     }
+
+    fun collegeFeeDtoToEntity(dto: CollegeFeeDto): CollegeFeeEntity = CollegeFeeEntity(
+        shift = dto.shift ?: Session.MORNING.name,
+        cadence = dto.cadence ?: "",
+        academicYear = dto.academicYear,
+        dueDate = dto.dueDate,
+        paymentNote = dto.paymentNote,
+        createdAt = PgTime.parseOrEpoch(dto.createdAt).toEpochMilli(),
+        createdBy = dto.createdBy,
+        updatedAt = PgTime.parseOrEpoch(dto.updatedAt).toEpochMilli(),
+        updatedBy = dto.updatedBy,
+        isDeleted = dto.isDeleted,
+        deletedAt = PgTime.parse(dto.deletedAt)?.toEpochMilli(),
+        deletedBy = dto.deletedBy,
+    )
+
+    fun collegeHeadDtoToEntity(dto: CollegeFeeHeadDto): CollegeFeeHeadEntity = CollegeFeeHeadEntity(
+        id = headLocalId("", parseShift(dto.shift) ?: Session.MORNING, dto.label ?: ""),
+        shift = dto.shift ?: Session.MORNING.name,
+        label = dto.label ?: "",
+        amount = dto.amount,
+        position = dto.position,
+        createdAt = PgTime.parseOrEpoch(dto.createdAt).toEpochMilli(),
+        createdBy = dto.createdBy,
+        updatedAt = PgTime.parseOrEpoch(dto.updatedAt).toEpochMilli(),
+        updatedBy = dto.updatedBy,
+        isDeleted = dto.isDeleted,
+        deletedAt = PgTime.parse(dto.deletedAt)?.toEpochMilli(),
+        deletedBy = dto.deletedBy,
+    )
+
+    /** The college base as a structure with no session of its own (blank session id). */
+    fun collegeToDomain(fee: CollegeFeeEntity, heads: List<CollegeFeeHeadEntity>): SessionFeeStructure = SessionFeeStructure(
+        sessionId = "",
+        shift = parseShift(fee.shift) ?: Session.MORNING,
+        cadence = runCatching { FeeType.valueOf(fee.cadence) }.getOrDefault(FeeType.SEMESTER),
+        heads = heads.map { head ->
+            FeeHead(
+                label = head.label,
+                amount = head.amount,
+                createdAt = Instant.ofEpochMilli(head.createdAt),
+                createdBy = head.createdBy,
+                updatedAt = Instant.ofEpochMilli(head.updatedAt),
+                updatedBy = head.updatedBy,
+            )
+        },
+        academicYear = fee.academicYear,
+        dueDate = fee.dueDate,
+        paymentNote = fee.paymentNote,
+        createdAt = Instant.ofEpochMilli(fee.createdAt),
+        createdBy = fee.createdBy,
+        updatedAt = Instant.ofEpochMilli(fee.updatedAt),
+        updatedBy = fee.updatedBy,
+    )
 
     fun headLocalId(sessionId: String, shift: Session, label: String): String =
         "${sessionId}_${shift.name}_${label.trim().lowercase(Locale.ROOT)}"

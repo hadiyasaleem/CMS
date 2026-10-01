@@ -218,7 +218,7 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                                 RecordsDestination.CALENDAR -> push(AdminScreen.Calendar)
                                 RecordsDestination.DATESHEETS -> push(AdminScreen.Datesheets)
                                 RecordsDestination.TIMETABLE -> push(AdminScreen.MasterTimetable)
-                                RecordsDestination.FEES -> push(AdminScreen.FeesPicker)
+                                RecordsDestination.FEES -> push(AdminScreen.FeeStructures)
                                 RecordsDestination.INSIGHTS -> push(AdminScreen.Insights)
                                 RecordsDestination.SEMESTER_RESULTS -> push(AdminScreen.SemesterResults)
                             }
@@ -334,12 +334,19 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         createdBy = accountKey,
                     )
 
-                    AdminScreen.FeesPicker -> DepartmentsScreen(
-                        repository = component.departmentRepository(),
+                    AdminScreen.FeeStructures -> FeeStructuresScreen(
+                        feeRepository = component.sessionFeeRepository(),
                         sessionRepository = component.academicSessionRepository(),
-                        teacherRepository = component.teacherRepository(),
-                        createdBy = accountKey,
-                        onOpenDepartment = { deptId -> push(AdminScreen.DeptDetail(deptId)) },
+                        departmentRepository = component.departmentRepository(),
+                        onEditCollege = { shift -> push(AdminScreen.CollegeFees(shift)) },
+                        onOpenClass = { sessionId, shift -> push(AdminScreen.SessionFeesRoute(sessionId, shift)) },
+                    )
+
+                    is AdminScreen.CollegeFees -> CollegeFeesScreen(
+                        initialShift = current.shift,
+                        feeRepository = component.sessionFeeRepository(),
+                        updatedBy = accountKey,
+                        window = window,
                     )
 
                     AdminScreen.Insights -> InsightsScreen(
@@ -462,6 +469,7 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         departmentRepository = component.departmentRepository(),
                         updatedBy = accountKey,
                         window = window,
+                        initialShift = current.shift,
                     )
                 }
             }

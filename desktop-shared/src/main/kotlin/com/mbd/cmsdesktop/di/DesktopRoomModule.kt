@@ -18,6 +18,7 @@ import com.mbd.cmscommon.data.local.dao.PoolSubjectDao
 import com.mbd.cmscommon.data.local.dao.SemesterSubjectDao
 import com.mbd.cmscommon.data.local.dao.SemesterTermDao
 import com.mbd.cmscommon.data.local.dao.SessionAttendanceDao
+import com.mbd.cmscommon.data.local.dao.CollegeFeeDao
 import com.mbd.cmscommon.data.local.dao.SessionFeeDao
 import com.mbd.cmscommon.data.local.dao.SessionMarkDao
 import com.mbd.cmscommon.data.local.dao.SessionPeriodDao
@@ -90,6 +91,7 @@ object DesktopRoomModule {
     @Provides fun sessionMarkDao(db: DesktopDatabase): SessionMarkDao = db.sessionMarkDao()
     @Provides fun studentSemesterGpaDao(db: DesktopDatabase): StudentSemesterGpaDao = db.studentSemesterGpaDao()
     @Provides fun sessionFeeDao(db: DesktopDatabase): SessionFeeDao = db.sessionFeeDao()
+    @Provides fun collegeFeeDao(db: DesktopDatabase): CollegeFeeDao = db.collegeFeeDao()
     @Provides fun appLogDao(db: DesktopDatabase): AppLogDao = db.appLogDao()
 
     @Provides

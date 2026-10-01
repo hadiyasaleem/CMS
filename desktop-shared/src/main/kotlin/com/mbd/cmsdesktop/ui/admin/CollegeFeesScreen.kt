@@ -1,53 +1,41 @@
 package com.mbd.cmsdesktop.ui.admin
 
-import com.mbd.cmsdesktop.platform.rememberDocumentExport
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.awt.ComposeWindow
-import com.mbd.cmscommon.controller.SessionFeesController
-import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
-import com.mbd.cmscommon.domain.repository.DepartmentRepository
+import com.mbd.cmscommon.controller.CollegeFeesController
+import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.repository.SessionFeeRepository
 import com.mbd.cmscommon.ui.components.SessionFeeWorkspace
 import com.mbd.cmsdesktop.platform.AwtDesktopPlatformServices
 import com.mbd.cmsdesktop.util.FeeChallanPdfGenerator
 
+/** The college-wide base fee structure for one shift (Morning and Evening are edited separately). */
 @Composable
-fun SessionFeesScreen(
-    sessionId: String,
+fun CollegeFeesScreen(
+    initialShift: Session,
     feeRepository: SessionFeeRepository,
-    sessionRepository: AcademicSessionRepository,
-    departmentRepository: DepartmentRepository,
     updatedBy: String?,
     window: ComposeWindow,
-    initialShift: com.mbd.cmscommon.domain.model.Session? = null,
 ) {
     val scope = rememberCoroutineScope()
-    val controller = remember(sessionId, feeRepository, sessionRepository, departmentRepository, updatedBy, initialShift) {
-        SessionFeesController(sessionId, feeRepository, sessionRepository, departmentRepository, updatedBy.orEmpty(), scope, initialShift)
+    val controller = remember(feeRepository, updatedBy) {
+        CollegeFeesController(feeRepository, updatedBy.orEmpty(), scope, initialShift)
     }
     val structure by controller.structure.collectAsState()
-    val structures by controller.structures.collectAsState()
     val shift by controller.shift.collectAsState()
-    val shifts by controller.shifts.collectAsState()
-    val session by controller.session.collectAsState()
-    val department by controller.department.collectAsState()
     val loading by controller.loading.collectAsState()
     val saving by controller.saving.collectAsState()
     val saved by controller.saved.collectAsState()
     val errorMessage by controller.error.collectAsState()
-    val inheritsCollege by controller.inheritsCollege.collectAsState()
-    val canRevert by controller.canRevert.collectAsState()
 
     SessionFeeWorkspace(
-
-        onExport = rememberDocumentExport(),
-        sessionId = sessionId,
-        session = session,
-        department = department,
+        sessionId = "",
+        session = null,
+        department = null,
         structure = structure,
         loading = loading,
         saving = saving,
@@ -64,11 +52,8 @@ fun SessionFeesScreen(
             }
         },
         shift = shift,
-        shifts = shifts,
+        shifts = controller.shifts,
         onSelectShift = controller::selectShift,
-        allStructures = structures,
-        inheritsCollege = inheritsCollege,
-        canRevertToCollege = canRevert,
-        onRevertToCollege = controller::revertToCollege,
+        collegeBase = true,
     )
 }

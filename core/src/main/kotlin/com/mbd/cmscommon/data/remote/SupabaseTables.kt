@@ -20,6 +20,8 @@ object SupabaseTables {
     const val STUDENT_SEMESTER_GPA = "student_semester_gpa"
     const val SESSION_FEES = "session_fees"
     const val SESSION_FEE_HEADS = "session_fee_heads"
+    const val COLLEGE_FEES = "college_fees"
+    const val COLLEGE_FEE_HEADS = "college_fee_heads"
     const val FEE_OVERRIDES = "fee_overrides"
     const val DATESHEETS = "datesheets"
     const val DATESHEET_SLOTS = "datesheet_slots"

@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 
 class SessionDetailController(
@@ -88,7 +89,9 @@ class SessionDetailController(
     init {
         launch("load the fee structures") {
             try {
-                val fees = feeRepository.getSessionFees(sessionId)
+                // Each shift the session runs, with the structure it pays: its own, else the college-wide base.
+                val shifts = sessionRepository.observeSession(sessionId).first()?.shifts ?: Session.entries
+                val fees = shifts.mapNotNull { shift -> feeRepository.getSessionFee(sessionId, shift) }
                 _fees.value = fees
                 _fee.value = fees.firstOrNull()
             } finally {

@@ -38,6 +38,7 @@ class SessionFeesViewModel @Inject constructor(
         departmentRepository = departmentRepository,
         updatedBy = sessionManager.accountKey.orEmpty(),
         scope = viewModelScope,
+        initialShift = com.mbd.cmscommon.domain.model.parseShift(savedStateHandle["shift"]),
     )
 
     val sessionId = controller.sessionId
@@ -46,6 +47,9 @@ class SessionFeesViewModel @Inject constructor(
     val shift = controller.shift
     val shifts = controller.shifts
     fun selectShift(picked: com.mbd.cmscommon.domain.model.Session) = controller.selectShift(picked)
+    val inheritsCollege = controller.inheritsCollege
+    val canRevert = controller.canRevert
+    fun revertToCollege() = controller.revertToCollege()
     val session = controller.session
     val department = controller.department
     val loading = controller.loading
@@ -78,6 +82,8 @@ fun SessionFeesScreen(viewModel: SessionFeesViewModel = hiltViewModel()) {
     val saving by viewModel.saving.collectAsState()
     val saved by viewModel.saved.collectAsState()
     val errorMessage by viewModel.error.collectAsState()
+    val inheritsCollege by viewModel.inheritsCollege.collectAsState()
+    val canRevert by viewModel.canRevert.collectAsState()
 
     SessionFeeWorkspace(
 
@@ -103,5 +109,8 @@ fun SessionFeesScreen(viewModel: SessionFeesViewModel = hiltViewModel()) {
         shifts = shifts,
         onSelectShift = viewModel::selectShift,
         allStructures = structures,
+        inheritsCollege = inheritsCollege,
+        canRevertToCollege = canRevert,
+        onRevertToCollege = viewModel::revertToCollege,
     )
 }

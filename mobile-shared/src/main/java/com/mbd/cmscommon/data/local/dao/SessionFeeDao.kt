@@ -4,6 +4,8 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.mbd.cmscommon.data.local.entity.CollegeFeeEntity
+import com.mbd.cmscommon.data.local.entity.CollegeFeeHeadEntity
 import com.mbd.cmscommon.data.local.entity.SessionFeeEntity
 import com.mbd.cmscommon.data.local.entity.SessionFeeHeadEntity
 
@@ -12,6 +14,9 @@ import com.mbd.cmscommon.data.local.entity.SessionFeeHeadEntity
 interface SessionFeeDao {
     @Query("SELECT * FROM session_fees WHERE sessionId = :sessionId AND shift = :shift LIMIT 1")
     suspend fun getFee(sessionId: String, shift: String): SessionFeeEntity?
+
+    @Query("SELECT * FROM session_fees WHERE isDeleted = 0 ORDER BY sessionId, shift")
+    suspend fun getAllFees(): List<SessionFeeEntity>
 
     @Query("SELECT * FROM session_fees WHERE sessionId = :sessionId ORDER BY shift")
     suspend fun getFees(sessionId: String): List<SessionFeeEntity>
@@ -41,6 +46,44 @@ interface SessionFeeDao {
     }
 
     suspend fun applyHeadDelta(upserts: List<SessionFeeHeadEntity>, deletedIds: List<String>) {
+        if (upserts.isNotEmpty()) upsertHeads(upserts)
+        if (deletedIds.isNotEmpty()) deleteHeadsByIds(deletedIds)
+    }
+}
+
+/** The college-wide base fee structure: one per shift, with its heads. */
+@Dao
+interface CollegeFeeDao {
+    @Query("SELECT * FROM college_fees WHERE shift = :shift AND isDeleted = 0 LIMIT 1")
+    suspend fun getFee(shift: String): CollegeFeeEntity?
+
+    @Query("SELECT * FROM college_fees WHERE isDeleted = 0 ORDER BY shift")
+    suspend fun getFees(): List<CollegeFeeEntity>
+
+    @Query("SELECT * FROM college_fee_heads WHERE shift = :shift AND isDeleted = 0 ORDER BY position")
+    suspend fun getHeads(shift: String): List<CollegeFeeHeadEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertFees(items: List<CollegeFeeEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertHeads(items: List<CollegeFeeHeadEntity>)
+
+    @Query("DELETE FROM college_fees WHERE shift = :shift")
+    suspend fun deleteFee(shift: String)
+
+    @Query("DELETE FROM college_fee_heads WHERE id IN (:ids)")
+    suspend fun deleteHeadsByIds(ids: List<String>)
+
+    @Query("DELETE FROM college_fee_heads WHERE shift = :shift")
+    suspend fun deleteHeadsFor(shift: String)
+
+    suspend fun applyFeeDelta(upserts: List<CollegeFeeEntity>, deletedShifts: List<String>) {
+        if (upserts.isNotEmpty()) upsertFees(upserts)
+        deletedShifts.forEach { deleteFee(it) }
+    }
+
+    suspend fun applyHeadDelta(upserts: List<CollegeFeeHeadEntity>, deletedIds: List<String>) {
         if (upserts.isNotEmpty()) upsertHeads(upserts)
         if (deletedIds.isNotEmpty()) deleteHeadsByIds(deletedIds)
     }

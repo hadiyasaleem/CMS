@@ -1839,6 +1839,23 @@ val MIGRATION_52_53: Migration = object : Migration(52, 53) {
     }
 }
 
+/** 53 -> 54: the college-wide base fee structure (one per shift) is cached locally. */
+val MIGRATION_53_54: Migration = object : Migration(53, 54) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `college_fees` (`shift` TEXT NOT NULL, `cadence` TEXT NOT NULL, `academicYear` TEXT, `dueDate` TEXT, " +
+                "`paymentNote` TEXT, `createdAt` INTEGER NOT NULL, `createdBy` TEXT, `updatedAt` INTEGER NOT NULL, `updatedBy` TEXT, " +
+                "`isDeleted` INTEGER NOT NULL, `deletedAt` INTEGER, `deletedBy` TEXT, PRIMARY KEY(`shift`))",
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `college_fee_heads` (`id` TEXT NOT NULL, `shift` TEXT NOT NULL, `label` TEXT NOT NULL, `amount` REAL NOT NULL, " +
+                "`position` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `createdBy` TEXT, `updatedAt` INTEGER NOT NULL, `updatedBy` TEXT, " +
+                "`isDeleted` INTEGER NOT NULL, `deletedAt` INTEGER, `deletedBy` TEXT, PRIMARY KEY(`id`))",
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_college_fee_heads_shift_position` ON `college_fee_heads` (`shift`, `position`)")
+    }
+}
+
 val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_18_19,
     MIGRATION_19_20,
@@ -1875,4 +1892,5 @@ val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_50_51,
     MIGRATION_51_52,
     MIGRATION_52_53,
+    MIGRATION_53_54,
 )

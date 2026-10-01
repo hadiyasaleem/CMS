@@ -25,6 +25,8 @@ import com.mbd.cmscommon.data.local.entity.SemesterSubjectEntity
 import com.mbd.cmscommon.data.local.entity.SemesterTermEntity
 import com.mbd.cmscommon.data.local.entity.SessionAttendanceTallyEntity
 import com.mbd.cmscommon.data.local.entity.SessionAttendanceRowEntity
+import com.mbd.cmscommon.data.local.entity.CollegeFeeEntity
+import com.mbd.cmscommon.data.local.entity.CollegeFeeHeadEntity
 import com.mbd.cmscommon.data.local.entity.SessionFeeEntity
 import com.mbd.cmscommon.data.local.entity.SessionFeeHeadEntity
 import com.mbd.cmscommon.data.local.entity.SessionMarkEntity
@@ -57,7 +59,7 @@ import com.mbd.cmscommon.data.local.entity.UserEntity
         AcademicSessionEntity::class, SemesterSubjectEntity::class, PoolSubjectEntity::class, SemesterTermEntity::class, SessionStudentEntity::class,
         SessionPeriodEntity::class, SessionAttendanceTallyEntity::class, SessionAttendanceRowEntity::class,
         SessionMarkEntity::class, StudentSemesterGpaEntity::class,
-        SessionFeeEntity::class, SessionFeeHeadEntity::class,
+        SessionFeeEntity::class, CollegeFeeEntity::class, CollegeFeeHeadEntity::class, SessionFeeHeadEntity::class,
         CalendarEventEntity::class, MarkEditRequestEntity::class,
         InsightSessionOverviewEntity::class, InsightAtRiskStudentEntity::class, InsightExamStatEntity::class,
         DatesheetEntity::class, DatesheetSlotEntity::class,

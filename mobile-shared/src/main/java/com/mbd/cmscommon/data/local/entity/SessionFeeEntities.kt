@@ -38,3 +38,36 @@ data class SessionFeeHeadEntity(
     val deletedAt: Long? = null,
     val deletedBy: String? = null,
 )
+
+/** The college-wide base fee structure for one shift (see the college_fees table). */
+@Entity(tableName = "college_fees")
+data class CollegeFeeEntity(
+    @PrimaryKey val shift: String,
+    val cadence: String,
+    val academicYear: String?,
+    val dueDate: String?,
+    val paymentNote: String?,
+    val createdAt: Long = 0L,
+    val createdBy: String? = null,
+    val updatedAt: Long = 0L,
+    val updatedBy: String? = null,
+    val isDeleted: Boolean = false,
+    val deletedAt: Long? = null,
+    val deletedBy: String? = null,
+)
+
+@Entity(tableName = "college_fee_heads", indices = [Index(value = ["shift", "position"])])
+data class CollegeFeeHeadEntity(
+    @PrimaryKey val id: String,
+    val shift: String,
+    val label: String,
+    val amount: Double,
+    val position: Int,
+    val createdAt: Long = 0L,
+    val createdBy: String? = null,
+    val updatedAt: Long = 0L,
+    val updatedBy: String? = null,
+    val isDeleted: Boolean = false,
+    val deletedAt: Long? = null,
+    val deletedBy: String? = null,
+)

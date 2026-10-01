@@ -57,9 +57,24 @@ class SessionFeesController(
     val structures: StateFlow<List<SessionFeeStructure>> = _structures.map { it.values.sortedBy { fee -> fee.shift } }
         .stateIn(scope, SharingStarted.Eagerly, emptyList())
 
-    /** The selected shift's structure, or null when that shift has none yet. */
-    val structure: StateFlow<SessionFeeStructure?> = combine(_structures, shift) { all, current -> all[current] }
-        .stateIn(scope, SharingStarted.Eagerly, null)
+    /** The college-wide base for each shift; a session with no structure of its own follows it. */
+    private val _college = MutableStateFlow<Map<Session, SessionFeeStructure>>(emptyMap())
+
+    /**
+     * The selected shift's structure: the session's own, else the college base (marked inherited, so the form starts
+     * from it and saving creates the session's own), else null when neither exists yet.
+     */
+    val structure: StateFlow<SessionFeeStructure?> = combine(_structures, _college, shift) { own, college, current ->
+        own[current] ?: college[current]?.copy(sessionId = sessionId, inherited = true)
+    }.stateIn(scope, SharingStarted.Eagerly, null)
+
+    /** True while the open shift follows the college base (it has no structure of its own). */
+    val inheritsCollege: StateFlow<Boolean> = structure.map { it?.inherited == true }
+        .stateIn(scope, SharingStarted.Eagerly, false)
+
+    /** True when the open shift has its own structure and the college base exists to go back to. */
+    val canRevert: StateFlow<Boolean> = combine(_structures, _college, shift) { own, college, current -> current in own && current in college }
+        .stateIn(scope, SharingStarted.Eagerly, false)
 
     fun selectShift(picked: Session) {
         _pickedShift.value = picked
@@ -86,6 +101,7 @@ class SessionFeesController(
         launch("load the fee structure") {
             try {
                 val loaded = repo.getSessionFees(sessionId).associateBy { it.shift }
+                _college.value = runCatching { repo.getCollegeFees() }.getOrDefault(emptyList()).associateBy { it.shift }
                 if (loadVersion == structureVersion) _structures.value = loaded
             } finally {
                 _loading.value = false
@@ -96,36 +112,25 @@ class SessionFeesController(
     fun save(cadence: FeeType, heads: List<FeeHead>, academicYear: String, dueDate: String, paymentNote: String) = launch("save the fee structure") {
         try {
             _saving.value = true
-            val normalizedHeads = heads.map { it.copy(label = it.label.trim()) }
-            requireValid(normalizedHeads.isNotEmpty()) { "Add at least one fee head before saving." }
-            requireValid(normalizedHeads.all { it.label.isNotBlank() }) { "Every fee head needs a label." }
-            requireValid(normalizedHeads.all { it.amount > 0.0 }) { "Every fee amount must be greater than zero." }
-            requireValid(normalizedHeads.map { it.label.lowercase(Locale.ROOT) }.distinct().size == normalizedHeads.size) {
-                "Fee head labels must be unique."
-            }
-
-            val year = academicYear.trim()
-            FieldValidators.academicYearError(year).orThrowValidation()
-
-            val due = dueDate.trim()
-            if (due.isNotBlank()) {
-                requireValid(runCatching { LocalDate.parse(due) }.isSuccess) { "Due date must use YYYY-MM-DD format." }
-            }
-            requireValid(paymentNote.trim().length <= 1000) { "Payment instructions must not exceed 1,000 characters." }
-
             val editing = feeTabShift(session.value, _pickedShift.value)
-            val updated = SessionFeeStructure(
-                sessionId = sessionId,
-                shift = editing,
-                cadence = cadence,
-                heads = normalizedHeads,
-                academicYear = year.takeIf { it.isNotBlank() },
-                dueDate = due.takeIf { it.isNotBlank() },
-                paymentNote = paymentNote.trim().takeIf { it.isNotBlank() },
-            )
+            val updated = buildFeeStructure(sessionId, editing, cadence, heads, academicYear, dueDate, paymentNote)
             repo.saveSessionFee(updated, updatedBy)
             structureVersion++
             _structures.value = _structures.value + (editing to updated)
+            _saved.value = true
+        } finally {
+            _saving.value = false
+        }
+    }
+
+    /** Drops this session's own structure for the open shift so it follows the college-wide base again. */
+    fun revertToCollege() = launch("go back to the college fee structure") {
+        try {
+            _saving.value = true
+            val editing = feeTabShift(session.value, _pickedShift.value)
+            repo.removeSessionFee(sessionId, editing, updatedBy)
+            structureVersion++
+            _structures.value = _structures.value - editing
             _saved.value = true
         } finally {
             _saving.value = false

@@ -32,7 +32,7 @@ object AdminLeaf {
     const val PROFILE = "profile"
     const val MASTER_TIMETABLE = "master_timetable"
     const val BUILDINGS_ROOMS = "buildings_rooms"
-    const val FEES_PICKER = "fees_picker"          // pick a department → straight to ITS fees
+    const val FEE_STRUCTURES = "fee_structures"    // college-wide base + every class's fees in one grid
     const val ATTENDANCE_RECORDS = "attendance_records"
     const val CALENDAR = "calendar"
     const val DATESHEETS = "datesheets"
@@ -50,6 +50,8 @@ object AdminRoutes {
     const val STUDENT_PROFILE = "session/{sessionId}/student/{roll}"
     const val SESSION_TIMETABLE = "session/{sessionId}/timetable"
     const val SESSION_FEES = "session/{sessionId}/fees"
+    const val SESSION_FEES_SHIFT = "session/{sessionId}/fees/{shift}"
+    const val COLLEGE_FEES = "college_fees/{shift}"
     const val STUDENT_RECORD = "student_record/{sessionId}/{roll}"
     const val TEACHER_DETAIL = "teacher/{teacherId}"
 
@@ -60,6 +62,8 @@ object AdminRoutes {
     fun studentProfile(sessionId: String, roll: String) = "session/$sessionId/student/$roll"
     fun sessionTimetable(sessionId: String) = "session/$sessionId/timetable"
     fun sessionFees(sessionId: String) = "session/$sessionId/fees"
+    fun sessionFees(sessionId: String, shift: com.mbd.cmscommon.domain.model.Session) = "session/$sessionId/fees/${shift.name}"
+    fun collegeFees(shift: com.mbd.cmscommon.domain.model.Session) = "college_fees/${shift.name}"
     fun studentRecord(sessionId: String, roll: String) = "student_record/$sessionId/$roll"
     fun teacherDetail(teacherId: String) = "teacher/$teacherId"
 }

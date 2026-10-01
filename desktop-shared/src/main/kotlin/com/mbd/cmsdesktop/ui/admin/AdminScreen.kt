@@ -21,7 +21,8 @@ sealed interface AdminScreen {
     data object Datesheets : AdminScreen
     data object MasterTimetable : AdminScreen
     data object BuildingsRooms : AdminScreen
-    data object FeesPicker : AdminScreen
+    data object FeeStructures : AdminScreen
+    data class CollegeFees(val shift: com.mbd.cmscommon.domain.model.Session) : AdminScreen
     data object Insights : AdminScreen
     data object SemesterResults : AdminScreen
     data object Notifications : AdminScreen
@@ -34,6 +35,6 @@ sealed interface AdminScreen {
     data class StudentRecord(val sessionId: String, val roll: String) : AdminScreen
     data class SessionTimetableRoute(val sessionId: String) : AdminScreen
     data class SemesterSubjectsRoute(val sessionId: String, val semester: Int) : AdminScreen
-    data class SessionFeesRoute(val sessionId: String) : AdminScreen
+    data class SessionFeesRoute(val sessionId: String, val shift: com.mbd.cmscommon.domain.model.Session? = null) : AdminScreen
     data class TeacherDetail(val teacherId: String) : AdminScreen
 }

@@ -188,10 +188,22 @@ interface SessionTimetableRepository {
 }
 
 interface SessionFeeRepository {
-    /** One shift's fee structure; Morning and Evening are configured independently. */
+    /**
+     * One shift's fee structure as the session pays it: the session's own structure, or -- when it has none -- the
+     * college-wide base for that shift (marked [com.mbd.cmscommon.domain.model.SessionFeeStructure.inherited]).
+     */
     suspend fun getSessionFee(sessionId: String, shift: Session): com.mbd.cmscommon.domain.model.SessionFeeStructure?
-    /** Every configured shift's structure for the session. */
+    /** The structures this session has set for itself (its overrides); the college base is not included. */
     suspend fun getSessionFees(sessionId: String): List<com.mbd.cmscommon.domain.model.SessionFeeStructure>
+    /** Every session's own structures (overrides), for the college-wide overview. */
+    suspend fun getAllSessionFees(): List<com.mbd.cmscommon.domain.model.SessionFeeStructure>
+    /** Drops the session's own structure for [shift] so it follows the college base again. */
+    suspend fun removeSessionFee(sessionId: String, shift: Session, updatedBy: String)
+
+    /** The college-wide base for one shift (Morning and Evening can differ); null until an admin sets it. */
+    suspend fun getCollegeFee(shift: Session): com.mbd.cmscommon.domain.model.SessionFeeStructure?
+    suspend fun getCollegeFees(): List<com.mbd.cmscommon.domain.model.SessionFeeStructure>
+    suspend fun saveCollegeFee(structure: com.mbd.cmscommon.domain.model.SessionFeeStructure, updatedBy: String)
     suspend fun syncSession(sessionId: String) = Unit
     suspend fun syncAll() = Unit
     suspend fun saveSessionFee(structure: com.mbd.cmscommon.domain.model.SessionFeeStructure, updatedBy: String)

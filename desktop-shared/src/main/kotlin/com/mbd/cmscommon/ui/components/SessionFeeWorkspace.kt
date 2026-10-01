@@ -85,7 +85,15 @@ fun SessionFeeWorkspace(
     shifts: List<Session> = listOf(shift),
     onSelectShift: (Session) -> Unit = {},
     allStructures: List<SessionFeeStructure> = listOfNotNull(structure),
+    /** Set when editing the college-wide base instead of one session: names it in the header. */
+    collegeBase: Boolean = false,
+    /** The structure shown is the college base this class follows, not one it has saved itself. */
+    inheritsCollege: Boolean = false,
+    /** This class has its own structure and the college base exists to go back to. */
+    canRevertToCollege: Boolean = false,
+    onRevertToCollege: () -> Unit = {},
 ) {
+    var confirmRevert by remember { mutableStateOf(false) }
     // Form state belongs to one shift's structure: switching tabs starts from that shift's saved values.
     var initialized by remember(shift) { mutableStateOf(false) }
     var showSampleChallan by remember { mutableStateOf(false) }
@@ -124,7 +132,7 @@ fun SessionFeeWorkspace(
     val listState = rememberLazyListState()
     WithVerticalScrollbar(listState) {
     LazyColumn(modifier.fillMaxWidth(), state = listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { FeeHero(session) }
+        item { FeeHero(session, collegeBase) }
         item {
             Column {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -144,6 +152,14 @@ fun SessionFeeWorkspace(
             item { ExportBar(onExport, build = { sessionFeesExport(session, department?.name, allStructures) }) }
         }
 
+        if (inheritsCollege) {
+            item { CmsNotice("This class follows the college-wide fee structure. Change anything and save to give it a structure of its own.", tone = NoticeTone.Info) }
+        }
+        if (canRevertToCollege) {
+            item {
+                TextButton(onClick = { confirmRevert = true }) { Text("Use the college-wide structure again") }
+            }
+        }
         if (!errorMessage.isNullOrBlank()) {
             item { CmsNotice(errorMessage, tone = NoticeTone.Error, onDismiss = onClearError) }
         }
@@ -196,6 +212,17 @@ fun SessionFeeWorkspace(
 
         item { Spacer(Modifier.height(72.dp)) }
     }
+    }
+
+    if (confirmRevert) {
+        ConfirmDestructiveActionDialog(
+            title = "Use the college-wide structure",
+            dependentSummary = "Removes this class's own fee structure for the ${shift.label} shift; it will follow the college-wide one again.",
+            onConfirm = { onRevertToCollege(); confirmRevert = false },
+            onDismiss = { confirmRevert = false },
+            confirmLabel = "Use college structure",
+            showUndoWarning = false,
+        )
     }
 
     if (addingHead || editingIndex >= 0) {
@@ -260,14 +287,18 @@ fun SessionFeeWorkspace(
 }
 
 @Composable
-private fun FeeHero(session: AcademicSession?) {
+private fun FeeHero(session: AcademicSession?, collegeBase: Boolean = false) {
     Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Column(Modifier.padding(20.dp)) {
-            Text("SESSION FEES", color = FeeGold, style = CmsTextStyles.eyebrow)
+            Text(if (collegeBase) "COLLEGE-WIDE FEES" else "SESSION FEES", color = FeeGold, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
-            Text("Session fee structure", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+            Text(if (collegeBase) "Base fee structure" else "Session fee structure", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
             Spacer(Modifier.height(4.dp))
-            Text(session?.label ?: "Session", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
+            Text(
+                if (collegeBase) "Applies to every class without a structure of its own." else session?.label ?: "Session",
+                color = CmsTheme.colors.onInkMuted,
+                style = MaterialTheme.typography.bodyMedium,
+            )
         }
     }
 }
