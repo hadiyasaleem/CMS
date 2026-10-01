@@ -9,7 +9,7 @@ cache and tell the user it worked. This audit reads every remote write in the re
 `supabase/migrations/20260930030000_delete_notification_and_ingest_app_logs.sql` adds `delete_notification` and `ingest_app_logs`; it is
 **not yet applied to production** and must be applied *before* the new app versions are released (until then notification delete and log
 upload report an out-of-date-app error). Guarded writes use `requireAffected` (`core/.../util/RowsAffected.kt`): the soft-deletes of
-calendar events, fines, buildings, rooms, departments, sessions, students, subjects, exam papers, datesheets/papers and timetable periods, the
+calendar events, buildings, rooms, departments, sessions, students, subjects, exam papers, datesheets/papers and timetable periods, the
 mark-edit approve/reject (an approval is no longer recorded unless the score changed), attendance-edit reject and link-request reject. A stale
 local copy is dropped when the server row is gone, and the user is told "That item was already changed or removed." `linkStudent` and
 `unlinkStudent` were deleted.
@@ -125,8 +125,6 @@ cache. Put it in one helper next to `FailureSummary`/`orThrowValidation` so each
 | `DepartmentRepositoryImpl.kt:79` | `deleteDepartment` | `departments` | update | OK | Admin-only screen and admin-only policy; 0 rows only if the row is already gone (stale device), which is harmless |
 | `ExamPaperSubmissionRepositoryImpl.kt:70` | `uploadSubmission` | `exam_paper_submissions` | update | OK | Owner teacher or admin (`upd_papers`); the UI only offers a teacher their own papers |
 | `ExamPaperSubmissionRepositoryImpl.kt:109` | `deleteSubmission` | `exam_paper_submissions` | update | OK | Owner teacher or admin (`upd_papers`); the UI only offers a teacher their own papers |
-| `FineRepositoryImpl.kt:47` | `deleteFine` | `fines` | delete | OK | Admin-only screen and admin-only policy; 0 rows only if the row is already gone (stale device), which is harmless |
-| `RecordsRepositoryImpls.kt:128` | `deleteFine` | `fines` | update | OK | Admin-only screen and admin-only policy; 0 rows only if the row is already gone (stale device), which is harmless |
 | `MarkEditRequestRepositoryImpl.kt:71` | `approveRequest` | `mark_edit_requests` | update | OK | Admin-only screen and admin-only policy; 0 rows only if the row is already gone (stale device), which is harmless |
 | `MarkEditRequestRepositoryImpl.kt:87` | `approveRequest` | `mark_edit_requests` | update | OK | Admin-only screen and admin-only policy; 0 rows only if the row is already gone (stale device), which is harmless |
 | `MarkEditRequestRepositoryImpl.kt:97` | `rejectRequest` | `mark_edit_requests` | update | OK | Admin-only screen and admin-only policy; 0 rows only if the row is already gone (stale device), which is harmless |

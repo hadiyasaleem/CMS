@@ -11,7 +11,6 @@ import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.DatesheetRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.ExamPaperSubmissionRepository
-import com.mbd.cmscommon.domain.repository.FineRepository
 import com.mbd.cmscommon.domain.repository.InsightsRepository
 import com.mbd.cmscommon.domain.repository.MarkEditRequestRepository
 import com.mbd.cmscommon.domain.repository.NotificationRepository
@@ -37,7 +36,6 @@ class AdminDataBootstrapper @Inject constructor(
     private val administratorRepository: AdministratorRepository,
     private val calendarRepository: CalendarRepository,
     private val datesheetRepository: DatesheetRepository,
-    private val fineRepository: FineRepository,
     private val insightsRepository: InsightsRepository,
     private val markEditRequestRepository: MarkEditRequestRepository,
     private val examPaperRepository: ExamPaperSubmissionRepository,
@@ -102,7 +100,6 @@ class AdminDataBootstrapper @Inject constructor(
                 async { step("attendance", "sync.attendance", onTaskDone) { attendanceRepository.syncAll() } },
                 async { step("marks", "sync.marks", onTaskDone) { marksRepository.syncAll() } },
                 async { step("fees", "sync.fees", onTaskDone) { feeRepository.syncAll() } },
-                async { step("fines", "sync.fines", onTaskDone) { fineRepository.syncAll() } },
                 async { step("exam papers", "sync.examPapers", onTaskDone) { examPaperRepository.syncAll() } },
                 async { step("datesheet slots", "sync.datesheetSlots", onTaskDone) { datesheetRepository.syncAllSlots() } },
             ).awaitAll().filterNotNull()
@@ -138,6 +135,6 @@ class AdminDataBootstrapper @Inject constructor(
     companion object {
         /** Must track the exact number of `onTaskDone()` calls in [refreshAllReport] -- 10 + 9 + 4 sync
          * tasks plus the final log flush. Drives the refresh progress dialog's determinate bar. */
-        const val TOTAL_SYNC_TASKS = 24
+        const val TOTAL_SYNC_TASKS = 23
     }
 }

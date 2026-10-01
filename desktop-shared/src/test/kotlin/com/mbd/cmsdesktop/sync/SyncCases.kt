@@ -197,16 +197,6 @@ internal val syncCases = listOf(
         "update session_fee_heads set amount=777 where label='Tuition'",
         "select count(*) from session_fee_heads where amount=777",
         "update session_fee_heads set is_deleted=true where label='Victim'"),
-    Case("fines", "fines",
-        listOf(
-            "insert into fines(session_id,roll_number,category,amount,reason) values ('ch_2023','R-01','LIBRARY',100,'late book')",
-            "insert into fines(session_id,roll_number,category,amount,reason) values ('ch_2023','R-02','LIBRARY',200,'lost book')",
-            "insert into fines(session_id,roll_number,category,amount,reason) values ('ch_2023','R-03','LIBRARY',300,'victim')",
-        ), 3,
-        "insert into fines(session_id,roll_number,category,amount,reason) values ('ch_2023','R-04','LIBRARY',400,'new')",
-        "update fines set amount=999 where roll_number='R-01'",
-        "select count(*) from fines where amount=999",
-        "update fines set is_deleted=true where roll_number='R-03'"),
     Case("exam_paper_submissions", "exam_paper_submissions",
         listOf(
             "insert into exam_paper_submissions(session_id,semester,course_code,teacher_email,storage_path,file_name) values ('ch_2023',3,'GE-101','t1@x.pk','p/1.pdf','one.pdf')",

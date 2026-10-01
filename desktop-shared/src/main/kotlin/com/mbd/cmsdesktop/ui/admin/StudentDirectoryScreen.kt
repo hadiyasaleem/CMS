@@ -10,7 +10,6 @@ import com.mbd.cmscommon.controller.StudentRecordController
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
-import com.mbd.cmscommon.domain.repository.FineRepository
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
 import com.mbd.cmscommon.domain.repository.SessionFeeRepository
 import com.mbd.cmscommon.domain.repository.SessionMarksRepository
@@ -70,7 +69,6 @@ fun StudentRecordScreen(
     attendanceRepository: SessionAttendanceRepository,
     marksRepository: SessionMarksRepository,
     feeRepository: SessionFeeRepository,
-    fineRepository: FineRepository,
     onBack: () -> Unit,
     onEditProfile: () -> Unit,
 ) {
@@ -78,7 +76,7 @@ fun StudentRecordScreen(
     val controller = remember(sessionId, rollNumber) {
         StudentRecordController(
             sessionId, rollNumber, sessionRepository, departmentRepository, curriculumRepository,
-            attendanceRepository, marksRepository, feeRepository, fineRepository, scope,
+            attendanceRepository, marksRepository, feeRepository, scope,
         )
     }
     val record by controller.record.collectAsState()

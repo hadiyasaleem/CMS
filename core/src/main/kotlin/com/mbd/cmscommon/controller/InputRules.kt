@@ -21,10 +21,3 @@ fun termDatesError(startText: String, endText: String): String? {
     if (start != null && end != null && start.isAfter(end)) return "The term can't end ($end) before it starts ($start)."
     return null
 }
-
-/** Why a fine of [amount] can't be issued, or null. [amount] is null when the typed text isn't a number. */
-fun fineAmountError(amount: Double?): String? = when {
-    amount == null -> "Enter the fine amount as a number, for example 500."
-    !amount.isFinite() || amount <= 0.0 -> "Fine amount must be greater than zero."
-    else -> null
-}

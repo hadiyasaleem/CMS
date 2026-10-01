@@ -5,11 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.domain.model.Department
-import com.mbd.cmscommon.domain.model.Fine
 import com.mbd.cmscommon.domain.model.StudentProfile
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
-import com.mbd.cmscommon.domain.repository.FineRepository
 import com.mbd.cmscommon.util.orLogCritical
 import com.mbd.cmscommon.util.userMessageLogged
 import com.mbd.cmsstudent.feature.common.CurrentStudentProvider
@@ -31,7 +29,6 @@ data class StudentProfileScreenState(
     val context: StudentContext,
     val department: Department?,
     val profile: StudentProfile?,
-    val fines: List<Fine>,
 )
 
 @HiltViewModel
@@ -40,7 +37,6 @@ class ProfileViewModel @Inject constructor(
     currentStudentProvider: CurrentStudentProvider,
     private val sessionRepository: AcademicSessionRepository,
     private val departmentRepository: DepartmentRepository,
-    private val fineRepository: FineRepository,
 ) : ViewModel() {
 
     val accountKey: String get() = sessionManager.accountKey.orEmpty()
@@ -60,14 +56,12 @@ class ProfileViewModel @Inject constructor(
                 _refreshTrigger.map {
                     val departmentResult = runCatching { departmentRepository.getDepartment(context.deptId) }
                     val profileResult = runCatching { sessionRepository.getStudentProfile(context.sessionId, context.rollNumber) }
-                    val finesResult = runCatching { fineRepository.getFines(context.sessionId, context.rollNumber) }
                     val department = departmentResult.orLogCritical("ProfileViewModel.getDepartment")
                     val profile = profileResult.orLogCritical("ProfileViewModel.getStudentProfile")
-                    val fines = finesResult.orLogCritical("ProfileViewModel.getFines", emptyList())
                     _error.value = FailureSummary.describe(
-                        FailureSummary.of(listOf("your department" to departmentResult, "your profile" to profileResult, "fines" to finesResult)),
+                        FailureSummary.of(listOf("your department" to departmentResult, "your profile" to profileResult)),
                     )
-                    StudentProfileScreenState(context, department, profile, fines)
+                    StudentProfileScreenState(context, department, profile)
                 }
             }
         }

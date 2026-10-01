@@ -11,7 +11,7 @@ Automated coverage (run `./gradlew :core:test`):
 | `ErrorMessageMatrixTest` | One row per failure kind (typed, network, database, edge function, sign-in, unknown): kind, wording, no internals, Ref code only for unknowns |
 | `ErrorMessageSourceGuardTest` | Source scan: no stray "Something went wrong", no vague "Some … could not be loaded", every controller `launch` labelled, no raw `exception.message` shown, no untyped `IllegalArgument`/`IllegalState` throws |
 | `ErrorMessageUiGuardTest` | Source scan of ViewModels, desktop screens and controllers: no reliance on the default generic fallback, no `catch` that swallows a failure, no fixed sentence set inside a `catch`, every dropped `runCatching` carries a `// Best-effort: <why>` comment, and every `.onFailure { }` actually uses the failure |
-| `InputRulesTest` | The shared term-date and fine-amount checks that both the screens and the controllers use (one wording each) |
+| `InputRulesTest` | The shared term-date checks that both the screens and the controllers use (one wording each) |
 | `EdgeFunctionGuardTest` | Source scan of `supabase/functions/**/*.ts`: no generic `httpError` message, a specific code on every 5xx, no raw `error.message` echoed, no hand-built responses, `dbError`/`authError` fallbacks that say what to do next |
 | `ErrorMessageMatrixExtrasTest` | Transient/platform database codes, edge-function HTTP statuses (401/403/404/422/429/500/502/503), file-picker and export failures |
 | `DatabaseScenarioMessagesTest` | (needs the local tools, otherwise skipped) real errors from a scratch Postgres, and constraint names that still exist |
@@ -61,7 +61,7 @@ report unless the check says otherwise.
 | 2.5 | Student **Datesheets** and **Marks** refresh offline | "Couldn't load datesheets (no connection)." / "Couldn't refresh marks and subjects (no connection)." |
 | 2.6 | Teacher **Schedule** refresh offline | "Couldn't refresh departments, sessions and timetables (no connection)." |
 | 2.7 | Admin **Master Timetable** refresh offline | "Couldn't refresh … (no connection)." naming the parts |
-| 2.8 | Student **Profile** refresh offline | Names student details / fines / your profile |
+| 2.8 | Student **Profile** refresh offline | Names student details / your profile |
 | 2.9 | Teacher **My Students** → pick a class offline with an empty cache | A notice above the list: "Couldn't refresh the student list and attendance summary (no connection)." — so an empty list is not read as an empty class |
 | 2.10 | Admin **Semester Results** → Refresh offline | Saved results still shown, with "Showing saved results. Couldn't refresh … (no connection)." |
 | 2.11 | Admin **Student Record** with one area unreadable | Record opens; message names the missing areas |
@@ -94,7 +94,7 @@ report unless the check says otherwise.
 | 3.16 | Create/delete anything as a user without permission | "You do not have permission to perform this action." |
 | 3.17 | **[needs migration]** Trigger a database constraint (e.g. duplicate via a second device) | Plain-words constraint message — no `violates … constraint` text |
 | 3.18 | Delete a notification you sent (needs migration `20260930030000` applied) | It disappears for other users too; a teacher trying to delete someone else's sees "You can only delete notifications you sent…" |
-| 3.19 | Delete, approve or reject something another device already handled (an event, a fine, a mark edit request, a link request) | "That item was already changed or removed. Refresh and try again." (or the request-specific version) — never a false success |
+| 3.19 | Delete, approve or reject something another device already handled (an event, a mark edit request, a link request) | "That item was already changed or removed. Refresh and try again." (or the request-specific version) — never a false success |
 
 ## 4. Teacher
 

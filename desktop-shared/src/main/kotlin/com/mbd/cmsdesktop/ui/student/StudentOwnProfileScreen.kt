@@ -15,7 +15,6 @@ import com.mbd.cmscommon.controller.StudentProfileController
 import com.mbd.cmscommon.domain.model.Department
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
-import com.mbd.cmscommon.domain.repository.FineRepository
 import com.mbd.cmscommon.ui.components.StudentOwnProfileWorkspace
 import com.mbd.cmscommon.util.StudentIdCodec
 import kotlinx.coroutines.launch
@@ -28,17 +27,15 @@ fun StudentOwnProfileScreen(
     sessionManager: SessionManager,
     sessionRepository: AcademicSessionRepository,
     departmentRepository: DepartmentRepository,
-    fineRepository: FineRepository,
     onSignOut: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val controller = remember(sessionId, rollNumber) {
-        StudentProfileController(sessionId, rollNumber, sessionRepository, fineRepository, scope)
+        StudentProfileController(sessionId, rollNumber, sessionRepository, scope)
     }
     val session by controller.session.collectAsState()
     val me by controller.me.collectAsState()
     val profile by controller.profile.collectAsState()
-    val fines by controller.fines.collectAsState()
     val loading by controller.loading.collectAsState()
     val loadError by controller.error.collectAsState()
     var resetMessage by remember { mutableStateOf<String?>(null) }
@@ -61,7 +58,6 @@ fun StudentOwnProfileScreen(
         profile = profile,
         departmentName = department?.name,
         accountKey = accountKey,
-        fines = fines,
         loading = loading && me == null,
         errorMessage = resetError ?: loadError,
         actionMessage = resetMessage,

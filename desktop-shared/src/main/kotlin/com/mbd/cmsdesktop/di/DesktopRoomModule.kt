@@ -10,7 +10,6 @@ import com.mbd.cmscommon.data.local.dao.CalendarEventDao
 import com.mbd.cmscommon.data.local.dao.DatesheetDao
 import com.mbd.cmscommon.data.local.dao.DepartmentDao
 import com.mbd.cmscommon.data.local.dao.ExamPaperSubmissionDao
-import com.mbd.cmscommon.data.local.dao.FineDao
 import com.mbd.cmscommon.data.local.dao.InsightsDao
 import com.mbd.cmscommon.data.local.dao.MarkEditRequestDao
 import com.mbd.cmscommon.data.local.dao.NotificationDao
@@ -75,7 +74,6 @@ object DesktopRoomModule {
     @Provides fun notificationViewStateDao(db: DesktopDatabase): NotificationViewStateDao = db.notificationViewStateDao()
     @Provides fun desktopAuthSessionDao(db: DesktopDatabase): DesktopAuthSessionDao = db.desktopAuthSessionDao()
     @Provides fun desktopAuthCodeVerifierDao(db: DesktopDatabase): DesktopAuthCodeVerifierDao = db.desktopAuthCodeVerifierDao()
-    @Provides fun fineDao(db: DesktopDatabase): FineDao = db.fineDao()
     @Provides fun calendarEventDao(db: DesktopDatabase): CalendarEventDao = db.calendarEventDao()
     @Provides fun markEditRequestDao(db: DesktopDatabase): MarkEditRequestDao = db.markEditRequestDao()
     @Provides fun insightsDao(db: DesktopDatabase): InsightsDao = db.insightsDao()

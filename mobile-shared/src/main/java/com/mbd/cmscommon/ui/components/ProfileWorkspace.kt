@@ -31,7 +31,6 @@ import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.domain.model.AdministratorAccount
 import com.mbd.cmscommon.domain.model.AdministratorDirectorySnapshot
 import com.mbd.cmscommon.domain.model.AcademicSession
-import com.mbd.cmscommon.domain.model.Fine
 import com.mbd.cmscommon.domain.model.StudentProfile
 import com.mbd.cmscommon.domain.model.Teacher
 import com.mbd.cmscommon.teacher.ResolvedAssignment
@@ -218,7 +217,6 @@ fun StudentOwnProfileWorkspace(
     profile: StudentProfile?,
     departmentName: String?,
     accountKey: String,
-    fines: List<Fine>,
     loading: Boolean,
     errorMessage: String?,
     actionMessage: String?,
@@ -272,15 +270,6 @@ fun StudentOwnProfileWorkspace(
                 ProfileInfoRow("Guardian phone", profile?.guardianPhone ?: "Not recorded")
                 ProfileInfoRow("Current address", profile?.currentAddress ?: "Not recorded")
                 ProfileInfoRow("Permanent address", profile?.permanentAddress ?: "Not recorded")
-            }
-        }
-        item {
-            ProfileSectionCard("Fines", "Informational amounts issued to this record") {
-                if (fines.isEmpty()) {
-                    ProfileEmptyLine("No fines recorded")
-                } else {
-                    fines.forEach { FineLine(it) }
-                }
             }
         }
         item {
@@ -379,17 +368,6 @@ private fun AssignmentCard(assignment: ResolvedAssignment) {
             Text(assignment.subjectLabel, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
             Text("${assignment.sessionLabel} · ${assignment.courseCode}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
         }
-    }
-}
-
-@Composable
-private fun FineLine(fine: Fine) {
-    Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-        Column(Modifier.weight(1f)) {
-            Text(fine.category, style = MaterialTheme.typography.bodyMedium)
-            Text(fine.reason.ifBlank { "Issue details not recorded" }, color = ModMuted, style = MaterialTheme.typography.bodySmall)
-        }
-        Text("Rs ${fine.amount}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
     }
 }
 

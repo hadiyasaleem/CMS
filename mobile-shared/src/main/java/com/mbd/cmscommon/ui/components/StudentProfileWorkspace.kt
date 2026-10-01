@@ -1,6 +1,5 @@
 package com.mbd.cmscommon.ui.components
 
-import com.mbd.cmscommon.controller.fineAmountError
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Camera
 import com.mbd.cmscommon.controller.rollBlockHint
@@ -47,7 +46,6 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.domain.model.AcademicSession
-import com.mbd.cmscommon.domain.model.Fine
 import com.mbd.cmscommon.domain.model.StudentProfile
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
@@ -64,7 +62,6 @@ import com.mbd.cmscommon.util.Outcome
 private val ProfileGreen = ModSuccess
 private val ProfileGold = ModWarn
 private val ProfileRed = ModAccent
-private val FINE_CATEGORIES = listOf("ATTENDANCE", "DISCIPLINARY", "EXAM", "LIBRARY", "OTHER")
 private val GENDERS = listOf("MALE", "FEMALE")
 private val ENROLLMENTS = listOf("ACTIVE", "GRADUATED", "PROMOTED", "REPEATED", "WITHDRAWN")
 private val BLOOD_GROUPS = listOf("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-")
@@ -73,12 +70,9 @@ private val BLOOD_GROUPS = listOf("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O
 fun StudentProfileWorkspace(
     loadedProfile: StudentProfile,
     session: AcademicSession?,
-    fines: List<Fine>,
     saveOutcome: Outcome<Unit>?,
     errorMessage: String?,
     onSave: (StudentProfile) -> Unit,
-    onIssueFine: (String, Double, String) -> Unit,
-    onDeleteFine: (Fine) -> Unit,
     onDelink: () -> Unit,
     onClearError: () -> Unit,
     onPickPhoto: (onPicked: (ImageBitmap) -> Unit) -> Unit,
@@ -88,8 +82,6 @@ fun StudentProfileWorkspace(
     modifier: Modifier = Modifier,
 ) {
     var profile by remember(loadedProfile.rollNumber) { mutableStateOf(loadedProfile) }
-    var showFineDialog by remember { mutableStateOf(false) }
-    var pendingFineDelete by remember { mutableStateOf<Fine?>(null) }
     var pendingCrop by remember { mutableStateOf<ImageBitmap?>(null) }
     // Tracks whether the last save-in-flight was a delink, so its success/failure shows right next
     // to the Delink button (which sits below the fold) instead of only in the generic notice at the
@@ -111,7 +103,6 @@ fun StudentProfileWorkspace(
     )
     val completion = (((requiredFields.count { !it.isNullOrBlank() }) * 100) / requiredFields.size).coerceIn(0, 100)
 
-    val totalFines = fines.sumOf { it.amount }
 
     LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
@@ -195,8 +186,6 @@ fun StudentProfileWorkspace(
             )
         }
 
-        item { FinesWorkspaceCard(fines, totalFines, onAdd = { showFineDialog = true }, onDelete = { pendingFineDelete = it }) }
-
         item {
             ProfileSaveCard(
                 dirty = dirty,
@@ -208,19 +197,6 @@ fun StudentProfileWorkspace(
         }
 
         item { Spacer(Modifier.height(72.dp)) }
-    }
-
-    if (showFineDialog) {
-        AddProfileFineDialog(onDismiss = { showFineDialog = false }, onConfirm = { category, amount, reason -> onIssueFine(category, amount, reason); showFineDialog = false })
-    }
-
-    pendingFineDelete?.let { fine ->
-        ConfirmDestructiveActionDialog(
-            title = "Remove fine",
-            dependentSummary = "Removes the Rs ${fine.amount} ${fine.category} record.",
-            onConfirm = { onDeleteFine(fine); pendingFineDelete = null },
-            onDismiss = { pendingFineDelete = null },
-        )
     }
 
     pendingCrop?.let { source ->
@@ -404,39 +380,6 @@ private fun AcademicMetric(label: String, value: String, modifier: Modifier = Mo
 }
 
 @Composable
-private fun FinesWorkspaceCard(fines: List<Fine>, total: Double, onAdd: () -> Unit, onDelete: (Fine) -> Unit) {
-    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Column(Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text("Fines", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                    Text("Rs $total total", color = ModMuted, style = MaterialTheme.typography.bodySmall)
-                }
-                TextButton(onClick = onAdd) { Text("Fine") }
-            }
-            if (fines.isEmpty()) {
-                Spacer(Modifier.height(6.dp))
-                Text("No active fine records", color = ModMuted, style = MaterialTheme.typography.bodySmall)
-            } else {
-                Spacer(Modifier.height(6.dp))
-                fines.forEach { fine -> FineCard(fine, onDelete) }
-            }
-        }
-    }
-}
-
-@Composable
-private fun FineCard(fine: Fine, onDelete: (Fine) -> Unit) {
-    Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f)) {
-            Text("${fine.category} · Rs ${fine.amount}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
-            Text(fine.reason, color = ModMuted, style = MaterialTheme.typography.bodySmall)
-        }
-        TextButton(onClick = { onDelete(fine) }) { Text("Remove", color = CmsTheme.colors.accent) }
-    }
-}
-
-@Composable
 private fun ProfileSaveCard(dirty: Boolean, saving: Boolean, errors: List<String>, onSave: () -> Unit, onReset: () -> Unit) {
     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
@@ -455,41 +398,3 @@ private fun ProfileSaveCard(dirty: Boolean, saving: Boolean, errors: List<String
     }
 }
 
-@Composable
-private fun AddProfileFineDialog(onDismiss: () -> Unit, onConfirm: (String, Double, String) -> Unit) {
-    var category by remember { mutableStateOf(FINE_CATEGORIES.first()) }
-    var amount by remember { mutableStateOf("") }
-    var reason by remember { mutableStateOf("") }
-
-    val parsedAmount = amount.toDoubleOrNull()
-    val error = if (amount.isNotBlank()) fineAmountError(parsedAmount) else null
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Fine", style = MaterialTheme.typography.headlineSmall) },
-        text = { DialogScrollBody {
-            Column {
-                Text("CATEGORY", color = ModMuted, style = CmsTextStyles.eyebrow)
-                Spacer(Modifier.height(6.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    FINE_CATEGORIES.forEach { option -> CmsChip(option, selected = category == option, onClick = { category = option }) }
-                }
-                Spacer(Modifier.height(10.dp))
-                OutlinedTextField(value = amount, onValueChange = { amount = it }, label = { Text("Amount (Rs)") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-                Spacer(Modifier.height(10.dp))
-                OutlinedTextField(value = reason, onValueChange = { reason = it }, label = { Text("Reason") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
-                if (error != null) {
-                    Spacer(Modifier.height(8.dp))
-                    Text(error, color = ProfileRed, style = MaterialTheme.typography.bodySmall)
-                }
-            }
-        }},
-        confirmButton = {
-            TextButton(onClick = { parsedAmount?.let { onConfirm(category, it, reason.trim()) } }, enabled = parsedAmount != null && parsedAmount > 0.0) { Text("Add") }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
-    )
-}

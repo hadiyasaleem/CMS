@@ -425,7 +425,6 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         attendanceRepository = component.sessionAttendanceRepository(),
                         marksRepository = component.sessionMarksRepository(),
                         feeRepository = component.sessionFeeRepository(),
-                        fineRepository = component.fineRepository(),
                         onBack = { backStack.removeAt(backStack.lastIndex) },
                         onEditProfile = { push(AdminScreen.StudentProfile(current.sessionId, current.roll)) },
                     )
@@ -434,7 +433,6 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         sessionId = current.sessionId,
                         rollNumber = current.roll,
                         sessionRepository = component.academicSessionRepository(),
-                        fineRepository = component.fineRepository(),
                         sessionManager = component.sessionManager(),
                         window = window,
                     )

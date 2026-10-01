@@ -39,32 +39,32 @@ class LocalSupabaseAdminSyncTest : LocalSyncSupport() {
         sql("insert into academic_sessions(session_id,dept_id,start_year,end_year,max_students,current_semester,shift_mode,program_type) values ('ch_2023','ch',2023,2027,50,3,'MORNING','BS')")
         sql("insert into session_students(session_id,roll_number,name,shift) values ('ch_2023','R-01','Ali','MORNING')")
         // One statement = one transaction = 1,200 rows sharing the same updated_at (a typical bulk import).
-        sql("insert into fines(session_id,roll_number,category,amount,reason) select 'ch_2023','R-01','LIBRARY',10,'bulk-'||g from generate_series(1,1200) g")
+        sql("insert into calendar_events(title,event_type,start_date) select 'bulk-'||g,'EVENT',date '2026-10-01' from generate_series(1,1200) g")
         call("POST", "/__log/clear")
         val app = startApp()
         val notes = mutableListOf<String>()
         val problems = mutableListOf<String>()
 
         app.refreshAllReport()
-        val first = fetchedByTable()["fines"]?.first ?: 0
-        val cached = activeCount("fines")
-        val distinct = scalar("select count(distinct fineId) from fines")
-        notes += "first refresh: fetched $first fines rows across pages (server 1200) -> cached $cached ($distinct distinct)"
-        if (cached != 1200 || distinct != 1200) problems += "bulk import: cached $cached / $distinct distinct of 1200 fines rows (page boundaries lost or duplicated rows)"
+        val first = fetchedByTable()["calendar_events"]?.first ?: 0
+        val cached = activeCount("calendar_events")
+        val distinct = scalar("select count(distinct eventId) from calendar_events")
+        notes += "first refresh: fetched $first calendar event rows across pages (server 1200) -> cached $cached ($distinct distinct)"
+        if (cached != 1200 || distinct != 1200) problems += "bulk import: cached $cached / $distinct distinct of 1200 calendar event rows (page boundaries lost or duplicated rows)"
 
         app.refreshAllReport()
-        val idle = fetchedByTable()["fines"]?.first ?: 0
+        val idle = fetchedByTable()["calendar_events"]?.first ?: 0
         notes += "idle refresh right after a bulk import: fetched $idle rows (all 1200 share one updated_at)"
 
-        sql("insert into fines(session_id,roll_number,category,amount,reason) values ('ch_2023','R-01','LIBRARY',1,'new')")
+        sql("insert into calendar_events(title,event_type,start_date) values ('new','EVENT','2026-10-02')")
         app.refreshAllReport()
-        val afterNew = fetchedByTable()["fines"]?.first ?: 0
-        notes += "after one new fine: fetched $afterNew row(s) -> cached ${activeCount("fines")}"
-        if (activeCount("fines") != 1201) problems += "bulk import: the new fine did not arrive"
-        if (afterNew != 1) problems += "bulk import: one new fine caused $afterNew rows to be fetched"
+        val afterNew = fetchedByTable()["calendar_events"]?.first ?: 0
+        notes += "after one new event: fetched $afterNew row(s) -> cached ${activeCount("calendar_events")}"
+        if (activeCount("calendar_events") != 1201) problems += "bulk import: the new event did not arrive"
+        if (afterNew != 1) problems += "bulk import: one new event caused $afterNew rows to be fetched"
 
         app.refreshAllReport()
-        val settled = fetchedByTable()["fines"]?.first ?: 0
+        val settled = fetchedByTable()["calendar_events"]?.first ?: 0
         notes += "next idle refresh: fetched $settled rows"
         println("\n=== BULK IMPORT ===\n" + notes.joinToString("\n") + "\nproblems: $problems")
         File(System.getProperty("java.io.tmpdir"), "cms-bulk-sync-report.txt").writeText(notes.joinToString("\n") + "\nproblems: $problems")
@@ -161,11 +161,11 @@ class LocalSupabaseAdminSyncTest : LocalSyncSupport() {
         if (activeCount("rooms") != roomsBefore + 1) fail("rooms lost the change made while it was failing")
 
         // 7. Information only: a row physically removed on the server (no is_deleted tombstone).
-        val finesBefore = activeCount("fines")
-        sql("delete from fines where roll_number='R-04'")
+        val eventsBefore = activeCount("calendar_events")
+        sql("delete from calendar_events where title='Convocation'")
         bootstrapper.refreshAllReport(); fetchedByTable()
-        val finesAfter = activeCount("fines")
-        report7 = "hard-deleted fine: local fines $finesBefore -> $finesAfter (${if (finesAfter == finesBefore) "NOT removed: a delta sync cannot see a physical delete" else "removed"})"
+        val eventsAfter = activeCount("calendar_events")
+        report7 = "hard-deleted event: local calendar events $eventsBefore -> $eventsAfter (${if (eventsAfter == eventsBefore) "NOT removed: a delta sync cannot see a physical delete" else "removed"})"
         println(report7)
 
         // 8. archive-and-delete-session: the server hard-deletes the session (cascade) and leaves a soft-deleted tombstone row.

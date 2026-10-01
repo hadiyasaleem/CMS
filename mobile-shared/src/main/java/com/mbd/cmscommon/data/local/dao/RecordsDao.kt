@@ -5,7 +5,6 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.mbd.cmscommon.data.local.entity.CalendarEventEntity
-import com.mbd.cmscommon.data.local.entity.FineEntity
 import com.mbd.cmscommon.data.local.entity.MarkEditRequestEntity
 
 @Dao
@@ -23,26 +22,6 @@ interface CalendarEventDao {
     suspend fun deleteByIds(ids: List<String>)
 
     suspend fun applyDelta(upserts: List<CalendarEventEntity>, deletedIds: List<String>) {
-        if (upserts.isNotEmpty()) upsertAll(upserts)
-        if (deletedIds.isNotEmpty()) deleteByIds(deletedIds)
-    }
-}
-
-@Dao
-interface FineDao {
-    @Query("SELECT * FROM fines WHERE sessionId = :sessionId AND rollNumber = :rollNumber AND isDeleted = 0 ORDER BY issuedAt DESC")
-    suspend fun getForStudent(sessionId: String, rollNumber: String): List<FineEntity>
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun upsertAll(items: List<FineEntity>)
-
-    @Query("DELETE FROM fines WHERE fineId = :id")
-    suspend fun deleteById(id: String)
-
-    @Query("DELETE FROM fines WHERE fineId IN (:ids)")
-    suspend fun deleteByIds(ids: List<String>)
-
-    suspend fun applyDelta(upserts: List<FineEntity>, deletedIds: List<String>) {
         if (upserts.isNotEmpty()) upsertAll(upserts)
         if (deletedIds.isNotEmpty()) deleteByIds(deletedIds)
     }

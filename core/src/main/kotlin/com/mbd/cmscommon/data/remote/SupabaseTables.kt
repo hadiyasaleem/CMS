@@ -21,7 +21,6 @@ object SupabaseTables {
     const val SESSION_FEES = "session_fees"
     const val SESSION_FEE_HEADS = "session_fee_heads"
     const val FEE_OVERRIDES = "fee_overrides"
-    const val FINES = "fines"
     const val DATESHEETS = "datesheets"
     const val DATESHEET_SLOTS = "datesheet_slots"
     const val CALENDAR_EVENTS = "calendar_events"

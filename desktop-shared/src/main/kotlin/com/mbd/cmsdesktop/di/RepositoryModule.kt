@@ -9,7 +9,6 @@ import com.mbd.cmscommon.data.repository.CurriculumRepositoryImpl
 import com.mbd.cmscommon.data.repository.DatesheetRepositoryLocalImpl
 import com.mbd.cmscommon.data.repository.DepartmentRepositoryImpl
 import com.mbd.cmscommon.data.repository.ExamPaperSubmissionRepositoryImpl
-import com.mbd.cmscommon.data.repository.FineRepositoryLocalImpl
 import com.mbd.cmscommon.data.repository.InsightsRepositoryLocalImpl
 import com.mbd.cmscommon.data.repository.MarkEditRequestRepositoryLocalImpl
 import com.mbd.cmscommon.data.repository.AttendanceEditRequestRepositoryImpl
@@ -31,7 +30,6 @@ import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.DatesheetRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.ExamPaperSubmissionRepository
-import com.mbd.cmscommon.domain.repository.FineRepository
 import com.mbd.cmscommon.domain.repository.InsightsRepository
 import com.mbd.cmscommon.domain.repository.MarkEditRequestRepository
 import com.mbd.cmscommon.domain.repository.AttendanceEditRequestRepository
@@ -72,7 +70,6 @@ abstract class RepositoryModule {
     @Singleton @Binds abstract fun bindStudentLinkRequestRepository(impl: StudentLinkRequestRepositoryImpl): StudentLinkRequestRepository
     @Singleton @Binds abstract fun bindSessionAttendanceRepository(impl: SessionAttendanceRepositoryImpl): SessionAttendanceRepository
     @Singleton @Binds abstract fun bindSessionMarksRepository(impl: SessionMarksRepositoryImpl): SessionMarksRepository
-    @Singleton @Binds abstract fun bindFineRepository(impl: FineRepositoryLocalImpl): FineRepository
     @Singleton @Binds abstract fun bindExamPaperSubmissionRepository(impl: ExamPaperSubmissionRepositoryImpl): ExamPaperSubmissionRepository
     @Singleton @Binds abstract fun bindAppLogRepository(impl: AppLogRepositoryImpl): AppLogRepository
     @Singleton @Binds abstract fun bindLogSink(impl: RoomLogSink): LogSink

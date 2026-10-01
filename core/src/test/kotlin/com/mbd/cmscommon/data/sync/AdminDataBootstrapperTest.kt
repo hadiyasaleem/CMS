@@ -9,7 +9,6 @@ import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.DatesheetRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.ExamPaperSubmissionRepository
-import com.mbd.cmscommon.domain.repository.FineRepository
 import com.mbd.cmscommon.domain.repository.InsightsRepository
 import com.mbd.cmscommon.domain.repository.MarkEditRequestRepository
 import com.mbd.cmscommon.domain.repository.NotificationRepository
@@ -54,7 +53,6 @@ class AdminDataBootstrapperTest {
             administratorRepository = fake(AdministratorRepository::class.java),
             calendarRepository = fake(CalendarRepository::class.java),
             datesheetRepository = fake(DatesheetRepository::class.java),
-            fineRepository = fake(FineRepository::class.java),
             insightsRepository = fake(InsightsRepository::class.java),
             markEditRequestRepository = fake(MarkEditRequestRepository::class.java),
             examPaperRepository = fake(ExamPaperSubmissionRepository::class.java),

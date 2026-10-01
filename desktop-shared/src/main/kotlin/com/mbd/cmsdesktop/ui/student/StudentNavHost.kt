@@ -195,7 +195,7 @@ private fun StudentShell(role: UserRole.LinkedStudent, component: DesktopAppComp
                         audienceContext = studentAudience,
                     )
                     StudentScreen.Profile -> StudentOwnProfileScreen(
-                        sessionId, rollNumber, component.sessionManager(), component.academicSessionRepository(), component.departmentRepository(), component.fineRepository(),
+                        sessionId, rollNumber, component.sessionManager(), component.academicSessionRepository(), component.departmentRepository(),
                         onSignOut = onSignOut,
                     )
                 }

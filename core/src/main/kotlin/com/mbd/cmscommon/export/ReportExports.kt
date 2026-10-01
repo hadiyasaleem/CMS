@@ -412,7 +412,6 @@ fun studentRecordExport(record: com.mbd.cmscommon.controller.StudentRecord): Exp
             s.heads.forEach { add(listOf("Fee", it.label, num(it.amount, 0), "")) }
             add(listOf("Fee", "Total (${titleCase(s.cadence.name)})", num(s.heads.sumOf { it.amount }, 0), s.dueDate?.let { "Due $it" }.orEmpty()))
         }
-        record.snapshot.validFines.forEach { add(listOf("Fine", it.category, num(it.amount, 0), it.reason)) }
     }
     return ExportDocument(
         fileBase = "student_${p.rollNumber}",
@@ -422,7 +421,7 @@ fun studentRecordExport(record: com.mbd.cmscommon.controller.StudentRecord): Exp
             ExportSection("Attendance", listOf("Course", "Subject", "Classes", "Present", "Absent", "Leave", "%"), attendance),
             ExportSection("Marks", listOf("Course", "Subject", "Exam", "Score", "Out of", "Remarks"), marks),
             ExportSection("Results", listOf("Semester", "Term", "GPA", "CGPA", "Result", "Position", "Supply courses"), results),
-            ExportSection("Fees and fines", listOf("Type", "Item", "Amount (PKR)", "Note"), fees),
+            ExportSection("Fees", listOf("Type", "Item", "Amount (PKR)", "Note"), fees),
         ),
     )
 }

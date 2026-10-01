@@ -28,25 +28,6 @@ data class CalendarEventEntity(
     val deletedBy: String? = null,
 )
 
-@Entity(tableName = "fines", indices = [Index(value = ["sessionId", "rollNumber"])])
-data class FineEntity(
-    @PrimaryKey val fineId: String,
-    val sessionId: String,
-    val rollNumber: String,
-    val category: String,
-    val amount: Double,
-    val reason: String?,
-    val issuedBy: String?,
-    val issuedAt: Long?,
-    val createdAt: Long = 0L,
-    val createdBy: String? = null,
-    val updatedAt: Long = 0L,
-    val updatedBy: String? = null,
-    val isDeleted: Boolean = false,
-    val deletedAt: Long? = null,
-    val deletedBy: String? = null,
-)
-
 @Entity(
     tableName = "mark_edit_requests",
     indices = [

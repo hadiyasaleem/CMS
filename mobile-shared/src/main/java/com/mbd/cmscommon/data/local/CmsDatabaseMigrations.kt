@@ -392,7 +392,6 @@ private val SOFT_DELETE_TABLES = listOf(
     SupabaseTables.DEPARTMENTS,
     "documents",
     SupabaseTables.EXAM_PAPER_SUBMISSIONS,
-    SupabaseTables.FINES,
     SupabaseTables.MARK_EDIT_REQUESTS,
     SupabaseTables.NOTIFICATIONS,
     "semester_subjects",
@@ -1805,6 +1804,13 @@ val MIGRATION_49_50: Migration = object : Migration(49, 50) {
     }
 }
 
+/** Fines were removed from the app, so their cache table goes (its index is dropped with it). */
+val MIGRATION_50_51: Migration = object : Migration(50, 51) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("DROP TABLE IF EXISTS `fines`")
+    }
+}
+
 val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_18_19,
     MIGRATION_19_20,
@@ -1838,4 +1844,5 @@ val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_47_48,
     MIGRATION_48_49,
     MIGRATION_49_50,
+    MIGRATION_50_51,
 )

@@ -247,21 +247,13 @@ private fun ResultsCard(record: StudentRecord) {
 @Composable
 private fun FeesCard(record: StudentRecord) {
     val structure = record.feeStructure
-    RecordCard("FEES AND FINES") {
+    RecordCard("FEES") {
         if (structure == null) {
             Text("No fee structure set for this session.", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
         } else {
             structure.heads.forEach { FieldLine(it.label, "PKR %,.0f".format(Locale.ENGLISH, it.amount)) }
             FieldLine("Total (${recordPretty(structure.cadence.name)})", "PKR %,.0f".format(Locale.ENGLISH, structure.heads.sumOf { it.amount }))
             structure.dueDate?.let { FieldLine("Due date", it) }
-        }
-        Spacer(Modifier.height(8.dp))
-        val fines = record.snapshot.validFines
-        if (fines.isEmpty()) {
-            Text("No fines.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
-        } else {
-            fines.forEach { FieldLine("Fine: ${it.category}", "PKR %,.0f · %s".format(Locale.ENGLISH, it.amount, it.reason)) }
-            FieldLine("Fines total", "PKR %,.0f".format(Locale.ENGLISH, record.snapshot.fineTotal))
         }
     }
 }

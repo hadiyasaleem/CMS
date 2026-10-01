@@ -22,7 +22,6 @@ fun ProfileScreen(onSignedOut: () -> Unit, viewModel: ProfileViewModel = hiltVie
         profile = state?.profile,
         departmentName = state?.department?.name,
         accountKey = viewModel.accountKey,
-        fines = state?.fines.orEmpty(),
         loading = state == null,
         errorMessage = error,
         actionMessage = actionMessage,

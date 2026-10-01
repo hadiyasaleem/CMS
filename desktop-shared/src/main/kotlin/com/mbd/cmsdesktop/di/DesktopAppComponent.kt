@@ -11,7 +11,6 @@ import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.DatesheetRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.ExamPaperSubmissionRepository
-import com.mbd.cmscommon.domain.repository.FineRepository
 import com.mbd.cmscommon.domain.repository.InsightsRepository
 import com.mbd.cmscommon.domain.repository.MarkEditRequestRepository
 import com.mbd.cmscommon.domain.repository.AttendanceEditRequestRepository
@@ -65,7 +64,6 @@ interface DesktopAppComponent {
     fun studentLinkRequestRepository(): StudentLinkRequestRepository
     fun sessionAttendanceRepository(): SessionAttendanceRepository
     fun sessionMarksRepository(): SessionMarksRepository
-    fun fineRepository(): FineRepository
     fun appLogRepository(): AppLogRepository
     fun logSink(): LogSink
 

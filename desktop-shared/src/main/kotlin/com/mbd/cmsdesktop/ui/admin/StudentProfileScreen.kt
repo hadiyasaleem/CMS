@@ -16,7 +16,6 @@ import com.mbd.cmscommon.controller.StudentProfileEditController
 import com.mbd.cmscommon.domain.model.PROFILE_PHOTO_COMPRESSED_TARGET_BYTES
 import com.mbd.cmscommon.domain.model.StudentProfile
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
-import com.mbd.cmscommon.domain.repository.FineRepository
 import com.mbd.cmscommon.ui.components.StudentProfileWorkspace
 import com.mbd.cmscommon.util.orLogCritical
 import com.mbd.cmsdesktop.platform.AwtDesktopPlatformServices
@@ -32,18 +31,16 @@ fun StudentProfileScreen(
     sessionId: String,
     rollNumber: String,
     sessionRepository: AcademicSessionRepository,
-    fineRepository: FineRepository,
     sessionManager: SessionManager,
     window: ComposeWindow,
 ) {
     val scope = rememberCoroutineScope()
-    val controller = remember(sessionId, rollNumber, sessionRepository, fineRepository) {
-        StudentProfileEditController(sessionId, rollNumber, sessionRepository, fineRepository, sessionManager.accountKey.orEmpty(), scope)
+    val controller = remember(sessionId, rollNumber, sessionRepository) {
+        StudentProfileEditController(sessionId, rollNumber, sessionRepository, sessionManager.accountKey.orEmpty(), scope)
     }
     val profile by controller.profile.collectAsState()
     val session by controller.session.collectAsState()
     val saveState by controller.saveState.collectAsState()
-    val fines by controller.fines.collectAsState()
     val errorMessage by controller.error.collectAsState()
     val photoBusy by controller.photoBusy.collectAsState()
     val photoCacheDir = remember { File(System.getProperty("java.io.tmpdir"), "cms_student_photos").apply { mkdirs() } }
@@ -54,12 +51,9 @@ fun StudentProfileScreen(
     StudentProfileWorkspace(
         loadedProfile = loadedProfile,
         session = session,
-        fines = fines,
         saveOutcome = saveState,
         errorMessage = errorMessage,
         onSave = controller::save,
-        onIssueFine = controller::issueFine,
-        onDeleteFine = { controller.deleteFine(it.id) },
         onDelink = controller::delinkAccount,
         onClearError = controller::clearError,
         onPickPhoto = { onPicked ->

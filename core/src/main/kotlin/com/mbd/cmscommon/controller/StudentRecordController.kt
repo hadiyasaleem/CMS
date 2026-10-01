@@ -11,7 +11,6 @@ import com.mbd.cmscommon.domain.model.SubjectExamScore
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
-import com.mbd.cmscommon.domain.repository.FineRepository
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
 import com.mbd.cmscommon.domain.repository.SessionFeeRepository
 import com.mbd.cmscommon.domain.repository.SessionMarksRepository
@@ -46,7 +45,6 @@ class StudentRecordController(
     private val attendanceRepository: SessionAttendanceRepository,
     private val marksRepository: SessionMarksRepository,
     private val feeRepository: SessionFeeRepository,
-    private val fineRepository: FineRepository,
     scope: CoroutineScope,
 ) : ScreenController(scope) {
 
@@ -74,7 +72,6 @@ class StudentRecordController(
             // Each block below is optional: a missing cache for one area shouldn't hide the rest of the record,
             // but the areas that could not be read are named in the error so an empty section isn't mistaken for "no data".
             val subjectsLoad = runCatching { curriculumRepository.observeSessionSubjects(sessionId).first() }
-            val finesLoad = runCatching { fineRepository.getFines(sessionId, rollNumber) }
             val attendanceLoad = runCatching { attendanceRepository.observeStudentTallies(sessionId, rollNumber).first() }
             val marksLoad = runCatching { marksRepository.observeStudentMarks(sessionId, rollNumber).first() }
             val resultsLoad = runCatching { marksRepository.getSemesterGpa(sessionId, rollNumber) }
@@ -84,7 +81,6 @@ class StudentRecordController(
                     FailureSummary.of(
                         listOf(
                             "subjects" to subjectsLoad,
-                            "fines" to finesLoad,
                             "attendance" to attendanceLoad,
                             "marks" to marksLoad,
                             "results" to resultsLoad,
@@ -103,7 +99,7 @@ class StudentRecordController(
                 marks = marksLoad.getOrNull().orEmpty(),
                 results = resultsLoad.getOrNull().orEmpty().sortedBy { it.semester },
                 feeStructure = feeLoad.getOrNull(),
-                snapshot = studentProfileSnapshot(profile, finesLoad.getOrNull().orEmpty()),
+                snapshot = studentProfileSnapshot(profile),
             )
         } finally {
             _loading.value = false

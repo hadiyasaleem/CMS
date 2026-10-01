@@ -11,7 +11,6 @@ import com.mbd.cmscommon.controller.StudentRecordController
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.CurriculumRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
-import com.mbd.cmscommon.domain.repository.FineRepository
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
 import com.mbd.cmscommon.domain.repository.SessionFeeRepository
 import com.mbd.cmscommon.domain.repository.SessionMarksRepository
@@ -29,7 +28,6 @@ class StudentRecordViewModel @Inject constructor(
     attendanceRepository: SessionAttendanceRepository,
     marksRepository: SessionMarksRepository,
     feeRepository: SessionFeeRepository,
-    fineRepository: FineRepository,
 ) : ViewModel() {
     val controller = StudentRecordController(
         sessionId = checkNotNull(savedStateHandle["sessionId"]),
@@ -40,7 +38,6 @@ class StudentRecordViewModel @Inject constructor(
         attendanceRepository = attendanceRepository,
         marksRepository = marksRepository,
         feeRepository = feeRepository,
-        fineRepository = fineRepository,
         scope = viewModelScope,
     )
 }

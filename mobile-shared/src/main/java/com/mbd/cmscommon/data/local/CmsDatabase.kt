@@ -9,7 +9,6 @@ import com.mbd.cmscommon.data.local.dao.CalendarEventDao
 import com.mbd.cmscommon.data.local.dao.DatesheetDao
 import com.mbd.cmscommon.data.local.dao.DepartmentDao
 import com.mbd.cmscommon.data.local.dao.ExamPaperSubmissionDao
-import com.mbd.cmscommon.data.local.dao.FineDao
 import com.mbd.cmscommon.data.local.dao.InsightsDao
 import com.mbd.cmscommon.data.local.dao.MarkEditRequestDao
 import com.mbd.cmscommon.data.local.dao.NotificationDao
@@ -29,7 +28,7 @@ import com.mbd.cmscommon.data.local.dao.TableSyncStateDao
 import com.mbd.cmscommon.data.local.dao.TeacherDao
 import com.mbd.cmscommon.data.local.dao.UserDao
 
-const val CMS_DATABASE_VERSION = 50
+const val CMS_DATABASE_VERSION = 51
 
 abstract class CmsDatabase : RoomDatabase() {
     abstract fun departmentDao(): DepartmentDao
@@ -41,7 +40,6 @@ abstract class CmsDatabase : RoomDatabase() {
     abstract fun studentLinkRequestDao(): StudentLinkRequestDao
     abstract fun examPaperSubmissionDao(): ExamPaperSubmissionDao
     abstract fun notificationDao(): NotificationDao
-    abstract fun fineDao(): FineDao
     abstract fun calendarEventDao(): CalendarEventDao
     abstract fun markEditRequestDao(): MarkEditRequestDao
     abstract fun insightsDao(): InsightsDao

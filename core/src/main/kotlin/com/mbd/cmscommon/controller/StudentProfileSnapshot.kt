@@ -1,6 +1,5 @@
 package com.mbd.cmscommon.controller
 
-import com.mbd.cmscommon.domain.model.Fine
 import com.mbd.cmscommon.domain.model.StudentProfile
 import com.mbd.cmscommon.util.FieldValidators
 import java.time.LocalDate
@@ -11,11 +10,9 @@ data class StudentProfileSnapshot(
     val completionPercent: Int,
     val validGpa: Double?,
     val validCgpa: Double?,
-    val validFines: List<Fine>,
-    val fineTotal: Double,
 )
 
-fun studentProfileSnapshot(profile: StudentProfile, fines: List<Fine>): StudentProfileSnapshot {
+fun studentProfileSnapshot(profile: StudentProfile): StudentProfileSnapshot {
     val completed = listOf(
         profile.name.isNotBlank(),
         hasValue(profile.fatherName),
@@ -36,15 +33,12 @@ fun studentProfileSnapshot(profile: StudentProfile, fines: List<Fine>): StudentP
         hasValue(profile.bloodGroup),
         hasValue(profile.domicile),
     )
-    val validFines = fines.filter { it.amount > 0.0 && it.reason.isNotBlank() }
     val completionPercent = ((completed.count { it } * 100f) / completed.size).roundToInt()
 
     return StudentProfileSnapshot(
         completionPercent = completionPercent,
         validGpa = validAcademicGrade(profile.gpa),
         validCgpa = validAcademicGrade(profile.cgpa),
-        validFines = validFines,
-        fineTotal = validFines.sumOf { it.amount },
     )
 }
 

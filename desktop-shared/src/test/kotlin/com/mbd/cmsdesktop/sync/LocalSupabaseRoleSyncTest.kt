@@ -39,8 +39,6 @@ class LocalSupabaseRoleSyncTest : LocalSyncSupport() {
             "insert into session_students(session_id,roll_number,name,shift) values ('ur_2023','R-02','Zoya','MORNING')",
             "insert into session_students(session_id,roll_number,name,shift) values ('ch_2024','R-01','Hina','MORNING')",
             "insert into timetable_periods(primary_session_id,day,start_time,end_time,course_code,subject_name,teacher_email,room_no,shift) values ('ur_2023','THURSDAY','09:00','10:00','UR-201','Poetry','t2@x.pk','R2','MORNING')",
-            "insert into fines(session_id,roll_number,category,amount,reason) values ('ur_2023','R-01','LIBRARY',55,'ur fine')",
-            "insert into fines(session_id,roll_number,category,amount,reason) values ('ch_2024','R-01','LIBRARY',66,'ch24 fine')",
             "insert into session_marks(session_id,semester,course_code,exam_type,roll_number,score,max_marks) values ('ur_2023',3,'UR-201','MIDTERM','R-01',9,25)",
             "insert into session_attendance(session_id,semester,course_code,date,roll_number,status) values ('ur_2023',3,'UR-201','2026-09-01','R-01','PRESENT')",
             "insert into student_link_requests(requested_by_email,roll_number_claimed,session_id) values ('s2@x.pk','R-01','ur_2023')",
@@ -110,19 +108,18 @@ class LocalSupabaseRoleSyncTest : LocalSyncSupport() {
         }
         cachedFor(s1) {
             val students = scalar("select count(*) from session_students")
-            val otherFines = scalar("select count(*) from fines where not (sessionId = 'ch_2023' and rollNumber = 'R-01')")
             val otherMarks = scalar("select count(*) from session_marks where not (sessionId = 'ch_2023' and rollNumber = 'R-01')")
             val otherAtt = scalar("select count(*) from session_attendance_rows where not (sessionId = 'ch_2023' and rollNumber = 'R-01')")
-            println("S1 cache: students=$students otherFines=$otherFines otherMarks=$otherMarks otherAttendance=$otherAtt")
+            println("S1 cache: students=$students otherMarks=$otherMarks otherAttendance=$otherAtt")
             if (students != 1) fail("student S1 caches $students student rows (only their own is allowed)")
-            if (otherFines + otherMarks + otherAtt != 0) fail("student S1 cached someone else's fines/marks/attendance ($otherFines/$otherMarks/$otherAtt)")
+            if (otherMarks + otherAtt != 0) fail("student S1 cached someone else's marks/attendance ($otherMarks/$otherAtt)")
         }
         cachedFor(s2) {
             if (scalar("select count(*) from session_students where not (sessionId = 'ur_2023' and rollNumber = 'R-01')") != 0) fail("student S2 cached another student's record")
             if (scalar("select count(*) from student_link_requests where requestedByUid <> 's2@x.pk'") != 0) fail("student S2 cached someone else's link request")
         }
         cachedFor(t3) {
-            val n = scalar("select count(*) from session_students") + scalar("select count(*) from session_marks") + scalar("select count(*) from session_attendance_rows") + scalar("select count(*) from fines")
+            val n = scalar("select count(*) from session_students") + scalar("select count(*) from session_marks") + scalar("select count(*) from session_attendance_rows")
             if (n != 0) fail("a teacher with no classes cached $n student-level rows")
         }
         cachedFor(t2) {

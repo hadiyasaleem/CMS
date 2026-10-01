@@ -31,7 +31,6 @@ import com.mbd.cmscommon.controller.StudentProfileEditController
 import com.mbd.cmscommon.domain.model.PROFILE_PHOTO_COMPRESSED_TARGET_BYTES
 import com.mbd.cmscommon.domain.model.StudentProfile
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
-import com.mbd.cmscommon.domain.repository.FineRepository
 import com.mbd.cmscommon.ui.components.StudentProfileWorkspace
 import com.mbd.cmscommon.util.orLogCritical
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -46,14 +45,12 @@ import kotlinx.coroutines.withContext
 class StudentProfileViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val sessionRepository: AcademicSessionRepository,
-    fineRepository: FineRepository,
     sessionManager: SessionManager,
 ) : ViewModel() {
     private val controller = StudentProfileEditController(
         sessionId = checkNotNull(savedStateHandle["sessionId"]),
         rollNumber = checkNotNull(savedStateHandle["roll"]),
         sessionRepository = sessionRepository,
-        fineRepository = fineRepository,
         issuedBy = sessionManager.accountKey.orEmpty(),
         scope = viewModelScope,
     )
@@ -61,12 +58,9 @@ class StudentProfileViewModel @Inject constructor(
     val profile = controller.profile
     val session = controller.session
     val saveState = controller.saveState
-    val fines = controller.fines
     val error = controller.error
     val photoBusy = controller.photoBusy
 
-    fun issueFine(category: String, amount: Double, reason: String) = controller.issueFine(category, amount, reason)
-    fun deleteFine(id: String) = controller.deleteFine(id)
     fun save(profile: StudentProfile) = controller.save(profile)
     fun delinkAccount() = controller.delinkAccount()
     fun clearError() = controller.clearError()
@@ -80,7 +74,6 @@ fun StudentProfileScreen(viewModel: StudentProfileViewModel = hiltViewModel()) {
     val profile by viewModel.profile.collectAsState()
     val session by viewModel.session.collectAsState()
     val saveState by viewModel.saveState.collectAsState()
-    val fines by viewModel.fines.collectAsState()
     val errorMessage by viewModel.error.collectAsState()
     val photoBusy by viewModel.photoBusy.collectAsState()
 
@@ -116,12 +109,9 @@ fun StudentProfileScreen(viewModel: StudentProfileViewModel = hiltViewModel()) {
     StudentProfileWorkspace(
         loadedProfile = loadedProfile,
         session = session,
-        fines = fines,
         saveOutcome = saveState,
         errorMessage = errorMessage,
         onSave = viewModel::save,
-        onIssueFine = viewModel::issueFine,
-        onDeleteFine = { viewModel.deleteFine(it.id) },
         onDelink = viewModel::delinkAccount,
         onClearError = viewModel::clearError,
         onPickPhoto = { onPicked -> pendingOnPicked = onPicked; pickPhoto.launch("image/*") },

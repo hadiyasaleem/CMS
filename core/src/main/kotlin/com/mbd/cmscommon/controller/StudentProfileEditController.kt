@@ -4,10 +4,8 @@ import com.mbd.cmscommon.domain.model.shiftForRoll
 import kotlinx.coroutines.flow.first
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.AcademicSession
-import com.mbd.cmscommon.domain.model.Fine
 import com.mbd.cmscommon.domain.model.StudentProfile
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
-import com.mbd.cmscommon.domain.repository.FineRepository
 import com.mbd.cmscommon.util.Outcome
 import com.mbd.cmscommon.util.orThrowValidation
 import com.mbd.cmscommon.util.requireValid
@@ -23,7 +21,6 @@ class StudentProfileEditController(
     val sessionId: String,
     val rollNumber: String,
     private val sessionRepository: AcademicSessionRepository,
-    private val fineRepository: FineRepository,
     private val issuedBy: String,
     scope: CoroutineScope,
 ) : ScreenController(scope) {
@@ -36,9 +33,6 @@ class StudentProfileEditController(
 
     private val _saveState = MutableStateFlow<Outcome<Unit>?>(null)
     val saveState: StateFlow<Outcome<Unit>?> = _saveState.asStateFlow()
-
-    private val _fines = MutableStateFlow<List<Fine>>(emptyList())
-    val fines: StateFlow<List<Fine>> = _fines.asStateFlow()
 
     private val _photoBusy = MutableStateFlow(false)
     val photoBusy: StateFlow<Boolean> = _photoBusy.asStateFlow()
@@ -54,30 +48,6 @@ class StudentProfileEditController(
                     shift = sessionRepository.observeSession(sessionId).first()?.let { shiftForRoll(it, rollNumber) } ?: Session.MORNING,
                 )
         }
-        loadFines()
-    }
-
-    private fun loadFines() = launch("load the student's fines") {
-        _fines.value = fineRepository.getFines(sessionId, rollNumber)
-    }
-
-    fun issueFine(category: String, amount: Double, reason: String) = launch("issue the fine") {
-        val normalizedCategory = category.trim().uppercase(Locale.ROOT).ifBlank { "OTHER" }
-        val normalizedReason = reason.trim()
-        requireValid(normalizedCategory in setOf("LIBRARY", "ATTENDANCE", "EXAM", "DISCIPLINARY", "OTHER")) {
-            "Choose a valid fine category."
-        }
-        fineAmountError(amount).orThrowValidation("amount")
-        requireValid(normalizedReason.isNotBlank()) { "Fine reason is required." }
-        requireValid(normalizedReason.length <= 300) { "Fine reason must not exceed 300 characters." }
-
-        fineRepository.issueFine(sessionId, rollNumber, normalizedCategory, amount, normalizedReason, issuedBy)
-        loadFines()
-    }
-
-    fun deleteFine(id: String) = launch("delete the fine") {
-        fineRepository.deleteFine(id)
-        loadFines()
     }
 
     fun delinkAccount() = launch("unlink the account") {
