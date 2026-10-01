@@ -1,7 +1,7 @@
 // archive-and-delete-session — Free tier has no automated backups, so this is
 // the backup story: export EVERYTHING about an inactive session to a JSON file
 // in the documents/archives/ folder (service-role only), then cascade-delete
-// the session (FKs remove roster/attendance/marks/gpa/fees/fines/periods) and
+// the session (FKs remove roster/attendance/marks/gpa/fees/periods) and
 // purge its exam-paper blobs.
 //
 // POST { sessionId }
@@ -9,7 +9,7 @@ import { dbError, handle, httpError, ok, readJson, requireAdmin, serviceClient }
 
 const TABLES = [
   "session_subjects", "session_students", "session_attendance", "session_marks",
-  "student_semester_gpa", "session_fee_heads", "fee_overrides", "fines",
+  "student_semester_gpa", "session_fee_heads", "fee_overrides",
   "exam_paper_submissions", "datesheets",
 ] as const;
 
@@ -22,7 +22,6 @@ const TABLE_LABELS: Record<string, string> = {
   student_semester_gpa: "results",
   session_fee_heads: "fee item",
   fee_overrides: "fee override",
-  fines: "fine",
   exam_paper_submissions: "exam paper",
   datesheets: "datesheet",
   session_fees: "fee structure",

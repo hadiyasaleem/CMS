@@ -719,68 +719,6 @@ export type Database = {
           },
         ]
       }
-      fines: {
-        Row: {
-          amount: number
-          category: Database["public"]["Enums"]["fine_category"]
-          created_at: string
-          created_by: string | null
-          deleted_at: string | null
-          deleted_by: string | null
-          id: string
-          is_deleted: boolean
-          issued_at: string
-          issued_by: string | null
-          reason: string
-          roll_number: string
-          session_id: string
-          updated_at: string
-          updated_by: string | null
-        }
-        Insert: {
-          amount: number
-          category?: Database["public"]["Enums"]["fine_category"]
-          created_at?: string
-          created_by?: string | null
-          deleted_at?: string | null
-          deleted_by?: string | null
-          id?: string
-          is_deleted?: boolean
-          issued_at?: string
-          issued_by?: string | null
-          reason: string
-          roll_number: string
-          session_id: string
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Update: {
-          amount?: number
-          category?: Database["public"]["Enums"]["fine_category"]
-          created_at?: string
-          created_by?: string | null
-          deleted_at?: string | null
-          deleted_by?: string | null
-          id?: string
-          is_deleted?: boolean
-          issued_at?: string
-          issued_by?: string | null
-          reason?: string
-          roll_number?: string
-          session_id?: string
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fines_session_id_roll_number_fkey"
-            columns: ["session_id", "roll_number"]
-            isOneToOne: false
-            referencedRelation: "session_students"
-            referencedColumns: ["session_id", "roll_number"]
-          },
-        ]
-      }
       mark_edit_requests: {
         Row: {
           course_code: string
@@ -1308,7 +1246,6 @@ export type Database = {
           deleted_by: string | null
           due_date: string | null
           is_deleted: boolean
-          late_fine_note: string | null
           payment_note: string | null
           session_id: string
           shift: Database["public"]["Enums"]["shift"]
@@ -1324,7 +1261,6 @@ export type Database = {
           deleted_by?: string | null
           due_date?: string | null
           is_deleted?: boolean
-          late_fine_note?: string | null
           payment_note?: string | null
           session_id: string
           shift: Database["public"]["Enums"]["shift"]
@@ -1340,7 +1276,6 @@ export type Database = {
           deleted_by?: string | null
           due_date?: string | null
           is_deleted?: boolean
-          late_fine_note?: string | null
           payment_note?: string | null
           session_id?: string
           shift?: Database["public"]["Enums"]["shift"]
@@ -2051,12 +1986,6 @@ export type Database = {
       event_type: "HOLIDAY" | "EVENT" | "EXAM" | "DEADLINE"
       exam_type: "MIDTERM" | "SESSIONAL"
       fee_cadence: "ANNUAL" | "SEMESTER"
-      fine_category:
-        | "LIBRARY"
-        | "ATTENDANCE"
-        | "EXAM"
-        | "DISCIPLINARY"
-        | "OTHER"
       gender: "MALE" | "FEMALE" | "OTHER"
       link_status: "PENDING" | "APPROVED" | "REJECTED"
       mark_edit_status: "PENDING" | "APPROVED" | "REJECTED"
@@ -2215,7 +2144,6 @@ export const Constants = {
       event_type: ["HOLIDAY", "EVENT", "EXAM", "DEADLINE"],
       exam_type: ["MIDTERM", "SESSIONAL"],
       fee_cadence: ["ANNUAL", "SEMESTER"],
-      fine_category: ["LIBRARY", "ATTENDANCE", "EXAM", "DISCIPLINARY", "OTHER"],
       gender: ["MALE", "FEMALE", "OTHER"],
       link_status: ["PENDING", "APPROVED", "REJECTED"],
       mark_edit_status: ["PENDING", "APPROVED", "REJECTED"],
