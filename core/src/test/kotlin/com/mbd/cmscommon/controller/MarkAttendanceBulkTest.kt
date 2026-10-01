@@ -94,6 +94,22 @@ class MarkAttendanceBulkTest {
     }
 
     @Test
+    fun lateCanOnlyBeSetWhenPresent() {
+        val c = controller()
+        c.setStatus(students[0].id, AttendanceStatus.ABSENT)
+        c.toggleLate(students[0].id)
+        assertEquals(emptySet<String>(), c.late.value)
+
+        c.setStatus(students[0].id, AttendanceStatus.PRESENT)
+        c.toggleLate(students[0].id)
+        assertEquals(setOf(students[0].id), c.late.value)
+
+        // Switching away from Present drops the late flag already set.
+        c.setStatus(students[0].id, AttendanceStatus.LEAVE)
+        assertEquals(emptySet<String>(), c.late.value)
+    }
+
+    @Test
     fun bulkMarkingIgnoresLockedStudents() {
         // No session is reported as already-marked here (marksBetween returns empty), so nothing is locked;
         // this documents that markAllPresent only ever writes unlocked ids via lockedStudentIds filtering.

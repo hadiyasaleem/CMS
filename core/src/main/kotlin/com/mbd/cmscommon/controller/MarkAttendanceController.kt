@@ -190,6 +190,8 @@ class MarkAttendanceController(
     fun setStatus(studentId: String, status: AttendanceStatus) {
         if (studentId in lockedStudentIds.value) return
         _statuses.value = _statuses.value + (studentId to status)
+        // Late only means anything for a student who showed up: switching away from Present drops it.
+        if (status != AttendanceStatus.PRESENT) _late.value = _late.value - studentId
     }
 
     /** Marks every student on the register Present -- locked (already-marked) students are left alone. */
@@ -209,6 +211,8 @@ class MarkAttendanceController(
 
     fun toggleLate(studentId: String) {
         if (studentId in lockedStudentIds.value) return
+        // Late only applies to a student marked Present.
+        if (_statuses.value[studentId] != AttendanceStatus.PRESENT) return
         _late.value = if (_late.value.contains(studentId)) _late.value - studentId else _late.value + studentId
     }
 

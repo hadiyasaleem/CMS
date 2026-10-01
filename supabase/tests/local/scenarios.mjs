@@ -44,6 +44,8 @@ await tryIt("timetable co-teacher ok", ttCo(`('eng_2023','TUESDAY','09:00','10:0
 await tryIt("timetable co-teacher without main teacher", `insert into timetable_periods(primary_session_id,day,start_time,end_time,course_code,subject_name,shift,co_teacher_emails) values ('eng_2023','WEDNESDAY','09:00','10:00','ENG-305','Project','MORNING',array['jane@x.pk'])`);
 await tryIt("timetable co-teacher is the main teacher", ttCo(`('eng_2023','WEDNESDAY','11:00','12:00','ENG-306','Project','omar@x.pk','R15','MORNING',array['omar@x.pk'])`));
 await tryIt("timetable co-teacher not a teacher", ttCo(`('eng_2023','THURSDAY','09:00','10:00','ENG-307','Project','omar@x.pk','R15','MORNING',array['ghost@x.pk'])`));
+await tryIt("absent student marked late", `insert into session_attendance(session_id,semester,course_code,date,roll_number,status,is_late,teacher_email) values ('eng_2023',3,'ENG-301','2026-10-05','ENG-23-01','ABSENT',true,'jane@x.pk')`);
+await tryIt("present student marked late is fine", `insert into session_attendance(session_id,semester,course_code,date,roll_number,status,is_late,teacher_email) values ('eng_2023',3,'ENG-301','2026-10-06','ENG-23-01','PRESENT',true,'jane@x.pk')`);
 await tryIt("timetable room clash", tt(`('eng_2023','MONDAY','09:30','10:30','ENG-302','Prose','omar@x.pk','R14','MORNING')`));
 await seed("insert into session_students(session_id,roll_number,name,shift) values ('eng_2023','ENG-23-02','Filler','MORNING')");
 await tryIt("roster full", `insert into session_students(session_id,roll_number,name,shift) values ('eng_2023','ENG-23-02','Sara','MORNING')`);

@@ -358,7 +358,8 @@ private fun StudentAttendanceCard(
                 FilterChip(
                     selected = isLate,
                     onClick = onToggleLate,
-                    enabled = !locked,
+                    // Late only applies to a student marked Present.
+                    enabled = !locked && status == AttendanceStatus.PRESENT,
                     label = { Text("Late") },
                     leadingIcon = if (isLate) { { Icon(TablerIcons.Check, contentDescription = null, modifier = Modifier.size(16.dp)) } } else null,
                 )

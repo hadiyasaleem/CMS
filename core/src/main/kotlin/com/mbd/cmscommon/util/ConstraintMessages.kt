@@ -231,6 +231,8 @@ internal object ConstraintMessages {
         "attendance_edit_requests_reason_check" to "The reason is too long (500 characters at most).",
         "student_semester_gpa_gpa_check" to "GPA must be between 0 and 4.",
         "student_semester_gpa_cgpa_check" to "CGPA must be between 0 and 4.",
+        "session_attendance_late_only_present" to "A student can only be marked late when their status is Present.",
+        "attendance_edit_requests_late_only_present" to "A student can only be marked late when their requested status is Present.",
     )
 
     /** Every constraint/index name this object words specially -- checked against a real migrated database by DatabaseScenarioMessagesTest. */

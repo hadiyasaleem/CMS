@@ -574,12 +574,16 @@ private fun CellDetailDialog(
                         Spacer(Modifier.height(6.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             AttendanceStatus.entries.forEach { option ->
-                                CmsChip(statusLabel(option), selected = status == option, onClick = { status = option })
+                                CmsChip(statusLabel(option), selected = status == option, onClick = {
+                                    status = option
+                                    // Late only applies to a student marked Present.
+                                    if (option != AttendanceStatus.PRESENT) late = false
+                                })
                             }
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Checkbox(checked = late, onCheckedChange = { late = it })
-                            Text("Arrived late")
+                            Checkbox(checked = late, onCheckedChange = { late = it }, enabled = status == AttendanceStatus.PRESENT)
+                            Text("Arrived late", color = if (status == AttendanceStatus.PRESENT) androidx.compose.ui.graphics.Color.Unspecified else ModMuted)
                         }
                         OutlinedTextField(
                             value = reason,
