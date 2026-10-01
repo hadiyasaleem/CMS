@@ -192,6 +192,21 @@ class MarkAttendanceController(
         _statuses.value = _statuses.value + (studentId to status)
     }
 
+    /** Marks every student on the register Present -- locked (already-marked) students are left alone. */
+    fun markAllPresent() {
+        if (alreadyMarked.value) return
+        val locked = lockedStudentIds.value
+        _statuses.value = _statuses.value + roster.value.filterNot { it.id in locked }.associate { it.id to AttendanceStatus.PRESENT }
+    }
+
+    /** Marks Present only the students who have no status yet; everyone already marked (Present, Absent, Leave, or locked) is untouched. */
+    fun markRemainingPresent() {
+        if (alreadyMarked.value) return
+        val locked = lockedStudentIds.value
+        val unmarked = roster.value.filterNot { it.id in locked || it.id in _statuses.value }
+        _statuses.value = _statuses.value + unmarked.associate { it.id to AttendanceStatus.PRESENT }
+    }
+
     fun toggleLate(studentId: String) {
         if (studentId in lockedStudentIds.value) return
         _late.value = if (_late.value.contains(studentId)) _late.value - studentId else _late.value + studentId

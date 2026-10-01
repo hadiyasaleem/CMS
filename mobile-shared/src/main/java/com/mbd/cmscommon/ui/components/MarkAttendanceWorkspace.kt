@@ -96,6 +96,8 @@ fun MarkAttendanceWorkspace(
     onLectureTopic: (String) -> Unit,
     onHistory: (String, String) -> Unit,
     onSubmit: () -> Unit,
+    onMarkAllPresent: () -> Unit = {},
+    onMarkRemainingPresent: () -> Unit = {},
     modifier: Modifier = Modifier,
     date: LocalDate = LocalDate.now(),
     onDate: (LocalDate) -> Unit = {},
@@ -142,6 +144,14 @@ fun MarkAttendanceWorkspace(
                     onStatus = { status -> onStatus(student.id, status) },
                     onToggleLate = { onToggleLate(student.id) },
                     onNote = { noteId = student.id },
+                )
+            }
+            item {
+                BulkMarkRow(
+                    locked = locked,
+                    hasUnmarked = summary.unmarked > 0,
+                    onMarkAllPresent = onMarkAllPresent,
+                    onMarkRemainingPresent = onMarkRemainingPresent,
                 )
             }
         }
@@ -382,6 +392,15 @@ private fun StatusCircle(letter: String, color: Color, selected: Boolean, enable
         Box(contentAlignment = Alignment.Center) {
             Text(letter, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
         }
+    }
+}
+
+@Composable
+private fun BulkMarkRow(locked: Boolean, hasUnmarked: Boolean, onMarkAllPresent: () -> Unit, onMarkRemainingPresent: () -> Unit) {
+    if (locked) return
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedButton(onClick = onMarkAllPresent, modifier = Modifier.weight(1f)) { Text("Mark all present") }
+        OutlinedButton(onClick = onMarkRemainingPresent, enabled = hasUnmarked, modifier = Modifier.weight(1f)) { Text("Mark remaining present") }
     }
 }
 

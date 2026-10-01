@@ -69,6 +69,8 @@ fun MarkAttendanceScreen(
         onLectureTopic = controller::setLectureTopic,
         onHistory = { sessionId, courseCode -> onOpenHistory(sessionId, courseCode, controller.selected.value?.classShift) },
         onSubmit = controller::submit,
+        onMarkAllPresent = controller::markAllPresent,
+        onMarkRemainingPresent = controller::markRemainingPresent,
         date = date,
         topics = topics,
         onToggleTopic = controller::toggleTopic,
