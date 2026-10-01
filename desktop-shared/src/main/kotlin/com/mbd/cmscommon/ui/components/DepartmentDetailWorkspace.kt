@@ -282,19 +282,10 @@ private fun DepartmentSessionCard(session: AcademicSession, studentCount: Int, o
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                StatusBadge(
-                    session.shiftMode.label.uppercase(),
-                    when (session.shiftMode) {
-                        ShiftMode.MORNING -> BadgeTone.Navy
-                        ShiftMode.EVENING -> BadgeTone.Gold
-                        ShiftMode.BOTH -> BadgeTone.Neutral
-                    },
-                )
-                if (!session.isActive) {
-                    StatusBadge("GRADUATED", BadgeTone.Neutral)
-                }
+            // The shift is already in the line above, so only a graduated session gets a badge.
+            if (!session.isActive) {
+                Spacer(Modifier.height(8.dp))
+                StatusBadge("GRADUATED", BadgeTone.Neutral)
             }
             Spacer(Modifier.height(8.dp))
             Text(
