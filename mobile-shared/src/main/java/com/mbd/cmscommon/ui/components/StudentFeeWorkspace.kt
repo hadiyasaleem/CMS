@@ -206,10 +206,6 @@ private fun FeeGuidanceCards(snapshot: StudentFeeSnapshot) {
             Text("Payment guidance", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(6.dp))
             Text(snapshot.structure?.paymentNote?.takeIf { it.isNotBlank() } ?: "Not specified", color = ModMuted, style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.height(10.dp))
-            Text("Late fee policy", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(6.dp))
-            Text(snapshot.structure?.lateFineNote?.takeIf { it.isNotBlank() } ?: "Not specified", color = ModMuted, style = MaterialTheme.typography.bodySmall)
         }
     }
 }

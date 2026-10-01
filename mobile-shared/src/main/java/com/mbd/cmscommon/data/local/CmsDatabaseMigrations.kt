@@ -1811,6 +1811,26 @@ val MIGRATION_50_51: Migration = object : Migration(50, 51) {
     }
 }
 
+/** The fee structure's late fine note was removed; SQLite can't drop a column on older Androids, so the table is rebuilt without it. */
+val MIGRATION_51_52: Migration = object : Migration(51, 52) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE `session_fees_new` (`sessionId` TEXT NOT NULL, `shift` TEXT NOT NULL, `cadence` TEXT NOT NULL, " +
+                "`academicYear` TEXT, `dueDate` TEXT, `paymentNote` TEXT, `createdAt` INTEGER NOT NULL, `createdBy` TEXT, " +
+                "`updatedAt` INTEGER NOT NULL, `updatedBy` TEXT, `isDeleted` INTEGER NOT NULL, `deletedAt` INTEGER, `deletedBy` TEXT, " +
+                "PRIMARY KEY(`sessionId`, `shift`))",
+        )
+        db.execSQL(
+            "INSERT INTO `session_fees_new` (`sessionId`,`shift`,`cadence`,`academicYear`,`dueDate`,`paymentNote`,`createdAt`,`createdBy`," +
+                "`updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy`) " +
+                "SELECT `sessionId`,`shift`,`cadence`,`academicYear`,`dueDate`,`paymentNote`,`createdAt`,`createdBy`," +
+                "`updatedAt`,`updatedBy`,`isDeleted`,`deletedAt`,`deletedBy` FROM `session_fees`",
+        )
+        db.execSQL("DROP TABLE `session_fees`")
+        db.execSQL("ALTER TABLE `session_fees_new` RENAME TO `session_fees`")
+    }
+}
+
 val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_18_19,
     MIGRATION_19_20,
@@ -1845,4 +1865,5 @@ val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_48_49,
     MIGRATION_49_50,
     MIGRATION_50_51,
+    MIGRATION_51_52,
 )

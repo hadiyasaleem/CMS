@@ -74,7 +74,7 @@ fun SessionFeeWorkspace(
     saving: Boolean,
     saved: Boolean,
     errorMessage: String?,
-    onSave: (FeeType, List<FeeHead>, String, String, String, String) -> Unit,
+    onSave: (FeeType, List<FeeHead>, String, String, String) -> Unit,
     onConsumeSaved: () -> Unit,
     onClearError: () -> Unit,
     onDownloadSamplePdf: (FeeChallanHeader, SessionFeeStructure) -> Unit,
@@ -93,7 +93,6 @@ fun SessionFeeWorkspace(
     var heads by remember(shift) { mutableStateOf(listOf<FeeHead>()) }
     var academicYear by remember(shift) { mutableStateOf("") }
     var dueDate by remember(shift) { mutableStateOf("") }
-    var lateFineNote by remember(shift) { mutableStateOf("") }
     var paymentNote by remember(shift) { mutableStateOf("") }
     var addingHead by remember { mutableStateOf(false) }
     var editingIndex by remember { mutableStateOf(-1) }
@@ -104,7 +103,6 @@ fun SessionFeeWorkspace(
         heads = structure.heads
         academicYear = structure.academicYear ?: ""
         dueDate = structure.dueDate ?: ""
-        lateFineNote = structure.lateFineNote ?: ""
         paymentNote = structure.paymentNote ?: ""
         initialized = true
     }
@@ -113,7 +111,7 @@ fun SessionFeeWorkspace(
     val average = if (heads.isEmpty()) 0.0 else total / heads.size
     val dirty = structure == null || cadence != structure.cadence || heads != structure.heads ||
         academicYear != (structure.academicYear ?: "") || dueDate != (structure.dueDate ?: "") ||
-        lateFineNote != (structure.lateFineNote ?: "") || paymentNote != (structure.paymentNote ?: "")
+        paymentNote != (structure.paymentNote ?: "")
 
     val validationError = when {
         heads.isEmpty() -> "Add at least one fee head."
@@ -183,7 +181,6 @@ fun SessionFeeWorkspace(
             PaymentDetailsCard(
                 academicYear = academicYear, onAcademicYear = { academicYear = it },
                 dueDate = dueDate, onDueDate = { dueDate = it },
-                lateFineNote = lateFineNote, onLateFineNote = { lateFineNote = it },
                 paymentNote = paymentNote, onPaymentNote = { paymentNote = it },
             )
         }
@@ -193,7 +190,7 @@ fun SessionFeeWorkspace(
                 dirty = dirty,
                 saving = saving,
                 validationError = validationError,
-                onSave = { onSave(cadence, heads, academicYear.trim(), dueDate.trim(), lateFineNote.trim(), paymentNote.trim()) },
+                onSave = { onSave(cadence, heads, academicYear.trim(), dueDate.trim(), paymentNote.trim()) },
             )
         }
 
@@ -240,7 +237,6 @@ fun SessionFeeWorkspace(
             heads = heads,
             academicYear = academicYear.takeIf { it.isNotBlank() },
             dueDate = dueDate.takeIf { it.isNotBlank() },
-            lateFineNote = lateFineNote.takeIf { it.isNotBlank() },
             paymentNote = paymentNote.takeIf { it.isNotBlank() },
         )
         AlertDialog(
@@ -349,7 +345,6 @@ private fun FeeHeadsEmptyState(onAdd: () -> Unit) {
 private fun PaymentDetailsCard(
     academicYear: String, onAcademicYear: (String) -> Unit,
     dueDate: String, onDueDate: (String) -> Unit,
-    lateFineNote: String, onLateFineNote: (String) -> Unit,
     paymentNote: String, onPaymentNote: (String) -> Unit,
 ) {
     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
@@ -359,8 +354,6 @@ private fun PaymentDetailsCard(
             OutlinedTextField(value = academicYear, onValueChange = onAcademicYear, label = { Text("Academic year (optional)") }, placeholder = { Text("2026-2027") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
             Spacer(Modifier.height(10.dp))
             CmsDateField(value = dueDate, onValueChange = onDueDate, label = "Due date", optional = true)
-            Spacer(Modifier.height(10.dp))
-            OutlinedTextField(value = lateFineNote, onValueChange = onLateFineNote, label = { Text("Late fine note (optional)") }, placeholder = { Text("Rs 50/day after due date") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
             Spacer(Modifier.height(10.dp))
             OutlinedTextField(value = paymentNote, onValueChange = onPaymentNote, label = { Text("Payment instructions (optional)") }, placeholder = { Text("Payable at the college accounts office") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
         }

@@ -12,7 +12,6 @@ data class SessionFeeEntity(
     val cadence: String,
     val academicYear: String?,
     val dueDate: String?,
-    val lateFineNote: String?,
     val paymentNote: String?,
     val createdAt: Long = 0L,
     val createdBy: String? = null,

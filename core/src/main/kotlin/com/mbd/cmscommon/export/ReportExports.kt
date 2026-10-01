@@ -232,7 +232,6 @@ fun sessionFeesExport(session: AcademicSession?, departmentName: String?, struct
             listOf("Cadence", titleCase(structure.cadence.name)),
             structure.academicYear?.let { listOf("Academic year", it) },
             structure.dueDate?.let { listOf("Due date", it) },
-            structure.lateFineNote?.let { listOf("Late fine", it) },
             structure.paymentNote?.let { listOf("Payment", it) },
         )
         listOf(ExportSection("${prefix}fee heads".replaceFirstChar { it.uppercase() }, listOf("Head", "Amount (PKR)"), heads), ExportSection("${prefix}details".replaceFirstChar { it.uppercase() }, listOf("Field", "Value"), details))

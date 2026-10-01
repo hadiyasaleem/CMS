@@ -58,9 +58,8 @@ class SessionFeesViewModel @Inject constructor(
         heads: List<FeeHead>,
         academicYear: String,
         dueDate: String,
-        lateFineNote: String,
         paymentNote: String,
-    ) = controller.save(cadence, heads, academicYear, dueDate, lateFineNote, paymentNote)
+    ) = controller.save(cadence, heads, academicYear, dueDate, paymentNote)
 
     fun consumeSaved() = controller.consumeSaved()
     fun clearError() = controller.clearError()

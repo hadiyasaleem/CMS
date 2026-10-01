@@ -66,12 +66,12 @@ object FeeChallanPdfGenerator {
         return out.toByteArray()
     }
 
-    // Must track drawCopy's actual draw sequence exactly (worst case: both optional note lines
+    // Must track drawCopy's actual draw sequence exactly (worst case: the optional note line
     // present): 9(offset)+11(title)+10(subtitle)+28(4 field rows)+3(gap)=61 pre-grid, +2*ROW_H
-    // (head+total rows)=20, +6(post-grid gap), +8(due date)+7(late fine)+7(payment note)+6(pre-box
-    // gap), +32(24pt box + 8pt label) = 147 fixed, plus ROW_H per fee-head body row, plus a 13pt
+    // (head+total rows)=20, +6(post-grid gap), +8(due date)+7(payment note)+6(pre-box
+    // gap), +32(24pt box + 8pt label) = 140 fixed, plus ROW_H per fee-head body row, plus a 13pt
     // safety margin for font-metric rounding.
-    private fun estimateCopyHeight(headCount: Int): Float = 160f + headCount * ROW_H
+    private fun estimateCopyHeight(headCount: Int): Float = 153f + headCount * ROW_H
 
     private fun drawCopy(
         canvas: Canvas,
@@ -130,10 +130,6 @@ object FeeChallanPdfGenerator {
 
         canvas.drawText("Due date: ${structure.dueDate?.takeIf { it.isNotBlank() } ?: "Not set"}", x0, y, fieldPaint)
         y += 8f
-        structure.lateFineNote?.takeIf { it.isNotBlank() }?.let {
-            canvas.drawText("Late fine: $it", x0, y, notePaint)
-            y += 7f
-        }
         structure.paymentNote?.takeIf { it.isNotBlank() }?.let {
             canvas.drawText(it, x0, y, notePaint)
             y += 7f

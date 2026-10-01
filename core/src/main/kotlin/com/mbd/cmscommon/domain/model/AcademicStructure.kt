@@ -244,7 +244,6 @@ data class SessionFeeStructure(
     val heads: List<FeeHead>,
     val academicYear: String? = null,
     val dueDate: String? = null,
-    val lateFineNote: String? = null,
     val paymentNote: String? = null,
     override val createdAt: Instant = Instant.EPOCH,
     override val createdBy: String? = null,

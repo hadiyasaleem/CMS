@@ -93,7 +93,7 @@ class SessionFeesController(
         }
     }
 
-    fun save(cadence: FeeType, heads: List<FeeHead>, academicYear: String, dueDate: String, lateFineNote: String, paymentNote: String) = launch("save the fee structure") {
+    fun save(cadence: FeeType, heads: List<FeeHead>, academicYear: String, dueDate: String, paymentNote: String) = launch("save the fee structure") {
         try {
             _saving.value = true
             val normalizedHeads = heads.map { it.copy(label = it.label.trim()) }
@@ -111,7 +111,6 @@ class SessionFeesController(
             if (due.isNotBlank()) {
                 requireValid(runCatching { LocalDate.parse(due) }.isSuccess) { "Due date must use YYYY-MM-DD format." }
             }
-            requireValid(lateFineNote.trim().length <= 300) { "Late fine note must not exceed 300 characters." }
             requireValid(paymentNote.trim().length <= 1000) { "Payment instructions must not exceed 1,000 characters." }
 
             val editing = feeTabShift(session.value, _pickedShift.value)
@@ -122,7 +121,6 @@ class SessionFeesController(
                 heads = normalizedHeads,
                 academicYear = year.takeIf { it.isNotBlank() },
                 dueDate = due.takeIf { it.isNotBlank() },
-                lateFineNote = lateFineNote.trim().takeIf { it.isNotBlank() },
                 paymentNote = paymentNote.trim().takeIf { it.isNotBlank() },
             )
             repo.saveSessionFee(updated, updatedBy)

@@ -45,7 +45,6 @@ class SessionFeeRepositoryImpl @Inject constructor(
             cadence = structure.cadence.name,
             academicYear = structure.academicYear,
             dueDate = structure.dueDate,
-            lateFineNote = structure.lateFineNote,
             paymentNote = structure.paymentNote,
             updatedBy = updatedBy,
         )

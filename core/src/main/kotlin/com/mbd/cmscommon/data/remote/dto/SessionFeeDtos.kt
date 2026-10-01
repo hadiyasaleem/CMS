@@ -9,7 +9,6 @@ data class SessionFeeDto(
     val cadence: String? = null,
     val academicYear: String? = null,
     val dueDate: String? = null,
-    val lateFineNote: String? = null,
     val paymentNote: String? = null,
     val updatedBy: String? = null,
     val createdAt: String? = null,
