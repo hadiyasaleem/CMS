@@ -36,7 +36,6 @@ import com.mbd.cmscommon.domain.model.TeacherStatus
 import com.mbd.cmscommon.export.ExportDocument
 import com.mbd.cmscommon.export.ExportFormat
 import com.mbd.cmscommon.export.teacherDetailExport
-import com.mbd.cmscommon.export.teacherStatsExport
 import com.mbd.cmscommon.teacher.ResolvedAssignment
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
@@ -88,9 +87,6 @@ fun TeacherDetailWorkspace(
                 onExportAll = { format ->
                     teacher?.let { onExport(teacherDetailExport(it, department, stats, assignments, grids.map { g -> g.grid }, grids.associate { g -> g.grid.title to g.breakSlot }), format) }
                 },
-                onExportStats = { format ->
-                    teacher?.let { onExport(teacherStatsExport(it, department, stats, assignments), format) }
-                },
             )
         }
         item { TeacherStatsRow(stats) }
@@ -128,7 +124,6 @@ private fun TeacherDetailHeader(
     department: Department?,
     exportEnabled: Boolean,
     onExportAll: (ExportFormat) -> Unit,
-    onExportStats: (ExportFormat) -> Unit,
 ) {
     Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Column(Modifier.padding(20.dp)) {
@@ -147,9 +142,6 @@ private fun TeacherDetailHeader(
                 Column(horizontalAlignment = Alignment.End) {
                     ExportMenuButton(onExport = onExportAll, enabled = exportEnabled, tint = CmsTheme.colors.onInk)
                     Text("Export all", color = CmsTheme.colors.onInkMuted, style = CmsTextStyles.eyebrow)
-                    Spacer(Modifier.height(8.dp))
-                    ExportMenuButton(onExport = onExportStats, enabled = exportEnabled, tint = CmsTheme.colors.onInk)
-                    Text("Export stats", color = CmsTheme.colors.onInkMuted, style = CmsTextStyles.eyebrow)
                 }
             }
             if (teacher != null) {

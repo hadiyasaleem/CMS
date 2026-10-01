@@ -35,9 +35,8 @@ private fun statsRows(stats: TeacherWorkloadStats): List<List<String>> = listOf(
 private fun classesRows(assignments: List<ResolvedAssignment>): List<List<String>> =
     assignments.sortedBy { it.courseCode }.map { listOf(it.courseCode, it.subjectLabel, it.sessionLabel, it.shift.ifBlank { "-" }) }
 
-/** Profile + computed workload stats + the classes a teacher is assigned, with no timetable grids --
- * for the detail screen's "Export stats" button. */
-fun teacherStatsExport(teacher: Teacher, department: Department?, stats: TeacherWorkloadStats, assignments: List<ResolvedAssignment>): ExportDocument = ExportDocument(
+/** Profile + computed workload stats + the classes a teacher is assigned, with no timetable grids. */
+private fun teacherStatsExport(teacher: Teacher, department: Department?, stats: TeacherWorkloadStats, assignments: List<ResolvedAssignment>): ExportDocument = ExportDocument(
     fileBase = "teacher_${teacher.teacherId}_stats",
     title = listOf("Teacher Profile & Stats", teacher.name),
     sections = listOf(
@@ -49,7 +48,7 @@ fun teacherStatsExport(teacher: Teacher, department: Department?, stats: Teacher
 
 /** Everything on the teacher detail screen in one document: profile + stats + classes, followed by
  * one printed-style grid section per semester+shift the teacher has periods in -- the detail screen's
- * "Export all" button. [breakSlots], keyed by grid title, carries each grid's own break column through. */
+ * single export button. [breakSlots], keyed by grid title, carries each grid's own break column through. */
 fun teacherDetailExport(
     teacher: Teacher,
     department: Department?,
