@@ -77,6 +77,8 @@ fun TeacherStudentRosterWorkspace(
     students: List<SessionStudent>,
     tallies: Map<String, AttendanceTally>,
     onSelectAssignment: (ResolvedAssignment) -> Unit,
+    /** Switches back to the combined roster across every class. */
+    onShowAllClasses: () -> Unit = {},
     onExport: ((ExportDocument, ExportFormat) -> Unit)? = null,
     /** Why the roster/attendance refresh failed (a named reason), so an empty list isn't mistaken for an empty class. */
     syncError: String? = null,
@@ -112,51 +114,55 @@ fun TeacherStudentRosterWorkspace(
     LazyColumn(modifier.fillMaxWidth(), state = listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { TeacherRosterHero(selected, students.size) }
         syncError?.let { message -> item { CmsNotice(message = message) } }
-        if (onExport != null && selected != null) {
+        if (onExport != null) {
             item { ExportBar(onExport, build = { myStudentsExport(selected, students, tallies) }, enabled = students.isNotEmpty()) }
         }
-        item { TeacherClassPicker(assignments, selected, onSelectAssignment) }
+        item {
+            Column(Modifier.fillMaxWidth()) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    CmsChip("All classes", selected = selected == null, onClick = onShowAllClasses)
+                }
+                Spacer(Modifier.height(8.dp))
+                TeacherClassPicker(assignments, selected, onSelectAssignment)
+            }
+        }
 
-        if (selected != null) {
-            item { TeacherRosterSummaryCard(students.size, avgCgpa, linked) }
+        item { TeacherRosterSummaryCard(students.size, avgCgpa, linked) }
 
-            item {
-                Column(Modifier.fillMaxWidth()) {
-                    OutlinedTextField(
-                        value = query,
-                        onValueChange = { query = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Find attendance risks, account-link gaps, and missing grades") },
-                        singleLine = true,
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        TeacherRosterFilter.entries.forEach { option -> CmsChip(option.label, selected = filter == option, onClick = { filter = option }) }
-                    }
-                    Spacer(Modifier.height(8.dp))
-                    Text("SORT", color = ModMuted, style = CmsTextStyles.eyebrow)
-                    Spacer(Modifier.height(6.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        TeacherRosterSort.entries.forEach { option -> CmsChip(option.label, selected = sort == option, onClick = { sort = option }) }
-                    }
+        item {
+            Column(Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Find attendance risks, account-link gaps, and missing grades") },
+                    singleLine = true,
+                )
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    TeacherRosterFilter.entries.forEach { option -> CmsChip(option.label, selected = filter == option, onClick = { filter = option }) }
+                }
+                Spacer(Modifier.height(8.dp))
+                Text("SORT", color = ModMuted, style = CmsTextStyles.eyebrow)
+                Spacer(Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    TeacherRosterSort.entries.forEach { option -> CmsChip(option.label, selected = sort == option, onClick = { sort = option }) }
                 }
             }
+        }
 
-            if (students.isEmpty()) {
-                item { TeacherRosterEmpty("No students found", "This class has no enrolled students yet.") }
-            } else if (visible.isEmpty()) {
-                item { TeacherRosterEmpty("No matching students", "Try a different search or filter.") }
-            } else {
-                items(visible, key = { it.id }) { student -> TeacherStudentCard(student, tallies[student.id]) }
-            }
+        if (students.isEmpty()) {
+            item { TeacherRosterEmpty("No students found", if (selected == null) "None of your classes have enrolled students yet." else "This class has no enrolled students yet.") }
+        } else if (visible.isEmpty()) {
+            item { TeacherRosterEmpty("No matching students", "Try a different search or filter.") }
         } else {
-            item { TeacherRosterEmpty("Class roster", "Choose a class to review student progress") }
+            items(visible, key = { it.id }) { student -> TeacherStudentCard(student, tallies[student.id]) }
         }
 
         item { Spacer(Modifier.height(72.dp)) }
@@ -173,7 +179,7 @@ private fun TeacherRosterHero(selected: ResolvedAssignment?, count: Int) {
             Text("My Students", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
             Spacer(Modifier.height(4.dp))
             Text(
-                selected?.let { "${it.subjectLabel} · ${it.sessionLabel} · $count students" } ?: "Student directory",
+                selected?.let { "${it.subjectLabel} · ${it.sessionLabel} · $count students" } ?: "All classes · $count students",
                 color = CmsTheme.colors.onInkMuted,
                 style = MaterialTheme.typography.bodyMedium,
             )

@@ -199,8 +199,9 @@ fun semesterResultsExport(
     )
 }
 
+/** [assignment] is null for the combined "All classes" roster (every student this teacher has, across every class). */
 fun myStudentsExport(
-    assignment: ResolvedAssignment,
+    assignment: ResolvedAssignment?,
     roster: List<SessionStudent>,
     tallies: Map<String, AttendanceTally>,
 ): ExportDocument {
@@ -214,8 +215,12 @@ fun myStudentsExport(
         )
     }
     return ExportDocument(
-        fileBase = "students_${assignment.courseCode}_${assignment.sessionLabel}${if (assignment.isMerged) "_combined" else ""}",
-        title = listOf("Student Roster", "${assignment.courseCode} · ${assignment.subjectLabel}", assignment.sessionLabel + if (assignment.isMerged) " (combined)" else ""),
+        fileBase = assignment?.let { "students_${it.courseCode}_${it.sessionLabel}${if (it.isMerged) "_combined" else ""}" } ?: "students_all_classes",
+        title = listOfNotNull(
+            "Student Roster",
+            assignment?.let { "${it.courseCode} · ${it.subjectLabel}" } ?: "All my classes",
+            assignment?.let { it.sessionLabel + if (it.isMerged) " (combined)" else "" },
+        ),
         sections = listOf(ExportSection("Students", header, rows)),
     )
 }

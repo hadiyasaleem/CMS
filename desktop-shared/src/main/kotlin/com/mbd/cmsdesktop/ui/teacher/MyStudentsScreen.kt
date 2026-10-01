@@ -5,8 +5,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import com.mbd.cmscommon.controller.MyStudentsController
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.SessionAttendanceRepository
@@ -36,12 +38,18 @@ fun MyStudentsScreen(
     val tallies by controller.tallies.collectAsState()
     val syncError by controller.error.collectAsState()
     val assignments by assignmentsProvider.observeAssignmentsFor(teacherId).collectAsState(initial = emptyList())
+    var didInitialRefresh by remember { mutableStateOf(false) }
 
     LaunchedEffect(assignments, selected) {
-        val selectionExists = selected != null &&
-            assignments.any { it.classKey == selected?.classKey && it.courseCode == selected?.courseCode }
-        if (!selectionExists) {
-            assignments.firstOrNull()?.let { controller.select(it) }
+        controller.setAssignments(assignments)
+        // A class that was picked but is no longer taught (dropped from the timetable) falls back to "All classes"
+        // rather than silently picking a different one for the teacher.
+        val selectionExists = selected == null || assignments.any { it.classKey == selected?.classKey && it.courseCode == selected?.courseCode }
+        if (!selectionExists) controller.selectAll()
+        // One combined refresh across every class, the first time this teacher's classes are known.
+        if (!didInitialRefresh && assignments.isNotEmpty()) {
+            didInitialRefresh = true
+            controller.refresh()
         }
     }
 
@@ -53,6 +61,7 @@ fun MyStudentsScreen(
         students = roster,
         tallies = tallies,
         onSelectAssignment = controller::select,
+        onShowAllClasses = controller::selectAll,
         syncError = syncError,
     )
 }
