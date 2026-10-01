@@ -208,10 +208,6 @@ private fun SessionIdentityCard(session: AcademicSession?, onEdit: () -> Unit) {
                 Spacer(Modifier.height(4.dp))
                 Text(session?.programName?.takeIf { it.isNotBlank() } ?: "Program name not configured", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
                 Text(session?.inchargeEmail?.takeIf { it.isNotBlank() } ?: "Session in-charge not assigned", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
-                if (session != null) {
-                    Spacer(Modifier.height(6.dp))
-                    StatusBadge(session.shiftMode.label.uppercase(), if (session.shiftMode == ShiftMode.EVENING) BadgeTone.Gold else BadgeTone.Navy)
-                }
             }
             StatusBadge(if (session?.isActive == true) "ACTIVE" else "ARCHIVED", if (session?.isActive == true) BadgeTone.Success else BadgeTone.Neutral)
             TextButton(onClick = onEdit) { Text("Edit", color = CmsTheme.colors.onInk) }
