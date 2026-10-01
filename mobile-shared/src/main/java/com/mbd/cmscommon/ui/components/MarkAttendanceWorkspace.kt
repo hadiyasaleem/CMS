@@ -400,8 +400,8 @@ private fun StatusCircle(letter: String, color: Color, selected: Boolean, enable
 private fun BulkMarkRow(locked: Boolean, hasUnmarked: Boolean, onMarkAllPresent: () -> Unit, onMarkRemainingPresent: () -> Unit) {
     if (locked) return
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedButton(onClick = onMarkAllPresent, modifier = Modifier.weight(1f)) { Text("Mark all present") }
-        OutlinedButton(onClick = onMarkRemainingPresent, enabled = hasUnmarked, modifier = Modifier.weight(1f)) { Text("Mark remaining present") }
+        CmsOutlinedButton(text = "Mark all present", onClick = onMarkAllPresent, modifier = Modifier.weight(1f))
+        CmsOutlinedButton(text = "Mark rest present", onClick = onMarkRemainingPresent, enabled = hasUnmarked, modifier = Modifier.weight(1f))
     }
 }
 

@@ -281,10 +281,11 @@ fun CmsPrimaryButton(
 }
 
 @Composable
-fun CmsOutlinedButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, leadingIcon: ImageVector? = null) {
+fun CmsOutlinedButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, leadingIcon: ImageVector? = null, enabled: Boolean = true) {
     OutlinedButton(
         onClick = onClick,
         modifier = modifier.height(52.dp),
+        enabled = enabled,
         shape = RectangleShape,
         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
         border = BorderStroke(2.dp, CmsTheme.colors.rule),
