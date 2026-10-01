@@ -58,14 +58,7 @@ class SemesterResultsController(
     /** The session behind the picked class, without its shift. */
     private val selectedSessionId: String? get() = _sessionId.value?.let { parseShiftClassKey(it).first }
 
-    /** The valid semester numbers for the picked class's session's program type (1-8 for BS, 5-8 for MA Replacement). */
-    val semesterRange: StateFlow<IntRange> = _sessionId
-        .flatMapLatest { key ->
-            val sid = key?.let { parseShiftClassKey(it).first }
-            if (sid == null) flowOf(ProgramType.BS.semesterRange) else sessionRepository.observeSession(sid).map { it?.semesterRange ?: ProgramType.BS.semesterRange }
-        }
-        .stateIn(scope, SharingStarted.WhileSubscribed(5000), ProgramType.BS.semesterRange)
-
+    /** The semester being recorded: the picked class's current semester. */
     private val _semester = MutableStateFlow(1)
     val semester: StateFlow<Int> = _semester.asStateFlow()
 
@@ -104,17 +97,11 @@ class SemesterResultsController(
         _subjects.value = emptyList()
         val sid = parseShiftClassKey(id).first
         launch("load the session") {
-            val range = sessionRepository.observeSession(sid).first()?.semesterRange ?: ProgramType.BS.semesterRange
-            if (_semester.value !in range) _semester.value = range.first
+            val session = sessionRepository.observeSession(sid).first()
+            val range = session?.semesterRange ?: ProgramType.BS.semesterRange
+            _semester.value = session?.currentSemester?.coerceIn(range.first, range.last) ?: range.first
             reload(fetchRemote = false)
         }
-    }
-
-    fun setSemester(n: Int) {
-        _semester.value = n
-        _results.value = emptyMap()
-        _subjects.value = emptyList()
-        reload(fetchRemote = false)
     }
 
     fun refresh() {

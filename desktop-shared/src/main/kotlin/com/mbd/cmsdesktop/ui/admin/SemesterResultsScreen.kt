@@ -56,7 +56,6 @@ fun SemesterResultsScreen(
     val subjects by controller.subjects.collectAsState()
     val loadState by controller.loadState.collectAsState()
     val saveState by controller.saveState.collectAsState()
-    val semesterRange by controller.semesterRange.collectAsState()
 
     ControllerErrorDialog(controller.error, "Couldn't load semester results", controller::clearError)
 
@@ -64,7 +63,6 @@ fun SemesterResultsScreen(
 
         onExport = rememberDocumentExport(),
         sessions = sessions,
-        semesterRange = semesterRange,
         classOptions = visibleClasses,
         filterScope = filterScope,
         filterOptions = filterOptions,
@@ -77,7 +75,6 @@ fun SemesterResultsScreen(
         saveOutcome = saveState,
         loadOutcome = loadState,
         onSelectSession = controller::selectSession,
-        onSemester = controller::setSemester,
         onRetry = controller::refresh,
         onClearSave = controller::clearSave,
         onRecord = controller::record,

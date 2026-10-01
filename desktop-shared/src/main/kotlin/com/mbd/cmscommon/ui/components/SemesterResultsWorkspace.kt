@@ -76,7 +76,6 @@ fun SemesterResultsWorkspace(
     saveOutcome: Outcome<Unit>?,
     loadOutcome: Outcome<Unit>?,
     onSelectSession: (String) -> Unit,
-    onSemester: (Int) -> Unit,
     onRetry: () -> Unit,
     onClearSave: () -> Unit,
     onRecord: (String, Double, Double, String, String, Int?, String, List<String>) -> Unit,
@@ -88,8 +87,6 @@ fun SemesterResultsWorkspace(
     onFilterScope: (ShiftScope) -> Unit = {},
     /** The classes the picker lists (inside the filter); defaults to every class in [sessions]. */
     classOptions: List<Pair<String, String>> = sessions,
-    /** Valid semester numbers for the selected class's session (1-8 for BS, 5-8 for MA Replacement). */
-    semesterRange: IntRange = 1..8,
 ) {
     var editing by remember { mutableStateOf<SessionStudent?>(null) }
 
@@ -133,14 +130,6 @@ fun SemesterResultsWorkspace(
             item { ShiftScopeSelector(filterScope, filterOptions.departments, filterOptions.sessions, onFilterScope, label = "CLASSES") }
         }
         item { SessionPicker(classOptions, sessionId, onSelectSession, selectedLabel = sessions.firstOrNull { it.first == sessionId }?.second) }
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                semesterRange.forEach { sem -> CmsChip("Sem $sem", selected = semester == sem, onClick = { onSemester(sem) }) }
-            }
-        }
         item { ResultsMetrics(roster.size, recorded, missing, promoted, attention, supply) }
 
         if (roster.isEmpty()) {
