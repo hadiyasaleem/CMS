@@ -36,6 +36,9 @@ fun TeacherClassPicker(
     selected: ResolvedAssignment?,
     onSelect: (ResolvedAssignment) -> Unit,
     modifier: Modifier = Modifier,
+    /** Adds an "All classes" entry at the top of the dropdown, for screens with a combined roster view. */
+    showAllOption: Boolean = false,
+    onSelectAll: () -> Unit = {},
 ) {
     var expanded by remember { mutableStateOf(false) }
     var scope by remember { mutableStateOf(ShiftScope.ALL) }
@@ -53,10 +56,17 @@ fun TeacherClassPicker(
         Spacer(Modifier.height(8.dp))
         Box(Modifier.fillMaxWidth()) {
             OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) {
-                Text(selected?.let { "${it.subjectLabel} · ${it.sessionLabel}${if (it.isMerged) " (combined)" else ""}" } ?: "Select a class", modifier = Modifier.weight(1f))
+                Text(
+                    selected?.let { "${it.subjectLabel} · ${it.sessionLabel}${if (it.isMerged) " (combined)" else ""}" }
+                        ?: if (showAllOption) "All classes" else "Select a class",
+                    modifier = Modifier.weight(1f),
+                )
                 Icon(TablerIcons.ChevronDown, contentDescription = null)
             }
             CmsDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                if (showAllOption) {
+                    DropdownMenuItem(text = { Text("All classes") }, onClick = { onSelectAll(); expanded = false })
+                }
                 if (visible.isEmpty()) DropdownMenuItem(text = { Text("No classes match these filters") }, onClick = { expanded = false }, enabled = false)
                 visible.forEach { assignment ->
                     DropdownMenuItem(
