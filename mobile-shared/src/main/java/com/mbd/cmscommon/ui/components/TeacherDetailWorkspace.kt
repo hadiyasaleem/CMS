@@ -26,7 +26,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.controller.TeacherGrid
 import com.mbd.cmscommon.controller.TeacherWorkloadStats
-import com.mbd.cmscommon.controller.formatWeeklyMinutes
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.Department
 import com.mbd.cmscommon.domain.model.SessionPeriod
@@ -44,8 +43,6 @@ import com.mbd.cmscommon.ui.theme.ModMuted
 import com.mbd.cmscommon.ui.theme.ModSurface
 import com.mbd.cmscommon.ui.theme.ModTrack
 import com.mbd.cmscommon.ui.theme.ModWarn
-import java.time.format.TextStyle
-import java.util.Locale
 
 private val DetailCanvas = ModGround
 private val DetailGold = ModWarn
@@ -85,7 +82,6 @@ fun TeacherDetailWorkspace(
                 },
             )
         }
-        item { TeacherStatsRow(stats) }
         if (loading) {
             item { SkeletonRow() }
         }
@@ -146,27 +142,6 @@ private fun TeacherDetailHeader(
                     Text(listOfNotNull(teacher.email, teacher.phone?.takeIf { it.isNotBlank() }).joinToString(" · "), color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun TeacherStatsRow(stats: TeacherWorkloadStats) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        TeacherStatTile(stats.totalPeriods.toString(), "Periods / week", Modifier.weight(1f))
-        TeacherStatTile(formatWeeklyMinutes(stats.totalWeeklyMinutes), "Weekly time", Modifier.weight(1f))
-        TeacherStatTile(stats.distinctSubjects.toString(), "Subjects", Modifier.weight(1f))
-        TeacherStatTile(stats.distinctClasses.toString(), "Classes", Modifier.weight(1f))
-        TeacherStatTile(stats.busiestDay?.getDisplayName(TextStyle.SHORT, Locale.ENGLISH) ?: "None", "Busiest day", Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun TeacherStatTile(value: String, label: String, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Column(Modifier.padding(14.dp)) {
-            Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }
