@@ -16,8 +16,8 @@ android {
         applicationId = "com.mbd.cmsteacher"
         minSdk = 24
         targetSdk = 36
-        versionCode = 104
-        versionName = "1.0.103"
+        versionCode = 105
+        versionName = "1.0.104"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
