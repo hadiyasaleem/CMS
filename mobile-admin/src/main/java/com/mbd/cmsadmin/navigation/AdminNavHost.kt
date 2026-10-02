@@ -4,9 +4,11 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.mbd.cmsadmin.feature.academics.MasterDatesheetScreen
 import com.mbd.cmsadmin.feature.academics.MasterTimetableScreen
 import com.mbd.cmsadmin.feature.academics.SemesterResultsScreen
 import com.mbd.cmsadmin.feature.academics.SemesterSubjectsScreen
+import com.mbd.cmsadmin.feature.academics.SessionDatesheetScreen
 import com.mbd.cmsadmin.feature.academics.SessionDetailScreen
 import com.mbd.cmsadmin.feature.academics.SessionStudentsScreen
 import com.mbd.cmsadmin.feature.academics.SessionTimetableScreen
@@ -117,7 +119,7 @@ fun AdminNavHost(navController: NavHostController, onSignedOut: () -> Unit, refr
         }
         composable(AdminLeaf.CALENDAR) { com.mbd.cmsadmin.feature.calendar.CalendarScreen() }
         composable(AdminLeaf.DATESHEETS) {
-            com.mbd.cmscommon.ui.datesheets.DatesheetsScreen(viewModel = androidx.hilt.navigation.compose.hiltViewModel())
+            MasterDatesheetScreen(onOpenSession = { go(AdminRoutes.sessionDatesheet(it)) })
         }
         composable(AdminLeaf.INSIGHTS) { com.mbd.cmsadmin.feature.insights.InsightsScreen(refreshVersion = refreshVersion) }
         composable(AdminLeaf.SEMESTER_RESULTS) { SemesterResultsScreen() }
@@ -137,10 +139,14 @@ fun AdminNavHost(navController: NavHostController, onSignedOut: () -> Unit, refr
             SessionDetailScreen(
                 onOpenStudents = { go(AdminRoutes.sessionStudents(it)) },
                 onOpenTimetable = { go(AdminRoutes.sessionTimetable(it)) },
+                onOpenDatesheet = { go(AdminRoutes.sessionDatesheet(it)) },
                 onOpenSemester = { sid, semester -> go(AdminRoutes.semesterSubjects(sid, semester)) },
                 onOpenFees = { go(AdminRoutes.sessionFees(it)) },
                 onDeleted = { navController.popBackStack() },
             )
+        }
+        composable(AdminRoutes.SESSION_DATESHEET) {
+            SessionDatesheetScreen(viewModel = androidx.hilt.navigation.compose.hiltViewModel())
         }
         composable(AdminRoutes.SESSION_FEES) { com.mbd.cmsadmin.feature.academics.SessionFeesScreen() }
         composable(AdminRoutes.SESSION_FEES_SHIFT) { com.mbd.cmsadmin.feature.academics.SessionFeesScreen() }

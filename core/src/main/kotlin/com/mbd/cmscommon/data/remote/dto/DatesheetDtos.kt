@@ -11,6 +11,7 @@ data class DatesheetDto(
     val defaultStartTime: String? = null,
     val defaultEndTime: String? = null,
     val defaultBuildingId: String? = null,
+    val defaultRoomId: String? = null,
     val published: Boolean = false,
     val instructions: String? = null,
     val createdBy: String? = null,

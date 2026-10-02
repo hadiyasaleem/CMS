@@ -58,6 +58,7 @@ class DatesheetRepositoryLocalImpl @Inject constructor(
             defaultStartTime = draft.defaultStartTime,
             defaultEndTime = draft.defaultEndTime,
             defaultBuildingId = draft.defaultBuildingId,
+            defaultRoomId = draft.defaultRoomId,
             published = draft.published,
             instructions = draft.instructions,
             createdBy = createdBy,
@@ -74,6 +75,7 @@ class DatesheetRepositoryLocalImpl @Inject constructor(
             set("default_start_time", draft.defaultStartTime)
             set("default_end_time", draft.defaultEndTime)
             set("default_building_id", draft.defaultBuildingId)
+            set("default_room_id", draft.defaultRoomId)
             set("instructions", draft.instructions)
             set("published", draft.published)
         }) {
@@ -88,6 +90,7 @@ class DatesheetRepositoryLocalImpl @Inject constructor(
                         defaultStartTime = draft.defaultStartTime,
                         defaultEndTime = draft.defaultEndTime,
                         defaultBuildingId = draft.defaultBuildingId,
+                        defaultRoomId = draft.defaultRoomId,
                         instructions = draft.instructions,
                         published = draft.published,
                         updatedAt = System.currentTimeMillis(),

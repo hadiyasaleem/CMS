@@ -1876,6 +1876,13 @@ val MIGRATION_55_56: Migration = object : Migration(55, 56) {
     }
 }
 
+/** 56 -> 57: datesheets gain a default room, parallel to default_building_id. */
+val MIGRATION_56_57: Migration = object : Migration(56, 57) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `datesheets` ADD COLUMN `defaultRoomId` TEXT")
+    }
+}
+
 val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_18_19,
     MIGRATION_19_20,
@@ -1915,4 +1922,5 @@ val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_53_54,
     MIGRATION_54_55,
     MIGRATION_55_56,
+    MIGRATION_56_57,
 )

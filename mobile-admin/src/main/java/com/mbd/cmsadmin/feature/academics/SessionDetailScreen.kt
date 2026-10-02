@@ -54,6 +54,7 @@ class SessionDetailViewModel @Inject constructor(
     val canPromote = controller.canPromote
     val error = controller.error
     val notice = controller.notice
+    val datesheets = controller.datesheets
     val teachers = teacherRepository.observeActiveTeachers()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
@@ -71,6 +72,7 @@ fun SessionDetailScreen(
     onOpenTimetable: (String) -> Unit,
     onOpenSemester: (String, Int) -> Unit,
     onOpenFees: (String) -> Unit,
+    onOpenDatesheet: (String) -> Unit,
     onDeleted: () -> Unit,
     viewModel: SessionDetailViewModel = hiltViewModel(),
 ) {
@@ -87,6 +89,7 @@ fun SessionDetailScreen(
     val errorMessage by viewModel.error.collectAsState()
     val notice by viewModel.notice.collectAsState()
     val teachers by viewModel.teachers.collectAsState()
+    val datesheets by viewModel.datesheets.collectAsState()
 
     SessionOperationsWorkspace(
         session = session,
@@ -100,12 +103,14 @@ fun SessionDetailScreen(
         errorMessage = errorMessage,
         notice = notice,
         teachers = teachers,
+        datesheets = datesheets,
         onPromoteSession = viewModel::promoteSession,
         onUpdateDetails = viewModel::updateDetails,
         onOpenStudents = { onOpenStudents(viewModel.sessionId) },
         onOpenTimetable = { onOpenTimetable(viewModel.sessionId) },
         onOpenSemester = { onOpenSemester(viewModel.sessionId, it) },
         onOpenFees = { onOpenFees(viewModel.sessionId) },
+        onOpenDatesheet = { onOpenDatesheet(viewModel.sessionId) },
         onDeleteSession = { viewModel.deleteSession(onDeleted) },
         onClearError = viewModel::clearError,
         onConsumeNotice = viewModel::consumeNotice,

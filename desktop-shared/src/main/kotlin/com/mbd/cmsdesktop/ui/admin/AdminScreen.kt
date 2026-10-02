@@ -35,6 +35,7 @@ sealed interface AdminScreen {
     data object StudentDirectory : AdminScreen
     data class StudentRecord(val sessionId: String, val roll: String) : AdminScreen
     data class SessionTimetableRoute(val sessionId: String) : AdminScreen
+    data class SessionDatesheetRoute(val sessionId: String) : AdminScreen
     data class SemesterSubjectsRoute(val sessionId: String, val semester: Int) : AdminScreen
     data class SessionFeesRoute(val sessionId: String, val shift: com.mbd.cmscommon.domain.model.Session? = null) : AdminScreen
     data class TeacherDetail(val teacherId: String) : AdminScreen

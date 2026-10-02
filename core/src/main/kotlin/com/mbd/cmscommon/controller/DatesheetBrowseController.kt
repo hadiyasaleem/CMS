@@ -104,6 +104,7 @@ class DatesheetBrowseController(
         defaultStartTime: String?,
         defaultEndTime: String?,
         defaultBuildingId: String?,
+        defaultRoomId: String?,
         instructions: String?,
         createdBy: String,
         shift: Session? = null,
@@ -112,7 +113,7 @@ class DatesheetBrowseController(
         requireValid(session?.isActive == true) { "This session has graduated and can no longer have new datesheets created for it." }
         // Datesheets are per shift; default to the shift chosen in the browse filters.
         val sheetShift = shift ?: _selectedShift.value?.takeIf { session?.runs(it) == true } ?: session?.shifts?.firstOrNull() ?: Session.MORNING
-        val draft = DatesheetDraft(sessionId, sheetShift, semester, defaultStartTime, defaultEndTime, defaultBuildingId, instructions, published = false)
+        val draft = DatesheetDraft(sessionId, sheetShift, semester, defaultStartTime, defaultEndTime, defaultBuildingId, defaultRoomId, instructions, published = false)
         validationMessage(draft).orThrowValidation()
         return datesheetRepository.createDatesheet(draft, createdBy)
     }

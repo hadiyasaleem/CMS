@@ -115,10 +115,11 @@ fun DatesheetWorkspace(
     onSelectStartYear: (Int?) -> Unit,
     onSelectShift: (Session?) -> Unit,
     buildings: List<Building>,
+    rooms: List<Room> = emptyList(),
     loading: Boolean,
     errorMessage: String?,
     onRetry: () -> Unit,
-    onCreateDatesheet: (defaultStart: String?, defaultEnd: String?, defaultBuildingId: String?, instructions: String?) -> Unit,
+    onCreateDatesheet: (defaultStart: String?, defaultEnd: String?, defaultBuildingId: String?, defaultRoomId: String?, instructions: String?) -> Unit,
     openDatesheetId: String?,
     onOpenDatesheet: (String?) -> Unit,
     detail: DatesheetDetailData?,
@@ -130,6 +131,7 @@ fun DatesheetWorkspace(
     onRemovePaper: (String) -> Unit,
     onUpdatePaper: (DatesheetSlot) -> Unit,
     onExport: ((ExportDocument, ExportFormat) -> Unit)? = null,
+    lockedSessionId: String? = null,
     modifier: Modifier = Modifier,
 ) {
     var viewMode by remember { mutableStateOf(DatesheetViewMode.FILTERED) }
@@ -146,12 +148,14 @@ fun DatesheetWorkspace(
             if (!errorMessage.isNullOrBlank()) {
                 item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
             }
-            item {
-                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    CmsChip("Filtered", selected = viewMode == DatesheetViewMode.FILTERED, onClick = { viewMode = DatesheetViewMode.FILTERED })
-                    CmsChip("Grouped", selected = viewMode == DatesheetViewMode.GROUPED, onClick = { viewMode = DatesheetViewMode.GROUPED })
-                    CmsChip("Calendar", selected = viewMode == DatesheetViewMode.CALENDAR, onClick = { viewMode = DatesheetViewMode.CALENDAR })
-                    CmsChip("Semester", selected = viewMode == DatesheetViewMode.SEMESTER, onClick = { viewMode = DatesheetViewMode.SEMESTER })
+            if (lockedSessionId == null) {
+                item {
+                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        CmsChip("Filtered", selected = viewMode == DatesheetViewMode.FILTERED, onClick = { viewMode = DatesheetViewMode.FILTERED })
+                        CmsChip("Grouped", selected = viewMode == DatesheetViewMode.GROUPED, onClick = { viewMode = DatesheetViewMode.GROUPED })
+                        CmsChip("Calendar", selected = viewMode == DatesheetViewMode.CALENDAR, onClick = { viewMode = DatesheetViewMode.CALENDAR })
+                        CmsChip("Semester", selected = viewMode == DatesheetViewMode.SEMESTER, onClick = { viewMode = DatesheetViewMode.SEMESTER })
+                    }
                 }
             }
             if (loading) {
@@ -170,12 +174,14 @@ fun DatesheetWorkspace(
                             datesheets = datesheets,
                             departments = departments,
                             buildings = buildings,
+                            rooms = rooms,
                             busy = detailBusy,
                             onSelectDepartment = onSelectDepartment,
                             onSelectStartYear = onSelectStartYear,
                             onSelectShift = onSelectShift,
                             onOpenDatesheet = { onOpenDatesheet(it) },
                             onCreateDatesheet = onCreateDatesheet,
+                            lockedSessionId = lockedSessionId,
                         )
                         DatesheetViewMode.GROUPED -> GroupedDatesheetView(
                             departments = departments,
@@ -326,18 +332,22 @@ private fun FilteredDatesheetView(
     resolvedSession: AcademicSession?,
     datesheets: List<Datesheet>,
     buildings: List<Building>,
+    rooms: List<Room>,
     busy: Boolean,
     onSelectDepartment: (String?) -> Unit,
     onSelectStartYear: (Int?) -> Unit,
     onSelectShift: (Session?) -> Unit,
     onOpenDatesheet: (String) -> Unit,
-    onCreateDatesheet: (String?, String?, String?, String?) -> Unit,
+    onCreateDatesheet: (String?, String?, String?, String?, String?) -> Unit,
+    lockedSessionId: String? = null,
 ) {
     var showCreateDialog by remember { mutableStateOf(false) }
 
     Column {
-        DatesheetFilterRow(departments, allSessions, selectedDeptId, selectedStartYear, selectedShift, onSelectDepartment, onSelectStartYear, onSelectShift)
-        Spacer(Modifier.height(12.dp))
+        if (lockedSessionId == null) {
+            DatesheetFilterRow(departments, allSessions, selectedDeptId, selectedStartYear, selectedShift, onSelectDepartment, onSelectStartYear, onSelectShift)
+            Spacer(Modifier.height(12.dp))
+        }
         // No manual semester picker -- a datesheet is always for whichever semester the session is
         // currently in, same as timetable periods and marks entry.
         when {
@@ -385,10 +395,11 @@ private fun FilteredDatesheetView(
             shift = selectedShift,
             semester = resolvedSession.currentSemester,
             buildings = buildings,
+            rooms = rooms,
             busy = busy,
             onDismiss = { showCreateDialog = false },
-            onConfirm = { start, end, buildingId, instructions ->
-                onCreateDatesheet(start, end, buildingId, instructions)
+            onConfirm = { start, end, buildingId, roomId, instructions ->
+                onCreateDatesheet(start, end, buildingId, roomId, instructions)
                 showCreateDialog = false
             },
         )
@@ -870,13 +881,15 @@ private fun CreateDatesheetDialog(
     shift: Session?,
     semester: Int,
     buildings: List<Building>,
+    rooms: List<Room>,
     busy: Boolean,
     onDismiss: () -> Unit,
-    onConfirm: (defaultStart: String?, defaultEnd: String?, defaultBuildingId: String?, instructions: String?) -> Unit,
+    onConfirm: (defaultStart: String?, defaultEnd: String?, defaultBuildingId: String?, defaultRoomId: String?, instructions: String?) -> Unit,
 ) {
     var startTime by remember { mutableStateOf("") }
     var endTime by remember { mutableStateOf("") }
     var selectedBuildingId by remember { mutableStateOf<String?>(null) }
+    var selectedRoomId by remember { mutableStateOf<String?>(null) }
     var instructions by remember { mutableStateOf("") }
 
     val startTimeValid = startTime.isBlank() || runCatching { LocalTime.parse(startTime) }.isSuccess
@@ -897,13 +910,14 @@ private fun CreateDatesheetDialog(
                     CmsTimeField(value = endTime, onValueChange = { endTime = it }, label = "Default end", minTime = startTime, modifier = Modifier.weight(1f))
                 }
                 Spacer(Modifier.height(10.dp))
-                CmsEntityPicker(
-                    label = "Default building",
-                    selectedId = selectedBuildingId,
-                    options = buildings.map { CmsEntityOption(it.buildingId, it.name) },
-                    onSelected = { selectedBuildingId = it },
-                    optional = true,
-                    emptyLabel = "None",
+                CmsBuildingRoomPicker(
+                    buildings = buildings,
+                    rooms = rooms,
+                    selectedBuildingId = selectedBuildingId,
+                    selectedRoomId = selectedRoomId,
+                    onChange = { buildingId, _, roomId, _ -> selectedBuildingId = buildingId; selectedRoomId = roomId },
+                    buildingLabel = "Default building",
+                    roomLabel = "Default room",
                 )
                 Spacer(Modifier.height(10.dp))
                 OutlinedTextField(
@@ -917,7 +931,7 @@ private fun CreateDatesheetDialog(
         },
         confirmButton = {
             TextButton(
-                onClick = { onConfirm(startTime.ifBlank { null }, endTime.ifBlank { null }, selectedBuildingId, instructions.ifBlank { null }) },
+                onClick = { onConfirm(startTime.ifBlank { null }, endTime.ifBlank { null }, selectedBuildingId, selectedRoomId, instructions.ifBlank { null }) },
                 enabled = !busy && startTimeValid && endTimeValid && timesConsistent,
             ) { Text("Create") }
         },
@@ -943,8 +957,8 @@ private fun PaperEditorDialog(
     var endTime by remember { mutableStateOf(slot.endTime ?: "") }
     var selectedBuildingId by remember { mutableStateOf(slot.buildingId ?: sheet.defaultBuildingId) }
     var buildingName by remember { mutableStateOf(buildings.firstOrNull { it.buildingId == selectedBuildingId }?.name ?: slot.building ?: "") }
-    var selectedRoomId by remember { mutableStateOf(slot.roomId) }
-    var roomNo by remember { mutableStateOf(slot.roomNo ?: "") }
+    var selectedRoomId by remember { mutableStateOf(slot.roomId ?: sheet.defaultRoomId) }
+    var roomNo by remember { mutableStateOf(rooms.firstOrNull { it.roomId == selectedRoomId }?.roomNo ?: slot.roomNo ?: "") }
     var invigilatorEmail by remember { mutableStateOf(slot.invigilatorEmail ?: "") }
 
     // The save itself is fire-and-forget (updatePaper runs async on the controller), so this dialog

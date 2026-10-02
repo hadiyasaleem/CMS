@@ -27,6 +27,7 @@ fun SessionDetailScreen(
     onOpenTimetable: (String) -> Unit,
     onOpenSemester: (String, Int) -> Unit,
     onOpenFees: (String) -> Unit,
+    onOpenDatesheet: (String) -> Unit,
     onDeleted: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -45,6 +46,7 @@ fun SessionDetailScreen(
     val canPromote by controller.canPromote.collectAsState()
     val errorMessage by controller.error.collectAsState()
     val notice by controller.notice.collectAsState()
+    val datesheets by controller.datesheets.collectAsState()
     val teachers by teacherRepository.observeActiveTeachers().collectAsState(initial = emptyList())
 
     SessionOperationsWorkspace(
@@ -59,6 +61,7 @@ fun SessionDetailScreen(
         errorMessage = errorMessage,
         notice = notice,
         teachers = teachers,
+        datesheets = datesheets,
         onPromoteSession = controller::promoteSession,
         onUpdateDetails = { programName, inchargeEmail, maxStudents, shiftMode ->
             controller.updateDetails(programName, inchargeEmail, maxStudents, shiftMode)
@@ -67,6 +70,7 @@ fun SessionDetailScreen(
         onOpenTimetable = { onOpenTimetable(sessionId) },
         onOpenSemester = { semester -> onOpenSemester(sessionId, semester) },
         onOpenFees = { onOpenFees(sessionId) },
+        onOpenDatesheet = { onOpenDatesheet(sessionId) },
         onDeleteSession = { controller.deleteSession(onDeleted) },
         onClearError = controller::clearError,
         onConsumeNotice = controller::consumeNotice,

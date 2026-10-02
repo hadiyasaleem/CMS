@@ -10,6 +10,7 @@ data class Datesheet(
     val defaultStartTime: String? = null,
     val defaultEndTime: String? = null,
     val defaultBuildingId: String? = null,
+    val defaultRoomId: String? = null,
     val published: Boolean = false,
     val instructions: String? = null,
     override val createdAt: Instant = Instant.EPOCH,
@@ -45,6 +46,9 @@ fun DatesheetSlot.resolvedEndTime(sheet: Datesheet): String? = endTime ?: sheet.
 
 /** A paper's effective building: its own override, or its datesheet's default. */
 fun DatesheetSlot.resolvedBuildingId(sheet: Datesheet): String? = buildingId ?: sheet.defaultBuildingId
+
+/** A paper's effective room: its own override, or its datesheet's default. */
+fun DatesheetSlot.resolvedRoomId(sheet: Datesheet): String? = roomId ?: sheet.defaultRoomId
 
 /** A paper counts as scheduled once it has a date, an effective time, and an effective building. */
 fun DatesheetSlot.isScheduled(sheet: Datesheet): Boolean =

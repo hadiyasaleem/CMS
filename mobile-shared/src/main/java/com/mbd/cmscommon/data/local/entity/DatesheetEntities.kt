@@ -13,6 +13,7 @@ data class DatesheetEntity(
     val defaultStartTime: String?,
     val defaultEndTime: String?,
     val defaultBuildingId: String?,
+    val defaultRoomId: String? = null,
     val published: Boolean = false,
     val instructions: String?,
     val createdAt: Long = 0L,

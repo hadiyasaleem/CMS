@@ -29,8 +29,6 @@ import com.mbd.cmscommon.controller.NotificationsController
 import com.mbd.cmscommon.data.sync.AdminDataBootstrapper
 import com.mbd.cmscommon.domain.model.CalendarViewerContext
 import com.mbd.cmscommon.domain.model.CalendarViewerRole
-import com.mbd.cmscommon.domain.model.DatesheetViewerContext
-import com.mbd.cmscommon.domain.model.DatesheetViewerRole
 import com.mbd.cmscommon.domain.model.NotificationTargetRole
 import com.mbd.cmscommon.domain.model.UserRole
 import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider
@@ -45,7 +43,6 @@ import com.mbd.cmscommon.ui.components.SyncProgressDialog
 import com.mbd.cmscommon.ui.theme.CmsTheme
 import com.mbd.cmsdesktop.di.DesktopAppComponent
 import com.mbd.cmsdesktop.ui.parity.desktopBackHandler
-import com.mbd.cmsdesktop.ui.shared.DatesheetsScreen
 import com.mbd.cmsdesktop.ui.shared.InsightsScreen
 import com.mbd.cmsdesktop.ui.shared.NotificationsScreen
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -308,7 +305,18 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         viewer = CalendarViewerContext(role = CalendarViewerRole.ADMIN),
                     )
 
-                    AdminScreen.Datesheets -> DatesheetsScreen(
+                    AdminScreen.Datesheets -> MasterDatesheetScreen(
+                        departmentRepository = component.departmentRepository(),
+                        sessionRepository = component.academicSessionRepository(),
+                        datesheetRepository = component.datesheetRepository(),
+                        teacherRepository = component.teacherRepository(),
+                        buildingRepository = component.buildingRepository(),
+                        roomRepository = component.roomRepository(),
+                        onOpenSession = { sessionId -> push(AdminScreen.SessionDatesheetRoute(sessionId)) },
+                    )
+
+                    is AdminScreen.SessionDatesheetRoute -> SessionDatesheetScreen(
+                        sessionId = current.sessionId,
                         datesheetRepository = component.datesheetRepository(),
                         sessionRepository = component.academicSessionRepository(),
                         departmentRepository = component.departmentRepository(),
@@ -316,7 +324,6 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         teacherRepository = component.teacherRepository(),
                         buildingRepository = component.buildingRepository(),
                         roomRepository = component.roomRepository(),
-                        viewer = DatesheetViewerContext(role = DatesheetViewerRole.ADMIN, canManage = true),
                         createdBy = accountKey,
                     )
 
@@ -407,6 +414,7 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         teacherRepository = component.teacherRepository(),
                         onOpenStudents = { sessionId -> push(AdminScreen.SessionStudents(sessionId)) },
                         onOpenTimetable = { sessionId -> push(AdminScreen.SessionTimetableRoute(sessionId)) },
+                        onOpenDatesheet = { sessionId -> push(AdminScreen.SessionDatesheetRoute(sessionId)) },
                         onOpenSemester = { sessionId, semester -> push(AdminScreen.SemesterSubjectsRoute(sessionId, semester)) },
                         onOpenFees = { sessionId -> push(AdminScreen.SessionFeesRoute(sessionId)) },
                         onDeleted = { backStack.removeAt(backStack.lastIndex) },
