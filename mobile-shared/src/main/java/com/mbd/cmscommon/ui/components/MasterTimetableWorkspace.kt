@@ -350,13 +350,15 @@ private fun MasterGridSection(
     }
 
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        MasterGridTitleBlock(grid)
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-            if (pending.isNotEmpty()) {
-                TextButton(onClick = onDiscard) { Text("Discard") }
-                TextButton(onClick = onSave) { Text("Save changes") }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.weight(1f)) { MasterGridTitleBlock(grid) }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (pending.isNotEmpty()) {
+                    TextButton(onClick = onDiscard) { Text("Discard") }
+                    TextButton(onClick = onSave) { Text("Save changes") }
+                }
+                ExportMenuButton(onExport = { format -> onExport(masterGridExport(grid), format) })
             }
-            ExportMenuButton(onExport = { format -> onExport(masterGridExport(grid), format) })
         }
         if (timeSlots.isEmpty()) {
             MasterEmptyCard("No periods yet", "This grid has no timetable periods scheduled.")

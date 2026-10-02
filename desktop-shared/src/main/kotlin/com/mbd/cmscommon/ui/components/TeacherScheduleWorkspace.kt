@@ -254,8 +254,8 @@ fun TeacherGridSection(teacherGrid: TeacherGrid, onCellClick: (SessionPeriod) ->
     }
 
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        MasterGridTitleBlock(grid)
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.weight(1f)) { MasterGridTitleBlock(grid) }
             ExportMenuButton(onExport = { format -> onExport(masterGridExport(grid, teacherGrid.breakSlot), format) })
         }
         TeacherTimetableGrid(
