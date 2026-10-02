@@ -374,8 +374,6 @@ fun AttendanceRecordsScreen(
             }
         }
 
-        if (ready) AttendanceSummaryStrip(reportMarks(mode, raw, month, full), roster)
-
         when {
             sessionId == null || semester == null -> EmptyState("Pick a department, session and semester. Choose a shift to narrow to one shift.")
             reportLoading -> EmptyState("Loading attendance report…")
@@ -434,47 +432,6 @@ fun AttendanceRecordsScreen(
             text = { DialogScrollBody { Text(message) }},
             confirmButton = { TextButton(onClick = { actionError = null }) { Text("Close") } },
         )
-    }
-}
-
-private fun reportMarks(
-    mode: ReportMode,
-    raw: List<DailyAttendanceMark>,
-    month: YearMonth?,
-    full: Map<String, Map<LocalDate, DailyAttendanceMark>>,
-): List<DailyAttendanceMark> = when (mode) {
-    ReportMode.SEMESTER -> raw
-    ReportMode.MONTHLY -> raw.filter { month != null && YearMonth.from(it.date) == month }
-    ReportMode.FULL -> full.values.flatMap { it.values }
-}
-
-@Composable
-private fun AttendanceSummaryStrip(marks: List<DailyAttendanceMark>, roster: List<SessionStudent>) {
-    val summary = attendanceReportSummary(marks, roster)
-    Row(
-        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        AttendanceMetric("Students", summary.studentCount.toString())
-        AttendanceMetric("Marked entries", summary.markedEntries.toString())
-        AttendanceMetric("Attendance", summary.attendancePercentage?.let { "$it%" } ?: "--")
-        AttendanceMetric("Late marks", summary.lateEntries.toString(), alert = summary.lateEntries > 0)
-        AttendanceMetric("Below 75%", summary.belowTargetStudents.toString(), alert = summary.belowTargetStudents > 0)
-    }
-}
-
-@Composable
-private fun AttendanceMetric(label: String, value: String, alert: Boolean = false) {
-    Surface(
-        modifier = Modifier.width(132.dp),
-        color = if (alert) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.surfaceContainerLowest,
-        shape = RoundedCornerShape(14.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-    ) {
-        Column(Modifier.padding(12.dp)) {
-            Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
-            Text(label.uppercase(), style = CmsTextStyles.eyebrow, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
     }
 }
 
