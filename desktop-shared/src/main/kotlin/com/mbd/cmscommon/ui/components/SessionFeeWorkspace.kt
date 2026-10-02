@@ -115,8 +115,6 @@ fun SessionFeeWorkspace(
         initialized = true
     }
 
-    val total = heads.sumOf { it.amount }
-    val average = if (heads.isEmpty()) 0.0 else total / heads.size
     val dirty = structure == null || cadence != structure.cadence || heads != structure.heads ||
         academicYear != (structure.academicYear ?: "") || dueDate != (structure.dueDate ?: "") ||
         paymentNote != (structure.paymentNote ?: "")
@@ -169,7 +167,7 @@ fun SessionFeeWorkspace(
             item { CmsNotice("Fee structure saved", tone = NoticeTone.Success, onDismiss = onConsumeSaved) }
         }
 
-        item { FeeSummaryCard(total, average, cadence, onCadenceChange = { cadence = it }) }
+        item { FeeCadenceCard(cadence, onCadenceChange = { cadence = it }) }
 
         item {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -289,14 +287,9 @@ fun SessionFeeWorkspace(
 }
 
 @Composable
-private fun FeeSummaryCard(total: Double, average: Double, cadence: FeeType, onCadenceChange: (FeeType) -> Unit) {
+private fun FeeCadenceCard(cadence: FeeType, onCadenceChange: (FeeType) -> Unit) {
     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                FeeMetric("Total", "Rs $total", Modifier.weight(1f))
-                FeeMetric("Average", "Rs %.0f".format(average), Modifier.weight(1f))
-            }
-            Spacer(Modifier.height(10.dp))
             Text("COLLECTION CADENCE", color = ModMuted, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
             Row(
@@ -306,16 +299,6 @@ private fun FeeSummaryCard(total: Double, average: Double, cadence: FeeType, onC
                 CmsChip("Annual collection", selected = cadence == FeeType.ANNUAL, onClick = { onCadenceChange(FeeType.ANNUAL) })
                 CmsChip("Per-semester collection", selected = cadence == FeeType.SEMESTER, onClick = { onCadenceChange(FeeType.SEMESTER) })
             }
-        }
-    }
-}
-
-@Composable
-private fun FeeMetric(label: String, value: String, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModGround) {
-        Column(Modifier.padding(14.dp)) {
-            Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }

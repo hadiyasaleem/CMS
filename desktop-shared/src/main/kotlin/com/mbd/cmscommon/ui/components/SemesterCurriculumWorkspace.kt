@@ -94,9 +94,6 @@ fun SemesterCurriculumWorkspace(
     var showTermEditor by remember { mutableStateOf(false) }
     var pendingRemove by remember { mutableStateOf<SemesterSubject?>(null) }
 
-    val totalCredits = subjects.sumOf { it.creditHours }
-    val electiveCount = subjects.count { it.isElective }
-
     val visible = subjects.filter { query.isBlank() || it.name.contains(query, ignoreCase = true) || it.courseCode.contains(query, ignoreCase = true) }
         .sortedBy { it.courseCode }
 
@@ -109,7 +106,6 @@ fun SemesterCurriculumWorkspace(
             fullSpanItem { CmsNotice(notice, tone = NoticeTone.Success, onDismiss = onConsumeNotice) }
         }
 
-        fullSpanItem { CurriculumSummaryCard(subjects.size, totalCredits, electiveCount) }
         fullSpanItem { TermReadinessCard(term, onClick = { showTermEditor = true }) }
 
         fullSpanItem {
@@ -203,25 +199,6 @@ fun SemesterCurriculumWorkspace(
             onConfirm = { onRemoveSubject(subject.courseCode); pendingRemove = null },
             onDismiss = { pendingRemove = null },
         )
-    }
-}
-
-@Composable
-private fun CurriculumSummaryCard(subjectCount: Int, totalCredits: Int, electiveCount: Int) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        CurriculumMetric("Subjects", subjectCount.toString(), Modifier.weight(1f))
-        CurriculumMetric("Credits", totalCredits.toString(), Modifier.weight(1f))
-        CurriculumMetric("Electives", electiveCount.toString(), Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun CurriculumMetric(label: String, value: String, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Column(Modifier.padding(14.dp)) {
-            Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
-        }
     }
 }
 

@@ -72,15 +72,8 @@ fun DepartmentPortfolio(
             (dept.hodEmail ?: "").contains(query, ignoreCase = true)
     }.sortedBy { it.name.lowercase(Locale.ROOT) }
 
-    val totalStudents = stats.values.sumOf { it.studentCount }
-    val totalSessions = stats.values.sumOf { it.activeSessions }
-    val totalCapacity = stats.values.sumOf { it.totalCapacity }
-    val occupancy = if (totalCapacity == 0) 0f else (totalStudents * 100f) / totalCapacity
-    val departmentsWithHod = departments.count { !it.hodEmail.isNullOrBlank() }
-
     CardGrid(modifier.fillMaxWidth(), columns = 3) {
         fullSpanItem { DepartmentHero(heroPainter, departments.size) }
-        fullSpanItem { PortfolioSummary(departments.size, totalStudents, totalSessions, occupancy, departmentsWithHod) }
         fullSpanItem {
             OutlinedTextField(
                 value = query,
@@ -139,30 +132,6 @@ private fun DepartmentHero(heroPainter: Painter, departmentCount: Int) {
                     Text("$departmentCount departments across the college", color = ModInk.copy(alpha = 0.78f), style = MaterialTheme.typography.bodyMedium)
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun PortfolioSummary(departmentCount: Int, totalStudents: Int, totalSessions: Int, occupancy: Float, departmentsWithHod: Int) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            DepartmentMetric("Departments", departmentCount.toString(), Modifier.weight(1f))
-            DepartmentMetric("Students", totalStudents.toString(), Modifier.weight(1f))
-        }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            DepartmentMetric("Sessions", totalSessions.toString(), Modifier.weight(1f))
-            DepartmentMetric("HOD assigned", "$departmentsWithHod / $departmentCount", Modifier.weight(1f))
-        }
-    }
-}
-
-@Composable
-private fun DepartmentMetric(label: String, value: String, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Column(Modifier.padding(14.dp)) {
-            Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(Locale.ROOT), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }

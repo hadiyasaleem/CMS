@@ -89,11 +89,6 @@ fun SemesterResultsWorkspace(
 ) {
     var editing by remember { mutableStateOf<SessionStudent?>(null) }
 
-    val recorded = roster.count { results.containsKey(it.rollNumber) }
-    val missing = roster.size - recorded
-    val promoted = results.values.count { it.resultStatus == "PROMOTED" }
-    val attention = results.values.count { it.resultStatus == "PROBATION" || it.resultStatus == "REPEATED" }
-    val supply = results.values.count { it.supplyCourses.isNotEmpty() }
     val averageGpa = results.values.map { it.gpa }.takeIf { it.isNotEmpty() }?.average()
     val classLabel = sessions.firstOrNull { it.first == sessionId }?.second ?: "Select a class"
 
@@ -126,7 +121,6 @@ fun SemesterResultsWorkspace(
             item { ShiftScopeSelector(filterScope, filterOptions.departments, filterOptions.sessions, onFilterScope, label = "CLASSES") }
         }
         item { SessionPicker(classOptions, sessionId, onSelectSession, selectedLabel = sessions.firstOrNull { it.first == sessionId }?.second) }
-        item { ResultsMetrics(roster.size, recorded, missing, promoted, attention, supply) }
 
         if (roster.isEmpty()) {
             item {
@@ -171,27 +165,6 @@ private fun SessionPicker(sessions: List<Pair<String, String>>, selected: String
             sessions.forEach { (id, label) ->
                 DropdownMenuItem(text = { Text(label) }, onClick = { onSelect(id); expanded = false })
             }
-        }
-    }
-}
-
-@Composable
-private fun ResultsMetrics(total: Int, recorded: Int, missing: Int, promoted: Int, attention: Int, supply: Int) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        ResultMetric("Students", total.toString(), Modifier.weight(1f))
-        ResultMetric("Recorded", recorded.toString(), Modifier.weight(1f))
-        ResultMetric("Missing", missing.toString(), Modifier.weight(1f), alert = missing > 0)
-        ResultMetric("Attention", attention.toString(), Modifier.weight(1f), alert = attention > 0)
-        ResultMetric("Supply", supply.toString(), Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun ResultMetric(label: String, value: String, modifier: Modifier = Modifier, alert: Boolean = false) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ResultBorder)) {
-        Column(Modifier.padding(14.dp)) {
-            Text(value, color = if (alert) ResultRed else ModInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }

@@ -90,8 +90,6 @@ fun PeopleHubWorkspace(
         if (filterOptions != null) {
             fullSpanItem { ShiftScopeSelector(filterScope, filterOptions.departments, filterOptions.sessions, onFilterScope) }
         }
-        fullSpanItem { PeopleSummary(snapshot, loading) }
-
         if (loading && snapshot == null) {
             fullSpanItems(3) { PeopleSkeleton() }
         } else if (snapshot != null) {
@@ -121,30 +119,6 @@ private fun PeopleHeader(heroPainter: Painter) {
                 Spacer(Modifier.height(6.dp))
                 Text("People", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
             }
-        }
-    }
-}
-
-@Composable
-private fun PeopleSummary(snapshot: PeopleHubSnapshot?, loading: Boolean) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        PeopleMetric(if (loading || snapshot == null) "--" else snapshot.teacherCount.toString(), "Teachers", Modifier.weight(1f))
-        PeopleMetric(if (loading || snapshot == null) "--" else snapshot.studentCount.toString(), "Students", Modifier.weight(1f))
-        PeopleMetric(
-            if (loading || snapshot == null) "--" else snapshot.pendingReviews.toString(),
-            "Pending reviews",
-            Modifier.weight(1f),
-            alert = (snapshot?.pendingReviews ?: 0) > 0,
-        )
-    }
-}
-
-@Composable
-private fun PeopleMetric(value: String, label: String, modifier: Modifier = Modifier, alert: Boolean = false) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Column(Modifier.padding(14.dp)) {
-            Text(value, color = if (alert) PeopleRed else ModInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }

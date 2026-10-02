@@ -94,7 +94,6 @@ fun NotificationControllerWorkspace(controller: NotificationsController, modifie
     var pendingDelete by remember { mutableStateOf<Notification?>(null) }
 
     val canPublish = publishAccess == NotificationPublishAccess.ALLOWED
-    val urgentCount = inbox.count { it.priority == NotificationPriority.URGENT }
 
     Box(modifier.fillMaxSize()) {
     LazyColumn(
@@ -115,8 +114,6 @@ fun NotificationControllerWorkspace(controller: NotificationsController, modifie
         if (!notice.isNullOrBlank()) {
             item { CmsNotice(notice ?: "", tone = NoticeTone.Success, onDismiss = controller::consumeNotice) }
         }
-
-        item { NotificationSummaryCard(inbox.size, sent.size, urgentCount) }
 
         item {
             Row(
@@ -175,25 +172,6 @@ fun NotificationControllerWorkspace(controller: NotificationsController, modifie
             onConfirm = { controller.delete(notification); pendingDelete = null },
             onDismiss = { pendingDelete = null },
         )
-    }
-}
-
-@Composable
-private fun NotificationSummaryCard(inbox: Int, sent: Int, urgent: Int) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        NoticeMetric("Inbox", inbox.toString(), Modifier.weight(1f))
-        NoticeMetric("Sent", sent.toString(), Modifier.weight(1f))
-        NoticeMetric("Urgent", urgent.toString(), Modifier.weight(1f), alert = urgent > 0)
-    }
-}
-
-@Composable
-private fun NoticeMetric(label: String, value: String, modifier: Modifier = Modifier, alert: Boolean = false) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Column(Modifier.padding(14.dp)) {
-            Text(value, color = if (alert) NoticeRed else ModInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
-        }
     }
 }
 

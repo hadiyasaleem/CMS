@@ -83,14 +83,6 @@ fun TeacherScheduleWorkspace(
     modifier: Modifier = Modifier,
 ) {
     val teachingPeriods = periods.filter { it.periodType != PeriodType.BREAK && it.courseCode.isNotBlank() }
-    val classDays = teachingPeriods.map { it.day }.distinct().size
-    val totalMinutes = teachingPeriods.sumOf { period ->
-        val start = parseClock(period.startTime)
-        val end = parseClock(period.endTime)
-        if (start != null && end != null && end.isAfter(start)) java.time.Duration.between(start, end).toMinutes().toInt() else 0
-    }
-    val rooms = teachingPeriods.mapNotNull { it.roomNo?.takeIf { r -> r.isNotBlank() } }.distinct().size
-    val busiest = ScheduleDays.maxByOrNull { day -> teachingPeriods.count { it.day == day } }
 
     var detailPeriod by remember { mutableStateOf<SessionPeriod?>(null) }
 
@@ -115,8 +107,6 @@ fun TeacherScheduleWorkspace(
                 teachingPeriods.size,
             )
         }
-        item { ScheduleMetrics(teachingPeriods.size, classDays, totalMinutes, rooms, busiest) }
-
         if (grids.isEmpty()) {
             item {
                 Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ScheduleBorder)) {
@@ -175,16 +165,6 @@ private fun ScheduleHeader(
     }
 }
 
-@Composable
-private fun ScheduleMetrics(total: Int, days: Int, minutes: Int, rooms: Int, busiest: DayOfWeek?) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        ScheduleMetric(total.toString(), "Periods", Modifier.weight(1f))
-        ScheduleMetric(days.toString(), "Teaching days", Modifier.weight(1f))
-        ScheduleMetric(formatMinutes(minutes), "Weekly time", Modifier.weight(1f))
-        ScheduleMetric(busiest?.getDisplayName(TextStyle.SHORT, Locale.ENGLISH) ?: "None", "Busiest day", Modifier.weight(1f))
-    }
-}
-
 fun formatMinutes(minutes: Int): String {
     val hours = minutes / 60
     val mins = minutes % 60
@@ -192,16 +172,6 @@ fun formatMinutes(minutes: Int): String {
         hours == 0 -> "${mins}m"
         mins == 0 -> "${hours}h"
         else -> "${hours}h ${mins}m"
-    }
-}
-
-@Composable
-private fun ScheduleMetric(value: String, label: String, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ScheduleBorder)) {
-        Column(Modifier.padding(14.dp)) {
-            Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
-        }
     }
 }
 

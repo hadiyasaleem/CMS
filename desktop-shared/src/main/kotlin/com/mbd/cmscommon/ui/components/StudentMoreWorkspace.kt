@@ -193,19 +193,8 @@ private fun MoreNavigationCard(card: StudentPortalCard, onClick: () -> Unit) {
                 if (card.subtitle != null) {
                     Text(card.subtitle, color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
-                Spacer(Modifier.height(4.dp))
-                MoreSummaryMetric(card.metric, card.metricLabel)
             }
         }
-    }
-}
-
-@Composable
-private fun MoreSummaryMetric(value: String, label: String) {
-    Row(verticalAlignment = Alignment.Bottom) {
-        Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.width(6.dp))
-        Text(label, color = ModMuted, style = MaterialTheme.typography.bodySmall)
     }
 }
 

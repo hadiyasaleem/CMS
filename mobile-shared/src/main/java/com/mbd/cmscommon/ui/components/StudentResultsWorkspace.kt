@@ -97,12 +97,6 @@ private fun ResultsOverview(snapshot: StudentResultsSnapshot) {
             Spacer(Modifier.height(6.dp))
             Text(snapshot.currentCgpa?.let { "%.2f".format(it) } ?: "Not available", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
             snapshot.currentGpa?.let { Text("Latest semester GPA %.2f".format(it), color = ModMuted, style = MaterialTheme.typography.bodySmall) }
-            Spacer(Modifier.height(10.dp))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                ResultMetric(snapshot.promotedSemesters.toString(), "Promoted")
-                ResultMetric(snapshot.semesters.size.toString(), "Semesters")
-                ResultMetric(snapshot.cgpaChange?.let { (if (it >= 0) "+" else "") + "%.2f".format(it) } ?: "--", "CGPA change")
-            }
         }
     }
 }

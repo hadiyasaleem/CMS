@@ -11,13 +11,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -49,11 +46,9 @@ import com.mbd.cmscommon.ui.theme.ModInk
 import com.mbd.cmscommon.ui.theme.ModMuted
 import com.mbd.cmscommon.ui.theme.ModSuccess
 import com.mbd.cmscommon.ui.theme.ModSurface
-import com.mbd.cmscommon.ui.theme.ModTrack
 import com.mbd.cmscommon.ui.theme.ModWarn
 
 private val ExamCanvas = ModGround
-private val ExamBorder = ModTrack
 private val ExamBlue = ModInk
 private val ExamGreen = ModSuccess
 private val ExamGold = ModWarn
@@ -111,7 +106,6 @@ fun ExamsHubWorkspace(
         if (!errorMessage.isNullOrBlank()) {
             item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         }
-        item { ExamMetrics(snapshot, loading) }
         items(actions, key = { it.destination }) { action -> ExamActionCard(action, onClick = { onOpen(action.destination) }) }
         item { Spacer(Modifier.height(72.dp)) }
     }
@@ -134,39 +128,6 @@ private fun ExamHeader(heroPainter: Painter) {
                 Spacer(Modifier.height(6.dp))
                 Text("Exams hub", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
             }
-        }
-    }
-}
-
-private data class ExamMetricItem(val value: String, val label: String, val alert: Boolean)
-
-@Composable
-private fun ExamMetrics(snapshot: ExamsHubSnapshot, loading: Boolean) {
-    val metrics = listOf(
-        ExamMetricItem(if (loading) "--" else snapshot.assignedClasses.toString(), "Classes", alert = false),
-        ExamMetricItem(if (loading) "--" else "${snapshot.paperCoveragePercent}%", "Paper coverage", alert = snapshot.paperCoveragePercent < 100),
-        ExamMetricItem(if (loading) "--" else snapshot.publishedDatesheets.toString(), "Datesheets", alert = false),
-        ExamMetricItem(if (loading) "--" else snapshot.upcomingInvigilationSlots.toString(), "Duties", alert = snapshot.upcomingInvigilationSlots > 0),
-    )
-    BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val columns = if (maxWidth >= 900.dp) metrics.size else 2
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            metrics.chunked(columns).forEach { rowItems ->
-                Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    rowItems.forEach { metric -> ExamMetric(metric.value, metric.label, Modifier.weight(1f).fillMaxHeight(), alert = metric.alert) }
-                    repeat(columns - rowItems.size) { Spacer(Modifier.weight(1f)) }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ExamMetric(value: String, label: String, modifier: Modifier = Modifier, alert: Boolean = false) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ExamBorder)) {
-        Column(Modifier.padding(14.dp)) {
-            Text(value, color = if (alert) ExamRed else ModInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }

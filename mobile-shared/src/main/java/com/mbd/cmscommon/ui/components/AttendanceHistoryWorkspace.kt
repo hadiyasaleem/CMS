@@ -156,7 +156,6 @@ fun AttendanceHistoryWorkspace(
         } else if (roster.isEmpty()) {
             item { HistoryEmpty("No students are enrolled in this session yet.") }
         } else {
-            item { HistoryMetrics(summary) }
             item { HistoryFilters(query, { query = it }, filter, { filter = it }) }
             if (visible.isEmpty()) {
                 item { HistoryEmpty("No students match this search or filter.") }
@@ -283,31 +282,6 @@ private fun HistoryHeader(
                 Text(month, modifier = Modifier.weight(1f), color = CmsTheme.colors.onInk, style = MaterialTheme.typography.titleMedium)
                 TextButton(onClick = onNext) { Text("Next ›", color = CmsTheme.colors.onInk) }
             }
-        }
-    }
-}
-
-@Composable
-private fun HistoryMetrics(summary: AttendanceHistorySummary) {
-    val metrics = listOf(
-        summary.students.size.toString() to "Students",
-        "${summary.averagePercentage}%" to "Average",
-        summary.atRiskStudents.toString() to "At risk",
-        summary.late.toString() to "Late marks",
-    )
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        metrics.forEach { (value, label) ->
-            HistoryMetric(value, label, Modifier.weight(1f), alert = label == "At risk" && summary.atRiskStudents > 0)
-        }
-    }
-}
-
-@Composable
-private fun HistoryMetric(value: String, label: String, modifier: Modifier = Modifier, alert: Boolean = false) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, HistoryBorder)) {
-        Column(Modifier.padding(14.dp)) {
-            Text(value, color = if (alert) HistoryRed else ModInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }

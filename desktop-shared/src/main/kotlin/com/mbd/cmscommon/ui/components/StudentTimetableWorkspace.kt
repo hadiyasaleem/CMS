@@ -101,7 +101,6 @@ fun StudentTimetableWorkspace(
         when {
             loading && snapshot == null -> items(3) { SkeletonRow() }
             snapshot != null -> {
-                item { TimetableOverview(snapshot) }
                 val nextLecture = snapshot.nextLecture
                 if (nextLecture != null) {
                     item { NextLectureCard(nextLecture) }
@@ -172,41 +171,6 @@ private fun StudentTimetableHeader(heroPainter: Painter) {
                 Text("Timetable", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
             }
         }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun TimetableOverview(snapshot: StudentTimetableSnapshot) {
-    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Column(Modifier.padding(16.dp)) {
-            Text("${snapshot.weekStart.format(DayFormat)} - ${snapshot.weekEnd.format(DayFormat)}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.height(10.dp))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                ScheduleMetric(snapshot.lectureCount.toString(), "Lectures")
-                ScheduleMetric(snapshot.classDays.toString(), "Class days")
-                ScheduleMetric(formatDuration(snapshot.weeklyMinutes), "Weekly time")
-                ScheduleMetric(snapshot.todayPeriods.toString(), "Today")
-            }
-        }
-    }
-}
-
-private fun formatDuration(minutes: Int): String {
-    val hours = minutes / 60
-    val mins = minutes % 60
-    return when {
-        hours == 0 -> "${mins}m"
-        mins == 0 -> "${hours}h"
-        else -> "${hours}h ${mins}m"
-    }
-}
-
-@Composable
-private fun ScheduleMetric(value: String, label: String, modifier: Modifier = Modifier) {
-    Column(modifier) {
-        Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-        Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
     }
 }
 

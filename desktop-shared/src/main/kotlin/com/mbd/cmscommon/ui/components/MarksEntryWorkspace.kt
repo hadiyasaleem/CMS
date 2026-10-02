@@ -95,7 +95,6 @@ fun MarksEntryWorkspace(
         (n != null && n in 0..maxMarks) || absentRolls.contains(student.id)
     }
     val locked = roster.count { lockedRolls.contains(it.id) }
-    val pending = pendingByRoll.size
     val invalid = roster.size - validScores - locked
 
     val average = roster.mapNotNull { scores[it.id]?.toIntOrNull() }.takeIf { it.isNotEmpty() }?.average()
@@ -122,8 +121,6 @@ fun MarksEntryWorkspace(
                 ExamType.entries.forEach { type -> CmsChip(type.name, selected = examType == type, onClick = { onExamType(type) }) }
             }
         }
-        item { MarksMetrics(roster.size, locked, validScores, absentRolls.size, pending) }
-
         if (roster.isEmpty()) {
             item {
                 Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
@@ -161,27 +158,6 @@ fun MarksEntryWorkspace(
             onDismiss = { editTarget = null },
             onSubmit = { newScore, reason -> onRequestEdit(student, newScore, reason); editTarget = null },
         )
-    }
-}
-
-@Composable
-private fun MarksMetrics(total: Int, locked: Int, ready: Int, absent: Int, pending: Int) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        MarkMetric("Students", total.toString(), Modifier.weight(1f))
-        MarkMetric("Ready", ready.toString(), Modifier.weight(1f))
-        MarkMetric("Locked", locked.toString(), Modifier.weight(1f))
-        MarkMetric("Absent", absent.toString(), Modifier.weight(1f))
-        MarkMetric("Pending", pending.toString(), Modifier.weight(1f), alert = pending > 0)
-    }
-}
-
-@Composable
-private fun MarkMetric(label: String, value: String, modifier: Modifier = Modifier, alert: Boolean = false) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Column(Modifier.padding(14.dp)) {
-            Text(value, color = if (alert) MarksRed else ModInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
-        }
     }
 }
 
