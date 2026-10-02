@@ -155,8 +155,6 @@ fun TeacherDirectoryWorkspace(
 
     Box(modifier.fillMaxSize()) {
         CardGrid(Modifier.fillMaxWidth()) {
-            fullSpanItem { TeacherHero(teachers.size, teachers.count { it.status == TeacherStatus.ACTIVE }) }
-
             if (onExport != null) {
                 fullSpanItem { ExportBar(onExport, build = { teacherDirectoryExport(visible, departments, assignments) }, enabled = visible.isNotEmpty()) }
             }
@@ -307,19 +305,6 @@ fun TeacherDirectoryWorkspace(
             text = { DialogScrollBody { Text(notice) }},
             confirmButton = { TextButton(onClick = onConsumeNotice) { Text("OK") } },
         )
-    }
-}
-
-@Composable
-private fun TeacherHero(count: Int, active: Int) {
-    Surface(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(22.dp), color = ModInk) {
-        Column(Modifier.padding(20.dp)) {
-            Text("FACULTY", color = CmsTheme.colors.onInk.copy(alpha = 0.7f), style = CmsTextStyles.eyebrow)
-            Spacer(Modifier.height(6.dp))
-            Text("Teacher directory", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(4.dp))
-            Text("$active active of $count faculty", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
-        }
     }
 }
 

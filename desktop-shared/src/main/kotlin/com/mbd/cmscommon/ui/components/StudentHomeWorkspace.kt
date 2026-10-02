@@ -82,8 +82,6 @@ fun StudentHomeWorkspace(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { StudentHomeHero(heroPainter, snapshot) }
-
         if (loading && snapshot == null) {
             items(3) { SkeletonRow() }
         } else if (snapshot != null) {
@@ -116,31 +114,6 @@ fun StudentHomeWorkspace(
 
         item { Spacer(Modifier.height(72.dp)) }
     }
-    }
-}
-
-@Composable
-private fun StudentHomeHero(heroPainter: Painter, snapshot: StudentHomeSnapshot?) {
-    Surface(modifier = Modifier.fillMaxWidth().height(150.dp), shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Box(Modifier.fillMaxSize()) {
-            Image(
-                painter = heroPainter,
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                alignment = Alignment.CenterEnd,
-                contentScale = ContentScale.Crop,
-                alpha = 0.35f,
-            )
-            Column(Modifier.align(Alignment.CenterStart).padding(20.dp)) {
-                Text("Assalam-o-Alaikum, ${snapshot?.name ?: "Student"}", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                Spacer(Modifier.height(4.dp))
-                Text(snapshot?.let { "Roll ${it.rollNumber} · ${it.programLine}" } ?: "Academic dashboard", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
-                if (snapshot != null) {
-                    Spacer(Modifier.height(8.dp))
-                    Text("${snapshot.overallAttendance.toInt()}% attendance", color = studentAttendanceColor(snapshot.overallAttendance), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                }
-            }
-        }
     }
 }
 

@@ -102,7 +102,6 @@ fun StudentDirectoryWorkspace(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { DirectoryHero(page.totalStudents) }
         item { ExportBar(onExport, build = buildExport, enabled = page.matches.isNotEmpty()) }
         if (!errorMessage.isNullOrBlank()) {
             item { CmsNotice(errorMessage, tone = NoticeTone.Error, onDismiss = onClearError) }
@@ -154,19 +153,6 @@ fun StudentDirectoryWorkspace(
         }
         item { Spacer(Modifier.height(72.dp)) }
     }
-    }
-}
-
-@Composable
-private fun DirectoryHero(total: Int) {
-    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Column(Modifier.fillMaxWidth().padding(20.dp)) {
-            Text("PEOPLE", color = ModWarn, style = CmsTextStyles.eyebrow)
-            Spacer(Modifier.height(6.dp))
-            Text("Student Rosters", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(4.dp))
-            Text("$total students across all sessions on this device", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
-        }
     }
 }
 

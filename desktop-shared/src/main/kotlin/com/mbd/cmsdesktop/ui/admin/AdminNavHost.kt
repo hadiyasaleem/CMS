@@ -4,6 +4,7 @@ import kotlinx.coroutines.CancellationException
 import com.mbd.cmscommon.util.userMessageLogged
 import com.mbd.cmscommon.ui.components.RefreshErrorDialog
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
@@ -13,6 +14,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -34,6 +36,7 @@ import com.mbd.cmscommon.domain.model.UserRole
 import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider
 import com.mbd.cmscommon.ui.components.CmsTopBar
 import com.mbd.cmscommon.ui.components.InsightsViewer
+import com.mbd.cmscommon.ui.components.LocalTopBarActions
 import com.mbd.cmscommon.ui.components.MoreDestination
 import com.mbd.cmscommon.ui.components.NotificationControllerWorkspace
 import com.mbd.cmscommon.ui.components.PeopleDestination
@@ -116,11 +119,14 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
     val teacherAssignmentsProvider = remember(component) {
         TeacherAssignmentsProvider(component.sessionManager(), component.sessionTimetableRepository(), component.academicSessionRepository(), component.departmentRepository())
     }
+    val topBarActions = remember { mutableStateOf<@Composable RowScope.() -> Unit>({}) }
 
+    CompositionLocalProvider(LocalTopBarActions provides topBarActions) {
     Scaffold(
         topBar = {
             CmsTopBar(
-                title = "GGC-MBD",
+                title = screen.title(),
+                actions = topBarActions.value,
                 onBack = {
                     if (backStack.size > 1) {
                         backStack.removeAt(backStack.lastIndex)
@@ -485,5 +491,6 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                 }
             }
         }
+    }
     }
 }

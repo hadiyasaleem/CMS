@@ -102,6 +102,10 @@ fun TeacherMenuWorkspace(
         ),
     )
 
+    TopBarActions {
+        TextButton(onClick = { confirmSignOut = true }) { Text("Sign out", color = CmsTheme.colors.onInk) }
+    }
+
     val listState = rememberLazyListState()
     WithVerticalScrollbar(listState) {
     LazyColumn( state = listState,
@@ -109,7 +113,7 @@ fun TeacherMenuWorkspace(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { TeacherMenuHeader(heroPainter, snapshot, onSignOut = { confirmSignOut = true }) }
+        item { TeacherMenuHeader(heroPainter, snapshot) }
         items(items) { item -> TeacherMenuCard(item) }
         item { Spacer(Modifier.height(72.dp)) }
     }
@@ -126,7 +130,7 @@ fun TeacherMenuWorkspace(
 }
 
 @Composable
-private fun TeacherMenuHeader(heroPainter: Painter, snapshot: TeacherMenuSnapshot, onSignOut: () -> Unit) {
+private fun TeacherMenuHeader(heroPainter: Painter, snapshot: TeacherMenuSnapshot) {
     Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = ModInk) {
         Box(Modifier.fillMaxSize()) {
             Image(
@@ -137,13 +141,10 @@ private fun TeacherMenuHeader(heroPainter: Painter, snapshot: TeacherMenuSnapsho
                 contentScale = ContentScale.Crop,
                 alpha = 0.35f,
             )
-            Row(Modifier.align(Alignment.CenterStart).padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text("MENU", color = ModWarn, style = CmsTextStyles.eyebrow)
-                    Spacer(Modifier.height(6.dp))
-                    Text(snapshot.teacherName, color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                }
-                TextButton(onClick = onSignOut) { Text("Sign out", color = CmsTheme.colors.onInk) }
+            Column(Modifier.align(Alignment.CenterStart).padding(20.dp)) {
+                Text("MENU", color = ModWarn, style = CmsTextStyles.eyebrow)
+                Spacer(Modifier.height(6.dp))
+                Text(snapshot.teacherName, color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
             }
         }
     }

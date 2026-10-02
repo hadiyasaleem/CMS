@@ -124,7 +124,6 @@ fun SessionTimetableWorkspace(
 
     Box(modifier.fillMaxSize()) {
         LazyColumn(Modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            item { TimetableHero(session, shift) }
             item {
                 Column {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -353,19 +352,6 @@ private fun conflictingPeriodIds(periods: List<SessionPeriod>): Set<String> {
         }
     }
     return conflicts
-}
-
-@Composable
-private fun TimetableHero(session: AcademicSession?, shift: Session) {
-    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Column(Modifier.padding(20.dp)) {
-            Text("WEEKLY TIMETABLE", color = TimetableGold, style = CmsTextStyles.eyebrow)
-            Spacer(Modifier.height(6.dp))
-            Text(session?.label ?: "Session", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(4.dp))
-            Text("Weekly period schedule for the ${shift.label} shift", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
-        }
-    }
 }
 
 @Composable

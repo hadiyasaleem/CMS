@@ -83,7 +83,6 @@ fun PeopleHubWorkspace(
     modifier: Modifier = Modifier,
 ) {
     CardGrid(modifier.fillMaxWidth().background(PeopleCanvas)) {
-        fullSpanItem { PeopleHeader(heroPainter) }
         if (!errorMessage.isNullOrBlank()) {
             fullSpanItem { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         }
@@ -101,27 +100,6 @@ fun PeopleHubWorkspace(
         }
 
         fullSpanItem { Spacer(Modifier.height(72.dp)) }
-    }
-}
-
-@Composable
-private fun PeopleHeader(heroPainter: Painter) {
-    Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Box(Modifier.fillMaxSize()) {
-            Image(
-                painter = heroPainter,
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                alignment = Alignment.CenterEnd,
-                contentScale = ContentScale.Crop,
-                alpha = 0.35f,
-            )
-            Column(Modifier.align(Alignment.CenterStart).padding(20.dp)) {
-                Text("COLLEGE COMMUNITY", color = PeopleGold, style = CmsTextStyles.eyebrow)
-                Spacer(Modifier.height(6.dp))
-                Text("People", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-            }
-        }
     }
 }
 

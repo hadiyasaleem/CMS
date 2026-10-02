@@ -35,6 +35,12 @@ sealed class TeacherDestination(
     companion object {
         val bottomNavItems = listOf(Home, Attendance, ExamsHub, Schedule, MenuHub)
 
+        val entries = listOf(
+            Home, Attendance, AttendanceHistory, AttendanceStudent, ExamsHub, Marks, SemesterResults,
+            ExamPaper, Schedule, MenuHub, Notifications, LinkRequests, MyStudents, Events, Datesheets,
+            Insights, Profile,
+        )
+
         /** [shift] is the class's shift ("ALL" when unknown): the register lists that shift's students only. */
         fun attendanceHistory(sessionId: String, courseCode: String, shift: com.mbd.cmscommon.domain.model.Session?) =
             "attendance_history/$sessionId/$courseCode/${shift?.name ?: "ALL"}"
@@ -42,4 +48,11 @@ sealed class TeacherDestination(
         fun attendanceStudent(sessionId: String, courseCode: String, rollNumber: String) =
             "attendance_student/$sessionId/$courseCode/$rollNumber"
     }
+}
+
+/** The top bar's title for the current route: "CMS Teacher" on a tab root, each screen's own
+ * short name everywhere else. [route] is the route PATTERN from NavController. */
+fun teacherScreenTitle(route: String?): String {
+    val destination = TeacherDestination.entries.firstOrNull { it.route == route } ?: return "CMS Teacher"
+    return if (destination in TeacherDestination.bottomNavItems) "CMS Teacher" else destination.label
 }

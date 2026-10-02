@@ -104,7 +104,6 @@ fun MarksEntryWorkspace(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { MarksHeader(selected, examType, average) }
         if (onExport != null && selected != null) {
             item { ExportBar(onExport, build = { marksSheetExport(selected, examType, roster, scores, absentRolls) }, enabled = roster.isNotEmpty()) }
         }
@@ -157,28 +156,6 @@ fun MarksEntryWorkspace(
         )
     }
 }
-
-@Composable
-private fun MarksHeader(selected: ResolvedAssignment?, examType: ExamType, average: Double?) {
-    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Column(Modifier.padding(20.dp)) {
-            Text("ASSESSMENT WORKSPACE", color = MarksGold, style = CmsTextStyles.eyebrow)
-            Spacer(Modifier.height(6.dp))
-            Text("Marks entry", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(4.dp))
-            Text(
-                selected?.let { "${it.subjectLabel} · ${it.sessionLabel} · $examType" } ?: "Select a class",
-                color = CmsTheme.colors.onInkMuted,
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            if (average != null) {
-                Spacer(Modifier.height(4.dp))
-                Text("Class average: %.1f".format(average), color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
-            }
-        }
-    }
-}
-
 
 @Composable
 private fun MarksMetrics(total: Int, locked: Int, ready: Int, absent: Int, pending: Int) {

@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import com.mbd.cmscommon.controller.observeShiftOf
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -15,6 +16,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -31,6 +33,7 @@ import com.mbd.cmscommon.data.sync.AdminDataBootstrapper
 import com.mbd.cmscommon.domain.model.NotificationTargetRole
 import com.mbd.cmscommon.domain.model.UserRole
 import com.mbd.cmscommon.ui.components.CmsTopBar
+import com.mbd.cmscommon.ui.components.LocalTopBarActions
 import com.mbd.cmscommon.ui.components.NotificationBadge
 import com.mbd.cmscommon.ui.components.StudentExamsDestination
 import com.mbd.cmscommon.ui.components.StudentHomeDestination
@@ -111,13 +114,18 @@ private fun StudentShell(role: UserRole.LinkedStudent, component: DesktopAppComp
         screen = target
     }
 
+    val topBarActions = remember { mutableStateOf<@Composable RowScope.() -> Unit>({}) }
+
+    CompositionLocalProvider(LocalTopBarActions provides topBarActions) {
     Column(Modifier.fillMaxSize()) {
         CmsTopBar(
+            title = screen.title(),
             onBack = if (screen != selectedTab.root) {
                 { screen = selectedTab.root }
             } else {
                 null
             },
+            actions = topBarActions.value,
             onRefresh = ::refreshCurrentScreen,
             isRefreshing = shellRefreshing,
             onNotifications = { open(StudentScreen.Notifications) },
@@ -227,5 +235,6 @@ private fun StudentShell(role: UserRole.LinkedStudent, component: DesktopAppComp
                 )
             }
         }
+    }
     }
 }

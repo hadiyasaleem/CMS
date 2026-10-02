@@ -75,8 +75,6 @@ fun BuildingsRoomsWorkspace(
     val listState = rememberLazyListState()
     Box(modifier.fillMaxSize()) {
         LazyColumn(Modifier.fillMaxWidth(), state = listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            item { BuildingsRoomsHero(buildings.size, rooms.size) }
-
             if (buildings.isEmpty()) {
                 item {
                     Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surfaceContainerLowest, border = BorderStroke(1.dp, ModTrack)) {
@@ -173,19 +171,6 @@ fun BuildingsRoomsWorkspace(
 
     if (!errorMessage.isNullOrBlank()) {
         CmsErrorDialog(message = errorMessage, title = "Couldn't update buildings and rooms", onDismiss = onClearError)
-    }
-}
-
-@Composable
-private fun BuildingsRoomsHero(buildingCount: Int, roomCount: Int) {
-    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Column(Modifier.padding(20.dp)) {
-            Text("CAMPUS", color = CmsTheme.colors.onInk.copy(alpha = 0.7f), style = CmsTextStyles.eyebrow)
-            Spacer(Modifier.height(6.dp))
-            Text("Buildings & rooms", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(4.dp))
-            Text("$buildingCount building(s), $roomCount room(s)", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
-        }
     }
 }
 

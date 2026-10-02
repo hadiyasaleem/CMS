@@ -11,9 +11,13 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -22,6 +26,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.mbd.cmscommon.ui.components.RefreshBox
 import com.mbd.cmscommon.ui.components.CmsTopBar
+import com.mbd.cmscommon.ui.components.LocalTopBarActions
 import com.mbd.cmscommon.ui.components.SyncProgressDialog
 import com.mbd.cmscommon.ui.state.GlobalRefreshViewModel
 import com.mbd.cmscommon.ui.theme.CmsTheme
@@ -39,6 +44,7 @@ fun AdminScaffold(onSignedOut: () -> Unit) {
     val refreshVersion by refreshVm.refreshVersion.collectAsState()
     val tasksCompleted by refreshVm.tasksCompleted.collectAsState()
     val unreadCount by badgeVm.unreadCount.collectAsState()
+    val topBarActions = remember { mutableStateOf<@Composable RowScope.() -> Unit>({}) }
 
     if (refreshing) {
         SyncProgressDialog(completed = tasksCompleted, total = refreshVm.totalTasks)
@@ -46,11 +52,13 @@ fun AdminScaffold(onSignedOut: () -> Unit) {
     val refreshError by refreshVm.refreshError.collectAsState()
     RefreshErrorDialog(message = refreshError, onDismiss = refreshVm::clearRefreshError)
 
+    CompositionLocalProvider(LocalTopBarActions provides topBarActions) {
     Scaffold(
         topBar = {
             CmsTopBar(
-                title = "GGC-MBD",
+                title = adminScreenTitle(currentRoute),
                 onBack = { if (!navController.popBackStack()) activity?.finish() },
+                actions = topBarActions.value,
                 onRefresh = refreshVm::refresh,
                 isRefreshing = refreshing,
                 onNotifications = {
@@ -102,5 +110,6 @@ fun AdminScaffold(onSignedOut: () -> Unit) {
                 refreshVersion = refreshVersion,
             )
         }
+    }
     }
 }

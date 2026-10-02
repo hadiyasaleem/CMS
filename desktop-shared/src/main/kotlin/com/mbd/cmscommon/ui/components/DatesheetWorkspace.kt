@@ -147,7 +147,6 @@ fun DatesheetWorkspace(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            item { DatesheetHeader() }
             if (!errorMessage.isNullOrBlank()) {
                 item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
             }
@@ -260,7 +259,6 @@ fun StudentDatesheetWorkspace(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { DatesheetHeader() }
         if (!errorMessage.isNullOrBlank()) {
             item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         }
@@ -285,17 +283,6 @@ fun StudentDatesheetWorkspace(
         }
         item { Spacer(Modifier.height(72.dp)) }
     }
-    }
-}
-
-@Composable
-private fun DatesheetHeader() {
-    Surface(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Column(Modifier.padding(20.dp)) {
-            Text("EXAM DATESHEETS", color = DatesheetGold, style = CmsTextStyles.eyebrow)
-            Spacer(Modifier.height(6.dp))
-            Text("Datesheets", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-        }
     }
 }
 

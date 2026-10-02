@@ -4,6 +4,7 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.Calendar
 import compose.icons.tablericons.ClipboardCheck
 import compose.icons.tablericons.CreditCard
+import compose.icons.tablericons.Edit
 import compose.icons.tablericons.School
 import com.mbd.cmscommon.controller.feeSummaryLine
 import com.mbd.cmscommon.controller.promotionConfirmText
@@ -29,6 +30,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -113,8 +115,14 @@ fun SessionOperationsWorkspace(
         SessionAction("Fee structure", feeSummaryLine(session, fees), TablerIcons.CreditCard, onOpenFees),
     )
 
+    TopBarActions {
+        IconButton(onClick = { showEditDetails = true }) {
+            Icon(TablerIcons.Edit, contentDescription = "Edit session", tint = CmsTheme.colors.onInk)
+        }
+    }
+
     LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { SessionIdentityCard(session, onEdit = { showEditDetails = true }) }
+        item { SessionIdentityCard(session) }
 
         if (!errorMessage.isNullOrBlank()) {
             item { CmsNotice(errorMessage, tone = NoticeTone.Error, onDismiss = onClearError) }
@@ -199,7 +207,7 @@ fun SessionOperationsWorkspace(
 }
 
 @Composable
-private fun SessionIdentityCard(session: AcademicSession?, onEdit: () -> Unit) {
+private fun SessionIdentityCard(session: AcademicSession?) {
     Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
@@ -211,7 +219,6 @@ private fun SessionIdentityCard(session: AcademicSession?, onEdit: () -> Unit) {
                 Text(session?.inchargeEmail?.takeIf { it.isNotBlank() } ?: "Session in-charge not assigned", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
             }
             StatusBadge(if (session?.isActive == true) "ACTIVE" else "ARCHIVED", if (session?.isActive == true) BadgeTone.Success else BadgeTone.Neutral)
-            TextButton(onClick = onEdit) { Text("Edit", color = CmsTheme.colors.onInk) }
         }
     }
 }

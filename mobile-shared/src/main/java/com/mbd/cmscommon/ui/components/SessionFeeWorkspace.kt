@@ -129,7 +129,6 @@ fun SessionFeeWorkspace(
     }
 
     LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { FeeHero(session, collegeBase) }
         item {
             Column {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -279,23 +278,6 @@ fun SessionFeeWorkspace(
             },
             confirmButton = { TextButton(onClick = { showSampleChallan = false }) { Text("Close") } },
         )
-    }
-}
-
-@Composable
-private fun FeeHero(session: AcademicSession?, collegeBase: Boolean = false) {
-    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Column(Modifier.padding(20.dp)) {
-            Text(if (collegeBase) "COLLEGE-WIDE FEES" else "SESSION FEES", color = FeeGold, style = CmsTextStyles.eyebrow)
-            Spacer(Modifier.height(6.dp))
-            Text(if (collegeBase) "Base fee structure" else "Session fee structure", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(4.dp))
-            Text(
-                if (collegeBase) "Applies to every class without a structure of its own." else session?.label ?: "Session",
-                color = CmsTheme.colors.onInkMuted,
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        }
     }
 }
 

@@ -8,6 +8,7 @@ import com.mbd.cmscommon.controller.taughtClasses
 import kotlinx.coroutines.flow.combine
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -15,6 +16,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -41,6 +43,7 @@ import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider
 import com.mbd.cmscommon.ui.components.CmsTopBar
 import com.mbd.cmscommon.ui.components.ExamsDestination
 import com.mbd.cmscommon.ui.components.InsightsViewer
+import com.mbd.cmscommon.ui.components.LocalTopBarActions
 import com.mbd.cmscommon.ui.components.SyncProgressDialog
 import com.mbd.cmscommon.ui.components.TeacherMenuWorkspace
 import com.mbd.cmscommon.ui.theme.CmsTheme
@@ -126,8 +129,12 @@ fun TeacherNavHost(role: UserRole.Teacher, component: DesktopAppComponent, windo
         screen = tab.root
     }
 
+    val topBarActions = remember { mutableStateOf<@Composable RowScope.() -> Unit>({}) }
+
+    CompositionLocalProvider(LocalTopBarActions provides topBarActions) {
     Column(Modifier.fillMaxSize()) {
         CmsTopBar(
+            title = screen.title(),
             onBack = {
                 if (screen == selectedTab.root) {
                     window.dispatchEvent(WindowEvent(window, WindowEvent.WINDOW_CLOSING))
@@ -135,6 +142,7 @@ fun TeacherNavHost(role: UserRole.Teacher, component: DesktopAppComponent, windo
                     screen = selectedTab.root
                 }
             },
+            actions = topBarActions.value,
             onRefresh = ::refreshCurrentScreen,
             isRefreshing = shellRefreshing,
             onNotifications = { screen = TeacherScreen.Notifications },
@@ -385,5 +393,6 @@ fun TeacherNavHost(role: UserRole.Teacher, component: DesktopAppComponent, windo
                 )
             }
         }
+    }
     }
 }

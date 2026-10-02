@@ -65,8 +65,6 @@ fun StudentFeeWorkspace(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { FeeHeader() }
-
         when {
             loading && snapshot == null -> items(3) { SkeletonRow() }
             !errorMessage.isNullOrBlank() -> item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
@@ -145,19 +143,6 @@ private fun FeeHeadsGrid(heads: List<FeeHead>, total: Double) {
                 Text("Total", modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
                 Text("Rs $total", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
             }
-        }
-    }
-}
-
-@Composable
-private fun FeeHeader() {
-    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Column(Modifier.padding(20.dp)) {
-            Text("FINANCIALS", color = FeeGold, style = CmsTextStyles.eyebrow)
-            Spacer(Modifier.height(6.dp))
-            Text("Fee challan", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(4.dp))
-            Text("Your session's published fee structure and payment guidance", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }

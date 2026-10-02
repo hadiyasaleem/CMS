@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -90,17 +91,16 @@ fun AppLogsWorkspace(
         log.status == tab && matchesQuery && matchesApp
     }
 
+    TopBarActions {
+        IconButton(onClick = { confirmingDeleteAll = true }, enabled = logs.isNotEmpty() && !deleting) {
+            Icon(TablerIcons.Trash, contentDescription = "Clear all", tint = if (logs.isNotEmpty() && !deleting) CmsTheme.colors.onInk else ModMuted)
+        }
+    }
+
     val listState = rememberLazyListState()
     RefreshBox(isRefreshing = loading, onRefresh = onRefresh, modifier = modifier) {
         WithVerticalScrollbar(listState) {
             LazyColumn(Modifier.fillMaxWidth(), state = listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                item {
-                AppLogsHero(
-                    count = logs.size,
-                    onDeleteAll = { confirmingDeleteAll = true },
-                    deleteEnabled = logs.isNotEmpty() && !deleting,
-                )
-            }
 
                 item {
                     TabRow(selectedTabIndex = AppLogStatus.entries.indexOf(tab)) {

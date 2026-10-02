@@ -62,7 +62,6 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 private val MasterDatesheetCanvas = ModGround
-private val MasterDatesheetGold = ModWarn
 
 @Composable
 fun MasterDatesheetWorkspace(
@@ -94,6 +93,17 @@ fun MasterDatesheetWorkspace(
     var dismissedError by remember { mutableStateOf<String?>(null) }
     val anyFilterActive = selectedSemester != null || selectedShift != null || selectedDeptId != null || selectedProgramType != null
 
+    TopBarActions {
+        ExportMenuButton(
+            onExport = { format ->
+                val entries = grids.flatMap { grid -> grid.rows.mapNotNull { row -> row.sheet?.let { sheet -> DatesheetGridEntry(listOfNotNull(row.department?.code, grid.title), sheet, row.slots) } } }
+                onExport(datesheetGridsExport("master_datesheet_${LocalDate.now()}", listOf("Master Datesheet", "Every current semester"), entries), format)
+            },
+            enabled = grids.isNotEmpty(),
+            tint = CmsTheme.colors.onInk,
+        )
+    }
+
     val listState = rememberLazyListState()
     WithVerticalScrollbar(listState) {
     LazyColumn(
@@ -102,17 +112,6 @@ fun MasterDatesheetWorkspace(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item {
-            MasterDatesheetHeader(
-                onExport = onExport,
-                build = {
-                    val entries = grids.flatMap { grid -> grid.rows.mapNotNull { row -> row.sheet?.let { sheet -> DatesheetGridEntry(listOfNotNull(row.department?.code, grid.title), sheet, row.slots) } } }
-                    datesheetGridsExport("master_datesheet_${LocalDate.now()}", listOf("Master Datesheet", "Every current semester"), entries)
-                },
-                exportEnabled = grids.isNotEmpty(),
-            )
-        }
-
         item {
             MasterDatesheetFilterBar(
                 departments = departments,
@@ -166,28 +165,6 @@ fun MasterDatesheetWorkspace(
             onDismiss = { dismissedError = errorMessage },
             onRetry = { dismissedError = null; onRetry() },
         )
-    }
-}
-
-@Composable
-private fun MasterDatesheetHeader(onExport: (ExportDocument, ExportFormat) -> Unit, build: () -> ExportDocument, exportEnabled: Boolean) {
-    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Column(Modifier.padding(20.dp)) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Column(Modifier.weight(1f)) {
-                    Text("COLLEGE-WIDE EXAM SCHEDULE", color = MasterDatesheetGold, style = CmsTextStyles.eyebrow)
-                    Spacer(Modifier.height(6.dp))
-                    Text("Master Datesheet", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                }
-                ExportMenuButton(onExport = { format -> onExport(build(), format) }, enabled = exportEnabled, tint = CmsTheme.colors.onInk)
-            }
-            Spacer(Modifier.height(4.dp))
-            Text(
-                "Every current semester's exam grid. Tap a scheduled paper to edit it, an empty date to assign one, or a department's name to open its own datesheet.",
-                color = CmsTheme.colors.onInkMuted,
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        }
     }
 }
 

@@ -23,6 +23,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -89,16 +90,14 @@ fun AppLogsWorkspace(
         log.status == tab && matchesQuery && matchesApp
     }
 
+    TopBarActions {
+        IconButton(onClick = { confirmingDeleteAll = true }, enabled = logs.isNotEmpty() && !deleting) {
+            Icon(TablerIcons.Trash, contentDescription = "Clear all", tint = if (logs.isNotEmpty() && !deleting) CmsTheme.colors.onInk else ModMuted)
+        }
+    }
+
     RefreshBox(isRefreshing = loading, onRefresh = onRefresh, modifier = modifier) {
         LazyColumn(Modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            item {
-                AppLogsHero(
-                    count = logs.size,
-                    onDeleteAll = { confirmingDeleteAll = true },
-                    deleteEnabled = logs.isNotEmpty() && !deleting,
-                )
-            }
-
             item {
                 TabRow(selectedTabIndex = AppLogStatus.entries.indexOf(tab)) {
                     AppLogStatus.entries.forEach { status ->
@@ -158,28 +157,6 @@ fun AppLogsWorkspace(
             onConfirm = { onDeleteAll(); confirmingDeleteAll = false },
             onDismiss = { confirmingDeleteAll = false },
         )
-    }
-}
-
-@Composable
-private fun AppLogsHero(count: Int, onDeleteAll: () -> Unit, deleteEnabled: Boolean) {
-    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Column(Modifier.padding(20.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text("DIAGNOSTICS", color = CmsTheme.colors.onInk.copy(alpha = 0.7f), style = CmsTextStyles.eyebrow)
-                    Spacer(Modifier.height(6.dp))
-                    Text("App Logs", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                }
-                TextButton(onClick = onDeleteAll, enabled = deleteEnabled) {
-                    Icon(TablerIcons.Trash, contentDescription = null, tint = if (deleteEnabled) CmsTheme.colors.accent else ModMuted)
-                    Spacer(Modifier.width(4.dp))
-                    Text("Clear all", color = if (deleteEnabled) CmsTheme.colors.accent else ModMuted)
-                }
-            }
-            Spacer(Modifier.height(4.dp))
-            Text("$count unexpected failures recorded across every app", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
-        }
     }
 }
 

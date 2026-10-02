@@ -102,8 +102,6 @@ fun SemesterCurriculumWorkspace(
 
     Box(modifier.fillMaxSize()) {
     CardGrid(Modifier.fillMaxWidth()) {
-        fullSpanItem { CurriculumHero(session, semester, subjects.size, totalCredits) }
-
         if (!errorMessage.isNullOrBlank()) {
             fullSpanItem { CmsNotice(errorMessage, tone = NoticeTone.Error, onDismiss = onClearError) }
         }
@@ -205,28 +203,6 @@ fun SemesterCurriculumWorkspace(
             onConfirm = { onRemoveSubject(subject.courseCode); pendingRemove = null },
             onDismiss = { pendingRemove = null },
         )
-    }
-}
-
-@Composable
-private fun CurriculumHero(session: AcademicSession?, semester: Int, subjectCount: Int, totalCredits: Int) {
-    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Column(Modifier.padding(20.dp)) {
-            Text("SESSION CURRICULUM", color = CurriculumGold, style = CmsTextStyles.eyebrow)
-            Spacer(Modifier.height(6.dp))
-            Text("Session curriculum", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(4.dp))
-            Text(
-                listOfNotNull(session?.label ?: "Session", session?.shiftMode?.label, "Semester $semester", "$subjectCount subject(s)", "$totalCredits credits")
-                    .joinToString(" · "),
-                color = CmsTheme.colors.onInkMuted,
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            sharedCurriculumNote(session)?.let { note ->
-                Spacer(Modifier.height(4.dp))
-                Text(note, color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
-            }
-        }
     }
 }
 

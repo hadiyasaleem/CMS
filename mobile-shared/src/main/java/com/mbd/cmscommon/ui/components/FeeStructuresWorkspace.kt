@@ -48,7 +48,6 @@ import com.mbd.cmscommon.ui.theme.ModMuted
 import com.mbd.cmscommon.ui.theme.ModSuccess
 import com.mbd.cmscommon.ui.theme.ModSurface
 import com.mbd.cmscommon.ui.theme.ModTrack
-import com.mbd.cmscommon.ui.theme.ModWarn
 import java.util.Locale
 
 private val GridClassWidth = 190.dp
@@ -87,29 +86,16 @@ fun FeeStructuresWorkspace(
     modifier: Modifier = Modifier,
 ) {
     val headLabels = rows.flatMap { row -> row.structure?.heads?.map { it.label }.orEmpty() }.distinct()
+
+    TopBarActions {
+        ExportMenuButton(onExport = onExport, enabled = rows.isNotEmpty() && !loading, tint = CmsTheme.colors.onInk)
+    }
+
     LazyColumn(
         modifier = modifier.fillMaxWidth(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item {
-            Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-                Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text("FEES", color = ModWarn, style = CmsTextStyles.eyebrow)
-                        Spacer(Modifier.height(6.dp))
-                        Text("Fee structures", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            "One college-wide structure per shift applies to every class; change any class on its own.",
-                            color = CmsTheme.colors.onInkMuted,
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                    }
-                    ExportMenuButton(onExport = onExport, enabled = rows.isNotEmpty() && !loading, tint = ModWarn)
-                }
-            }
-        }
         if (!errorMessage.isNullOrBlank()) {
             item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         }

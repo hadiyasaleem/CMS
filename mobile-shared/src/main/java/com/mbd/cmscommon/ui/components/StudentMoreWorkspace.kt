@@ -90,7 +90,6 @@ fun StudentMoreWorkspace(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { StudentMoreHeader(heroPainter) }
         if (!errorMessage.isNullOrBlank()) {
             item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         }
@@ -135,27 +134,6 @@ private fun studentMoreCards(snapshot: StudentMoreSnapshot): List<StudentPortalC
         StudentPortalCard(StudentMoreDestination.NOTIFICATIONS, "Notifications", snapshot.unreadNotifications.toString(), "unread notices", null, if (snapshot.unreadNotifications == 0) "All caught up" else "Needs attention", if (snapshot.unreadNotifications == 0) BadgeTone.Success else BadgeTone.Warning, TablerIcons.Bell),
         StudentPortalCard(StudentMoreDestination.PROFILE, "Profile", "${snapshot.profileCompletion}%", "essential details", profileSubtitle, if (snapshot.profileCompletion == 100) "Complete" else "${missing.size} missing", if (snapshot.profileCompletion == 100) BadgeTone.Success else BadgeTone.Warning, TablerIcons.User),
     )
-}
-
-@Composable
-private fun StudentMoreHeader(heroPainter: Painter) {
-    Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Box(Modifier.fillMaxSize()) {
-            Image(
-                painter = heroPainter,
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                alignment = Alignment.CenterEnd,
-                contentScale = ContentScale.Crop,
-                alpha = 0.35f,
-            )
-            Column(Modifier.align(Alignment.CenterStart).padding(20.dp)) {
-                Text("ACCOUNT", color = StudentMoreGold, style = CmsTextStyles.eyebrow)
-                Spacer(Modifier.height(6.dp))
-                Text("More", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-            }
-        }
-    }
 }
 
 @Composable

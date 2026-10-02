@@ -40,3 +40,39 @@ sealed interface AdminScreen {
     data class SessionFeesRoute(val sessionId: String, val shift: com.mbd.cmscommon.domain.model.Session? = null) : AdminScreen
     data class TeacherDetail(val teacherId: String) : AdminScreen
 }
+
+/** The top bar's title for this screen: "GGC-MBD" on a tab root, each screen's own short name
+ * everywhere else. */
+fun AdminScreen.title(): String = when (this) {
+    AdminScreen.Dashboard, AdminScreen.Academics, AdminScreen.PeopleHub,
+    AdminScreen.RecordsHub, AdminScreen.MoreHub,
+    -> "GGC-MBD"
+    AdminScreen.Administrators -> "Administrators"
+    AdminScreen.Teachers -> "Teachers"
+    AdminScreen.LinkRequests -> "Link Requests"
+    AdminScreen.MarkEditRequests -> "Edit Requests"
+    AdminScreen.SubmittedPapers -> "Submitted Papers"
+    AdminScreen.AttendanceRecords -> "Attendance Records"
+    AdminScreen.Calendar -> "Calendar"
+    AdminScreen.Datesheets -> "Master Datesheet"
+    AdminScreen.MasterTimetable -> "Master Timetable"
+    AdminScreen.BuildingsRooms -> "Buildings & Rooms"
+    AdminScreen.FeeStructures -> "Fee Structures"
+    is AdminScreen.CollegeFees -> "College Fees"
+    AdminScreen.Insights -> "Insights"
+    AdminScreen.SemesterResults -> "Semester Results"
+    AdminScreen.Notifications -> "Notifications"
+    AdminScreen.AppLogs -> "App Logs"
+    AdminScreen.Profile -> "Profile"
+    is AdminScreen.DeptDetail -> "Department"
+    is AdminScreen.SessionDetail -> "Session"
+    is AdminScreen.SessionStudents -> "Session Students"
+    is AdminScreen.StudentProfile -> "Student Profile"
+    AdminScreen.StudentDirectory -> "Students"
+    is AdminScreen.StudentRecord -> "Student Record"
+    is AdminScreen.SessionTimetableRoute -> "Timetable"
+    is AdminScreen.SessionDatesheetRoute -> "Datesheet"
+    is AdminScreen.SemesterSubjectsRoute -> "Curriculum"
+    is AdminScreen.SessionFeesRoute -> "Fee Structure"
+    is AdminScreen.TeacherDetail -> "Teacher Profile"
+}

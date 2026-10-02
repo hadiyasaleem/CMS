@@ -141,7 +141,6 @@ fun AdministratorDirectoryWorkspace(
 
     Box(modifier.fillMaxSize()) {
         CardGrid(Modifier.fillMaxWidth()) {
-            fullSpanItem { AdministratorHero(directory.accounts.size) }
 
             if (!createdEmail.isNullOrBlank()) {
                 fullSpanItem { AdministratorCreatedBanner(createdEmail, onConsumeCreated) }
@@ -289,19 +288,6 @@ fun AdministratorDirectoryWorkspace(
             text = { DialogScrollBody { Text(notice) } },
             confirmButton = { TextButton(onClick = onConsumeNotice) { Text("OK") } },
         )
-    }
-}
-
-@Composable
-private fun AdministratorHero(count: Int, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(22.dp), color = ModInk) {
-        Column(Modifier.padding(20.dp)) {
-            Text("ACCESS CONTROL", color = CmsTheme.colors.onInk.copy(alpha = 0.7f), style = CmsTextStyles.eyebrow)
-            Spacer(Modifier.height(6.dp))
-            Text("Administrator directory", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(4.dp))
-            Text("$count full-access accounts", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
-        }
     }
 }
 

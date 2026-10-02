@@ -78,7 +78,6 @@ fun AdministratorProfileWorkspace(
     val listState = rememberLazyListState()
     WithVerticalScrollbar(listState) {
     LazyColumn(modifier.fillMaxWidth().background(ProfileCanvas), state = listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { ProfileHero(account?.email ?: accountKey, "Administrator", if (active) "ACTIVE" else "INACTIVE", if (active) BadgeTone.Success else BadgeTone.Neutral, "Verified administrator account") }
         if (!errorMessage.isNullOrBlank()) item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         if (!actionMessage.isNullOrBlank()) item { CmsNotice(actionMessage, tone = NoticeTone.Success) }
         if (loading) item { SkeletonRow() }
@@ -140,7 +139,6 @@ fun TeacherProfileWorkspace(
     val listState = rememberLazyListState()
     WithVerticalScrollbar(listState) {
     LazyColumn(modifier.fillMaxWidth().background(ProfileCanvas), state = listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { ProfileHero(profile?.name ?: accountKey, "Teacher", (profile?.status?.name ?: "ACTIVE"), BadgeTone.Success, "Faculty member") }
         if (!errorMessage.isNullOrBlank()) item { CmsNotice(errorMessage, tone = NoticeTone.Error) }
         if (!actionMessage.isNullOrBlank()) item { CmsNotice(actionMessage, tone = NoticeTone.Success) }
         if (loading) item { SkeletonRow() }
@@ -230,7 +228,6 @@ fun StudentOwnProfileWorkspace(
     val listState = rememberLazyListState()
     WithVerticalScrollbar(listState) {
     LazyColumn(modifier.fillMaxWidth().background(ProfileCanvas), state = listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { ProfileHero(studentName, "Student", "ENROLLED", BadgeTone.Success, "Class roll $rollNumber") }
         if (!errorMessage.isNullOrBlank()) item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         if (!actionMessage.isNullOrBlank()) item { CmsNotice(actionMessage, tone = NoticeTone.Success) }
         if (loading) item { SkeletonRow() }
@@ -288,22 +285,6 @@ fun StudentOwnProfileWorkspace(
             confirmLabel = "Sign out",
             showUndoWarning = false,
         )
-    }
-}
-
-@Composable
-private fun ProfileHero(name: String, role: String, status: String, statusTone: BadgeTone, supporting: String) {
-    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-            AvatarInitials(name, size = 52)
-            Spacer(Modifier.width(14.dp))
-            Column(Modifier.weight(1f)) {
-                Text(role.uppercase(), color = CmsTheme.colors.onInk.copy(alpha = 0.7f), style = CmsTextStyles.eyebrow)
-                Text(name, color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                Text(supporting, color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
-            }
-            StatusBadge(status, statusTone)
-        }
     }
 }
 
