@@ -145,13 +145,6 @@ fun LinkRequestReviewWorkspace(
         LinkRequestSort.ATTEMPTS -> filtered.sortedByDescending { it.attemptCount }
     }
 
-    val ready = requests.count { verifications[linkRequestVerificationKey(it)]?.state == RosterVerificationState.MATCHED }
-    val blocked = requests.count {
-        val state = verifications[linkRequestVerificationKey(it)]?.state
-        state == RosterVerificationState.MISSING || state == RosterVerificationState.IDENTITY_MISMATCH || state == RosterVerificationState.FAILED
-    }
-    val relinks = requests.count { verifications[linkRequestVerificationKey(it)]?.state == RosterVerificationState.RELINK }
-
     val listState = rememberLazyListState()
     WithVerticalScrollbar(listState) {
     LazyColumn( state = listState,
@@ -167,15 +160,6 @@ fun LinkRequestReviewWorkspace(
         }
         if (!notice.isNullOrBlank()) {
             item { CmsNotice(notice, tone = NoticeTone.Success, onDismiss = onConsumeNotice) }
-        }
-
-        item {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                LinkSummaryTile("Pending", requests.size.toString(), Modifier.weight(1f))
-                LinkSummaryTile("Ready", ready.toString(), Modifier.weight(1f))
-                LinkSummaryTile("Blocked", blocked.toString(), Modifier.weight(1f), alert = blocked > 0)
-                LinkSummaryTile("Relinks", relinks.toString(), Modifier.weight(1f))
-            }
         }
 
         item {
@@ -333,16 +317,6 @@ private fun LinkRequestHero(count: Int) {
             Text("Student link review", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
             Spacer(Modifier.height(4.dp))
             Text("$count pending claim(s) awaiting a reviewer", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
-        }
-    }
-}
-
-@Composable
-private fun LinkSummaryTile(label: String, value: String, modifier: Modifier = Modifier, alert: Boolean = false) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Column(Modifier.padding(14.dp)) {
-            Text(value, color = if (alert) LinkRed else ModInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }
