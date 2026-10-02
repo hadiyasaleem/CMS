@@ -29,6 +29,7 @@ object AdminLeaf {
     const val MARK_EDIT_REQUESTS = "mark_edit_requests"
     const val SUBMITTED_PAPERS = "submitted_papers"
     const val NOTIFICATIONS = "notifications"
+    const val APP_LOGS = "app_logs"
     const val PROFILE = "profile"
     const val MASTER_TIMETABLE = "master_timetable"
     const val BUILDINGS_ROOMS = "buildings_rooms"

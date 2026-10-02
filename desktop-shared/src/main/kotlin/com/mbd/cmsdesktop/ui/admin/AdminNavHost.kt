@@ -234,6 +234,7 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                                 MoreDestination.ADMINISTRATORS -> push(AdminScreen.Administrators)
                                 MoreDestination.BUILDINGS_ROOMS -> push(AdminScreen.BuildingsRooms)
                                 MoreDestination.NOTIFICATIONS -> push(AdminScreen.Notifications)
+                                MoreDestination.APP_LOGS -> push(AdminScreen.AppLogs)
                                 MoreDestination.PROFILE -> push(AdminScreen.Profile)
                             }
                         },
@@ -243,6 +244,8 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         repository = component.administratorRepository(),
                         currentAccountKey = accountKey,
                     )
+
+                    AdminScreen.AppLogs -> AppLogsScreen(repository = component.appLogRepository())
 
                     AdminScreen.Teachers -> TeachersScreen(
                         repository = component.teacherRepository(),

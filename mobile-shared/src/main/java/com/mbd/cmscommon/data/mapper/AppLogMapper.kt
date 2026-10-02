@@ -1,8 +1,10 @@
 package com.mbd.cmscommon.data.mapper
 
+import com.mbd.cmscommon.data.local.entity.AppLogCacheEntity
 import com.mbd.cmscommon.data.local.entity.AppLogEntity
 import com.mbd.cmscommon.data.remote.PgTime
 import com.mbd.cmscommon.data.remote.dto.AppLogDto
+import com.mbd.cmscommon.domain.model.AppLogRecord
 import com.mbd.cmscommon.util.LogRecord
 import java.time.Instant
 
@@ -25,6 +27,36 @@ object AppLogMapper {
     fun entityToDto(entity: AppLogEntity): AppLogDto = AppLogDto(
         logId = entity.logId,
         occurredAt = PgTime.format(Instant.ofEpochMilli(entity.occurredAtMillis)) ?: Instant.ofEpochMilli(entity.occurredAtMillis).toString(),
+        severity = entity.severity,
+        kind = entity.kind,
+        tag = entity.tag,
+        message = entity.message,
+        stackTrace = entity.stackTrace,
+        accountEmail = entity.accountEmail,
+        appId = entity.appId,
+        appVersion = entity.appVersion,
+        platform = entity.platform,
+        deviceInfo = entity.deviceInfo,
+    )
+
+    fun dtoToCacheEntity(dto: AppLogDto): AppLogCacheEntity = AppLogCacheEntity(
+        logId = dto.logId,
+        occurredAtMillis = PgTime.parseOrEpoch(dto.occurredAt).toEpochMilli(),
+        severity = dto.severity,
+        kind = dto.kind,
+        tag = dto.tag,
+        message = dto.message,
+        stackTrace = dto.stackTrace,
+        accountEmail = dto.accountEmail,
+        appId = dto.appId,
+        appVersion = dto.appVersion,
+        platform = dto.platform,
+        deviceInfo = dto.deviceInfo,
+    )
+
+    fun cacheEntityToDomain(entity: AppLogCacheEntity): AppLogRecord = AppLogRecord(
+        logId = entity.logId,
+        occurredAt = Instant.ofEpochMilli(entity.occurredAtMillis),
         severity = entity.severity,
         kind = entity.kind,
         tag = entity.tag,

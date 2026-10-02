@@ -7,6 +7,7 @@ import com.mbd.cmscommon.data.local.CmsDatabase
 import com.mbd.cmscommon.data.local.Converters
 import com.mbd.cmscommon.data.local.entity.AcademicSessionEntity
 import com.mbd.cmscommon.data.local.entity.AdministratorAccountEntity
+import com.mbd.cmscommon.data.local.entity.AppLogCacheEntity
 import com.mbd.cmscommon.data.local.entity.AppLogEntity
 import com.mbd.cmscommon.data.local.entity.BuildingEntity
 import com.mbd.cmscommon.data.local.entity.CalendarEventEntity
@@ -64,7 +65,7 @@ import com.mbd.cmscommon.data.local.entity.UserEntity
         InsightSessionOverviewEntity::class, InsightAtRiskStudentEntity::class, InsightExamStatEntity::class,
         DatesheetEntity::class, DatesheetSlotEntity::class,
         BuildingEntity::class, RoomEntity::class,
-        AppLogEntity::class,
+        AppLogEntity::class, AppLogCacheEntity::class,
     ],
     version = CMS_DATABASE_VERSION,
     exportSchema = true,

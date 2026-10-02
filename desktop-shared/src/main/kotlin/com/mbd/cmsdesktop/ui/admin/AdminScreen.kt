@@ -26,6 +26,7 @@ sealed interface AdminScreen {
     data object Insights : AdminScreen
     data object SemesterResults : AdminScreen
     data object Notifications : AdminScreen
+    data object AppLogs : AdminScreen
     data object Profile : AdminScreen
     data class DeptDetail(val deptId: String) : AdminScreen
     data class SessionDetail(val sessionId: String) : AdminScreen

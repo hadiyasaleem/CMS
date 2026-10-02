@@ -1,20 +1,65 @@
 package com.mbd.cmscommon.data.repository
 
+import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.data.remote.dto.AppLogDto
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import com.mbd.cmscommon.data.local.dao.AppLogCacheDao
 import com.mbd.cmscommon.data.local.dao.AppLogDao
 import com.mbd.cmscommon.data.mapper.AppLogMapper
+import com.mbd.cmscommon.data.remote.PgTime
 import com.mbd.cmscommon.data.remote.SupabaseTables
+import com.mbd.cmscommon.data.sync.SyncCheckpoint
+import com.mbd.cmscommon.data.sync.SyncCheckpointDefaults
+import com.mbd.cmscommon.data.sync.SyncCheckpointStore
+import com.mbd.cmscommon.data.sync.maxRemoteUpdatedAt
+import com.mbd.cmscommon.domain.model.AppLogRecord
 import com.mbd.cmscommon.domain.repository.AppLogRepository
 import io.github.jan.supabase.postgrest.Postgrest
+import io.github.jan.supabase.postgrest.query.Order
+import java.time.Instant
 import javax.inject.Inject
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 class AppLogRepositoryImpl @Inject constructor(
     private val postgrest: Postgrest,
     private val appLogDao: AppLogDao,
+    private val appLogCacheDao: AppLogCacheDao,
+    private val checkpointStore: SyncCheckpointStore,
+    private val sessionManager: SessionManager,
 ) : AppLogRepository {
+
+    override fun observeLogs(): Flow<List<AppLogRecord>> =
+        appLogCacheDao.observeRecent(MAX_VIEW_ROWS).map { rows -> rows.map(AppLogMapper::cacheEntityToDomain) }
+
+    /**
+     * Downloads new rows from `app_logs` into the viewer cache. RLS (see the `app_logs` migration)
+     * only lets admins select any rows at all, so this is a harmless no-op for teacher/student
+     * accounts rather than something that needs its own role check here.
+     */
+    override suspend fun sync() {
+        val ownerKey = SyncCheckpointDefaults.ownerKey(sessionManager.accountKey ?: "anonymous-local")
+        val scopeKey = SyncCheckpointDefaults.globalScope()
+        val since = checkpointStore.get(ownerKey, SupabaseTables.APP_LOGS, scopeKey)?.lastUpdatedAt ?: SyncCheckpointDefaults.EPOCH
+        var maxOccurredAt = since
+        var offset = 0L
+        while (true) {
+            val page = postgrest.from(SupabaseTables.APP_LOGS).select {
+                filter { gt("occurred_at", since) }
+                order("occurred_at", Order.ASCENDING)
+                range(offset, offset + PAGE_SIZE - 1)
+            }.decodeList<AppLogDto>()
+            if (page.isEmpty()) break
+            appLogCacheDao.upsertAll(page.map(AppLogMapper::dtoToCacheEntity))
+            maxOccurredAt = page.maxRemoteUpdatedAt(maxOccurredAt) { it.occurredAt }
+            if (page.size < PAGE_SIZE) break
+            offset += PAGE_SIZE
+        }
+        appLogCacheDao.trimOldest(MAX_VIEW_ROWS)
+        checkpointStore.upsert(SyncCheckpoint(ownerKey, SupabaseTables.APP_LOGS, scopeKey, maxOccurredAt, PgTime.format(Instant.now()) ?: since))
+    }
 
     /**
      * Uploads buffered log rows, oldest first, then trims local storage. Deliberately swallows
@@ -67,5 +112,7 @@ class AppLogRepositoryImpl @Inject constructor(
         const val BATCH_SIZE = 100
         const val MAX_BATCHES_PER_FLUSH = 5
         const val MAX_LOCAL_ROWS = 500
+        const val PAGE_SIZE = 500L
+        const val MAX_VIEW_ROWS = 1000
     }
 }

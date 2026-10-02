@@ -3,6 +3,7 @@ package com.mbd.cmscommon.data.local
 import androidx.room.RoomDatabase
 import com.mbd.cmscommon.data.local.dao.AcademicSessionDao
 import com.mbd.cmscommon.data.local.dao.AdministratorAccountDao
+import com.mbd.cmscommon.data.local.dao.AppLogCacheDao
 import com.mbd.cmscommon.data.local.dao.AppLogDao
 import com.mbd.cmscommon.data.local.dao.BuildingDao
 import com.mbd.cmscommon.data.local.dao.CalendarEventDao
@@ -29,7 +30,7 @@ import com.mbd.cmscommon.data.local.dao.TableSyncStateDao
 import com.mbd.cmscommon.data.local.dao.TeacherDao
 import com.mbd.cmscommon.data.local.dao.UserDao
 
-const val CMS_DATABASE_VERSION = 54
+const val CMS_DATABASE_VERSION = 55
 
 abstract class CmsDatabase : RoomDatabase() {
     abstract fun departmentDao(): DepartmentDao
@@ -59,4 +60,5 @@ abstract class CmsDatabase : RoomDatabase() {
     abstract fun sessionFeeDao(): SessionFeeDao
     abstract fun collegeFeeDao(): CollegeFeeDao
     abstract fun appLogDao(): AppLogDao
+    abstract fun appLogCacheDao(): AppLogCacheDao
 }
