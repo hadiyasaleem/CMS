@@ -15,14 +15,17 @@ fun AppLogsScreen(repository: AppLogRepository) {
     val controller = remember(repository) { AppLogsController(repository, scope) }
     val logs by controller.logs.collectAsState()
     val loading by controller.loading.collectAsState()
+    val deleting by controller.deleting.collectAsState()
     val errorMessage by controller.error.collectAsState()
 
     AppLogsWorkspace(
         logs = logs,
         loading = loading,
+        deleting = deleting,
         errorMessage = errorMessage,
         onRefresh = controller::refresh,
         onStatusChange = { log, status -> controller.updateStatus(log.logId, status) },
+        onDeleteAll = controller::deleteAll,
         onClearError = controller::clearError,
     )
 }

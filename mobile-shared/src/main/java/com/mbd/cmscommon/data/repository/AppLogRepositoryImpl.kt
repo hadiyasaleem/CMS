@@ -75,6 +75,14 @@ class AppLogRepositoryImpl @Inject constructor(
         appLogCacheDao.updateStatus(logId, status.name)
     }
 
+    /** Same reasoning as [updateStatus]: no UPDATE policy on `app_logs`, so this goes through a
+     * definer function that re-checks admin-ness server-side. The rows stay in `app_logs` (soft
+     * delete), but the viewer's local cache is cleared since nothing it holds is visible any more. */
+    override suspend fun deleteAll() {
+        postgrest.rpc(SupabaseTables.RPC_DELETE_ALL_APP_LOGS, buildJsonObject {})
+        appLogCacheDao.deleteAll()
+    }
+
     /**
      * Uploads buffered log rows, oldest first, then trims local storage. Deliberately swallows
      * every failure with no [com.mbd.cmscommon.util.CmsLog] call of its own — logging a failure to

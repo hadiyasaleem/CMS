@@ -14,6 +14,7 @@ fun AppLogsScreen(
 ) {
     val logs by viewModel.logs.collectAsState()
     val loading by viewModel.loading.collectAsState()
+    val deleting by viewModel.deleting.collectAsState()
     val errorMessage by viewModel.error.collectAsState()
 
     LaunchedEffect(refreshVersion) {
@@ -23,9 +24,11 @@ fun AppLogsScreen(
     AppLogsWorkspace(
         logs = logs,
         loading = loading,
+        deleting = deleting,
         errorMessage = errorMessage,
         onRefresh = viewModel::refresh,
         onStatusChange = { log, status -> viewModel.updateStatus(log.logId, status) },
+        onDeleteAll = viewModel::deleteAll,
         onClearError = viewModel::clearError,
     )
 }

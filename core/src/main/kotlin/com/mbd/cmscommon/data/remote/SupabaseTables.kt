@@ -37,6 +37,7 @@ object SupabaseTables {
     const val RPC_DELETE_NOTIFICATION = "delete_notification"
     const val RPC_INGEST_APP_LOGS = "ingest_app_logs"
     const val RPC_UPDATE_APP_LOG_STATUS = "update_app_log_status"
+    const val RPC_DELETE_ALL_APP_LOGS = "delete_all_app_logs"
     const val BUCKET_EXAM_PAPERS = "exam-papers"
     const val BUCKET_PHOTOS = "photos"
     const val FN_ADMIN_CREATE_USER = "admin-create-user"

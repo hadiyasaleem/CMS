@@ -16,9 +16,11 @@ class AppLogsViewModel @Inject constructor(
 
     val logs = controller.logs
     val loading = controller.loading
+    val deleting = controller.deleting
     val error = controller.error
 
     fun refresh() = controller.refresh()
     fun updateStatus(logId: String, status: AppLogStatus) = controller.updateStatus(logId, status)
+    fun deleteAll() = controller.deleteAll()
     fun clearError() = controller.clearError()
 }

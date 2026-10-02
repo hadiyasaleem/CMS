@@ -37,4 +37,16 @@ class AppLogsController(
     fun updateStatus(logId: String, status: AppLogStatus) = launch("update the log status") {
         repository.updateStatus(logId, status)
     }
+
+    private val _deleting = MutableStateFlow(false)
+    val deleting: StateFlow<Boolean> = _deleting.asStateFlow()
+
+    fun deleteAll() = launch("clear the app logs") {
+        _deleting.value = true
+        try {
+            repository.deleteAll()
+        } finally {
+            _deleting.value = false
+        }
+    }
 }

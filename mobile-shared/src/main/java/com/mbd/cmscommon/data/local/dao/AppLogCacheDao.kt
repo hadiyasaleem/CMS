@@ -22,4 +22,8 @@ interface AppLogCacheDao {
     /** Applied optimistically right after the server-side status change succeeds. */
     @Query("UPDATE app_log_cache SET status = :status WHERE logId = :logId")
     suspend fun updateStatus(logId: String, status: String)
+
+    /** Clears the viewer cache after `delete_all_app_logs` soft-deletes every row server-side. */
+    @Query("DELETE FROM app_log_cache")
+    suspend fun deleteAll()
 }
