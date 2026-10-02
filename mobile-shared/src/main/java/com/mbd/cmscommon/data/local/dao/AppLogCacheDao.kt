@@ -18,4 +18,8 @@ interface AppLogCacheDao {
     /** Evicts rows beyond [keep] (oldest first), so the viewer cache does not grow unbounded on-device. */
     @Query("DELETE FROM app_log_cache WHERE logId NOT IN (SELECT logId FROM app_log_cache ORDER BY occurredAtMillis DESC LIMIT :keep)")
     suspend fun trimOldest(keep: Int)
+
+    /** Applied optimistically right after the server-side status change succeeds. */
+    @Query("UPDATE app_log_cache SET status = :status WHERE logId = :logId")
+    suspend fun updateStatus(logId: String, status: String)
 }

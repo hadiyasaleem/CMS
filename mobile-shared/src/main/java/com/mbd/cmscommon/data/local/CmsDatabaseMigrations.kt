@@ -1869,6 +1869,13 @@ val MIGRATION_54_55: Migration = object : Migration(54, 55) {
     }
 }
 
+/** 55 -> 56: triage status (New/In progress/Fixed) on the cached `app_logs` rows. */
+val MIGRATION_55_56: Migration = object : Migration(55, 56) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `app_log_cache` ADD COLUMN `status` TEXT NOT NULL DEFAULT 'NEW'")
+    }
+}
+
 val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_18_19,
     MIGRATION_19_20,
@@ -1907,4 +1914,5 @@ val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_52_53,
     MIGRATION_53_54,
     MIGRATION_54_55,
+    MIGRATION_55_56,
 )

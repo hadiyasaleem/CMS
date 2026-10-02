@@ -22,6 +22,7 @@ fun AppLogsScreen(repository: AppLogRepository) {
         loading = loading,
         errorMessage = errorMessage,
         onRefresh = controller::refresh,
+        onStatusChange = { log, status -> controller.updateStatus(log.logId, status) },
         onClearError = controller::clearError,
     )
 }

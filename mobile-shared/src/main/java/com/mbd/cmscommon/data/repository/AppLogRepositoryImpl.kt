@@ -15,6 +15,7 @@ import com.mbd.cmscommon.data.sync.SyncCheckpointDefaults
 import com.mbd.cmscommon.data.sync.SyncCheckpointStore
 import com.mbd.cmscommon.data.sync.maxRemoteUpdatedAt
 import com.mbd.cmscommon.domain.model.AppLogRecord
+import com.mbd.cmscommon.domain.model.AppLogStatus
 import com.mbd.cmscommon.domain.repository.AppLogRepository
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.query.Order
@@ -59,6 +60,19 @@ class AppLogRepositoryImpl @Inject constructor(
         }
         appLogCacheDao.trimOldest(MAX_VIEW_ROWS)
         checkpointStore.upsert(SyncCheckpoint(ownerKey, SupabaseTables.APP_LOGS, scopeKey, maxOccurredAt, PgTime.format(Instant.now()) ?: since))
+    }
+
+    /** `app_logs` has no UPDATE policy (see its migration), so this goes through a definer function
+     * that also re-checks admin-ness server-side rather than trusting the caller's role. */
+    override suspend fun updateStatus(logId: String, status: AppLogStatus) {
+        postgrest.rpc(
+            SupabaseTables.RPC_UPDATE_APP_LOG_STATUS,
+            buildJsonObject {
+                put("p_log_id", logId)
+                put("p_status", status.name)
+            },
+        )
+        appLogCacheDao.updateStatus(logId, status.name)
     }
 
     /**

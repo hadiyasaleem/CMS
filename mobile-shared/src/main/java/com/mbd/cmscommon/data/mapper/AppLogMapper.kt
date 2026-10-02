@@ -5,6 +5,7 @@ import com.mbd.cmscommon.data.local.entity.AppLogEntity
 import com.mbd.cmscommon.data.remote.PgTime
 import com.mbd.cmscommon.data.remote.dto.AppLogDto
 import com.mbd.cmscommon.domain.model.AppLogRecord
+import com.mbd.cmscommon.domain.model.parseAppLogStatus
 import com.mbd.cmscommon.util.LogRecord
 import java.time.Instant
 
@@ -52,6 +53,7 @@ object AppLogMapper {
         appVersion = dto.appVersion,
         platform = dto.platform,
         deviceInfo = dto.deviceInfo,
+        status = dto.status,
     )
 
     fun cacheEntityToDomain(entity: AppLogCacheEntity): AppLogRecord = AppLogRecord(
@@ -67,5 +69,6 @@ object AppLogMapper {
         appVersion = entity.appVersion,
         platform = entity.platform,
         deviceInfo = entity.deviceInfo,
+        status = parseAppLogStatus(entity.status),
     )
 }

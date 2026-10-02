@@ -17,4 +17,5 @@ data class AppLogDto(
     val appVersion: String? = null,
     val platform: String? = null,
     val deviceInfo: String? = null,
+    val status: String = "NEW",
 )
