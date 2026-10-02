@@ -23,4 +23,5 @@ data class AppLogCacheEntity(
     val appVersion: String?,
     val platform: String?,
     val deviceInfo: String?,
+    val status: String = "NEW",
 )

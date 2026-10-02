@@ -3,6 +3,7 @@ package com.mbd.cmsadmin.feature.applogs
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.controller.AppLogsController
+import com.mbd.cmscommon.domain.model.AppLogStatus
 import com.mbd.cmscommon.domain.repository.AppLogRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -18,5 +19,6 @@ class AppLogsViewModel @Inject constructor(
     val error = controller.error
 
     fun refresh() = controller.refresh()
+    fun updateStatus(logId: String, status: AppLogStatus) = controller.updateStatus(logId, status)
     fun clearError() = controller.clearError()
 }

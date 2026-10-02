@@ -25,6 +25,7 @@ fun AppLogsScreen(
         loading = loading,
         errorMessage = errorMessage,
         onRefresh = viewModel::refresh,
+        onStatusChange = { log, status -> viewModel.updateStatus(log.logId, status) },
         onClearError = viewModel::clearError,
     )
 }

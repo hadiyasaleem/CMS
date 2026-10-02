@@ -1,6 +1,7 @@
 package com.mbd.cmscommon.controller
 
 import com.mbd.cmscommon.domain.model.AppLogRecord
+import com.mbd.cmscommon.domain.model.AppLogStatus
 import com.mbd.cmscommon.domain.repository.AppLogRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,5 +32,9 @@ class AppLogsController(
         } finally {
             _loading.value = false
         }
+    }
+
+    fun updateStatus(logId: String, status: AppLogStatus) = launch("update the log status") {
+        repository.updateStatus(logId, status)
     }
 }

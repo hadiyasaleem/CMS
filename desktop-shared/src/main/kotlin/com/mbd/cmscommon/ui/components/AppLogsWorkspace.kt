@@ -26,7 +26,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,6 +40,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.domain.model.AppLogRecord
+import com.mbd.cmscommon.domain.model.AppLogStatus
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
 import com.mbd.cmscommon.ui.theme.ModInk
@@ -51,7 +55,9 @@ private val LogDateFormat = DateTimeFormatter.ofPattern("dd MMM, HH:mm")
 /**
  * The admin app's "App Logs" screen: critical/crash failures reported by every client (mobile +
  * desktop, every role), downloaded from the server's `app_logs` table and cached locally so the
- * list is still readable offline. Read-only -- there is nothing here for an admin to edit.
+ * list is still readable offline. Every log starts [AppLogStatus.NEW]; an admin triages it through
+ * [AppLogStatus.IN_PROGRESS] to [AppLogStatus.FIXED] (or reopens a fix that didn't hold) via [onStatusChange],
+ * one tab per status.
  */
 @Composable
 fun AppLogsWorkspace(
@@ -59,13 +65,16 @@ fun AppLogsWorkspace(
     loading: Boolean,
     errorMessage: String?,
     onRefresh: () -> Unit,
+    onStatusChange: (AppLogRecord, AppLogStatus) -> Unit,
     onClearError: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var query by remember { mutableStateOf("") }
     var appFilter by remember { mutableStateOf<String?>(null) }
+    var tab by remember { mutableStateOf(AppLogStatus.NEW) }
 
     val apps = remember(logs) { logs.mapNotNull { it.appId }.distinct().sorted() }
+    val countsByStatus = remember(logs) { logs.groupingBy { it.status }.eachCount() }
 
     val filtered = logs.filter { log ->
         val matchesQuery = query.isBlank() ||
@@ -73,7 +82,7 @@ fun AppLogsWorkspace(
             log.tag?.contains(query, ignoreCase = true) == true ||
             log.accountEmail?.contains(query, ignoreCase = true) == true
         val matchesApp = appFilter == null || log.appId == appFilter
-        matchesQuery && matchesApp
+        log.status == tab && matchesQuery && matchesApp
     }
 
     val listState = rememberLazyListState()
@@ -81,6 +90,18 @@ fun AppLogsWorkspace(
         WithVerticalScrollbar(listState) {
             LazyColumn(Modifier.fillMaxWidth(), state = listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 item { AppLogsHero(logs.size) }
+
+                item {
+                    TabRow(selectedTabIndex = AppLogStatus.entries.indexOf(tab)) {
+                        AppLogStatus.entries.forEach { status ->
+                            Tab(
+                                selected = tab == status,
+                                onClick = { tab = status },
+                                text = { Text("${status.label} (${countsByStatus[status] ?: 0})") },
+                            )
+                        }
+                    }
+                }
 
                 item {
                     Column(Modifier.fillMaxWidth()) {
@@ -108,9 +129,9 @@ fun AppLogsWorkspace(
                 if (!loading && logs.isEmpty()) {
                     item { AppLogsEmpty("No logs recorded", "Nothing unexpected has been reported by any app yet.") }
                 } else if (filtered.isEmpty()) {
-                    item { AppLogsEmpty("No matching logs", "Try a different search or app filter.") }
+                    item { AppLogsEmpty("No matching logs", "Try a different search or app filter, or check another tab.") }
                 } else {
-                    items(filtered, key = { it.logId }) { log -> AppLogCard(log) }
+                    items(filtered, key = { it.logId }) { log -> AppLogCard(log, onStatusChange = { status -> onStatusChange(log, status) }) }
                 }
 
                 item { Spacer(Modifier.height(72.dp)) }
@@ -137,7 +158,7 @@ private fun AppLogsHero(count: Int) {
 }
 
 @Composable
-private fun AppLogCard(log: AppLogRecord) {
+private fun AppLogCard(log: AppLogRecord, onStatusChange: (AppLogStatus) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     Surface(shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(14.dp)) {
@@ -189,6 +210,17 @@ private fun AppLogCard(log: AppLogRecord) {
                             style = MaterialTheme.typography.bodySmall,
                         )
                     }
+                }
+            }
+            Spacer(Modifier.height(10.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                when (log.status) {
+                    AppLogStatus.NEW -> TextButton(onClick = { onStatusChange(AppLogStatus.IN_PROGRESS) }) { Text("Start work") }
+                    AppLogStatus.IN_PROGRESS -> {
+                        TextButton(onClick = { onStatusChange(AppLogStatus.FIXED) }) { Text("Mark fixed") }
+                        TextButton(onClick = { onStatusChange(AppLogStatus.NEW) }) { Text("Back to new") }
+                    }
+                    AppLogStatus.FIXED -> TextButton(onClick = { onStatusChange(AppLogStatus.NEW) }) { Text("Reopen") }
                 }
             }
         }

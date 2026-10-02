@@ -1,6 +1,7 @@
 package com.mbd.cmscommon.domain.repository
 
 import com.mbd.cmscommon.domain.model.AppLogRecord
+import com.mbd.cmscommon.domain.model.AppLogStatus
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -19,4 +20,7 @@ interface AppLogRepository {
 
     /** Downloads new rows from `app_logs` into the local viewer cache. */
     suspend fun sync()
+
+    /** Sets [logId]'s triage status, admin-only (enforced server-side by `update_app_log_status`). */
+    suspend fun updateStatus(logId: String, status: AppLogStatus)
 }
