@@ -39,10 +39,13 @@ class InsightsRepositoryLocalImpl @Inject constructor(
         val cachedAt = Instant.now().toEpochMilli()
         val sessions = sessionDao.getAllActive()
         val students = studentDao.getAllActive()
+        val currentSemesterBySession = sessions.associate { it.sessionId to it.currentSemester }
         val attendance = attendanceDao.getAllRows().filterNot { it.isDeleted }
+            .filter { it.semester == currentSemesterBySession[it.sessionId] }
         val marks = markDao.getAllRows().filterNot { it.isDeleted }
         val gpas = gpaDao.getAllRows().filterNot { it.isDeleted }
         val latestGpa = gpas.groupBy { "${it.sessionId}|${it.rollNumber}" }.mapValues { (_, rows) -> rows.maxByOrNull { it.semester } }
+        // Only this semester's attendance -- how the class is doing right now, not a multi-year lifetime average.
         val attendanceByStudent = attendance.groupBy { "${it.sessionId}|${it.rollNumber}" }.mapValues { (_, rows) ->
             rows.count { it.status.equals("PRESENT", true) || it.status.equals("LATE", true) }.toDouble() * 100 / rows.size
         }
