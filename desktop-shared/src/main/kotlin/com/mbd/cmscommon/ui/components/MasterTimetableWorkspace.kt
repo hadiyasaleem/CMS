@@ -353,7 +353,7 @@ private fun MasterGridSection(
         }
     }
 
-    CmsCard(Modifier.fillMaxWidth()) {
+    Surface(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column {
             Row(
                 Modifier.fillMaxWidth().padding(16.dp),
