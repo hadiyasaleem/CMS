@@ -46,9 +46,12 @@ import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.AtRiskStudent
 import com.mbd.cmscommon.domain.model.Department
 import com.mbd.cmscommon.domain.model.ExamStat
+import com.mbd.cmscommon.domain.model.ExamType
 import com.mbd.cmscommon.domain.model.RiskSignal
 import com.mbd.cmscommon.domain.model.SessionOverview
+import com.mbd.cmscommon.domain.model.TeacherInsightsScope
 import com.mbd.cmscommon.domain.model.averagePercentage
+import com.mbd.cmscommon.domain.model.canonicalAtRiskStudents
 import com.mbd.cmscommon.domain.model.insightsSummary
 import com.mbd.cmscommon.domain.model.reviewReasons
 import com.mbd.cmscommon.domain.model.riskSignals
@@ -99,6 +102,7 @@ fun InsightsWorkspace(
     var tab by remember { mutableStateOf(InsightsTab.SESSIONS) }
     var query by remember { mutableStateOf("") }
     var filterScope by remember { mutableStateOf(ShiftScope.ALL) }
+    var examTypeFilter by remember { mutableStateOf<ExamType?>(null) }
 
     val scope = if (viewer == InsightsViewer.TEACHER) {
         scopeTeacherInsights(overviews, atRisk, examStats, assignments)
@@ -132,14 +136,17 @@ fun InsightsWorkspace(
 
     val filteredExams = scopedExamStats
         .filter { query.isBlank() || it.courseCode.contains(query, ignoreCase = true) }
+        .filter { examTypeFilter == null || it.examType == examTypeFilter }
         .sortedBy { it.courseCode }
+
+    val atRiskTotal = canonicalAtRiskStudents(scope?.atRisk ?: atRisk).size
 
     LazyColumn(
         modifier = modifier.fillMaxWidth().background(InsightsCanvas),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { InsightsHeader(viewer) }
+        item { InsightsHeader(viewer, scope) }
         if (onExport != null) {
             item {
                 ExportBar(
@@ -154,7 +161,7 @@ fun InsightsWorkspace(
             item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         }
 
-        item { InsightsSummaryStrip(summary.sessions, summary.students, summary.atRiskStudents, summary.weightedPassRate) }
+        item { InsightsSummaryStrip(summary.sessions, summary.students, summary.atRiskStudents, atRiskTotal, filterScope.isEmpty, summary.weightedPassRate) }
 
         item {
             Column(Modifier.fillMaxWidth()) {
@@ -176,6 +183,18 @@ fun InsightsWorkspace(
                 )
                 Spacer(Modifier.height(8.dp))
                 ShiftScopeSelector(filterScope, filterDepartments, filterSessions, { filterScope = it }, label = null)
+                if (tab == InsightsTab.ASSESSMENTS) {
+                    Spacer(Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        CmsChip("All", selected = examTypeFilter == null, onClick = { examTypeFilter = null })
+                        ExamType.entries.forEach { type ->
+                            CmsChip(type.name.lowercase().replaceFirstChar { it.uppercase() }, selected = examTypeFilter == type, onClick = { examTypeFilter = type })
+                        }
+                    }
+                }
             }
         }
 
@@ -192,14 +211,14 @@ fun InsightsWorkspace(
                 item { InsightsEmpty("No students currently show a risk signal.") }
             } else {
                 items(filteredRisk, key = { it.sessionId + it.rollNumber }) { student ->
-                    RiskStudentCard(student, sessionLabel(student.sessionId))
+                    RiskStudentCard(student, sessionLabel(student.sessionId), viewer, reviewReasons(student, validSessionIds))
                 }
             }
             else -> if (filteredExams.isEmpty()) {
                 item { InsightsEmpty("No assessments match these filters.") }
             } else {
                 items(filteredExams, key = { listOf(it.sessionId, it.semester, it.courseCode, it.examType).toString() }) { stat ->
-                    ExamInsightCard(stat, sessionLabel(stat.sessionId))
+                    ExamInsightCard(stat, sessionLabel(stat.sessionId), viewer, reviewReasons(stat, validSessionIds))
                 }
             }
         }
@@ -209,32 +228,49 @@ fun InsightsWorkspace(
 }
 
 @Composable
-private fun InsightsHeader(viewer: InsightsViewer) {
+private fun InsightsHeader(viewer: InsightsViewer, scope: TeacherInsightsScope?) {
     Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Column(Modifier.padding(20.dp)) {
             Text(if (viewer == InsightsViewer.ADMIN) "INSTITUTIONAL INTELLIGENCE" else "MY CLASS INTELLIGENCE", color = InsightsGold, style = CmsTextStyles.eyebrow)
             Spacer(Modifier.height(6.dp))
             Text("Academic Insights", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+            if (viewer == InsightsViewer.TEACHER && scope != null) {
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    "Teaching ${scope.assignedSessions} session(s) · ${scope.assignedClasses} class(es)",
+                    color = CmsTheme.colors.onInk.copy(alpha = 0.7f),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun InsightsSummaryStrip(sessions: Int, students: Int, atRisk: Int, weightedPassRate: Double?) {
+private fun InsightsSummaryStrip(sessions: Int, students: Int, atRisk: Int, atRiskTotal: Int, scopeIsAll: Boolean, weightedPassRate: Double?) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         InsightSummaryTile("Sessions", sessions.toString(), Modifier.weight(1f))
         InsightSummaryTile("Students", students.toString(), Modifier.weight(1f))
-        InsightSummaryTile("At risk", atRisk.toString(), Modifier.weight(1f), alert = atRisk > 0)
+        InsightSummaryTile(
+            "At risk",
+            atRisk.toString(),
+            Modifier.weight(1f),
+            alert = atRisk > 0,
+            caption = if (!scopeIsAll && atRiskTotal != atRisk) "of $atRiskTotal total" else null,
+        )
         InsightSummaryTile("Weighted pass", weightedPassRate?.let { "${it.roundToInt()}%" } ?: "--", Modifier.weight(1f))
     }
 }
 
 @Composable
-private fun InsightSummaryTile(label: String, value: String, modifier: Modifier = Modifier, alert: Boolean = false) {
+private fun InsightSummaryTile(label: String, value: String, modifier: Modifier = Modifier, alert: Boolean = false, caption: String? = null) {
     Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(14.dp)) {
             Text(value, color = if (alert) InsightsRed else ModInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
             Text(label.uppercase(Locale.ROOT), color = ModMuted, style = CmsTextStyles.eyebrow)
+            if (caption != null) {
+                Text(caption, color = ModMuted, style = MaterialTheme.typography.bodySmall)
+            }
         }
     }
 }
@@ -269,7 +305,7 @@ private fun SessionInsightCard(overview: SessionOverview, sessionLabel: String, 
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun RiskStudentCard(student: AtRiskStudent, sessionLabel: String) {
+private fun RiskStudentCard(student: AtRiskStudent, sessionLabel: String, viewer: InsightsViewer, reasons: List<String>) {
     val signals = riskSignals(student)
     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, if (signals.isNotEmpty()) InsightsRed.copy(alpha = 0.3f) else ModTrack)) {
         Column(Modifier.padding(16.dp)) {
@@ -277,6 +313,9 @@ private fun RiskStudentCard(student: AtRiskStudent, sessionLabel: String) {
                 Column(Modifier.weight(1f)) {
                     Text(student.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                     Text("Roll ${student.rollNumber} · $sessionLabel", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                }
+                if (viewer == InsightsViewer.ADMIN && reasons.isNotEmpty()) {
+                    StatusBadge("ADMIN REVIEW", BadgeTone.Warning)
                 }
             }
             Spacer(Modifier.height(8.dp))
@@ -300,13 +339,17 @@ private fun RiskStudentCard(student: AtRiskStudent, sessionLabel: String) {
                 color = ModMuted,
                 style = MaterialTheme.typography.bodySmall,
             )
+            if (viewer == InsightsViewer.ADMIN && reasons.isNotEmpty()) {
+                Spacer(Modifier.height(8.dp))
+                InsightReviewReasons(reasons)
+            }
         }
     }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ExamInsightCard(stat: ExamStat, sessionLabel: String) {
+private fun ExamInsightCard(stat: ExamStat, sessionLabel: String, viewer: InsightsViewer, reasons: List<String>) {
     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -314,7 +357,13 @@ private fun ExamInsightCard(stat: ExamStat, sessionLabel: String) {
                     Text("${stat.courseCode} · ${stat.examType}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                     Text("$sessionLabel · SEM ${stat.semester}", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
-                StatusBadge("Entered ${stat.entered}", BadgeTone.Neutral)
+                Column(horizontalAlignment = Alignment.End) {
+                    StatusBadge("Entered ${stat.entered}", BadgeTone.Neutral)
+                    if (viewer == InsightsViewer.ADMIN && reasons.isNotEmpty()) {
+                        Spacer(Modifier.height(4.dp))
+                        StatusBadge("ADMIN REVIEW", BadgeTone.Warning)
+                    }
+                }
             }
             Spacer(Modifier.height(10.dp))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -327,7 +376,11 @@ private fun ExamInsightCard(stat: ExamStat, sessionLabel: String) {
                 Text("Variation: %.2f".format(stat.stddev), color = ModMuted, style = MaterialTheme.typography.bodySmall)
             }
             Spacer(Modifier.height(6.dp))
-            Text("Pass rate uses the college rule: score at least 40% of maximum marks.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+            Text("Pass rate uses the college rule: score at least 50% of maximum marks.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+            if (viewer == InsightsViewer.ADMIN && reasons.isNotEmpty()) {
+                Spacer(Modifier.height(8.dp))
+                InsightReviewReasons(reasons)
+            }
         }
     }
 }
