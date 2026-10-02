@@ -59,22 +59,16 @@ fun SubmittedPapersWorkspace(
     onSetTeacherFilter: (String?) -> Unit,
     sessions: List<AcademicSession>,
     onSetScope: (ShiftScope) -> Unit,
-    onSetSemesterFilter: (Int?) -> Unit,
     onClearFilters: () -> Unit,
     onDownload: (ExamPaperSubmission) -> Unit,
     onConsumeNotice: () -> Unit,
-    onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val totalCount = grouped.values.sumOf { it.size }
-
     LazyColumn(
         modifier = modifier.fillMaxWidth().background(PapersCanvas),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { PapersHeader(totalCount, onRefresh) }
-
         notice?.let { message ->
             item { CmsNotice(message, tone = NoticeTone.Success, onDismiss = onConsumeNotice) }
         }
@@ -87,7 +81,6 @@ fun SubmittedPapersWorkspace(
                 onSetTeacherFilter = onSetTeacherFilter,
                 sessions = sessions,
                 onSetScope = onSetScope,
-                onSetSemesterFilter = onSetSemesterFilter,
                 onClearFilters = onClearFilters,
             )
         }
@@ -123,22 +116,6 @@ fun SubmittedPapersWorkspace(
 }
 
 @Composable
-private fun PapersHeader(totalCount: Int, onRefresh: () -> Unit) {
-    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Column(Modifier.padding(20.dp)) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("PRINT QUEUE", color = ModAccent, style = CmsTextStyles.eyebrow)
-                TextButton(onClick = onRefresh) { Text("Refresh") }
-            }
-            Spacer(Modifier.height(6.dp))
-            Text("Submitted exam papers", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(4.dp))
-            Text("$totalCount submitted", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
-        }
-    }
-}
-
-@Composable
 private fun PapersFilterBar(
     teachers: List<Teacher>,
     departments: List<Department>,
@@ -146,11 +123,9 @@ private fun PapersFilterBar(
     onSetTeacherFilter: (String?) -> Unit,
     sessions: List<AcademicSession>,
     onSetScope: (ShiftScope) -> Unit,
-    onSetSemesterFilter: (Int?) -> Unit,
     onClearFilters: () -> Unit,
 ) {
     val teacherOptions = teachers.sortedBy { it.name }.map { CmsEntityOption(it.email, it.name) }
-    val semesterOptions = (1..8).map { CmsEntityOption(it.toString(), "Semester $it") }
 
     Column(Modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -160,23 +135,12 @@ private fun PapersFilterBar(
             }
         }
         Spacer(Modifier.height(6.dp))
-        ShiftScopeSelector(filters.scope, departmentScopeOptions(departments), sessions, onSetScope, label = null)
-        Spacer(Modifier.height(8.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
+        ShiftScopeSelector(filters.scope, departmentScopeOptions(departments), sessions, onSetScope, label = null) {
             DropdownChip(
                 selectedLabel = teacherOptions.firstOrNull { it.id == filters.teacherEmail }?.label,
                 emptyLabel = "All teachers",
                 options = teacherOptions,
                 onSelected = onSetTeacherFilter,
-            )
-            DropdownChip(
-                selectedLabel = semesterOptions.firstOrNull { it.id == filters.semester?.toString() }?.label,
-                emptyLabel = "All semesters",
-                options = semesterOptions,
-                onSelected = { onSetSemesterFilter(it?.toIntOrNull()) },
             )
         }
     }

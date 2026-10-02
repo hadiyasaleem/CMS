@@ -46,7 +46,6 @@ fun SubmittedPapersScreen(
         onSetTeacherFilter = controller::setTeacherFilter,
         sessions = sessions,
         onSetScope = controller::setScope,
-        onSetSemesterFilter = controller::setSemesterFilter,
         onClearFilters = controller::clearFilters,
         onDownload = { submission ->
             controller.downloadAndOpen(submission, File(System.getProperty("java.io.tmpdir"))) { downloaded ->
@@ -55,6 +54,5 @@ fun SubmittedPapersScreen(
             }
         },
         onConsumeNotice = controller::consumeNotice,
-        onRefresh = controller::refresh,
     )
 }
