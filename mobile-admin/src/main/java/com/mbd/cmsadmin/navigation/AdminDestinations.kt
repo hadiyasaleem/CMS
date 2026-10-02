@@ -2,8 +2,8 @@ package com.mbd.cmsadmin.navigation
 
 import compose.icons.TablerIcons
 import compose.icons.tablericons.ChartBar
-import compose.icons.tablericons.Dashboard
 import compose.icons.tablericons.Dots
+import compose.icons.tablericons.LayoutGrid
 import compose.icons.tablericons.School
 import compose.icons.tablericons.Users
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -14,7 +14,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
  * "2021-2025 Morning") → students + weekly timetable. No terms/offerings indirection.
  */
 enum class AdminTab(val route: String, val label: String, val icon: ImageVector) {
-    Dashboard("tab_dashboard", "Dashboard", TablerIcons.Dashboard),
+    Dashboard("tab_dashboard", "Dashboard", TablerIcons.LayoutGrid),
     Academics("tab_academics", "Academics", TablerIcons.School),
     People("tab_people", "People", TablerIcons.Users),
     Records("tab_records", "Records", TablerIcons.ChartBar),

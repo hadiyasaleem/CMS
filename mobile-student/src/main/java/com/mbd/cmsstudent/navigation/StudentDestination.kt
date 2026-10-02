@@ -3,6 +3,7 @@ package com.mbd.cmsstudent.navigation
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Bell
 import compose.icons.tablericons.Calendar
+import compose.icons.tablericons.Certificate
 import compose.icons.tablericons.ClipboardCheck
 import compose.icons.tablericons.CreditCard
 import compose.icons.tablericons.Home
@@ -19,7 +20,7 @@ sealed class StudentDestination(
 ) {
     data object Home : StudentDestination("home", "Home", TablerIcons.Home)
     data object Attendance : StudentDestination("attendance", "Attendance", TablerIcons.ClipboardCheck, "Attend")
-    data object ExamsHub : StudentDestination("exams_hub", "Exams", TablerIcons.Report)
+    data object ExamsHub : StudentDestination("exams_hub", "Exams", TablerIcons.Certificate)
     data object Timetable : StudentDestination("timetable", "Timetable", TablerIcons.Calendar)
     data object More : StudentDestination("more", "More", TablerIcons.Menu2)
     data object Marks : StudentDestination("marks", "Marks", TablerIcons.Report)
