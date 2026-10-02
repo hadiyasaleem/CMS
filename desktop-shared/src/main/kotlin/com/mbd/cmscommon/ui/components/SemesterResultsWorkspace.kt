@@ -103,6 +103,7 @@ fun SemesterResultsWorkspace(
             ExportMenuButton(
                 onExport = { format -> onExport(semesterResultsExport(sessions.firstOrNull { it.first == sessionId }?.second ?: sessionId, semester, roster, results), format) },
                 enabled = roster.isNotEmpty(),
+                tint = CmsTheme.colors.onInk,
             )
         }
     }

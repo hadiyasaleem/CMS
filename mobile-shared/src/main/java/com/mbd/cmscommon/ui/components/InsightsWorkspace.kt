@@ -146,6 +146,7 @@ fun InsightsWorkspace(
             ExportMenuButton(
                 onExport = { format -> onExport(insightsExport(filteredOverviews, filteredRisk, filteredExams, ::sessionLabel, filterScope.title(filterDepartments, sessions)), format) },
                 enabled = !loading,
+                tint = CmsTheme.colors.onInk,
             )
         }
     }

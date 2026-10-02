@@ -268,7 +268,7 @@ fun AttendanceRecordsScreen(
             ExportMenuButton(onExport = { format ->
                 runCatching { DocumentExporter.export(window, payload.toExportDocument(), format) }
                     .onFailure { actionError = FileReadErrors.describeWrite(it, format.label) }
-            })
+            }, tint = CmsTheme.colors.onInk)
         }
     }
 

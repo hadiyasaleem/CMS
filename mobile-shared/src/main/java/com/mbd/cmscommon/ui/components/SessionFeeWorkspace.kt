@@ -130,7 +130,7 @@ fun SessionFeeWorkspace(
 
     if (onExport != null && allStructures.isNotEmpty()) {
         TopBarActions {
-            ExportMenuButton(onExport = { format -> onExport(sessionFeesExport(session, department?.name, allStructures), format) })
+            ExportMenuButton(onExport = { format -> onExport(sessionFeesExport(session, department?.name, allStructures), format) }, tint = CmsTheme.colors.onInk)
         }
     }
 

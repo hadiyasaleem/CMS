@@ -116,7 +116,7 @@ fun StudentRosterWorkspace(
 
     TopBarActions {
         if (onExport != null) {
-            ExportMenuButton(onExport = { format -> onExport(studentRosterExport(session, visible, activeTab), format) }, enabled = visible.isNotEmpty())
+            ExportMenuButton(onExport = { format -> onExport(studentRosterExport(session, visible, activeTab), format) }, enabled = visible.isNotEmpty(), tint = CmsTheme.colors.onInk)
         }
         IconButton(onClick = onPickImportFile, enabled = !importing) {
             Icon(TablerIcons.Upload, contentDescription = "Import file", tint = CmsTheme.colors.onInk)

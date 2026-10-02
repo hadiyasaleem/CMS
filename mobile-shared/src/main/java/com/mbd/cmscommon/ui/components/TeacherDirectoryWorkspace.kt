@@ -155,7 +155,7 @@ fun TeacherDirectoryWorkspace(
 
     if (onExport != null) {
         TopBarActions {
-            ExportMenuButton(onExport = { format -> onExport(teacherDirectoryExport(visible, departments, assignments), format) }, enabled = visible.isNotEmpty())
+            ExportMenuButton(onExport = { format -> onExport(teacherDirectoryExport(visible, departments, assignments), format) }, enabled = visible.isNotEmpty(), tint = CmsTheme.colors.onInk)
         }
     }
 

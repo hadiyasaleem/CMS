@@ -320,7 +320,7 @@ fun AttendanceRecordsScreen(
                     runCatching { DocumentExporter.export(context, payload.toExportDocument(), format) }
                         .onFailure { actionError = FileReadErrors.describeWrite(it, format.label) }
                 }
-            })
+            }, tint = CmsTheme.colors.onInk)
         }
     }
 

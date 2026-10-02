@@ -125,7 +125,7 @@ fun SessionTimetableWorkspace(
 
     if (onExport != null) {
         TopBarActions {
-            ExportMenuButton(onExport = { format -> onExport(timetableExport(session, shown, shift), format) }, enabled = shown.isNotEmpty())
+            ExportMenuButton(onExport = { format -> onExport(timetableExport(session, shown, shift), format) }, enabled = shown.isNotEmpty(), tint = CmsTheme.colors.onInk)
         }
     }
 
