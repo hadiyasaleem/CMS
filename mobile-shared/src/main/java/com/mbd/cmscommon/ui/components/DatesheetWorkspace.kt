@@ -514,7 +514,7 @@ private fun CalendarDatesheetView(
     val rows = sessionLabels.map { session -> GridRow(key = session, label = session, cells = dateColumns.associateWith { col -> byKey[session to col]?.cell }) }
 
     if (onExport != null) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+        TopBarActions {
             ExportMenuButton(onExport = { format ->
                 val gridEntries = datesheets.map { sheet ->
                     val session = sessionsById[sheet.sessionId]

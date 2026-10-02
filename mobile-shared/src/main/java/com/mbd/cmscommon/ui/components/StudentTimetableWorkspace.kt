@@ -82,6 +82,12 @@ fun StudentTimetableWorkspace(
 ) {
     var detailItem by remember { mutableStateOf<StudentScheduledPeriod?>(null) }
 
+    if (snapshot != null) {
+        TopBarActions {
+            ExportMenuButton(onExport = { format -> onExport(studentGridTimetableExport(snapshot.periods.map { it.period }), format) }, enabled = snapshot.periods.isNotEmpty())
+        }
+    }
+
     LazyColumn(
         modifier = modifier.fillMaxWidth().background(TimetableCanvas),
         contentPadding = PaddingValues(16.dp),
@@ -93,13 +99,6 @@ fun StudentTimetableWorkspace(
             loading && snapshot == null -> items(3) { SkeletonRow() }
             snapshot != null -> {
                 item { TimetableOverview(snapshot) }
-                item {
-                    ExportBar(
-                        onExport = onExport,
-                        build = { studentGridTimetableExport(snapshot.periods.map { it.period }) },
-                        enabled = snapshot.periods.isNotEmpty(),
-                    )
-                }
                 val nextLecture = snapshot.nextLecture
                 if (nextLecture != null) {
                     item { NextLectureCard(nextLecture) }

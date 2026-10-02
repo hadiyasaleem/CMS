@@ -100,6 +100,12 @@ fun MarksEntryWorkspace(
 
     val average = roster.mapNotNull { scores[it.id]?.toIntOrNull() }.takeIf { it.isNotEmpty() }?.average()
 
+    if (onExport != null && selected != null) {
+        TopBarActions {
+            ExportMenuButton(onExport = { format -> onExport(marksSheetExport(selected, examType, roster, scores, absentRolls), format) }, enabled = roster.isNotEmpty())
+        }
+    }
+
     val listState = rememberLazyListState()
     WithVerticalScrollbar(listState) {
     LazyColumn( state = listState,
@@ -107,9 +113,6 @@ fun MarksEntryWorkspace(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        if (onExport != null && selected != null) {
-            item { ExportBar(onExport, build = { marksSheetExport(selected, examType, roster, scores, absentRolls) }, enabled = roster.isNotEmpty()) }
-        }
         item { TeacherClassPicker(assignments, selected, onSelect) }
         item {
             Row(

@@ -128,6 +128,12 @@ fun SessionFeeWorkspace(
         else -> null
     }
 
+    if (onExport != null && allStructures.isNotEmpty()) {
+        TopBarActions {
+            ExportMenuButton(onExport = { format -> onExport(sessionFeesExport(session, department?.name, allStructures), format) })
+        }
+    }
+
     LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Column {
@@ -143,9 +149,6 @@ fun SessionFeeWorkspace(
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
-        }
-        if (onExport != null && allStructures.isNotEmpty()) {
-            item { ExportBar(onExport, build = { sessionFeesExport(session, department?.name, allStructures) }) }
         }
 
         if (inheritsCollege) {

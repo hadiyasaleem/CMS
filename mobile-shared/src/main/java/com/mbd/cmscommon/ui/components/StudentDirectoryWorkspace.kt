@@ -93,12 +93,15 @@ fun StudentDirectoryWorkspace(
         .filter { query.deptId == null || it.deptId == query.deptId }
         .sortedWith(compareBy({ it.deptId }, { -it.startYear }))
 
+    TopBarActions {
+        ExportMenuButton(onExport = { format -> onExport(buildExport(), format) }, enabled = page.matches.isNotEmpty())
+    }
+
     LazyColumn(
         modifier = modifier.fillMaxWidth().background(ModGround),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { ExportBar(onExport, build = buildExport, enabled = page.matches.isNotEmpty()) }
         if (!errorMessage.isNullOrBlank()) {
             item { CmsNotice(errorMessage, tone = NoticeTone.Error, onDismiss = onClearError) }
         }

@@ -141,21 +141,20 @@ fun InsightsWorkspace(
 
     val atRiskTotal = canonicalAtRiskStudents(scope?.atRisk ?: atRisk).size
 
+    if (onExport != null) {
+        TopBarActions {
+            ExportMenuButton(
+                onExport = { format -> onExport(insightsExport(filteredOverviews, filteredRisk, filteredExams, ::sessionLabel, filterScope.title(filterDepartments, sessions)), format) },
+                enabled = !loading,
+            )
+        }
+    }
+
     LazyColumn(
         modifier = modifier.fillMaxWidth().background(InsightsCanvas),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        if (onExport != null) {
-            item {
-                ExportBar(
-                    onExport,
-                    build = { insightsExport(filteredOverviews, filteredRisk, filteredExams, ::sessionLabel, filterScope.title(filterDepartments, sessions)) },
-                    enabled = !loading,
-                )
-            }
-        }
-
         if (!errorMessage.isNullOrBlank()) {
             item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         }
