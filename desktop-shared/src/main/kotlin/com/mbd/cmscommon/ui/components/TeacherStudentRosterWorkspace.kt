@@ -57,13 +57,6 @@ private val RosterGold = ModWarn
 private val RosterGreen = ModSuccess
 private val RosterRed = ModAccent
 
-enum class TeacherRosterFilter(val label: String) {
-    ALL("All"),
-    AT_RISK("Below 65%"),
-    UNLINKED("Not linked"),
-    MISSING_GRADES("Grades missing"),
-}
-
 enum class TeacherRosterSort(val label: String) {
     NAME("Name"),
     ROLL("Roll number"),
@@ -85,22 +78,10 @@ fun TeacherStudentRosterWorkspace(
     modifier: Modifier = Modifier,
 ) {
     var query by remember { mutableStateOf("") }
-    var filter by remember { mutableStateOf(TeacherRosterFilter.ALL) }
     var sort by remember { mutableStateOf(TeacherRosterSort.NAME) }
 
-    val linked = students.count { it.linkedEmail.isNotBlank() }
-    val avgCgpa = students.mapNotNull { it.cgpa }.takeIf { it.isNotEmpty() }?.average()
-
     val filtered = students.filter { student ->
-        val tally = tallies[student.id]
-        val matchesQuery = query.isBlank() || student.name.contains(query, ignoreCase = true) || student.rollNumber.contains(query, ignoreCase = true)
-        val matchesFilter = when (filter) {
-            TeacherRosterFilter.ALL -> true
-            TeacherRosterFilter.AT_RISK -> tally != null && tally.total > 0 && tally.percentage < 65f
-            TeacherRosterFilter.UNLINKED -> student.linkedEmail.isBlank()
-            TeacherRosterFilter.MISSING_GRADES -> student.gpa == null
-        }
-        matchesQuery && matchesFilter
+        query.isBlank() || student.name.contains(query, ignoreCase = true) || student.rollNumber.contains(query, ignoreCase = true)
     }
 
     val visible = when (sort) {
@@ -118,16 +99,8 @@ fun TeacherStudentRosterWorkspace(
             item { ExportBar(onExport, build = { myStudentsExport(selected, students, tallies) }, enabled = students.isNotEmpty()) }
         }
         item {
-            Column(Modifier.fillMaxWidth()) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    CmsChip("All classes", selected = selected == null, onClick = onShowAllClasses)
-                }
-                Spacer(Modifier.height(8.dp))
-                TeacherClassPicker(assignments, selected, onSelectAssignment)
-            }
+            TeacherClassPicker(assignments, selected, onSelectAssignment, showAllOption = true, onSelectAll = onShowAllClasses)
         }
-
-        item { TeacherRosterSummaryCard(students.size, avgCgpa, linked) }
 
         item {
             Column(Modifier.fillMaxWidth()) {
@@ -135,16 +108,9 @@ fun TeacherStudentRosterWorkspace(
                     value = query,
                     onValueChange = { query = it },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Find attendance risks, account-link gaps, and missing grades") },
+                    placeholder = { Text("Search name or roll number", maxLines = 1) },
                     singleLine = true,
                 )
-                Spacer(Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    TeacherRosterFilter.entries.forEach { option -> CmsChip(option.label, selected = filter == option, onClick = { filter = option }) }
-                }
                 Spacer(Modifier.height(8.dp))
                 Text("SORT", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
@@ -187,25 +153,6 @@ private fun TeacherRosterHero(selected: ResolvedAssignment?, count: Int) {
     }
 }
 
-
-@Composable
-private fun TeacherRosterSummaryCard(count: Int, avgCgpa: Double?, linked: Int) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        TeacherRosterMetric("Students", count.toString(), Modifier.weight(1f))
-        TeacherRosterMetric("Avg CGPA", avgCgpa?.let { "%.2f".format(it) } ?: "--", Modifier.weight(1f))
-        TeacherRosterMetric("Linked", "$linked / $count", Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun TeacherRosterMetric(label: String, value: String, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Column(Modifier.padding(14.dp)) {
-            Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
-        }
-    }
-}
 
 @Composable
 private fun TeacherStudentCard(student: SessionStudent, tally: AttendanceTally?) {
