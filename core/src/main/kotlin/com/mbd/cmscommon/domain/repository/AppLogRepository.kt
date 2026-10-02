@@ -23,4 +23,11 @@ interface AppLogRepository {
 
     /** Sets [logId]'s triage status, admin-only (enforced server-side by `update_app_log_status`). */
     suspend fun updateStatus(logId: String, status: AppLogStatus)
+
+    /**
+     * Soft-deletes every currently-visible server log row, admin-only (enforced server-side by
+     * `delete_all_app_logs`). Rows stay in `app_logs` for audit/history -- they just stop matching
+     * `sel_app_logs` -- so this also clears the local viewer cache to match.
+     */
+    suspend fun deleteAll()
 }

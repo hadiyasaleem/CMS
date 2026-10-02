@@ -28,6 +28,7 @@ export type Database = {
           is_deleted: boolean
           max_students: number
           program_name: string | null
+          program_type: Database["public"]["Enums"]["program_type"]
           session_id: string
           shift_mode: Database["public"]["Enums"]["shift_mode"]
           start_year: number
@@ -47,6 +48,7 @@ export type Database = {
           is_deleted?: boolean
           max_students?: number
           program_name?: string | null
+          program_type: Database["public"]["Enums"]["program_type"]
           session_id: string
           shift_mode: Database["public"]["Enums"]["shift_mode"]
           start_year: number
@@ -66,6 +68,7 @@ export type Database = {
           is_deleted?: boolean
           max_students?: number
           program_name?: string | null
+          program_type?: Database["public"]["Enums"]["program_type"]
           session_id?: string
           shift_mode?: Database["public"]["Enums"]["shift_mode"]
           start_year?: number
@@ -96,7 +99,10 @@ export type Database = {
           app_version: string | null
           created_at: string
           created_by: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           device_info: string | null
+          is_deleted: boolean
           kind: string | null
           log_id: string
           message: string
@@ -104,6 +110,7 @@ export type Database = {
           platform: string | null
           severity: string
           stack_trace: string | null
+          status: string
           tag: string | null
         }
         Insert: {
@@ -112,7 +119,10 @@ export type Database = {
           app_version?: string | null
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           device_info?: string | null
+          is_deleted?: boolean
           kind?: string | null
           log_id: string
           message: string
@@ -120,6 +130,7 @@ export type Database = {
           platform?: string | null
           severity: string
           stack_trace?: string | null
+          status?: string
           tag?: string | null
         }
         Update: {
@@ -128,7 +139,10 @@ export type Database = {
           app_version?: string | null
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           device_info?: string | null
+          is_deleted?: boolean
           kind?: string | null
           log_id?: string
           message?: string
@@ -136,6 +150,7 @@ export type Database = {
           platform?: string | null
           severity?: string
           stack_trace?: string | null
+          status?: string
           tag?: string | null
         }
         Relationships: []
@@ -364,6 +379,101 @@ export type Database = {
             referencedColumns: ["session_id"]
           },
         ]
+      }
+      college_fee_heads: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          is_deleted: boolean
+          label: string
+          position: number
+          shift: Database["public"]["Enums"]["shift"]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          is_deleted?: boolean
+          label: string
+          position?: number
+          shift: Database["public"]["Enums"]["shift"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          is_deleted?: boolean
+          label?: string
+          position?: number
+          shift?: Database["public"]["Enums"]["shift"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "college_fee_heads_shift_fkey"
+            columns: ["shift"]
+            isOneToOne: false
+            referencedRelation: "college_fees"
+            referencedColumns: ["shift"]
+          },
+        ]
+      }
+      college_fees: {
+        Row: {
+          academic_year: string | null
+          cadence: Database["public"]["Enums"]["fee_cadence"]
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          due_date: string | null
+          is_deleted: boolean
+          payment_note: string | null
+          shift: Database["public"]["Enums"]["shift"]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          academic_year?: string | null
+          cadence: Database["public"]["Enums"]["fee_cadence"]
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          due_date?: string | null
+          is_deleted?: boolean
+          payment_note?: string | null
+          shift: Database["public"]["Enums"]["shift"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          academic_year?: string | null
+          cadence?: Database["public"]["Enums"]["fee_cadence"]
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          due_date?: string | null
+          is_deleted?: boolean
+          payment_note?: string | null
+          shift?: Database["public"]["Enums"]["shift"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
       }
       datesheet_slots: {
         Row: {
@@ -1499,16 +1609,12 @@ export type Database = {
           course_code: string
           created_at: string
           created_by: string | null
-          credit_hours: number
           deleted_at: string | null
           deleted_by: string | null
           is_deleted: boolean
           is_elective: boolean
-          name: string
-          outline: string | null
           semester: number
           session_id: string
-          subject_type: Database["public"]["Enums"]["subject_type"]
           updated_at: string
           updated_by: string | null
         }
@@ -1516,16 +1622,12 @@ export type Database = {
           course_code: string
           created_at?: string
           created_by?: string | null
-          credit_hours?: number
           deleted_at?: string | null
           deleted_by?: string | null
           is_deleted?: boolean
           is_elective?: boolean
-          name: string
-          outline?: string | null
           semester: number
           session_id: string
-          subject_type?: Database["public"]["Enums"]["subject_type"]
           updated_at?: string
           updated_by?: string | null
         }
@@ -1533,20 +1635,23 @@ export type Database = {
           course_code?: string
           created_at?: string
           created_by?: string | null
-          credit_hours?: number
           deleted_at?: string | null
           deleted_by?: string | null
           is_deleted?: boolean
           is_elective?: boolean
-          name?: string
-          outline?: string | null
           semester?: number
           session_id?: string
-          subject_type?: Database["public"]["Enums"]["subject_type"]
           updated_at?: string
           updated_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "session_subjects_course_code_fkey"
+            columns: ["course_code"]
+            isOneToOne: false
+            referencedRelation: "subject_pool"
+            referencedColumns: ["course_code"]
+          },
           {
             foreignKeyName: "session_subjects_session_id_fkey"
             columns: ["session_id"]
@@ -1707,6 +1812,54 @@ export type Database = {
           },
         ]
       }
+      subject_pool: {
+        Row: {
+          course_code: string
+          course_type: Database["public"]["Enums"]["course_category"]
+          created_at: string
+          created_by: string | null
+          credit_hours: number
+          deleted_at: string | null
+          deleted_by: string | null
+          is_deleted: boolean
+          name: string
+          outline: string | null
+          subject_type: Database["public"]["Enums"]["subject_type"]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          course_code: string
+          course_type?: Database["public"]["Enums"]["course_category"]
+          created_at?: string
+          created_by?: string | null
+          credit_hours?: number
+          deleted_at?: string | null
+          deleted_by?: string | null
+          is_deleted?: boolean
+          name: string
+          outline?: string | null
+          subject_type?: Database["public"]["Enums"]["subject_type"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          course_code?: string
+          course_type?: Database["public"]["Enums"]["course_category"]
+          created_at?: string
+          created_by?: string | null
+          credit_hours?: number
+          deleted_at?: string | null
+          deleted_by?: string | null
+          is_deleted?: boolean
+          name?: string
+          outline?: string | null
+          subject_type?: Database["public"]["Enums"]["subject_type"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       teachers: {
         Row: {
           auth_uid: string | null
@@ -1799,6 +1952,8 @@ export type Database = {
       timetable_periods: {
         Row: {
           building: string | null
+          co_teacher_emails: string[]
+          co_teacher_names: string[]
           course_code: string | null
           created_at: string
           created_by: string | null
@@ -1825,6 +1980,8 @@ export type Database = {
         }
         Insert: {
           building?: string | null
+          co_teacher_emails?: string[]
+          co_teacher_names?: string[]
           course_code?: string | null
           created_at?: string
           created_by?: string | null
@@ -1851,6 +2008,8 @@ export type Database = {
         }
         Update: {
           building?: string | null
+          co_teacher_emails?: string[]
+          co_teacher_names?: string[]
           course_code?: string | null
           created_at?: string
           created_by?: string | null
@@ -1915,12 +2074,29 @@ export type Database = {
       }
       bootstrap_admin_email: { Args: never; Returns: string }
       current_email: { Args: never; Returns: string }
+      delete_all_app_logs: { Args: never; Returns: undefined }
+      delete_notification: { Args: { p_id: string }; Returns: undefined }
+      ingest_app_logs: { Args: { p_rows: Json }; Returns: undefined }
       is_active_teacher: { Args: never; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
+      msg_class_label: {
+        Args: {
+          p_semester?: number
+          p_session: string
+          p_shift: Database["public"]["Enums"]["shift"]
+        }
+        Returns: string
+      }
+      msg_session_label: { Args: { p_session: string }; Returns: string }
+      msg_teacher_label: { Args: { p_email: string }; Returns: string }
       my_dept: { Args: never; Returns: string }
       my_roll: { Args: never; Returns: string }
       my_session: { Args: never; Returns: string }
       my_shift: { Args: never; Returns: Database["public"]["Enums"]["shift"] }
+      period_teachers_of: {
+        Args: { p_co: string[]; p_main: string }
+        Returns: string[]
+      }
       record_semester_result: {
         Args: {
           p_cgpa: number
@@ -1973,10 +2149,15 @@ export type Database = {
         Args: { p_roll: string; p_session: string }
         Returns: boolean
       }
+      update_app_log_status: {
+        Args: { p_log_id: string; p_status: string }
+        Returns: undefined
+      }
     }
     Enums: {
       account_status: "ACTIVE" | "DISABLED" | "BANNED"
       attendance_status: "PRESENT" | "ABSENT" | "LEAVE"
+      course_category: "GENERAL" | "MAJOR" | "COMPULSORY" | "INTERDISCIPLINARY"
       enrollment_status:
         | "ACTIVE"
         | "PROMOTED"
@@ -1992,6 +2173,7 @@ export type Database = {
       notif_priority: "NORMAL" | "IMPORTANT" | "URGENT"
       notif_target: "ADMIN" | "TEACHER" | "STUDENT" | "ALL"
       period_type: "LECTURE" | "ZERO" | "BREAK"
+      program_type: "BS" | "MA_REPLACEMENT"
       review_status: "SUBMITTED" | "REVIEWED"
       semester_result: "PROMOTED" | "REPEATED" | "PROBATION" | "PENDING"
       shift: "MORNING" | "EVENING"
@@ -2134,6 +2316,7 @@ export const Constants = {
     Enums: {
       account_status: ["ACTIVE", "DISABLED", "BANNED"],
       attendance_status: ["PRESENT", "ABSENT", "LEAVE"],
+      course_category: ["GENERAL", "MAJOR", "COMPULSORY", "INTERDISCIPLINARY"],
       enrollment_status: [
         "ACTIVE",
         "PROMOTED",
@@ -2150,6 +2333,7 @@ export const Constants = {
       notif_priority: ["NORMAL", "IMPORTANT", "URGENT"],
       notif_target: ["ADMIN", "TEACHER", "STUDENT", "ALL"],
       period_type: ["LECTURE", "ZERO", "BREAK"],
+      program_type: ["BS", "MA_REPLACEMENT"],
       review_status: ["SUBMITTED", "REVIEWED"],
       semester_result: ["PROMOTED", "REPEATED", "PROBATION", "PENDING"],
       shift: ["MORNING", "EVENING"],

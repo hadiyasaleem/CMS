@@ -5,6 +5,7 @@ import compose.icons.tablericons.AlertTriangle
 import compose.icons.tablericons.ChevronDown
 import compose.icons.tablericons.ChevronUp
 import compose.icons.tablericons.Search
+import compose.icons.tablericons.Trash
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -34,6 +35,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -62,15 +64,18 @@ private val LogDateFormat = DateTimeFormatter.ofPattern("dd MMM, HH:mm")
 fun AppLogsWorkspace(
     logs: List<AppLogRecord>,
     loading: Boolean,
+    deleting: Boolean,
     errorMessage: String?,
     onRefresh: () -> Unit,
     onStatusChange: (AppLogRecord, AppLogStatus) -> Unit,
+    onDeleteAll: () -> Unit,
     onClearError: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var query by remember { mutableStateOf("") }
     var appFilter by remember { mutableStateOf<String?>(null) }
     var tab by remember { mutableStateOf(AppLogStatus.NEW) }
+    var confirmingDeleteAll by remember { mutableStateOf(false) }
 
     val apps = remember(logs) { logs.mapNotNull { it.appId }.distinct().sorted() }
     val countsByStatus = remember(logs) { logs.groupingBy { it.status }.eachCount() }
@@ -86,7 +91,13 @@ fun AppLogsWorkspace(
 
     RefreshBox(isRefreshing = loading, onRefresh = onRefresh, modifier = modifier) {
         LazyColumn(Modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            item { AppLogsHero(logs.size) }
+            item {
+                AppLogsHero(
+                    count = logs.size,
+                    onDeleteAll = { confirmingDeleteAll = true },
+                    deleteEnabled = logs.isNotEmpty() && !deleting,
+                )
+            }
 
             item {
                 TabRow(selectedTabIndex = AppLogStatus.entries.indexOf(tab)) {
@@ -138,15 +149,34 @@ fun AppLogsWorkspace(
     if (!errorMessage.isNullOrBlank()) {
         CmsErrorDialog(message = errorMessage, title = "Couldn't refresh app logs", onDismiss = onClearError)
     }
+
+    if (confirmingDeleteAll) {
+        ConfirmDestructiveActionDialog(
+            title = "Clear all app logs?",
+            dependentSummary = "${logs.size} log entr${if (logs.size == 1) "y" else "ies"} will be cleared from this list for every admin.",
+            confirmLabel = if (deleting) "Clearing..." else "Clear all logs",
+            onConfirm = { onDeleteAll(); confirmingDeleteAll = false },
+            onDismiss = { confirmingDeleteAll = false },
+        )
+    }
 }
 
 @Composable
-private fun AppLogsHero(count: Int) {
+private fun AppLogsHero(count: Int, onDeleteAll: () -> Unit, deleteEnabled: Boolean) {
     Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Column(Modifier.padding(20.dp)) {
-            Text("DIAGNOSTICS", color = CmsTheme.colors.onInk.copy(alpha = 0.7f), style = CmsTextStyles.eyebrow)
-            Spacer(Modifier.height(6.dp))
-            Text("App Logs", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("DIAGNOSTICS", color = CmsTheme.colors.onInk.copy(alpha = 0.7f), style = CmsTextStyles.eyebrow)
+                    Spacer(Modifier.height(6.dp))
+                    Text("App Logs", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+                }
+                TextButton(onClick = onDeleteAll, enabled = deleteEnabled) {
+                    Icon(TablerIcons.Trash, contentDescription = null, tint = if (deleteEnabled) CmsTheme.colors.accent else ModMuted)
+                    Spacer(Modifier.width(4.dp))
+                    Text("Clear all", color = if (deleteEnabled) CmsTheme.colors.accent else ModMuted)
+                }
+            }
             Spacer(Modifier.height(4.dp))
             Text("$count unexpected failures recorded across every app", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
         }
