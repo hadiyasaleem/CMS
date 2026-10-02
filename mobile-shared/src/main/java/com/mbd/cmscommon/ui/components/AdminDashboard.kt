@@ -3,16 +3,8 @@ package com.mbd.cmscommon.ui.components
 import compose.icons.TablerIcons
 import compose.icons.tablericons.ArrowRight
 import compose.icons.tablericons.Calendar
-import compose.icons.tablericons.ChevronDown
-import compose.icons.tablericons.ChevronUp
-import compose.icons.tablericons.Clock
-import compose.icons.tablericons.Dashboard
-import compose.icons.tablericons.School
 import compose.icons.tablericons.Speakerphone
 import compose.icons.tablericons.UserCheck
-import compose.icons.tablericons.Users
-import com.mbd.cmscommon.controller.ScopeFilterOptions
-import com.mbd.cmscommon.domain.model.ShiftScope
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
@@ -39,10 +31,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -65,16 +53,6 @@ import com.mbd.cmscommon.ui.theme.ModSuccess
 import com.mbd.cmscommon.ui.theme.ModWarn
 import com.mbd.cmscommon.ui.theme.ModRedTint
 import java.util.Locale
-import kotlin.math.roundToInt
-
-data class DashboardMetric(
-    val label: String,
-    val value: String,
-    val detail: String,
-    val icon: ImageVector,
-    val tint: Color,
-    val container: Color,
-)
 
 data class DashboardActionUi(
     val label: String,
@@ -92,60 +70,7 @@ fun AdminDashboardContent(
     onOpenNotifications: () -> Unit,
     modifier: Modifier = Modifier,
     errorMessage: String? = null,
-    /** The Department -> Session -> Shift filter for the counters; hidden when [filterOptions] is null. */
-    filterScope: ShiftScope = ShiftScope.ALL,
-    filterOptions: ScopeFilterOptions? = null,
-    onFilterScope: (ShiftScope) -> Unit = {},
 ) {
-    val studentsPerTeacher = if (state.teachers > 0) (state.students.toDouble() / state.teachers).roundToInt() else 0
-    val studentsPerSession = if (state.activeSessions > 0) (state.students.toDouble() / state.activeSessions).roundToInt() else 0
-    val sessionsPerDepartment = if (state.departments > 0) (state.activeSessions.toDouble() / state.departments).roundToInt() else 0
-
-    val metrics = listOf(
-        DashboardMetric(
-            "Students",
-            state.students.toString(),
-            if (state.activeSessions > 0) "$studentsPerSession per active session" else "No active sessions",
-            TablerIcons.School,
-            ModInk,
-            ModInk.copy(alpha = 0.08f),
-        ),
-        DashboardMetric(
-            "Teachers",
-            state.teachers.toString(),
-            if (state.teachers > 0) "$studentsPerTeacher students per teacher" else "Faculty directory is empty",
-            TablerIcons.Users,
-            ModSuccess,
-            ModSuccess.copy(alpha = 0.12f),
-        ),
-        DashboardMetric(
-            "Departments",
-            state.departments.toString(),
-            if (state.departments > 0) "$sessionsPerDepartment sessions per department" else "Create the first department",
-            TablerIcons.Dashboard,
-            ModWarn,
-            ModWarn.copy(alpha = 0.14f),
-        ),
-        DashboardMetric(
-            "Active sessions",
-            state.activeSessions.toString(),
-            if (state.activeSessions > 0) "$studentsPerSession students per session" else "No active intakes",
-            TablerIcons.Clock,
-            ModInk,
-            ModInk.copy(alpha = 0.08f),
-        ),
-        DashboardMetric(
-            "Link requests",
-            state.pendingRequests.toString(),
-            if (state.pendingRequests > 0) "Waiting for review" else "Queue is clear",
-            TablerIcons.UserCheck,
-            if (state.pendingRequests > 0) CmsTheme.colors.accent else ModSuccess,
-            if (state.pendingRequests > 0) ModRedTint else ModSuccess.copy(alpha = 0.12f),
-        ),
-    )
-
-    var snapshotExpanded by remember { mutableStateOf(false) }
-
     BoxWithConstraints(modifier.fillMaxSize().background(ModGround)) {
         val wide = maxWidth >= 900.dp
         val contentPadding = if (wide) 32.dp else 16.dp
@@ -169,18 +94,6 @@ fun AdminDashboardContent(
                 ) {
                     Text(errorMessage, modifier = Modifier.padding(16.dp), color = CmsTheme.colors.accent, style = MaterialTheme.typography.bodyMedium)
                 }
-            }
-
-            FoldableDashboardSectionHeading(
-                "College snapshot",
-                expanded = snapshotExpanded,
-                onToggle = { snapshotExpanded = !snapshotExpanded },
-            )
-            if (snapshotExpanded) {
-                if (filterOptions != null) {
-                    ShiftScopeSelector(filterScope, filterOptions.departments, filterOptions.sessions, onFilterScope)
-                }
-                DashboardGrid(metrics, if (wide) 5 else 2) { metric, itemModifier -> DashboardMetricCard(metric, itemModifier) }
             }
 
             DashboardSectionHeading("Needs attention")
@@ -255,22 +168,6 @@ private fun DashboardSectionHeading(title: String) {
 }
 
 @Composable
-private fun FoldableDashboardSectionHeading(title: String, expanded: Boolean, onToggle: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onToggle),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        DashboardSectionHeading(title)
-        Icon(
-            imageVector = if (expanded) TablerIcons.ChevronUp else TablerIcons.ChevronDown,
-            contentDescription = if (expanded) "Collapse" else "Expand",
-            tint = ModMuted,
-        )
-    }
-}
-
-@Composable
 private fun <T> DashboardGrid(items: List<T>, columns: Int, itemContent: @Composable (T, Modifier) -> Unit) {
     val rows = items.chunked(columns)
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -279,27 +176,6 @@ private fun <T> DashboardGrid(items: List<T>, columns: Int, itemContent: @Compos
                 rowItems.forEach { item -> itemContent(item, Modifier.weight(1f)) }
                 repeat(columns - rowItems.size) { Spacer(Modifier.weight(1f)) }
             }
-        }
-    }
-}
-
-@Composable
-private fun DashboardMetricCard(metric: DashboardMetric, modifier: Modifier = Modifier) {
-    CmsCard(modifier) {
-        Column(Modifier.padding(18.dp)) {
-            Box(Modifier.size(40.dp).background(metric.container, RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
-                Icon(metric.icon, contentDescription = null, tint = metric.tint, modifier = Modifier.size(20.dp))
-            }
-            Spacer(Modifier.height(12.dp))
-            Text(metric.value, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-            Text(metric.label.uppercase(Locale.ROOT), color = ModMuted, style = CmsTextStyles.eyebrow)
-            Text(
-                metric.detail,
-                color = metric.tint,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.bodySmall,
-            )
         }
     }
 }

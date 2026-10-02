@@ -22,8 +22,4 @@ class DashboardViewModel @Inject constructor(
         sessionRepository, teacherRepository, departmentRepository, linkRequestRepository, viewModelScope,
     )
     val state = controller.state
-    val filterScope = controller.filterScope
-    val filterOptions = controller.filterOptions
-
-    fun setFilterScope(scope: com.mbd.cmscommon.domain.model.ShiftScope) = controller.setFilterScope(scope)
 }

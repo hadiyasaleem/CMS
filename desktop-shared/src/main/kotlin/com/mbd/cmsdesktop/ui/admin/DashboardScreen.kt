@@ -42,8 +42,6 @@ fun DashboardScreen(
         DashboardController(sessionRepository, teacherRepository, departmentRepository, linkRequestRepository, scope)
     }
     val state by controller.state.collectAsState()
-    val filterScope by controller.filterScope.collectAsState()
-    val filterOptions by controller.filterOptions.collectAsState()
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val actions = listOf(
@@ -63,8 +61,5 @@ fun DashboardScreen(
         onOpenLinkRequests = onOpenLinkRequests,
         onOpenNotifications = onOpenNotifications,
         errorMessage = errorMessage,
-        filterScope = filterScope,
-        filterOptions = filterOptions,
-        onFilterScope = controller::setFilterScope,
     )
 }
