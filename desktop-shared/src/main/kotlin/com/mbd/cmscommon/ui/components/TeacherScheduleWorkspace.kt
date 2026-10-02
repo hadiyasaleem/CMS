@@ -98,6 +98,7 @@ fun TeacherScheduleWorkspace(
         ExportMenuButton(
             onExport = { format -> onExport(masterGridsExport(grids.map { it.grid }, grids.associate { it.grid.title to it.breakSlot }), format) },
             enabled = grids.isNotEmpty(),
+            tint = CmsTheme.colors.onInk,
         )
     }
 

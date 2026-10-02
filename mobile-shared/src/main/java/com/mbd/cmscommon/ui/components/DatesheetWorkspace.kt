@@ -522,7 +522,7 @@ private fun CalendarDatesheetView(
                     DatesheetGridEntry(listOfNotNull(deptCode, "Semester ${sheet.semester}"), sheet, slotsByDatesheet[sheet.id].orEmpty())
                 }.filter { it.slots.isNotEmpty() }
                 onExport(datesheetGridsExport("datesheets_calendar_${LocalDate.now()}", listOf("Datesheets", "All departments"), gridEntries), format)
-            })
+            }, tint = CmsTheme.colors.onInk)
         }
     }
 

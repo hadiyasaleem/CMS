@@ -95,7 +95,7 @@ fun StudentDirectoryWorkspace(
         .sortedWith(compareBy({ it.deptId }, { -it.startYear }))
 
     TopBarActions {
-        ExportMenuButton(onExport = { format -> onExport(buildExport(), format) }, enabled = page.matches.isNotEmpty())
+        ExportMenuButton(onExport = { format -> onExport(buildExport(), format) }, enabled = page.matches.isNotEmpty(), tint = CmsTheme.colors.onInk)
     }
 
     val listState = rememberLazyListState()

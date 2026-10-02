@@ -101,7 +101,7 @@ fun MarksEntryWorkspace(
 
     if (onExport != null && selected != null) {
         TopBarActions {
-            ExportMenuButton(onExport = { format -> onExport(marksSheetExport(selected, examType, roster, scores, absentRolls), format) }, enabled = roster.isNotEmpty())
+            ExportMenuButton(onExport = { format -> onExport(marksSheetExport(selected, examType, roster, scores, absentRolls), format) }, enabled = roster.isNotEmpty(), tint = CmsTheme.colors.onInk)
         }
     }
 

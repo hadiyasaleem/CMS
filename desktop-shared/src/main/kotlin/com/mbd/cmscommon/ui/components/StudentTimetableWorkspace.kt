@@ -85,7 +85,7 @@ fun StudentTimetableWorkspace(
 
     if (snapshot != null) {
         TopBarActions {
-            ExportMenuButton(onExport = { format -> onExport(studentGridTimetableExport(snapshot.periods.map { it.period }), format) }, enabled = snapshot.periods.isNotEmpty())
+            ExportMenuButton(onExport = { format -> onExport(studentGridTimetableExport(snapshot.periods.map { it.period }), format) }, enabled = snapshot.periods.isNotEmpty(), tint = CmsTheme.colors.onInk)
         }
     }
 

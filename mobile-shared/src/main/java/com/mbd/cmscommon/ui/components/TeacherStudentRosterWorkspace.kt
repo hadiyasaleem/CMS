@@ -91,7 +91,7 @@ fun TeacherStudentRosterWorkspace(
 
     if (onExport != null) {
         TopBarActions {
-            ExportMenuButton(onExport = { format -> onExport(myStudentsExport(selected, students, tallies), format) }, enabled = students.isNotEmpty())
+            ExportMenuButton(onExport = { format -> onExport(myStudentsExport(selected, students, tallies), format) }, enabled = students.isNotEmpty(), tint = CmsTheme.colors.onInk)
         }
     }
 
