@@ -2,6 +2,7 @@ package com.mbd.cmsteacher.navigation
 
 import com.mbd.cmscommon.ui.components.RefreshErrorDialog
 import android.app.Activity
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
@@ -11,14 +12,18 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.mbd.cmscommon.ui.components.CmsTopBar
+import com.mbd.cmscommon.ui.components.LocalTopBarActions
 import com.mbd.cmscommon.ui.components.RefreshBox
 import com.mbd.cmscommon.ui.components.SyncProgressDialog
 import com.mbd.cmscommon.ui.state.GlobalRefreshViewModel
@@ -36,6 +41,7 @@ fun TeacherScaffold(onSignedOut: () -> Unit) {
     val refreshVersion by refreshVm.refreshVersion.collectAsState()
     val tasksCompleted by refreshVm.tasksCompleted.collectAsState()
     val unreadCount by badgeVm.unreadCount.collectAsState()
+    val topBarActions = remember { mutableStateOf<@Composable RowScope.() -> Unit>({}) }
 
     if (refreshing) {
         SyncProgressDialog(completed = tasksCompleted, total = refreshVm.totalTasks)
@@ -43,11 +49,13 @@ fun TeacherScaffold(onSignedOut: () -> Unit) {
     val refreshError by refreshVm.refreshError.collectAsState()
     RefreshErrorDialog(message = refreshError, onDismiss = refreshVm::clearRefreshError)
 
+    CompositionLocalProvider(LocalTopBarActions provides topBarActions) {
     Scaffold(
         topBar = {
             CmsTopBar(
-                title = "CMS Teacher",
+                title = teacherScreenTitle(currentRoute),
                 onBack = { if (!navController.popBackStack()) activity?.finish() },
+                actions = topBarActions.value,
                 onRefresh = refreshVm::refresh,
                 isRefreshing = refreshing,
                 onNotifications = {
@@ -98,5 +106,6 @@ fun TeacherScaffold(onSignedOut: () -> Unit) {
                 refreshVersion = refreshVersion,
             )
         }
+    }
     }
 }

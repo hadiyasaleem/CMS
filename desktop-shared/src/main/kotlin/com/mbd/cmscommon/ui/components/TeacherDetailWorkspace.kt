@@ -68,6 +68,16 @@ fun TeacherDetailWorkspace(
     var detailPeriod by remember { mutableStateOf<SessionPeriod?>(null) }
     var dismissedError by remember { mutableStateOf<String?>(null) }
 
+    TopBarActions {
+        ExportMenuButton(
+            onExport = { format ->
+                teacher?.let { onExport(teacherDetailExport(it, department, stats, assignments, grids.map { g -> g.grid }, grids.associate { g -> g.grid.title to g.breakSlot }), format) }
+            },
+            enabled = teacher != null,
+            tint = CmsTheme.colors.onInk,
+        )
+    }
+
     val listState = rememberLazyListState()
     WithVerticalScrollbar(listState) {
     LazyColumn(
@@ -80,10 +90,6 @@ fun TeacherDetailWorkspace(
             TeacherDetailHeader(
                 teacher = teacher,
                 department = department,
-                exportEnabled = teacher != null,
-                onExportAll = { format ->
-                    teacher?.let { onExport(teacherDetailExport(it, department, stats, assignments, grids.map { g -> g.grid }, grids.associate { g -> g.grid.title to g.breakSlot }), format) }
-                },
             )
         }
         if (loading) {
@@ -118,8 +124,6 @@ fun TeacherDetailWorkspace(
 private fun TeacherDetailHeader(
     teacher: Teacher?,
     department: Department?,
-    exportEnabled: Boolean,
-    onExportAll: (ExportFormat) -> Unit,
 ) {
     Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Column(Modifier.padding(20.dp)) {
@@ -134,10 +138,6 @@ private fun TeacherDetailHeader(
                         color = CmsTheme.colors.onInkMuted,
                         style = MaterialTheme.typography.bodyMedium,
                     )
-                }
-                Column(horizontalAlignment = Alignment.End) {
-                    ExportMenuButton(onExport = onExportAll, enabled = exportEnabled, tint = CmsTheme.colors.onInk)
-                    Text("Export all", color = CmsTheme.colors.onInkMuted, style = CmsTextStyles.eyebrow)
                 }
             }
             if (teacher != null) {

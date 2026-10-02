@@ -129,7 +129,6 @@ fun LinkRequestReviewWorkspace(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { LinkRequestHero(requests.size) }
         item { ShiftScopeSelector(filterScope, departmentScopeOptions(departments), sessions, { filterScope = it }) }
 
         if (!errorMessage.isNullOrBlank()) {
@@ -270,19 +269,6 @@ private fun LinkRequestAccessState(access: LinkRequestAccess) {
                 color = ModMuted,
                 style = MaterialTheme.typography.bodyMedium,
             )
-        }
-    }
-}
-
-@Composable
-private fun LinkRequestHero(count: Int) {
-    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Column(Modifier.padding(20.dp)) {
-            Text("ACCOUNT VERIFICATION", color = LinkGold, style = CmsTextStyles.eyebrow)
-            Spacer(Modifier.height(6.dp))
-            Text("Student link review", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(4.dp))
-            Text("$count pending claim(s) awaiting a reviewer", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }

@@ -57,7 +57,6 @@ fun StudentResultsWorkspace(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { StudentResultsHeader() }
 
         if (loading) {
             item { StatusCard("Refreshing your semester results...") }
@@ -86,19 +85,6 @@ fun StudentResultsWorkspace(
         }
 
         item { Spacer(Modifier.height(72.dp)) }
-    }
-}
-
-@Composable
-private fun StudentResultsHeader() {
-    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Column(Modifier.padding(20.dp)) {
-            Text("PROGRESSION", color = ResultsGold, style = CmsTextStyles.eyebrow)
-            Spacer(Modifier.height(6.dp))
-            Text("Results", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(4.dp))
-            Text("Semester GPA, cumulative progress and recorded outcomes", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
-        }
     }
 }
 

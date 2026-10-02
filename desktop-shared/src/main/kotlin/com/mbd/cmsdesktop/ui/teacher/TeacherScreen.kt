@@ -28,3 +28,23 @@ sealed interface TeacherScreen {
     data object Insights : TeacherScreen
     data object Profile : TeacherScreen
 }
+
+/** The top bar's title for this screen: "GGC-MBD" (the CmsTopBar default, unchanged from today)
+ * on a tab root, each screen's own short name everywhere else. */
+fun TeacherScreen.title(): String = when (this) {
+    TeacherScreen.Home, TeacherScreen.Attendance, TeacherScreen.ExamsHub,
+    TeacherScreen.Schedule, TeacherScreen.MenuHub,
+    -> "GGC-MBD"
+    is TeacherScreen.AttendanceHistory -> "Attendance History"
+    is TeacherScreen.AttendanceStudentSummary -> "Student Attendance"
+    TeacherScreen.Marks -> "Marks Entry"
+    TeacherScreen.ExamPaper -> "Submit Exam Paper"
+    TeacherScreen.SemesterResults -> "Semester Results"
+    TeacherScreen.Notifications -> "Notifications"
+    TeacherScreen.LinkRequests -> "Link Requests"
+    TeacherScreen.MyStudents -> "My Students"
+    TeacherScreen.Calendar -> "Calendar"
+    TeacherScreen.Datesheets -> "Datesheets"
+    TeacherScreen.Insights -> "Insights"
+    TeacherScreen.Profile -> "Profile"
+}

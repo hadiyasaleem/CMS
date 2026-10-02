@@ -63,7 +63,6 @@ import java.util.Locale
 
 private val ScheduleCanvas = ModGround
 private val ScheduleBorder = ModTrack
-private val ScheduleGold = ModWarn
 private val ScheduleDays = listOf(
     DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
     DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY,
@@ -93,20 +92,19 @@ fun TeacherScheduleWorkspace(
 
     var detailPeriod by remember { mutableStateOf<SessionPeriod?>(null) }
 
+    TopBarActions {
+        ExportMenuButton(
+            onExport = { format -> onExport(masterGridsExport(grids.map { it.grid }, grids.associate { it.grid.title to it.breakSlot }), format) },
+            enabled = grids.isNotEmpty(),
+            tint = CmsTheme.colors.onInk,
+        )
+    }
+
     LazyColumn(
         modifier = modifier.fillMaxWidth().background(ScheduleCanvas),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item {
-            ScheduleHeader(
-                heroPainter,
-                teachingPeriods.size,
-                onExport = onExport,
-                build = { masterGridsExport(grids.map { it.grid }, grids.associate { it.grid.title to it.breakSlot }) },
-                exportEnabled = grids.isNotEmpty(),
-            )
-        }
         item { ScheduleMetrics(teachingPeriods.size, classDays, totalMinutes, rooms, busiest) }
 
         if (grids.isEmpty()) {
@@ -137,41 +135,6 @@ fun TeacherScheduleWorkspace(
 
     if (outcome is Outcome.Error) {
         CmsErrorDialog(message = outcome.message, onDismiss = onClearError, title = "Couldn't load schedule", onRetry = onRefresh)
-    }
-}
-
-@Composable
-private fun ScheduleHeader(
-    heroPainter: Painter,
-    total: Int,
-    onExport: (ExportDocument, ExportFormat) -> Unit,
-    build: () -> ExportDocument,
-    exportEnabled: Boolean,
-) {
-    Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Box(Modifier.fillMaxSize()) {
-            Image(
-                painter = heroPainter,
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                alignment = Alignment.CenterEnd,
-                contentScale = ContentScale.Crop,
-                alpha = 0.35f,
-            )
-            Column(Modifier.align(Alignment.CenterStart).padding(20.dp)) {
-                Text("FACULTY WORKSPACE", color = ScheduleGold, style = CmsTextStyles.eyebrow)
-                Spacer(Modifier.height(6.dp))
-                Text("My schedule", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                Spacer(Modifier.height(4.dp))
-                Text("$total period(s) across your assigned sessions", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
-            }
-            ExportMenuButton(
-                onExport = { format -> onExport(build(), format) },
-                enabled = exportEnabled,
-                tint = CmsTheme.colors.onInk,
-                modifier = Modifier.align(Alignment.TopEnd).padding(8.dp),
-            )
-        }
     }
 }
 

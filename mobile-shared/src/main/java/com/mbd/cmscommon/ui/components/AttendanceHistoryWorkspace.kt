@@ -134,13 +134,17 @@ fun AttendanceHistoryWorkspace(
     val datesWithMarks = remember(marks) { marks.values.flatMap { it.keys }.toSet() }
     val visible = filterRegisterStudents(summary.students, query, filter)
 
+    TopBarActions {
+        ExportMenuButton(onExport = onExport, enabled = roster.isNotEmpty(), tint = CmsTheme.colors.onInk)
+    }
+
     LazyColumn(
         modifier = modifier.fillMaxWidth().background(HistoryCanvas),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
-            HistoryHeader(courseCode, monthLabel, onPreviousMonth, onNextMonth, roster.isNotEmpty(), onExport)
+            HistoryHeader(courseCode, monthLabel, onPreviousMonth, onNextMonth)
         }
         if (sentNotice) {
             item {
@@ -267,8 +271,6 @@ private fun HistoryHeader(
     month: String,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
-    canExport: Boolean,
-    onExport: (ExportFormat) -> Unit,
 ) {
     Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Column(Modifier.padding(20.dp)) {
@@ -280,7 +282,6 @@ private fun HistoryHeader(
                 TextButton(onClick = onPrevious) { Text("‹ Prev", color = CmsTheme.colors.onInk) }
                 Text(month, modifier = Modifier.weight(1f), color = CmsTheme.colors.onInk, style = MaterialTheme.typography.titleMedium)
                 TextButton(onClick = onNext) { Text("Next ›", color = CmsTheme.colors.onInk) }
-                ExportMenuButton(onExport = onExport, enabled = canExport, tint = HistoryGold)
             }
         }
     }

@@ -70,3 +70,41 @@ object AdminRoutes {
     fun studentRecord(sessionId: String, roll: String) = "student_record/$sessionId/$roll"
     fun teacherDetail(teacherId: String) = "teacher/$teacherId"
 }
+
+/** The top bar's title for the current route: "GGC-MBD" on a tab root, each screen's own short
+ * name everywhere else. [route] is the route PATTERN from NavController (with `{placeholders}`),
+ * which matches the constants above directly. */
+fun adminScreenTitle(route: String?): String = when (route) {
+    AdminTab.Dashboard.route, AdminTab.Academics.route, AdminTab.People.route,
+    AdminTab.Records.route, AdminTab.More.route,
+    -> "GGC-MBD"
+    AdminLeaf.ADMINISTRATORS -> "Administrators"
+    AdminLeaf.TEACHERS -> "Teachers"
+    AdminLeaf.LINK_REQUESTS -> "Link Requests"
+    AdminLeaf.MARK_EDIT_REQUESTS -> "Edit Requests"
+    AdminLeaf.SUBMITTED_PAPERS -> "Submitted Papers"
+    AdminLeaf.NOTIFICATIONS -> "Notifications"
+    AdminLeaf.APP_LOGS -> "App Logs"
+    AdminLeaf.PROFILE -> "Profile"
+    AdminLeaf.MASTER_TIMETABLE -> "Master Timetable"
+    AdminLeaf.BUILDINGS_ROOMS -> "Buildings & Rooms"
+    AdminLeaf.FEE_STRUCTURES -> "Fee Structures"
+    AdminLeaf.ATTENDANCE_RECORDS -> "Attendance Records"
+    AdminLeaf.CALENDAR -> "Calendar"
+    AdminLeaf.DATESHEETS -> "Master Datesheet"
+    AdminLeaf.INSIGHTS -> "Insights"
+    AdminLeaf.SEMESTER_RESULTS -> "Semester Results"
+    AdminLeaf.STUDENT_DIRECTORY -> "Students"
+    AdminRoutes.DEPT_DETAIL -> "Department"
+    AdminRoutes.SESSION_DETAIL -> "Session"
+    AdminRoutes.SEMESTER_SUBJECTS -> "Curriculum"
+    AdminRoutes.SESSION_STUDENTS -> "Session Students"
+    AdminRoutes.STUDENT_PROFILE -> "Student Profile"
+    AdminRoutes.SESSION_TIMETABLE -> "Timetable"
+    AdminRoutes.SESSION_DATESHEET -> "Datesheet"
+    AdminRoutes.SESSION_FEES, AdminRoutes.SESSION_FEES_SHIFT -> "Fee Structure"
+    AdminRoutes.COLLEGE_FEES -> "College Fees"
+    AdminRoutes.STUDENT_RECORD -> "Student Record"
+    AdminRoutes.TEACHER_DETAIL -> "Teacher Profile"
+    else -> "GGC-MBD"
+}

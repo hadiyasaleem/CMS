@@ -90,7 +90,6 @@ fun TeacherStudentRosterWorkspace(
     }
 
     LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { TeacherRosterHero(selected, students.size) }
         syncError?.let { message -> item { CmsNotice(message = message) } }
         if (onExport != null) {
             item { ExportBar(onExport, build = { myStudentsExport(selected, students, tallies) }, enabled = students.isNotEmpty()) }
@@ -131,24 +130,6 @@ fun TeacherStudentRosterWorkspace(
         item { Spacer(Modifier.height(72.dp)) }
     }
 }
-
-@Composable
-private fun TeacherRosterHero(selected: ResolvedAssignment?, count: Int) {
-    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Column(Modifier.padding(20.dp)) {
-            Text("FACULTY ROSTER", color = RosterGold, style = CmsTextStyles.eyebrow)
-            Spacer(Modifier.height(6.dp))
-            Text("My Students", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(4.dp))
-            Text(
-                selected?.let { "${it.subjectLabel} · ${it.sessionLabel} · $count students" } ?: "All classes · $count students",
-                color = CmsTheme.colors.onInkMuted,
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        }
-    }
-}
-
 
 @Composable
 private fun TeacherStudentCard(student: SessionStudent, tally: AttendanceTally?) {

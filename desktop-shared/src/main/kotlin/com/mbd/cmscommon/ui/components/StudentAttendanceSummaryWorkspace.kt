@@ -65,6 +65,10 @@ fun StudentAttendanceSummaryWorkspace(
     onExport: (ExportFormat) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    TopBarActions {
+        ExportMenuButton(onExport = onExport, enabled = summary != null && !loading, tint = CmsTheme.colors.onInk)
+    }
+
     val listState = rememberLazyListState()
     WithVerticalScrollbar(listState) {
     LazyColumn(
@@ -73,7 +77,7 @@ fun StudentAttendanceSummaryWorkspace(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { SummaryHero(student?.name ?: "Roll $rollNumber", courseCode, onBack, canExport = summary != null && !loading, onExport = onExport) }
+        item { SummaryHero(student?.name ?: "Roll $rollNumber", courseCode) }
         if (!errorMessage.isNullOrBlank()) {
             item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry, onDismiss = onClearError) }
         }
@@ -97,14 +101,9 @@ fun StudentAttendanceSummaryWorkspace(
 }
 
 @Composable
-private fun SummaryHero(name: String, courseCode: String, onBack: () -> Unit, canExport: Boolean, onExport: (ExportFormat) -> Unit) {
+private fun SummaryHero(name: String, courseCode: String) {
     Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Column(Modifier.padding(start = 8.dp, end = 20.dp, top = 8.dp, bottom = 20.dp)) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                TextButton(onClick = onBack) { Text("‹ Register", color = CmsTheme.colors.onInk) }
-                Spacer(Modifier.weight(1f))
-                ExportMenuButton(onExport = onExport, enabled = canExport, tint = ModWarn)
-            }
             Column(Modifier.padding(start = 12.dp)) {
                 Text("TERM ATTENDANCE · $courseCode", color = ModWarn, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))

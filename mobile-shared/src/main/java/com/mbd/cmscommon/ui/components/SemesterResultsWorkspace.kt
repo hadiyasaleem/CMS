@@ -102,7 +102,6 @@ fun SemesterResultsWorkspace(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { ResultsHeader(classLabel, semester, averageGpa) }
         if (onExport != null && sessionId != null) {
             item {
                 ExportBar(
@@ -156,19 +155,6 @@ fun SemesterResultsWorkspace(
                 editing = null
             },
         )
-    }
-}
-
-@Composable
-private fun ResultsHeader(classLabel: String, semester: Int, averageGpa: Double?) {
-    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Column(Modifier.padding(20.dp)) {
-            Text("ACADEMIC OUTCOMES", color = ResultGold, style = CmsTextStyles.eyebrow)
-            Spacer(Modifier.height(6.dp))
-            Text("Semester results", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(4.dp))
-            Text("$classLabel · Semester $semester" + (averageGpa?.let { " · Avg GPA %.2f".format(it) } ?: ""), color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
-        }
     }
 }
 

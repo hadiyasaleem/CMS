@@ -2,6 +2,7 @@ package com.mbd.cmscommon.ui.components
 
 import compose.icons.TablerIcons
 import compose.icons.tablericons.DotsVertical
+import compose.icons.tablericons.Upload
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.controller.addStudentError
 import com.mbd.cmscommon.controller.defaultShiftForNewStudent
@@ -113,18 +114,14 @@ fun StudentRosterWorkspace(
         .filter { query.isBlank() || it.name.contains(query, ignoreCase = true) || it.rollNumber.contains(query, ignoreCase = true) }
         .sortedBy { it.rollNumber }
 
+    TopBarActions {
+        IconButton(onClick = onPickImportFile, enabled = !importing) {
+            Icon(TablerIcons.Upload, contentDescription = "Import file", tint = CmsTheme.colors.onInk)
+        }
+    }
+
     Box(modifier.fillMaxSize()) {
     CardGrid(Modifier.fillMaxWidth(), columns = 3) {
-        fullSpanItem {
-            RosterHero(
-                session = session,
-                studentCount = students.size,
-                maxStudents = maxStudents,
-                importing = importing,
-                onImport = onPickImportFile,
-            )
-        }
-
         if (!errorMessage.isNullOrBlank()) {
             fullSpanItem { CmsNotice(errorMessage, tone = NoticeTone.Error, onDismiss = onClearError) }
         }
@@ -201,31 +198,6 @@ fun StudentRosterWorkspace(
             onConfirm = { onDeleteStudent(student); pendingDelete = null },
             onDismiss = { pendingDelete = null },
         )
-    }
-}
-
-@Composable
-private fun RosterHero(
-    session: AcademicSession?,
-    studentCount: Int,
-    maxStudents: Int,
-    importing: Boolean,
-    onImport: () -> Unit,
-) {
-    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Column(Modifier.padding(20.dp)) {
-            Text("CLASS ROSTER", color = RosterGold, style = CmsTextStyles.eyebrow)
-            Spacer(Modifier.height(6.dp))
-            Text("Session students", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(4.dp))
-            Text(
-                "${session?.label ?: "Session"} · $studentCount" + (if (maxStudents > 0) " / $maxStudents enrolled" else " enrolled"),
-                color = CmsTheme.colors.onInkMuted,
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            Spacer(Modifier.height(8.dp))
-            TextButton(onClick = onImport, enabled = !importing) { Text(if (importing) "Importing" else "Import file", color = CmsTheme.colors.onInk) }
-        }
     }
 }
 

@@ -32,5 +32,17 @@ sealed class StudentDestination(
 
     companion object {
         val bottomNavItems = listOf(Home, Attendance, ExamsHub, Timetable, More)
+
+        val entries = listOf(
+            Home, Attendance, ExamsHub, Timetable, More, Marks, Results, Events, Datesheets, Fees,
+            Notifications, Profile,
+        )
     }
+}
+
+/** The top bar's title for the current route: "CMS Student" on a tab root, each screen's own
+ * short name everywhere else. [route] is the route PATTERN from NavController. */
+fun studentScreenTitle(route: String?): String {
+    val destination = StudentDestination.entries.firstOrNull { it.route == route } ?: return "CMS Student"
+    return if (destination in StudentDestination.bottomNavItems) "CMS Student" else destination.label
 }

@@ -105,7 +105,6 @@ fun NotificationControllerWorkspace(controller: NotificationsController, modifie
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { NotificationHero(controller.viewerRole, inbox.size) }
         if (showScopeFilter) {
             item { ShiftScopeSelector(filterScope, filterDepartments, publishSessions, { filterScope = it }) }
         }
@@ -180,19 +179,6 @@ fun NotificationControllerWorkspace(controller: NotificationsController, modifie
             onConfirm = { controller.delete(notification); pendingDelete = null },
             onDismiss = { pendingDelete = null },
         )
-    }
-}
-
-@Composable
-private fun NotificationHero(viewerRole: NotificationTargetRole, inboxCount: Int) {
-    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Column(Modifier.padding(20.dp)) {
-            Text("ACCOUNT & COMMUNICATIONS", color = NoticeGold, style = CmsTextStyles.eyebrow)
-            Spacer(Modifier.height(6.dp))
-            Text("Notifications", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(4.dp))
-            Text("$inboxCount notice(s) for ${viewerRole.name.lowercase().replaceFirstChar { it.uppercase() }}s", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
-        }
     }
 }
 

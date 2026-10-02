@@ -100,7 +100,6 @@ fun ExamPaperSubmissionWorkspace(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { PaperHeader(slots.size, submittedCount) }
         if (filterOptions.sessions.isNotEmpty()) {
             item { ShiftScopeSelector(filterScope, filterOptions.departments, filterOptions.sessions, { filterScope = it }) }
         }
@@ -159,23 +158,6 @@ fun ExamPaperSubmissionWorkspace(
             onConfirm = { onDelete(submission.submissionId); deleteTarget = null; onSelectSlot(null) },
             onDismiss = { deleteTarget = null },
         )
-    }
-}
-
-@Composable
-private fun PaperHeader(total: Int, submitted: Int) {
-    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Column(Modifier.padding(20.dp)) {
-            Text("ASSESSMENT WORKSPACE", color = PaperGold, style = CmsTextStyles.eyebrow)
-            Spacer(Modifier.height(6.dp))
-            Text("Exam papers", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(4.dp))
-            Text(
-                if (total == 0) "No exam slots yet" else "$submitted of $total papers submitted",
-                color = CmsTheme.colors.onInkMuted,
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        }
     }
 }
 

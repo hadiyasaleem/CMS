@@ -197,7 +197,6 @@ fun MarkEditRequestReviewWorkspace(
     val listState = rememberLazyListState()
     WithVerticalScrollbar(listState) {
     LazyColumn(modifier.fillMaxWidth(), state = listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { MarkRequestHero(requests.size + attendanceRequests.size) }
         item { ShiftScopeSelector(filterScope, departmentScopeOptions(departments), sessions, { filterScope = it }) }
 
         if (!errorMessage.isNullOrBlank()) {
@@ -372,19 +371,6 @@ fun MarkEditRequestReviewWorkspace(
             confirmButton = { TextButton(onClick = { onReject(request); rejectionTarget = null }) { Text("Reject") } },
             dismissButton = { TextButton(onClick = { rejectionTarget = null }) { Text("Cancel") } },
         )
-    }
-}
-
-@Composable
-private fun MarkRequestHero(count: Int) {
-    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Column(Modifier.padding(20.dp)) {
-            Text("ASSESSMENT CONTROL", color = MarkAmber, style = CmsTextStyles.eyebrow)
-            Spacer(Modifier.height(6.dp))
-            Text("Mark & Attendance Edit Requests", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(4.dp))
-            Text("$count in the review queue", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
-        }
     }
 }
 

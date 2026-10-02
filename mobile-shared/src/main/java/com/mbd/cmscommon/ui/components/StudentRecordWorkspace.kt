@@ -58,12 +58,19 @@ fun StudentRecordWorkspace(
     onExport: (ExportDocument, ExportFormat) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    TopBarActions {
+        if (record != null) {
+            TextButton(onClick = onEditProfile) { Text("Edit profile", color = CmsTheme.colors.onInk) }
+            ExportMenuButton(onExport = { format -> onExport(studentRecordExport(record), format) }, tint = CmsTheme.colors.onInk)
+        }
+    }
+
     LazyColumn(
         modifier = modifier.fillMaxWidth().background(ModGround),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { RecordHero(record, rollNumber, onBack, onEditProfile, onExport) }
+        item { RecordHero(record, rollNumber) }
         if (!errorMessage.isNullOrBlank()) {
             item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry, onDismiss = onClearError) }
         }
@@ -83,19 +90,11 @@ fun StudentRecordWorkspace(
 }
 
 @Composable
-private fun RecordHero(record: StudentRecord?, rollNumber: String, onBack: () -> Unit, onEditProfile: () -> Unit, onExport: (ExportDocument, ExportFormat) -> Unit) {
+private fun RecordHero(record: StudentRecord?, rollNumber: String) {
     val p = record?.profile
     Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Column(Modifier.fillMaxWidth().padding(start = 8.dp, end = 12.dp, top = 8.dp, bottom = 20.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                TextButton(onClick = onBack) { Text("‹ Students", color = CmsTheme.colors.onInk) }
-                Spacer(Modifier.weight(1f))
-                if (record != null) {
-                    TextButton(onClick = onEditProfile) { Text("Edit profile", color = CmsTheme.colors.onInk) }
-                    ExportMenuButton(onExport = { format -> onExport(studentRecordExport(record), format) }, tint = ModWarn)
-                }
-            }
-            Column(Modifier.padding(start = 12.dp)) {
+            Column(Modifier.padding(start = 12.dp, top = 8.dp)) {
                 Text("STUDENT RECORD", color = ModWarn, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
                 Text(p?.name ?: "Roll $rollNumber", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)

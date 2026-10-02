@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -42,6 +43,10 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -67,12 +72,26 @@ fun AvatarCircle(name: String, modifier: Modifier = Modifier, size: Int = 36) {
     }
 }
 
+/** Set by each app shell; lets a screen publish its own top-bar action(s) via [TopBarActions]
+ * without threading an `actions` parameter through every screen/ViewModel signature. */
+val LocalTopBarActions = staticCompositionLocalOf<MutableState<@Composable RowScope.() -> Unit>?> { null }
+
+/** Call once near the top of a screen's composable to show action(s) in the top bar while that
+ * screen is on screen; automatically cleared when the screen leaves composition. */
+@Composable
+fun TopBarActions(content: @Composable RowScope.() -> Unit) {
+    val slot = LocalTopBarActions.current ?: return
+    DisposableEffect(Unit) { onDispose { slot.value = {} } }
+    SideEffect { slot.value = content }
+}
+
 @Composable
 fun CmsTopBar(
     modifier: Modifier = Modifier,
     title: String = "GGC-MBD",
     avatarName: String? = null,
     onBack: (() -> Unit)? = null,
+    actions: @Composable RowScope.() -> Unit = {},
     onRefresh: (() -> Unit)? = null,
     isRefreshing: Boolean = false,
     onNotifications: (() -> Unit)? = null,
@@ -114,6 +133,8 @@ fun CmsTopBar(
                 color = if (goldWordmark) CmsTheme.colors.gold else CmsTheme.colors.onInk,
                 style = MaterialTheme.typography.titleMedium,
             )
+
+            actions()
 
             if (onRefresh != null) {
                 IconButton(onClick = onRefresh, modifier = Modifier.size(40.dp), enabled = !isRefreshing) {

@@ -116,7 +116,6 @@ fun MarkAttendanceWorkspace(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { RegisterHeader(heroPainter) }
         item { TeacherClassPicker(assignments, selected, onSelect) }
         item { RegisterSummary(summary, locked) }
         item {
@@ -182,30 +181,6 @@ fun MarkAttendanceWorkspace(
         )
     }
 }
-
-@Composable
-private fun RegisterHeader(heroPainter: Painter) {
-    Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Box(Modifier.fillMaxSize()) {
-            Image(
-                painter = heroPainter,
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                alignment = Alignment.CenterEnd,
-                contentScale = ContentScale.Crop,
-                alpha = 0.35f,
-            )
-            Column(Modifier.align(Alignment.CenterStart).padding(20.dp)) {
-                Text("ATTENDANCE REGISTRY", color = RegisterGold, style = CmsTextStyles.eyebrow)
-                Spacer(Modifier.height(6.dp))
-                Text("Mark Attendance", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                Spacer(Modifier.height(4.dp))
-                Text(LocalDate.now().format(RegisterDateFormat), color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
-            }
-        }
-    }
-}
-
 
 /** One optional filter: "All" (null) or one of [options]. */
 

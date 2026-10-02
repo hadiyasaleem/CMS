@@ -1,5 +1,7 @@
 package com.mbd.cmscommon.ui.components
 
+import compose.icons.TablerIcons
+import compose.icons.tablericons.Edit
 import androidx.compose.material3.Checkbox
 import com.mbd.cmscommon.controller.capacityError
 import com.mbd.cmscommon.controller.capacityForShiftSelection
@@ -21,6 +23,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -78,6 +82,12 @@ fun DepartmentDetailWorkspace(
     val filtered = snapshot.sessions.matchingQuery()
     val graduatedSessions = sessions.filter { !it.isActive }.matchingQuery()
 
+    TopBarActions {
+        IconButton(onClick = { showEditDepartment = true }) {
+            Icon(TablerIcons.Edit, contentDescription = "Edit department", tint = CmsTheme.colors.onInk)
+        }
+    }
+
     Box(modifier.fillMaxSize()) {
         CardGrid(Modifier.fillMaxWidth(), columns = 3) {
             fullSpanItem {
@@ -85,7 +95,6 @@ fun DepartmentDetailWorkspace(
                     department = department,
                     fallbackName = fallbackName,
                     hasHod = !department?.hodEmail.isNullOrBlank(),
-                    onEdit = { showEditDepartment = true },
                 )
             }
 
@@ -168,7 +177,7 @@ fun DepartmentDetailWorkspace(
 }
 
 @Composable
-private fun DepartmentIdentityCard(department: Department?, fallbackName: String, hasHod: Boolean, onEdit: () -> Unit) {
+private fun DepartmentIdentityCard(department: Department?, fallbackName: String, hasHod: Boolean) {
     Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
         Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
@@ -181,7 +190,6 @@ private fun DepartmentIdentityCard(department: Department?, fallbackName: String
                 Spacer(Modifier.height(6.dp))
                 StatusBadge(if (hasHod) "HOD ASSIGNED" else "HOD NOT ASSIGNED", if (hasHod) BadgeTone.Success else BadgeTone.Warning)
             }
-            TextButton(onClick = onEdit) { Text("Edit", color = CmsTheme.colors.onInk) }
         }
     }
 }

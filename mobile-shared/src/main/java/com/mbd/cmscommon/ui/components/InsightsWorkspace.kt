@@ -146,7 +146,6 @@ fun InsightsWorkspace(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { InsightsHeader(viewer, scope) }
         if (onExport != null) {
             item {
                 ExportBar(
@@ -224,25 +223,6 @@ fun InsightsWorkspace(
         }
 
         item { Spacer(Modifier.height(72.dp)) }
-    }
-}
-
-@Composable
-private fun InsightsHeader(viewer: InsightsViewer, scope: TeacherInsightsScope?) {
-    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Column(Modifier.padding(20.dp)) {
-            Text(if (viewer == InsightsViewer.ADMIN) "INSTITUTIONAL INTELLIGENCE" else "MY CLASS INTELLIGENCE", color = InsightsGold, style = CmsTextStyles.eyebrow)
-            Spacer(Modifier.height(6.dp))
-            Text("Academic Insights", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-            if (viewer == InsightsViewer.TEACHER && scope != null) {
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    "Teaching ${scope.assignedSessions} session(s) · ${scope.assignedClasses} class(es)",
-                    color = CmsTheme.colors.onInk.copy(alpha = 0.7f),
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-        }
     }
 }
 

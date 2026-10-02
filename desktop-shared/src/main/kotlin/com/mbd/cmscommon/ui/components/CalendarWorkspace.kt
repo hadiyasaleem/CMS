@@ -111,7 +111,6 @@ fun CalendarWorkspace(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { CalendarHeader() }
         if (viewer.role == CalendarViewerRole.ADMIN) {
             item { ShiftScopeSelector(filterScope, departmentScopeOptions(departments), sessions, { filterScope = it }) }
         }
@@ -183,20 +182,6 @@ fun CalendarWorkspace(
             onConfirm = { onDelete(event.id); pendingDelete = null; selectedDate = null },
             onDismiss = { pendingDelete = null },
         )
-    }
-}
-
-@Composable
-private fun CalendarHeader() {
-    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Column(Modifier.padding(20.dp)) {
-            Text("College calendar", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-            Text(
-                "Holidays, activities, exams and deadlines in one timeline",
-                color = CmsTheme.colors.onInkMuted,
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        }
     }
 }
 

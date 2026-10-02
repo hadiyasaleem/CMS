@@ -72,7 +72,6 @@ import java.time.format.TextStyle
 import java.util.Locale
 
 private val MasterCanvas = ModGround
-private val MasterGold = ModWarn
 
 @Composable
 fun MasterTimetableWorkspace(
@@ -110,6 +109,10 @@ fun MasterTimetableWorkspace(
     var pendingByGrid by remember { mutableStateOf<Map<String, Map<Pair<String, String>, Pair<String, String>>>>(emptyMap()) }
     val anyFilterActive = selectedSemester != null || selectedShift != null || selectedDeptId != null || selectedProgramType != null
 
+    TopBarActions {
+        ExportMenuButton(onExport = { format -> onExport(masterGridsExport(grids), format) }, enabled = grids.isNotEmpty(), tint = CmsTheme.colors.onInk)
+    }
+
     val listState = rememberLazyListState()
     WithVerticalScrollbar(listState) {
     LazyColumn( state = listState,
@@ -117,14 +120,6 @@ fun MasterTimetableWorkspace(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item {
-            MasterHeader(
-                onExport = onExport,
-                build = { masterGridsExport(grids) },
-                exportEnabled = grids.isNotEmpty(),
-            )
-        }
-
         item {
             MasterFilterBar(
                 departments = departments,
@@ -225,24 +220,6 @@ fun MasterTimetableWorkspace(
             onDismiss = { dismissedError = errorMessage },
             onRetry = { dismissedError = null; onRetry() },
         )
-    }
-}
-
-@Composable
-private fun MasterHeader(onExport: (ExportDocument, ExportFormat) -> Unit, build: () -> ExportDocument, exportEnabled: Boolean) {
-    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Column(Modifier.padding(20.dp)) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Column(Modifier.weight(1f)) {
-                    Text("COLLEGE-WIDE SCHEDULE", color = MasterGold, style = CmsTextStyles.eyebrow)
-                    Spacer(Modifier.height(6.dp))
-                    Text("Master Timetable", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                }
-                ExportMenuButton(onExport = { format -> onExport(build(), format) }, enabled = exportEnabled, tint = CmsTheme.colors.onInk)
-            }
-            Spacer(Modifier.height(4.dp))
-            Text("Every semester's grid, titled like the printed timetables. Filter by semester, shift, or department below.", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
-        }
     }
 }
 
