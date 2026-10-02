@@ -1,9 +1,5 @@
-package com.mbd.cmsdesktop.ui.shared
+package com.mbd.cmsdesktop.ui.admin
 
-import com.mbd.cmscommon.util.rethrowCancellation
-import com.mbd.cmscommon.util.FailureSummary
-import com.mbd.cmscommon.controller.observeShiftOf
-import com.mbd.cmscommon.controller.studentDatesheet
 import com.mbd.cmsdesktop.platform.rememberDocumentExport
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -15,8 +11,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import com.mbd.cmscommon.controller.DatesheetBrowseController
 import com.mbd.cmscommon.controller.DatesheetEditorController
-import com.mbd.cmscommon.domain.model.Datesheet
 import com.mbd.cmscommon.domain.model.DatesheetViewerContext
+import com.mbd.cmscommon.domain.model.DatesheetViewerRole
 import com.mbd.cmscommon.domain.model.Department
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.BuildingRepository
@@ -27,17 +23,16 @@ import com.mbd.cmscommon.domain.repository.RoomRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
 import com.mbd.cmscommon.ui.components.DatesheetDetailData
 import com.mbd.cmscommon.ui.components.DatesheetWorkspace
-import com.mbd.cmscommon.ui.components.StudentDatesheetWorkspace
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
-/**
- * Admin/teacher Datesheets screen: builds its own [DatesheetBrowseController] for the
- * department/session/semester filters and grid views, and a [DatesheetEditorController] scoped to
- * whichever datesheet is currently open.
- */
+/** One session's own Morning/Evening datesheet(s) -- reached from Session Detail -> Datesheet,
+ * the same relationship Session Detail -> Timetable has to Records -> Master Timetable. */
 @Composable
-fun DatesheetsScreen(
+fun SessionDatesheetScreen(
+    sessionId: String,
     datesheetRepository: DatesheetRepository,
     sessionRepository: AcademicSessionRepository,
     departmentRepository: DepartmentRepository,
@@ -45,14 +40,21 @@ fun DatesheetsScreen(
     teacherRepository: TeacherRepository,
     buildingRepository: BuildingRepository,
     roomRepository: RoomRepository,
-    viewer: DatesheetViewerContext,
     createdBy: String,
 ) {
     val scope = rememberCoroutineScope()
     val browseController = remember(datesheetRepository) {
         DatesheetBrowseController(datesheetRepository, sessionRepository, departmentRepository, scope)
     }
-    LaunchedEffect(browseController) { browseController.refresh() }
+    LaunchedEffect(browseController) {
+        browseController.refresh()
+        val session = browseController.sessions
+            .map { list -> list.firstOrNull { it.sessionId == sessionId } }
+            .filterNotNull()
+            .first()
+        browseController.selectDepartment(session.deptId)
+        browseController.selectStartYear(session.startYear)
+    }
 
     var openDatesheetId by remember { mutableStateOf<String?>(null) }
     val editorController = openDatesheetId?.let { id ->
@@ -75,14 +77,14 @@ fun DatesheetsScreen(
     val buildings by buildingRepository.observeActiveBuildings().collectAsState(initial = emptyList())
     val rooms by roomRepository.observeActiveRooms().collectAsState(initial = emptyList())
 
-    val detail: DatesheetDetailData? = editorController?.let { collectDatesheetDetail(it, departments) }
-    val detailBusy = editorController?.let { collectBusy(it) } ?: false
+    val detail: DatesheetDetailData? = editorController?.let { collectSessionDatesheetDetail(it, departments) }
+    val detailBusy = editorController?.let { collectSessionDatesheetBusy(it) } ?: false
     val detailError = editorController?.error?.collectAsState()?.value
 
     DatesheetWorkspace(
 
         onExport = rememberDocumentExport(),
-        viewer = viewer,
+        viewer = DatesheetViewerContext(DatesheetViewerRole.ADMIN, canManage = true),
         departments = departments,
         sessions = sessions,
         datesheets = datesheets,
@@ -122,11 +124,12 @@ fun DatesheetsScreen(
         onSyncMissingSubjects = { editorController?.syncMissingSubjects() },
         onRemovePaper = { slotId -> editorController?.removePaper(slotId) },
         onUpdatePaper = { slot -> editorController?.updatePaper(slot) },
+        lockedSessionId = sessionId,
     )
 }
 
 @Composable
-private fun collectDatesheetDetail(ec: DatesheetEditorController, departments: List<Department>): DatesheetDetailData? {
+private fun collectSessionDatesheetDetail(ec: DatesheetEditorController, departments: List<Department>): DatesheetDetailData? {
     val sheet by ec.sheet.collectAsState()
     val session by ec.session.collectAsState()
     val slots by ec.slots.collectAsState()
@@ -141,46 +144,7 @@ private fun collectDatesheetDetail(ec: DatesheetEditorController, departments: L
 }
 
 @Composable
-private fun collectBusy(ec: DatesheetEditorController): Boolean {
+private fun collectSessionDatesheetBusy(ec: DatesheetEditorController): Boolean {
     val busy by ec.busy.collectAsState()
     return busy
-}
-
-/** Read-only single-datesheet view for the student role: their own session's current semester's papers. */
-@Composable
-fun StudentDatesheetsScreen(
-    sessionId: String,
-    rollNumber: String,
-    datesheetRepository: DatesheetRepository,
-    sessionRepository: AcademicSessionRepository,
-) {
-    val session by sessionRepository.observeSession(sessionId).collectAsState(initial = null)
-    val semester = session?.currentSemester
-    val shift by remember(sessionId, rollNumber) { sessionRepository.observeShiftOf(sessionId, rollNumber) }.collectAsState(initial = null)
-    // Datesheets are per shift: the student's own shift's published sheet only.
-    val sheet by remember(sessionId, semester, shift) {
-        datesheetRepository.observeDatesheets().map { sheets -> studentDatesheet(sheets, sessionId, semester, shift) }
-    }.collectAsState(initial = null as Datesheet?)
-    val allSlots by datesheetRepository.observeAllSlots().collectAsState(initial = emptyList())
-    val slots = sheet?.let { s -> allSlots.filter { it.datesheetId == s.id } }.orEmpty()
-
-    var syncError by remember { mutableStateOf<String?>(null) }
-    var syncing by remember { mutableStateOf(false) }
-    val syncScope = rememberCoroutineScope()
-    suspend fun sync() {
-        syncing = true
-        val result = runCatching { datesheetRepository.sync(); datesheetRepository.syncAllSlots() }.rethrowCancellation()
-        syncError = FailureSummary.describe(FailureSummary.of(listOf("datesheets" to result)), "StudentDatesheetsScreen")
-        syncing = false
-    }
-    LaunchedEffect(datesheetRepository) { sync() }
-
-    StudentDatesheetWorkspace(
-        sheet = sheet,
-        session = session,
-        slots = slots,
-        loading = syncing && sheet == null,
-        errorMessage = syncError,
-        onRetry = { syncScope.launch { sync() } },
-    )
 }

@@ -2,6 +2,7 @@ package com.mbd.cmscommon.ui.components
 
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Calendar
+import compose.icons.tablericons.ClipboardCheck
 import compose.icons.tablericons.CreditCard
 import compose.icons.tablericons.School
 import com.mbd.cmscommon.controller.feeSummaryLine
@@ -46,6 +47,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.domain.model.AcademicSession
+import com.mbd.cmscommon.domain.model.Datesheet
 import com.mbd.cmscommon.domain.model.SemesterTerm
 import com.mbd.cmscommon.domain.model.SessionFeeStructure
 import com.mbd.cmscommon.domain.model.SessionPeriod
@@ -82,12 +84,14 @@ fun SessionOperationsWorkspace(
     errorMessage: String?,
     notice: String?,
     teachers: List<Teacher>,
+    datesheets: List<Datesheet> = emptyList(),
     onPromoteSession: () -> Unit,
     onUpdateDetails: (String, String, Int, ShiftMode) -> Unit,
     onOpenStudents: () -> Unit,
     onOpenTimetable: () -> Unit,
     onOpenSemester: (Int) -> Unit,
     onOpenFees: () -> Unit,
+    onOpenDatesheet: () -> Unit = {},
     onDeleteSession: () -> Unit,
     onClearError: () -> Unit,
     onConsumeNotice: () -> Unit,
@@ -105,6 +109,7 @@ fun SessionOperationsWorkspace(
     val actions = listOf(
         SessionAction("Students", shiftEnrolmentLine(session, students.size, shiftCounts), TablerIcons.School, onOpenStudents),
         SessionAction("Timetable", "${periods.size} period(s) configured", TablerIcons.Calendar, onOpenTimetable),
+        SessionAction("Datesheet", datesheetSummaryLine(datesheets), TablerIcons.ClipboardCheck, onOpenDatesheet),
         SessionAction("Fee structure", feeSummaryLine(session, fees), TablerIcons.CreditCard, onOpenFees),
     )
 
@@ -402,4 +407,10 @@ private fun shiftEnrolmentLine(session: AcademicSession?, total: Int, byShift: M
     val shifts = session?.shifts.orEmpty()
     if (shifts.size < 2) return "$total enrolled"
     return "$total enrolled · " + shifts.joinToString(" · ") { "${it.label} ${byShift[it] ?: 0}" }
+}
+
+private fun datesheetSummaryLine(datesheets: List<Datesheet>): String {
+    if (datesheets.isEmpty()) return "Not created yet"
+    val published = datesheets.count { it.published }
+    return "${datesheets.size} datesheet(s) · $published published"
 }

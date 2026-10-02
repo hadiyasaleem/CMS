@@ -72,6 +72,7 @@ fun TimetableGrid(
     slotWidth: Dp = DEFAULT_SLOT_W,
     editable: Boolean = false,
     onCellClick: ((String, String) -> Unit)? = null,
+    onRowLabelClick: ((String) -> Unit)? = null,
 ) {
     val hScroll = rememberScrollState()
 
@@ -110,7 +111,10 @@ fun TimetableGrid(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Column(Modifier.width(labelWidth), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(
+                        Modifier.width(labelWidth).let { m -> onRowLabelClick?.let { m.clickable { it(row.key) } } ?: m },
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
                         Text(
                             row.label,
                             color = MaterialTheme.colorScheme.onSurface,

@@ -28,6 +28,7 @@ fun DatesheetsScreen(
     val browseError by controller.error.collectAsState()
     val allSlots by viewModel.allSlots.collectAsState()
     val buildings by viewModel.buildings.collectAsState()
+    val rooms by viewModel.rooms.collectAsState()
     val viewer by viewModel.viewer.collectAsState()
     val openDatesheetId by viewModel.openDatesheetId.collectAsState()
     val editorController by viewModel.editorController.collectAsState()
@@ -54,13 +55,14 @@ fun DatesheetsScreen(
         onSelectStartYear = controller::selectStartYear,
         onSelectShift = controller::selectShift,
         buildings = buildings,
+        rooms = rooms,
         loading = false,
         errorMessage = browseError ?: detailError,
         onRetry = { controller.refresh() },
-        onCreateDatesheet = { defaultStart, defaultEnd, defaultBuildingId, instructions ->
+        onCreateDatesheet = { defaultStart, defaultEnd, defaultBuildingId, defaultRoomId, instructions ->
             val session = resolvedSession
             if (session != null) {
-                viewModel.createDatesheet(session.sessionId, session.currentSemester, defaultStart, defaultEnd, defaultBuildingId, instructions)
+                viewModel.createDatesheet(session.sessionId, session.currentSemester, defaultStart, defaultEnd, defaultBuildingId, defaultRoomId, instructions)
             }
         },
         openDatesheetId = openDatesheetId,

@@ -7,6 +7,7 @@ import com.mbd.cmscommon.controller.DatesheetBrowseController
 import com.mbd.cmscommon.controller.DatesheetEditorController
 import com.mbd.cmscommon.domain.model.Building
 import com.mbd.cmscommon.domain.model.DatesheetSlot
+import com.mbd.cmscommon.domain.model.Room
 import com.mbd.cmscommon.domain.model.DatesheetViewerContext
 import com.mbd.cmscommon.domain.model.DatesheetViewerRole
 import com.mbd.cmscommon.domain.model.UserRole
@@ -54,6 +55,9 @@ class DatesheetsViewModel @Inject constructor(
     val buildings: StateFlow<List<Building>> =
         buildingRepository.observeActiveBuildings().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    val rooms: StateFlow<List<Room>> =
+        roomRepository.observeActiveRooms().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
     private val _openDatesheetId = MutableStateFlow<String?>(null)
     val openDatesheetId: StateFlow<String?> = _openDatesheetId.asStateFlow()
 
@@ -67,10 +71,10 @@ class DatesheetsViewModel @Inject constructor(
         }
     }
 
-    fun createDatesheet(sessionId: String, semester: Int, defaultStart: String?, defaultEnd: String?, defaultBuildingId: String?, instructions: String?) {
+    fun createDatesheet(sessionId: String, semester: Int, defaultStart: String?, defaultEnd: String?, defaultBuildingId: String?, defaultRoomId: String?, instructions: String?) {
         viewModelScope.launch {
             runCatching {
-                browseController.createDatesheet(sessionId, semester, defaultStart, defaultEnd, defaultBuildingId, instructions, sessionManager.accountKey.orEmpty())
+                browseController.createDatesheet(sessionId, semester, defaultStart, defaultEnd, defaultBuildingId, defaultRoomId, instructions, sessionManager.accountKey.orEmpty())
             }.onSuccess { id -> openDatesheet(id) }
         }
     }

@@ -102,7 +102,7 @@ class DatesheetEditorController(
         _actionMessage.value = null
     }
 
-    fun updateDefaults(defaultStartTime: String?, defaultEndTime: String?, defaultBuildingId: String?, instructions: String?) = mutate("update the datesheet defaults") {
+    fun updateDefaults(defaultStartTime: String?, defaultEndTime: String?, defaultBuildingId: String?, defaultRoomId: String?, instructions: String?) = mutate("update the datesheet defaults") {
         val current = requireCurrentSheet()
         val draft = DatesheetDraft(
             sessionId = current.sessionId,
@@ -111,6 +111,7 @@ class DatesheetEditorController(
             defaultStartTime = defaultStartTime,
             defaultEndTime = defaultEndTime,
             defaultBuildingId = defaultBuildingId,
+            defaultRoomId = defaultRoomId,
             instructions = instructions,
             published = current.published,
         )

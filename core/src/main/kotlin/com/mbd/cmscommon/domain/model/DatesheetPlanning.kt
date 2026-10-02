@@ -27,6 +27,7 @@ data class DatesheetDraft(
     val defaultStartTime: String? = null,
     val defaultEndTime: String? = null,
     val defaultBuildingId: String? = null,
+    val defaultRoomId: String? = null,
     val instructions: String? = null,
     val published: Boolean = false,
 )
@@ -129,8 +130,8 @@ fun datesheetExternalConflicts(slot: DatesheetSlot, sheet: Datesheet, otherPaper
     }
 
     val issues = mutableListOf<String>()
-    slot.roomId?.let { roomId ->
-        overlapping.firstOrNull { it.first.roomId == roomId }?.let {
+    slot.resolvedRoomId(sheet)?.let { roomId ->
+        overlapping.firstOrNull { it.first.resolvedRoomId(it.second) == roomId }?.let {
             issues += "That room is already booked for ${displaySubject(it.first)} at an overlapping time on $date."
         }
     }
