@@ -90,6 +90,8 @@ fun StudentTimetableWorkspace(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        item { StudentTimetableHeader(heroPainter) }
+
         when {
             loading && snapshot == null -> items(3) { SkeletonRow() }
             snapshot != null -> {
@@ -150,6 +152,27 @@ fun StudentTimetableWorkspace(
 
     if (!errorMessage.isNullOrBlank()) {
         CmsErrorDialog(message = errorMessage, onDismiss = onClearError, title = "Couldn't load timetable", onRetry = onRetry)
+    }
+}
+
+@Composable
+private fun StudentTimetableHeader(heroPainter: Painter) {
+    Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = ModInk) {
+        Box(Modifier.fillMaxSize()) {
+            Image(
+                painter = heroPainter,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                alignment = Alignment.CenterEnd,
+                contentScale = ContentScale.Crop,
+                alpha = 0.35f,
+            )
+            Column(Modifier.align(Alignment.CenterStart).padding(20.dp)) {
+                Text("MY WEEK", color = ModWarn, style = CmsTextStyles.eyebrow)
+                Spacer(Modifier.height(6.dp))
+                Text("Timetable", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+            }
+        }
     }
 }
 

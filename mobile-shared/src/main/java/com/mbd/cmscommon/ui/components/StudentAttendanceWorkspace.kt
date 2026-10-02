@@ -59,6 +59,7 @@ fun StudentAttendanceWorkspace(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        item { AttendanceHero(heroPainter, snapshot) }
 
         if (loading && snapshot == null) {
             items(3) { SkeletonRow() }
@@ -81,6 +82,40 @@ fun StudentAttendanceWorkspace(
         }
 
         item { Spacer(Modifier.height(72.dp)) }
+    }
+}
+
+@Composable
+private fun AttendanceHero(heroPainter: Painter, snapshot: StudentAttendanceSnapshot?) {
+    val percent = snapshot?.overallPercent ?: 0f
+    val tone = when {
+        snapshot == null -> AttendanceBlue
+        percent >= 75f -> AttendanceGreen
+        percent >= 70f -> AttendanceGold
+        else -> AttendanceRed
+    }
+
+    Surface(modifier = Modifier.fillMaxWidth().height(150.dp), shape = RoundedCornerShape(18.dp), color = ModInk) {
+        Box(Modifier.fillMaxSize()) {
+            Image(
+                painter = heroPainter,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                alignment = Alignment.CenterEnd,
+                contentScale = ContentScale.Crop,
+                alpha = 0.35f,
+            )
+            Row(Modifier.align(Alignment.CenterStart).padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("MY RECORD", color = AttendanceGold, style = CmsTextStyles.eyebrow)
+                    Spacer(Modifier.height(6.dp))
+                    Text("Attendance", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+                }
+                if (snapshot != null) {
+                    Text("${percent.toInt()}%", color = tone, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.displaySmall)
+                }
+            }
+        }
     }
 }
 

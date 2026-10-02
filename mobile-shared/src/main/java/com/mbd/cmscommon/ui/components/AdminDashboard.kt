@@ -159,6 +159,8 @@ fun AdminDashboardContent(
                 .padding(horizontal = contentPadding, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(if (wide) 24.dp else 18.dp),
         ) {
+            DashboardHero(heroPainter, wide)
+
             if (!errorMessage.isNullOrBlank()) {
                 Surface(
                     shape = RoundedCornerShape(16.dp),
@@ -200,6 +202,49 @@ fun AdminDashboardContent(
             DashboardGrid(actions, if (wide) 3 else 2) { action, itemModifier -> DashboardActionCard(action, itemModifier) }
 
             Spacer(Modifier.height(72.dp))
+        }
+    }
+}
+
+@Composable
+private fun DashboardHero(heroPainter: Painter, wide: Boolean) {
+    Surface(
+        modifier = Modifier.fillMaxWidth().height(if (wide) 278.dp else 236.dp),
+        shape = RoundedCornerShape(if (wide) 28.dp else 22.dp),
+        color = ModWarn.copy(alpha = 0.12f),
+        border = BorderStroke(1.dp, ModTrack),
+    ) {
+        Box(Modifier.fillMaxSize()) {
+            Image(
+                painter = heroPainter,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                alignment = Alignment.CenterEnd,
+                contentScale = ContentScale.Crop,
+            )
+            Box(
+                Modifier.fillMaxSize().background(
+                    Brush.horizontalGradient(
+                        0f to ModSurface.copy(alpha = 0.82f),
+                        0.55f to ModSurface.copy(alpha = 0.6f),
+                        0.8f to ModSurface.copy(alpha = 0.1f),
+                        1f to Color.Transparent,
+                    ),
+                ),
+            )
+            Column(
+                Modifier
+                    .align(Alignment.CenterStart)
+                    .fillMaxWidth(if (wide) 0.5f else 0.64f)
+                    .padding(if (wide) 32.dp else 22.dp),
+            ) {
+                Text(
+                    "Welcome back,\nAdmin.",
+                    color = ModInk,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold,
+                    style = if (wide) MaterialTheme.typography.displayMedium else MaterialTheme.typography.headlineLarge,
+                )
+            }
         }
     }
 }

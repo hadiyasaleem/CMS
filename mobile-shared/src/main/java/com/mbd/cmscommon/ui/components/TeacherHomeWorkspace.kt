@@ -79,11 +79,33 @@ fun TeacherHomeWorkspace(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        item { HomeHeader(heroPainter, snapshot) }
         item { HomeMetrics(snapshot) }
         item { TodayCard(snapshot) }
         item { WeeklyLoadCard(snapshot) }
         items(TEACHER_HOME_ACTIONS) { action -> HomeActionCard(action, onClick = { onOpen(action.destination) }) }
         item { Spacer(Modifier.height(72.dp)) }
+    }
+}
+
+@Composable
+private fun HomeHeader(heroPainter: Painter, snapshot: TeacherHomeSnapshot) {
+    Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = CmsTheme.colors.ink) {
+        Box(Modifier.fillMaxSize()) {
+            Image(
+                painter = heroPainter,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                alignment = Alignment.CenterEnd,
+                contentScale = ContentScale.Crop,
+                alpha = 0.35f,
+            )
+            Column(Modifier.align(Alignment.CenterStart).padding(20.dp)) {
+                Text("Good day, ${snapshot.name}", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+                Spacer(Modifier.height(4.dp))
+                Text(snapshot.dateLabel, color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
+            }
+        }
     }
 }
 

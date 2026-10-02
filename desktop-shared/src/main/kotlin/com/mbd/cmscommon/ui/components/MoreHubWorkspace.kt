@@ -98,6 +98,7 @@ fun MoreHubWorkspace(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        item { MoreHeader(heroPainter) }
         if (!errorMessage.isNullOrBlank()) {
             item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         }
@@ -106,6 +107,27 @@ fun MoreHubWorkspace(
         items(actions, key = { it.destination }) { action -> MoreActionCard(action, onClick = { onOpen(action.destination) }) }
         item { Spacer(Modifier.height(72.dp)) }
     }
+    }
+}
+
+@Composable
+private fun MoreHeader(heroPainter: Painter) {
+    Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = ModInk) {
+        Box(Modifier.fillMaxSize()) {
+            Image(
+                painter = heroPainter,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                alignment = Alignment.CenterEnd,
+                contentScale = ContentScale.Crop,
+                alpha = 0.35f,
+            )
+            Column(Modifier.align(Alignment.CenterStart).padding(20.dp)) {
+                Text("ACCOUNT & COMMUNICATIONS", color = MoreGold, style = CmsTextStyles.eyebrow)
+                Spacer(Modifier.height(6.dp))
+                Text("More", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+            }
+        }
     }
 }
 
