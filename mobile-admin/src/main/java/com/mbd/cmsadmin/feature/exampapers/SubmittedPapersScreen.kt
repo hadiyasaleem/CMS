@@ -58,7 +58,6 @@ fun SubmittedPapersScreen(viewModel: SubmittedPapersViewModel = hiltViewModel())
         onSetTeacherFilter = controller::setTeacherFilter,
         sessions = sessions,
         onSetScope = controller::setScope,
-        onSetSemesterFilter = controller::setSemesterFilter,
         onClearFilters = controller::clearFilters,
         onDownload = { submission ->
             controller.downloadAndOpen(submission, context.cacheDir) { file ->
@@ -66,6 +65,5 @@ fun SubmittedPapersScreen(viewModel: SubmittedPapersViewModel = hiltViewModel())
             }
         },
         onConsumeNotice = controller::consumeNotice,
-        onRefresh = controller::refresh,
     )
 }

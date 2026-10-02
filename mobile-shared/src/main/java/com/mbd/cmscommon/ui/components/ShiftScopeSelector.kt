@@ -4,6 +4,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -33,6 +34,7 @@ fun ShiftScopeSelector(
     onScopeChange: (ShiftScope) -> Unit,
     modifier: Modifier = Modifier,
     label: String? = "SHOW",
+    trailingContent: @Composable RowScope.() -> Unit = {},
 ) {
     val deptOptions = departments.map { (id, name) -> CmsEntityOption(id, name) }
     val sessionChoices = ShiftScope.sessionOptions(scope, sessions)
@@ -68,6 +70,7 @@ fun ShiftScopeSelector(
                 options = shiftOptions,
                 onSelected = { name -> onScopeChange(scope.withShift(Session.entries.firstOrNull { it.name == name })) },
             )
+            trailingContent()
         }
     }
 }
