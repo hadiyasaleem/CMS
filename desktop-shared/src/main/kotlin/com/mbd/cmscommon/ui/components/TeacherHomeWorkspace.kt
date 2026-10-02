@@ -83,7 +83,6 @@ fun TeacherHomeWorkspace(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item { HomeHeader(heroPainter, snapshot) }
-        item { HomeMetrics(snapshot) }
         item { TodayCard(snapshot) }
         item { WeeklyLoadCard(snapshot) }
         items(TEACHER_HOME_ACTIONS) { action -> HomeActionCard(action, onClick = { onOpen(action.destination) }) }
@@ -109,25 +108,6 @@ private fun HomeHeader(heroPainter: Painter, snapshot: TeacherHomeSnapshot) {
                 Spacer(Modifier.height(4.dp))
                 Text(snapshot.dateLabel, color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
             }
-        }
-    }
-}
-
-@Composable
-private fun HomeMetrics(snapshot: TeacherHomeSnapshot) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        HomeMetric(snapshot.assignedSubjects.toString(), "Subjects", Modifier.weight(1f))
-        HomeMetric(snapshot.assignedSessions.toString(), "Sessions", Modifier.weight(1f))
-        HomeMetric(snapshot.weeklyLectures.toString(), "This week", Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun HomeMetric(value: String, label: String, modifier: Modifier) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.surfaceBright, border = BorderStroke(1.dp, CmsTheme.colors.track)) {
-        Column(Modifier.padding(14.dp)) {
-            Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(), color = CmsTheme.colors.muted, style = CmsTextStyles.eyebrow)
         }
     }
 }

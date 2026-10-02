@@ -88,10 +88,6 @@ fun RecordsHubWorkspace(
         if (!errorMessage.isNullOrBlank()) {
             fullSpanItem { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         }
-        if (snapshot != null) {
-            fullSpanItem { RecordsSummaryRow(snapshot) }
-        }
-
         if (loading && snapshot == null) {
             fullSpanItems(3) { SkeletonRow() }
         } else if (snapshot != null) {
@@ -119,25 +115,6 @@ private fun RecordsHeader(heroPainter: Painter) {
                 Spacer(Modifier.height(6.dp))
                 Text("Records", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
             }
-        }
-    }
-}
-
-@Composable
-private fun RecordsSummaryRow(snapshot: RecordsHubSnapshot) {
-    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        RecordsMetric(snapshot.activeSessions.toString(), "Active sessions", Modifier.weight(1f).fillMaxHeight())
-        RecordsMetric(snapshot.publishedResources.toString(), "Published", Modifier.weight(1f).fillMaxHeight())
-        RecordsMetric(snapshot.atRiskStudents.toString(), "At risk", Modifier.weight(1f).fillMaxHeight(), alert = snapshot.atRiskStudents > 0)
-    }
-}
-
-@Composable
-private fun RecordsMetric(value: String, label: String, modifier: Modifier = Modifier, alert: Boolean = false) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Column(Modifier.padding(14.dp)) {
-            Text(value, color = if (alert) RecordsRed else ModInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }

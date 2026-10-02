@@ -85,7 +85,6 @@ fun StudentMarksWorkspace(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun MarksOverviewCard(snapshot: StudentMarksSnapshot) {
     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
@@ -97,21 +96,7 @@ private fun MarksOverviewCard(snapshot: StudentMarksSnapshot) {
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.headlineSmall,
             )
-            Spacer(Modifier.height(10.dp))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                MarksMetric("Recorded", snapshot.assessmentsEntered.toString())
-                MarksMetric("Absent", snapshot.absentAssessments.toString())
-                MarksMetric("Subjects", snapshot.fullyRecordedSubjects.toString())
-            }
         }
-    }
-}
-
-@Composable
-private fun MarksMetric(label: String, value: String, modifier: Modifier = Modifier) {
-    Column(modifier) {
-        Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-        Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
     }
 }
 

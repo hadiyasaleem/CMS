@@ -49,8 +49,6 @@ private val ProfileCanvas = ModGround
 private val ProfileBlue = ModInk
 private val ProfileDateFormatter = DateTimeFormatter.ofPattern("dd MMM yyyy")
 
-private data class ProfileMetric(val label: String, val value: String, val detail: String)
-
 @Composable
 fun AdministratorProfileWorkspace(
     accountKey: String,
@@ -68,17 +66,11 @@ fun AdministratorProfileWorkspace(
     var confirmSignOut by remember { mutableStateOf(false) }
 
     val active = account?.status.equals("ACTIVE", ignoreCase = true)
-    val metrics = listOf(
-        ProfileMetric("Admins", directory?.accounts?.size?.toString() ?: "--", "Directory accounts"),
-        ProfileMetric("Active", directory?.activeCount?.toString() ?: "--", "Available accounts"),
-        ProfileMetric("Recent", directory?.recentlyActiveCount?.toString() ?: "--", "Signed in within 30 days"),
-    )
 
     LazyColumn(modifier.fillMaxWidth().background(ProfileCanvas), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         if (!errorMessage.isNullOrBlank()) item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         if (!actionMessage.isNullOrBlank()) item { CmsNotice(actionMessage, tone = NoticeTone.Success) }
         if (loading) item { SkeletonRow() }
-        item { ProfileMetrics(metrics) }
         item {
             ProfileSectionCard("Account identity", "Your verified college identity, access and record details") {
                 ProfileInfoRow("Signed-in email", account?.email ?: accountKey)
@@ -127,16 +119,10 @@ fun TeacherProfileWorkspace(
     var confirmSignOut by remember { mutableStateOf(false) }
     val permissions = profile?.permissions
 
-    val metrics = listOf(
-        ProfileMetric("Classes", assignments.distinctBy { it.sessionId to it.courseCode }.size.toString(), "Current timetable-derived workload"),
-        ProfileMetric("Sessions", assignments.map { it.sessionId }.distinct().size.toString(), "Active cohorts"),
-    )
-
     LazyColumn(modifier.fillMaxWidth().background(ProfileCanvas), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         if (!errorMessage.isNullOrBlank()) item { CmsNotice(errorMessage, tone = NoticeTone.Error) }
         if (!actionMessage.isNullOrBlank()) item { CmsNotice(actionMessage, tone = NoticeTone.Success) }
         if (loading) item { SkeletonRow() }
-        item { ProfileMetrics(metrics) }
         item {
             ProfileSectionCard("Professional details", "Faculty role and expertise") {
                 ProfileInfoRow("Designation", profile?.designation ?: "Not recorded")
@@ -212,17 +198,10 @@ fun StudentOwnProfileWorkspace(
     var confirmReset by remember { mutableStateOf(false) }
     var confirmSignOut by remember { mutableStateOf(false) }
 
-    val metrics = listOf(
-        ProfileMetric("Semester", session?.currentSemester?.toString() ?: "--", "Of 8"),
-        ProfileMetric("GPA", gpa?.let { "%.2f".format(it) } ?: "--", "Semester GPA"),
-        ProfileMetric("CGPA", cgpa?.let { "%.2f".format(it) } ?: "--", "Cumulative standing"),
-    )
-
     LazyColumn(modifier.fillMaxWidth().background(ProfileCanvas), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         if (!errorMessage.isNullOrBlank()) item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         if (!actionMessage.isNullOrBlank()) item { CmsNotice(actionMessage, tone = NoticeTone.Success) }
         if (loading) item { SkeletonRow() }
-        item { ProfileMetrics(metrics) }
         item {
             ProfileSectionCard("Current program and performance", "Academic standing") {
                 ProfileInfoRow("Department", departmentName ?: "Not recorded")
@@ -275,21 +254,6 @@ fun StudentOwnProfileWorkspace(
             confirmLabel = "Sign out",
             showUndoWarning = false,
         )
-    }
-}
-
-@Composable
-private fun ProfileMetrics(metrics: List<ProfileMetric>) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        metrics.forEach { metric ->
-            Surface(modifier = Modifier.weight(1f), shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-                Column(Modifier.padding(14.dp)) {
-                    Text(metric.value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-                    Text(metric.label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
-                    Text(metric.detail, color = ModMuted, style = MaterialTheme.typography.bodySmall)
-                }
-            }
-        }
     }
 }
 

@@ -161,8 +161,6 @@ fun TeacherDirectoryWorkspace(
 
     Box(modifier.fillMaxSize()) {
         CardGrid(Modifier.fillMaxWidth()) {
-            fullSpanItem { TeacherSummaryCard(teachers.size, teachers.count { it.status == TeacherStatus.ACTIVE }, assignments.values.sumOf { it.size }, teachers.count { completeness(it) < 100 }) }
-
             fullSpanItem {
                 Column(Modifier.fillMaxWidth()) {
                     OutlinedTextField(
@@ -311,20 +309,6 @@ fun TeacherDirectoryWorkspace(
 }
 
 @Composable
-private fun TeacherSummaryCard(total: Int, active: Int, classes: Int, incomplete: Int) {
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            TeacherMetric("Faculty", total.toString(), Modifier.weight(1f))
-            TeacherMetric("Active", active.toString(), Modifier.weight(1f))
-        }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            TeacherMetric("Classes", classes.toString(), Modifier.weight(1f))
-            TeacherMetric("Incomplete", incomplete.toString(), Modifier.weight(1f), alert = incomplete > 0)
-        }
-    }
-}
-
-@Composable
 private fun DepartmentFilterChip(departments: List<Department>, selectedDeptId: String?, onSelect: (String?) -> Unit) {
     val options = departments.sortedBy { it.name }.map { CmsEntityOption(it.deptId, it.name) }
     DropdownChip(
@@ -360,16 +344,6 @@ private fun TeacherAvatar(name: String, photoPath: String?, size: Int, onLoadPho
         )
     } else {
         AvatarInitials(name, modifier, size)
-    }
-}
-
-@Composable
-private fun TeacherMetric(label: String, value: String, modifier: Modifier = Modifier, alert: Boolean = false) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Column(Modifier.padding(14.dp)) {
-            Text(value, color = if (alert) TeacherRed else ModInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
-        }
     }
 }
 

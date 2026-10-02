@@ -116,8 +116,6 @@ fun SessionTimetableWorkspace(
     var ownerUnmerging by remember { mutableStateOf<Pair<SessionPeriod, String>?>(null) }
     val mergeCandidates = describeExistingPeriodsForMerge(allPeriods, session?.sessionId.orEmpty(), shift)
 
-    val roomsConfigured = shown.count { !it.roomNo.isNullOrBlank() }
-    val teacherIds = shown.filter { it.periodType != PeriodType.BREAK }.flatMap { it.teacherIds }.distinct()
     val conflictIds = conflictingPeriodIds(shown)
     val periodByDayAndSlot = shown.associateBy { it.day to it.timeRange }
     val timeSlots = shown.map { it.timeRange }.distinct().sortedBy { it.substringBefore('–') }
@@ -145,8 +143,6 @@ fun SessionTimetableWorkspace(
                     )
                 }
             }
-            item { TimetableSummaryCard(shown.size, roomsConfigured, teacherIds.size, conflictIds.size) }
-
             if (shown.isEmpty()) {
                 item { TimetableEmptyState(onAdd = { addingPeriodDay = DayOfWeek.MONDAY }) }
             } else {
@@ -354,26 +350,6 @@ private fun conflictingPeriodIds(periods: List<SessionPeriod>): Set<String> {
         }
     }
     return conflicts
-}
-
-@Composable
-private fun TimetableSummaryCard(periodCount: Int, rooms: Int, teachers: Int, issues: Int) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        TimetableMetric("Periods", periodCount.toString(), Modifier.weight(1f))
-        TimetableMetric("Rooms", rooms.toString(), Modifier.weight(1f))
-        TimetableMetric("Teachers", teachers.toString(), Modifier.weight(1f))
-        TimetableMetric("Issues", issues.toString(), Modifier.weight(1f), alert = issues > 0)
-    }
-}
-
-@Composable
-private fun TimetableMetric(label: String, value: String, modifier: Modifier = Modifier, alert: Boolean = false) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Column(Modifier.padding(14.dp)) {
-            Text(value, color = if (alert) TimetableRed else ModInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
-        }
-    }
 }
 
 @Composable

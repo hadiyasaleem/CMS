@@ -55,7 +55,6 @@ import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.CalendarEvent
 import com.mbd.cmscommon.domain.model.CalendarViewerContext
 import com.mbd.cmscommon.domain.model.Department
-import com.mbd.cmscommon.domain.model.calendarSummary
 import com.mbd.cmscommon.domain.model.isOngoingOn
 import com.mbd.cmscommon.domain.model.isVisibleTo
 import com.mbd.cmscommon.domain.model.validationMessage
@@ -101,7 +100,6 @@ fun CalendarWorkspace(
     // Admins narrow the calendar by Department -> Session -> Shift; teachers and students see their own audience.
     var filterScope by remember { mutableStateOf(ShiftScope.ALL) }
     val relevant = events.filter { isVisibleTo(it, viewer) }.inScope(filterScope, sessions)
-    val summary = calendarSummary(relevant, today)
 
     Box(modifier.fillMaxSize()) {
     val listState = rememberLazyListState()
@@ -121,8 +119,6 @@ fun CalendarWorkspace(
         if (!actionMessage.isNullOrBlank()) {
             item { CmsNotice(actionMessage, tone = NoticeTone.Success) }
         }
-
-        item { CalendarSummaryRow(summary.upcoming, summary.thisMonth, summary.exams + summary.deadlines, summary.ongoing) }
 
         item { CalendarLegend() }
 
@@ -182,26 +178,6 @@ fun CalendarWorkspace(
             onConfirm = { onDelete(event.id); pendingDelete = null; selectedDate = null },
             onDismiss = { pendingDelete = null },
         )
-    }
-}
-
-@Composable
-private fun CalendarSummaryRow(upcoming: Int, thisMonth: Int, examsAndDeadlines: Int, ongoing: Int) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        CalendarMetric("Upcoming", upcoming.toString(), Modifier.weight(1f))
-        CalendarMetric("This month", thisMonth.toString(), Modifier.weight(1f))
-        CalendarMetric("Exams / deadlines", examsAndDeadlines.toString(), Modifier.weight(1f))
-        CalendarMetric("Ongoing", ongoing.toString(), Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun CalendarMetric(label: String, value: String, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Column(Modifier.padding(14.dp)) {
-            Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(Locale.ROOT), color = ModMuted, style = CmsTextStyles.eyebrow)
-        }
     }
 }
 

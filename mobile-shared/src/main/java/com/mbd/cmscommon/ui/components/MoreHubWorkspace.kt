@@ -100,7 +100,6 @@ fun MoreHubWorkspace(
             item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         }
         item { AccountSummary(snapshot, loading) }
-        item { MoreMetrics(snapshot, loading) }
         items(actions, key = { it.destination }) { action -> MoreActionCard(action, onClick = { onOpen(action.destination) }) }
         item { Spacer(Modifier.height(72.dp)) }
     }
@@ -150,43 +149,6 @@ private fun AccountSummary(snapshot: MoreHubSnapshot?, loading: Boolean) {
                     }
                 }
             }
-        }
-    }
-}
-
-private data class MoreMetricItem(val value: String, val label: String, val alert: Boolean)
-
-@Composable
-private fun MoreMetrics(snapshot: MoreHubSnapshot?, loading: Boolean) {
-    val metrics = listOf(
-        MoreMetricItem(if (loading || snapshot == null) "--" else snapshot.administratorCount.toString(), "Admins", alert = false),
-        MoreMetricItem(if (loading || snapshot == null) "--" else snapshot.authoredNotifications.toString(), "Authored", alert = false),
-        MoreMetricItem(
-            if (loading || snapshot == null) "--" else snapshot.urgentAuthoredNotifications.toString(),
-            "Urgent",
-            alert = (snapshot?.urgentAuthoredNotifications ?: 0) > 0,
-        ),
-        MoreMetricItem(if (loading || snapshot == null) "--" else snapshot.unreadNotifications.toString(), "Unread", alert = false),
-    )
-    BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val columns = if (maxWidth >= 900.dp) metrics.size else 2
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            metrics.chunked(columns).forEach { rowItems ->
-                Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    rowItems.forEach { metric -> MoreMetric(metric.value, metric.label, Modifier.weight(1f).fillMaxHeight(), alert = metric.alert) }
-                    repeat(columns - rowItems.size) { Spacer(Modifier.weight(1f)) }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun MoreMetric(value: String, label: String, modifier: Modifier = Modifier, alert: Boolean = false) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Column(Modifier.padding(14.dp)) {
-            Text(value, color = if (alert) MoreRed else ModInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }

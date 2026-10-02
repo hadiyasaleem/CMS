@@ -331,13 +331,6 @@ private fun AcademicAndRolesCard(
         Column(Modifier.padding(16.dp)) {
             Text("Academic standing & class roles", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Text("Grades are read-only and update from recorded results.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.height(10.dp))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                AcademicMetric("GPA", profile.gpa?.let { "%.2f".format(it) } ?: "--")
-                AcademicMetric("CGPA", profile.cgpa?.let { "%.2f".format(it) } ?: "--")
-                AcademicMetric("Account", if (profile.linkedEmail.isNotBlank()) "Linked" else "Not linked")
-                AcademicMetric("Shift", profile.shift.label)
-            }
             // The roll number's serial decides the shift, so it isn't edited here.
             rollBlockHint(session)?.let { hint ->
                 Spacer(Modifier.height(4.dp))
@@ -383,14 +376,6 @@ private fun AcademicAndRolesCard(
             onConfirm = { onDelink(); confirmDelink = false },
             onDismiss = { confirmDelink = false },
         )
-    }
-}
-
-@Composable
-private fun AcademicMetric(label: String, value: String, modifier: Modifier = Modifier) {
-    Column(modifier) {
-        Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-        Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
     }
 }
 

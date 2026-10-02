@@ -219,8 +219,6 @@ fun MarkEditRequestReviewWorkspace(
             rowErrors[MarkEditRequestsController.ATTENDANCE_LOAD_KEY]?.let { message ->
                 item { CmsNotice(message, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRefresh) }
             }
-            item { AttendanceSummaryCard(attendanceRequests) }
-
             item {
                 Column(Modifier.fillMaxWidth()) {
                     OutlinedTextField(
@@ -275,8 +273,6 @@ fun MarkEditRequestReviewWorkspace(
             }
             item { Spacer(Modifier.height(72.dp)) }
         } else {
-        item { MarkSummaryCard(requests) }
-
         item {
             Column(Modifier.fillMaxWidth()) {
                 OutlinedTextField(
@@ -371,44 +367,6 @@ fun MarkEditRequestReviewWorkspace(
             confirmButton = { TextButton(onClick = { onReject(request); rejectionTarget = null }) { Text("Reject") } },
             dismissButton = { TextButton(onClick = { rejectionTarget = null }) { Text("Cancel") } },
         )
-    }
-}
-
-@Composable
-private fun MarkSummaryCard(requests: List<MarkEditRequest>) {
-    val blocked = requests.count { markEditReviewQuality(it).blocksApproval }
-    val needsAttention = requests.count { markEditReviewQuality(it).needsAttention }
-    val increases = requests.count { it.requestedScore > (it.currentScore ?: 0) }
-
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        MarkStatLabel("REVIEW QUEUE", requests.size.toString(), Modifier.weight(1f))
-        MarkStatLabel("BLOCKED", blocked.toString(), Modifier.weight(1f), alert = blocked > 0)
-        MarkStatLabel("NEEDS ATTENTION", needsAttention.toString(), Modifier.weight(1f), alert = needsAttention > 0)
-        MarkStatLabel("INCREASES", increases.toString(), Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun AttendanceSummaryCard(requests: List<AttendanceEditRequest>) {
-    val blocked = requests.count { attendanceEditReviewIssues(it).isNotEmpty() }
-    val noReason = requests.count { it.reason.isNullOrBlank() }
-    val toPresent = requests.count { it.requestedStatus == AttendanceStatus.PRESENT }
-
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        MarkStatLabel("REVIEW QUEUE", requests.size.toString(), Modifier.weight(1f))
-        MarkStatLabel("BLOCKED", blocked.toString(), Modifier.weight(1f), alert = blocked > 0)
-        MarkStatLabel("NO REASON", noReason.toString(), Modifier.weight(1f))
-        MarkStatLabel("TO PRESENT", toPresent.toString(), Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun MarkStatLabel(label: String, value: String, modifier: Modifier = Modifier, alert: Boolean = false) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Column(Modifier.padding(14.dp)) {
-            Text(value, color = if (alert) MarkRed else ModInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label, color = ModMuted, style = CmsTextStyles.eyebrow)
-        }
     }
 }
 
