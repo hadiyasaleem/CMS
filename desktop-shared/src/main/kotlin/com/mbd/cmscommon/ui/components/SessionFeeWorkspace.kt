@@ -129,6 +129,12 @@ fun SessionFeeWorkspace(
         else -> null
     }
 
+    if (onExport != null && allStructures.isNotEmpty()) {
+        TopBarActions {
+            ExportMenuButton(onExport = { format -> onExport(sessionFeesExport(session, department?.name, allStructures), format) })
+        }
+    }
+
     val listState = rememberLazyListState()
     WithVerticalScrollbar(listState) {
     LazyColumn(modifier.fillMaxWidth(), state = listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -146,9 +152,6 @@ fun SessionFeeWorkspace(
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
-        }
-        if (onExport != null && allStructures.isNotEmpty()) {
-            item { ExportBar(onExport, build = { sessionFeesExport(session, department?.name, allStructures) }) }
         }
 
         if (inheritsCollege) {

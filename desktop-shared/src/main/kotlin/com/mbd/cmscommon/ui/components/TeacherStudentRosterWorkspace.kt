@@ -90,13 +90,16 @@ fun TeacherStudentRosterWorkspace(
         TeacherRosterSort.ATTENDANCE -> filtered.sortedBy { tallies[it.id]?.percentage ?: 100f }
     }
 
+    if (onExport != null) {
+        TopBarActions {
+            ExportMenuButton(onExport = { format -> onExport(myStudentsExport(selected, students, tallies), format) }, enabled = students.isNotEmpty())
+        }
+    }
+
     val listState = rememberLazyListState()
     WithVerticalScrollbar(listState) {
     LazyColumn(modifier.fillMaxWidth(), state = listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         syncError?.let { message -> item { CmsNotice(message = message) } }
-        if (onExport != null) {
-            item { ExportBar(onExport, build = { myStudentsExport(selected, students, tallies) }, enabled = students.isNotEmpty()) }
-        }
         item {
             TeacherClassPicker(assignments, selected, onSelectAssignment, showAllOption = true, onSelectAll = onShowAllClasses)
         }

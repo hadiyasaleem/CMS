@@ -97,21 +97,20 @@ fun SemesterResultsWorkspace(
     val averageGpa = results.values.map { it.gpa }.takeIf { it.isNotEmpty() }?.average()
     val classLabel = sessions.firstOrNull { it.first == sessionId }?.second ?: "Select a class"
 
+    if (onExport != null && sessionId != null) {
+        TopBarActions {
+            ExportMenuButton(
+                onExport = { format -> onExport(semesterResultsExport(sessions.firstOrNull { it.first == sessionId }?.second ?: sessionId, semester, roster, results), format) },
+                enabled = roster.isNotEmpty(),
+            )
+        }
+    }
+
     LazyColumn(
         modifier = modifier.fillMaxWidth().background(ResultCanvas),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        if (onExport != null && sessionId != null) {
-            item {
-                ExportBar(
-                    onExport,
-                    build = { semesterResultsExport(sessions.firstOrNull { it.first == sessionId }?.second ?: sessionId, semester, roster, results) },
-                    enabled = roster.isNotEmpty(),
-                )
-            }
-        }
-
         if (loadOutcome is Outcome.Error) {
             item { CmsNotice(loadOutcome.message, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         }

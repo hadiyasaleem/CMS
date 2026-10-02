@@ -93,6 +93,13 @@ fun TeacherScheduleWorkspace(
 
     var detailPeriod by remember { mutableStateOf<SessionPeriod?>(null) }
 
+    TopBarActions {
+        ExportMenuButton(
+            onExport = { format -> onExport(masterGridsExport(grids.map { it.grid }, grids.associate { it.grid.title to it.breakSlot }), format) },
+            enabled = grids.isNotEmpty(),
+        )
+    }
+
     LazyColumn(
         modifier = modifier.fillMaxWidth().background(ScheduleCanvas),
         contentPadding = PaddingValues(16.dp),
@@ -102,9 +109,6 @@ fun TeacherScheduleWorkspace(
             ScheduleHeader(
                 heroPainter,
                 teachingPeriods.size,
-                onExport = onExport,
-                build = { masterGridsExport(grids.map { it.grid }, grids.associate { it.grid.title to it.breakSlot }) },
-                exportEnabled = grids.isNotEmpty(),
             )
         }
         item { ScheduleMetrics(teachingPeriods.size, classDays, totalMinutes, rooms, busiest) }
@@ -144,9 +148,6 @@ fun TeacherScheduleWorkspace(
 private fun ScheduleHeader(
     heroPainter: Painter,
     total: Int,
-    onExport: (ExportDocument, ExportFormat) -> Unit,
-    build: () -> ExportDocument,
-    exportEnabled: Boolean,
 ) {
     Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = ModInk) {
         Box(Modifier.fillMaxSize()) {
@@ -165,12 +166,6 @@ private fun ScheduleHeader(
                 Spacer(Modifier.height(4.dp))
                 Text("$total period(s) across your assigned sessions", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
             }
-            ExportMenuButton(
-                onExport = { format -> onExport(build(), format) },
-                enabled = exportEnabled,
-                tint = CmsTheme.colors.onInk,
-                modifier = Modifier.align(Alignment.TopEnd).padding(8.dp),
-            )
         }
     }
 }

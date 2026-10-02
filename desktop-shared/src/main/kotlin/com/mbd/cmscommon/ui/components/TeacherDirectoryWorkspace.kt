@@ -153,12 +153,14 @@ fun TeacherDirectoryWorkspace(
         TeacherSort.NEWEST -> filtered.sortedByDescending { it.createdAt }
     }
 
+    if (onExport != null) {
+        TopBarActions {
+            ExportMenuButton(onExport = { format -> onExport(teacherDirectoryExport(visible, departments, assignments), format) }, enabled = visible.isNotEmpty())
+        }
+    }
+
     Box(modifier.fillMaxSize()) {
         CardGrid(Modifier.fillMaxWidth()) {
-            if (onExport != null) {
-                fullSpanItem { ExportBar(onExport, build = { teacherDirectoryExport(visible, departments, assignments) }, enabled = visible.isNotEmpty()) }
-            }
-
             fullSpanItem { TeacherSummaryCard(teachers.size, teachers.count { it.status == TeacherStatus.ACTIVE }, assignments.values.sumOf { it.size }, teachers.count { completeness(it) < 100 }) }
 
             fullSpanItem {

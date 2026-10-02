@@ -14,6 +14,7 @@ import com.mbd.cmscommon.domain.model.ShiftScope
 import com.mbd.cmscommon.ui.components.ShiftScopeSelector
 import com.mbd.cmscommon.export.toExportDocument
 import com.mbd.cmscommon.ui.components.ExportMenuButton
+import com.mbd.cmscommon.ui.components.TopBarActions
 import com.mbd.cmsdesktop.platform.DocumentExporter
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.HorizontalScrollbar
@@ -262,6 +263,15 @@ fun AttendanceRecordsScreen(
         course,
     ).joinToString("  ·  ")
 
+    if (ready && payload != null) {
+        TopBarActions {
+            ExportMenuButton(onExport = { format ->
+                runCatching { DocumentExporter.export(window, payload.toExportDocument(), format) }
+                    .onFailure { actionError = FileReadErrors.describeWrite(it, format.label) }
+            })
+        }
+    }
+
     Column(Modifier.fillMaxWidth()) {
         SectionHeader("Attendance Records", "Reporting", "Department → session → shift → semester")
 
@@ -280,12 +290,6 @@ fun AttendanceRecordsScreen(
                         style = if (!expanded && ready) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium,
                         maxLines = 1,
                     )
-                    if (ready && payload != null) {
-                        ExportMenuButton(onExport = { format ->
-                            runCatching { DocumentExporter.export(window, payload.toExportDocument(), format) }
-                                .onFailure { actionError = FileReadErrors.describeWrite(it, format.label) }
-                        })
-                    }
                     IconButton(onClick = { expanded = !expanded }) {
                         Icon(
                             imageVector = if (expanded) TablerIcons.ChevronUp else TablerIcons.Edit,

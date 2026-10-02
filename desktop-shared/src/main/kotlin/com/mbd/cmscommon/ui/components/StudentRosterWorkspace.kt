@@ -115,6 +115,9 @@ fun StudentRosterWorkspace(
         .sortedBy { it.rollNumber }
 
     TopBarActions {
+        if (onExport != null) {
+            ExportMenuButton(onExport = { format -> onExport(studentRosterExport(session, visible, activeTab), format) }, enabled = visible.isNotEmpty())
+        }
         IconButton(onClick = onPickImportFile, enabled = !importing) {
             Icon(TablerIcons.Upload, contentDescription = "Import file", tint = CmsTheme.colors.onInk)
         }
@@ -124,9 +127,6 @@ fun StudentRosterWorkspace(
     CardGrid(Modifier.fillMaxWidth(), columns = 3) {
         if (!errorMessage.isNullOrBlank()) {
             fullSpanItem { CmsNotice(errorMessage, tone = NoticeTone.Error, onDismiss = onClearError) }
-        }
-        if (onExport != null) {
-            fullSpanItem { ExportBar(onExport, build = { studentRosterExport(session, visible, activeTab) }, enabled = visible.isNotEmpty()) }
         }
 
         fullSpanItem {

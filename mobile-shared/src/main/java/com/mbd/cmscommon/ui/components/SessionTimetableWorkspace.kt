@@ -122,6 +122,12 @@ fun SessionTimetableWorkspace(
     val periodByDayAndSlot = shown.associateBy { it.day to it.timeRange }
     val timeSlots = shown.map { it.timeRange }.distinct().sortedBy { it.substringBefore('–') }
 
+    if (onExport != null) {
+        TopBarActions {
+            ExportMenuButton(onExport = { format -> onExport(timetableExport(session, shown, shift), format) }, enabled = shown.isNotEmpty())
+        }
+    }
+
     Box(modifier.fillMaxSize()) {
         LazyColumn(Modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             item {
@@ -139,10 +145,6 @@ fun SessionTimetableWorkspace(
                     )
                 }
             }
-            if (onExport != null) {
-                item { ExportBar(onExport, build = { timetableExport(session, shown, shift) }, enabled = shown.isNotEmpty()) }
-            }
-
             item { TimetableSummaryCard(shown.size, roomsConfigured, teacherIds.size, conflictIds.size) }
 
             if (shown.isEmpty()) {
