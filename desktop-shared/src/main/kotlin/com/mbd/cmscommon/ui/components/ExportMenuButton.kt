@@ -8,8 +8,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,7 +21,7 @@ import com.mbd.cmscommon.export.ExportDocument
 import com.mbd.cmscommon.export.ExportFormat
 import com.mbd.cmscommon.ui.theme.CmsTheme
 
-/** "Export" text button that offers Excel or PDF. */
+/** Icon-only Export button that offers Excel or PDF. */
 @Composable
 fun ExportMenuButton(
     onExport: (ExportFormat) -> Unit,
@@ -31,9 +31,8 @@ fun ExportMenuButton(
 ) {
     var open by remember { mutableStateOf(false) }
     Box(modifier) {
-        TextButton(onClick = { open = true }, enabled = enabled) {
-            Icon(TablerIcons.Download, contentDescription = null, tint = tint)
-            Text(" Export", color = tint)
+        IconButton(onClick = { open = true }, enabled = enabled) {
+            Icon(TablerIcons.Download, contentDescription = "Export", tint = tint)
         }
         CmsDropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             ExportFormat.entries.forEach { format ->
