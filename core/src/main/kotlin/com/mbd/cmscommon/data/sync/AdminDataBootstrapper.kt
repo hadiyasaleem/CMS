@@ -114,9 +114,11 @@ class AdminDataBootstrapper @Inject constructor(
             ).awaitAll().filterNotNull()
         }
 
-        // Flush buffered crash/critical logs alongside the normal sync cycle. Best-effort: never allowed to
-        // affect the report or throw -- see AppLogRepositoryImpl.flush().
+        // Flush buffered crash/critical logs, then pull the server's log table down for the admin
+        // viewer -- alongside the normal sync cycle. Best-effort: never allowed to affect the report
+        // or throw, since neither is anything the signed-in user's own screens depend on.
         runCatching { appLogRepository.flush() }
+        runCatching { appLogRepository.sync() }
         onTaskDone()
 
         return SyncReport(failures)

@@ -1,6 +1,7 @@
 package com.mbd.cmscommon.ui.components
 
 import compose.icons.TablerIcons
+import compose.icons.tablericons.AlertTriangle
 import compose.icons.tablericons.Building
 import compose.icons.tablericons.Settings
 import compose.icons.tablericons.Shield
@@ -62,7 +63,7 @@ private val MoreRed = ModAccent
 private val MoreNavy = ModInk
 private val MoreDateFormat = DateTimeFormatter.ofPattern("dd MMM yyyy")
 
-enum class MoreDestination { ADMINISTRATORS, BUILDINGS_ROOMS, NOTIFICATIONS, PROFILE }
+enum class MoreDestination { ADMINISTRATORS, BUILDINGS_ROOMS, NOTIFICATIONS, APP_LOGS, PROFILE }
 
 private data class MoreAction(
     val destination: MoreDestination,
@@ -85,6 +86,7 @@ fun MoreHubWorkspace(
         MoreAction(MoreDestination.ADMINISTRATORS, "Administrators", TablerIcons.Shield, MoreNavy),
         MoreAction(MoreDestination.NOTIFICATIONS, "Notifications", TablerIcons.Speakerphone, MoreNavy),
         MoreAction(MoreDestination.BUILDINGS_ROOMS, "Buildings & Rooms", TablerIcons.Building, MoreGold),
+        MoreAction(MoreDestination.APP_LOGS, "App Logs", TablerIcons.AlertTriangle, MoreRed),
         MoreAction(MoreDestination.PROFILE, "Profile & Security", TablerIcons.Settings, MoreGreen),
     )
 

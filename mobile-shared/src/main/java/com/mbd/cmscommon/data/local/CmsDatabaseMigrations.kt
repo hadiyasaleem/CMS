@@ -1856,6 +1856,19 @@ val MIGRATION_53_54: Migration = object : Migration(53, 54) {
     }
 }
 
+/** 54 -> 55: a local cache of downloaded `app_logs` rows for the admin app's log viewer, distinct
+ * from the `app_logs` outbox table (that one buffers this device's own unflushed records). */
+val MIGRATION_54_55: Migration = object : Migration(54, 55) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `app_log_cache` (`logId` TEXT NOT NULL, `occurredAtMillis` INTEGER NOT NULL, " +
+                "`severity` TEXT NOT NULL, `kind` TEXT, `tag` TEXT, `message` TEXT NOT NULL, `stackTrace` TEXT, " +
+                "`accountEmail` TEXT, `appId` TEXT, `appVersion` TEXT, `platform` TEXT, `deviceInfo` TEXT, PRIMARY KEY(`logId`))",
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_app_log_cache_occurredAtMillis` ON `app_log_cache` (`occurredAtMillis`)")
+    }
+}
+
 val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_18_19,
     MIGRATION_19_20,
@@ -1893,4 +1906,5 @@ val CMS_DATABASE_MIGRATIONS = arrayOf(
     MIGRATION_51_52,
     MIGRATION_52_53,
     MIGRATION_53_54,
+    MIGRATION_54_55,
 )

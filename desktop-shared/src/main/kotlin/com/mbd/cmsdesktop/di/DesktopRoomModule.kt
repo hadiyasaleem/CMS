@@ -4,6 +4,7 @@ import androidx.room.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.mbd.cmscommon.data.local.dao.AcademicSessionDao
 import com.mbd.cmscommon.data.local.dao.AdministratorAccountDao
+import com.mbd.cmscommon.data.local.dao.AppLogCacheDao
 import com.mbd.cmscommon.data.local.dao.AppLogDao
 import com.mbd.cmscommon.data.local.dao.BuildingDao
 import com.mbd.cmscommon.data.local.dao.CalendarEventDao
@@ -93,6 +94,7 @@ object DesktopRoomModule {
     @Provides fun sessionFeeDao(db: DesktopDatabase): SessionFeeDao = db.sessionFeeDao()
     @Provides fun collegeFeeDao(db: DesktopDatabase): CollegeFeeDao = db.collegeFeeDao()
     @Provides fun appLogDao(db: DesktopDatabase): AppLogDao = db.appLogDao()
+    @Provides fun appLogCacheDao(db: DesktopDatabase): AppLogCacheDao = db.appLogCacheDao()
 
     @Provides
     @Singleton

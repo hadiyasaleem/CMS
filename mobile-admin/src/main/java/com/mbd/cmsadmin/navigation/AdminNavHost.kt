@@ -78,6 +78,7 @@ fun AdminNavHost(navController: NavHostController, onSignedOut: () -> Unit, refr
                         MoreDestination.ADMINISTRATORS -> AdminLeaf.ADMINISTRATORS
                         MoreDestination.BUILDINGS_ROOMS -> AdminLeaf.BUILDINGS_ROOMS
                         MoreDestination.NOTIFICATIONS -> AdminLeaf.NOTIFICATIONS
+                        MoreDestination.APP_LOGS -> AdminLeaf.APP_LOGS
                         MoreDestination.PROFILE -> AdminLeaf.PROFILE
                     },
                 )
@@ -96,6 +97,7 @@ fun AdminNavHost(navController: NavHostController, onSignedOut: () -> Unit, refr
             com.mbd.cmsadmin.feature.exampapers.SubmittedPapersScreen()
         }
         composable(AdminLeaf.NOTIFICATIONS) { NotificationsScreen(refreshVersion = refreshVersion) }
+        composable(AdminLeaf.APP_LOGS) { com.mbd.cmsadmin.feature.applogs.AppLogsScreen(refreshVersion = refreshVersion) }
         composable(AdminLeaf.PROFILE) { ProfileScreen(onSignedOut = onSignedOut) }
         composable(AdminLeaf.MASTER_TIMETABLE) {
             MasterTimetableScreen(onOpenSession = { go(AdminRoutes.sessionTimetable(it)) })
