@@ -105,9 +105,6 @@ fun SessionOperationsWorkspace(
     var showPromoteConfirm by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
 
-    val gpaRecorded = students.count { it.gpa != null }
-    val configuredSemesters = subjectCounts.count { it.value > 0 }
-
     val actions = listOf(
         SessionAction("Students", shiftEnrolmentLine(session, students.size, shiftCounts), TablerIcons.School, onOpenStudents),
         SessionAction("Timetable", "${periods.size} period(s) configured", TablerIcons.Calendar, onOpenTimetable),
@@ -122,26 +119,20 @@ fun SessionOperationsWorkspace(
     }
 
     LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { SessionIdentityCard(session) }
+        item {
+            SessionIdentityCard(
+                session,
+                currentSemesterTerm = currentSemesterTerm,
+                canPromote = canPromote,
+                onPromoteClick = { showPromoteConfirm = true },
+            )
+        }
 
         if (!errorMessage.isNullOrBlank()) {
             item { CmsNotice(errorMessage, tone = NoticeTone.Error, onDismiss = onClearError) }
         }
         if (!notice.isNullOrBlank()) {
             item { CmsNotice(notice, tone = NoticeTone.Success, onDismiss = onConsumeNotice) }
-        }
-
-        item {
-            SessionProgressCard(
-                session,
-                students.size,
-                shiftCounts,
-                gpaRecorded,
-                configuredSemesters,
-                currentSemesterTerm = currentSemesterTerm,
-                canPromote = canPromote,
-                onPromoteClick = { showPromoteConfirm = true },
-            )
         }
 
         item { WorkspaceSection("Operational areas") }
@@ -207,86 +198,41 @@ fun SessionOperationsWorkspace(
 }
 
 @Composable
-private fun SessionIdentityCard(session: AcademicSession?) {
-    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text("ACADEMIC SESSION", color = SessionGold, style = CmsTextStyles.eyebrow)
-                Spacer(Modifier.height(6.dp))
-                Text(session?.label ?: "Session", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                Spacer(Modifier.height(4.dp))
-                Text(session?.programName?.takeIf { it.isNotBlank() } ?: "Program name not configured", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
-                Text(session?.inchargeEmail?.takeIf { it.isNotBlank() } ?: "Session in-charge not assigned", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
-            }
-            StatusBadge(if (session?.isActive == true) "ACTIVE" else "ARCHIVED", if (session?.isActive == true) BadgeTone.Success else BadgeTone.Neutral)
-        }
-    }
-}
-
-@Composable
-private fun SessionProgressCard(
+private fun SessionIdentityCard(
     session: AcademicSession?,
-    studentCount: Int,
-    shiftCounts: Map<Session, Int>,
-    gpaRecorded: Int,
-    configuredSemesters: Int,
     currentSemesterTerm: SemesterTerm?,
     canPromote: Boolean,
     onPromoteClick: () -> Unit,
 ) {
-    val maxStudents = session?.maxStudents ?: 0
-    val capacityUsed = if (maxStudents == 0) 0f else (studentCount.toFloat() / maxStudents).coerceIn(0f, 1f)
-    val gpaPercent = if (studentCount == 0) 0f else gpaRecorded.toFloat() / studentCount
-    val curriculumPercent = configuredSemesters / 8f
-
-    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Column(Modifier.padding(16.dp)) {
-            Text("CURRENT ACADEMIC POSITION", color = ModMuted, style = CmsTextStyles.eyebrow)
-            Spacer(Modifier.height(6.dp))
-            Text("Semester ${session?.currentSemester ?: 1}", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(10.dp))
-            ProgressLine("Student capacity", capacityUsed, if (maxStudents > 0) "$studentCount / $maxStudents enrolled" else "Seats remaining unknown")
-            if (session != null && session.shifts.size > 1) {
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    session.shifts.joinToString(" · ") { "${it.label} ${shiftCounts[it] ?: 0}" },
-                    color = ModMuted,
-                    style = MaterialTheme.typography.bodySmall,
-                )
+    Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
+        Column(Modifier.padding(20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("ACADEMIC SESSION", color = SessionGold, style = CmsTextStyles.eyebrow)
+                    Spacer(Modifier.height(6.dp))
+                    Text(session?.label ?: "Session", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+                    Spacer(Modifier.height(4.dp))
+                    Text(session?.programName?.takeIf { it.isNotBlank() } ?: "Program name not configured", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodyMedium)
+                    Text(session?.inchargeEmail?.takeIf { it.isNotBlank() } ?: "Session in-charge not assigned", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
+                }
+                StatusBadge(if (session?.isActive == true) "ACTIVE" else "ARCHIVED", if (session?.isActive == true) BadgeTone.Success else BadgeTone.Neutral)
             }
-            Spacer(Modifier.height(10.dp))
-            ProgressLine("GPA coverage", gpaPercent, "$gpaRecorded / $studentCount recorded")
-            Spacer(Modifier.height(10.dp))
-            ProgressLine("Curriculum coverage", curriculumPercent, "$configuredSemesters / 8 semesters configured")
-            Spacer(Modifier.height(10.dp))
             if (session?.isActive == true) {
+                Spacer(Modifier.height(8.dp))
                 if (canPromote) {
                     TextButton(onClick = onPromoteClick) {
-                        Text(if (session.currentSemester >= 8) "Mark as graduated" else "Promote semester")
+                        Text(if (session.currentSemester >= 8) "Mark as graduated" else "Promote semester", color = CmsTheme.colors.onInk)
                     }
                 } else {
                     val hint = currentSemesterTerm?.endDate?.let { "Available after semester ends on $it." }
                         ?: "Set this semester's end date in Curriculum to enable promotion."
-                    Text(hint, color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                    Text(hint, color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
                 }
             } else if (session != null) {
-                Text("This class has graduated.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.height(8.dp))
+                Text("This class has graduated.", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
             }
         }
-    }
-}
-
-@Composable
-private fun ProgressLine(label: String, percent: Float, detail: String) {
-    Column {
-        Row {
-            Text(label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
-            Text("${(percent * 100).toInt()}%", color = ModMuted, style = MaterialTheme.typography.bodySmall)
-        }
-        Spacer(Modifier.height(4.dp))
-        LinearProgressIndicator(progress = { percent }, modifier = Modifier.fillMaxWidth().height(6.dp), color = SessionBlue, trackColor = ModTrack)
-        Spacer(Modifier.height(2.dp))
-        Text(detail, color = ModMuted, style = MaterialTheme.typography.bodySmall)
     }
 }
 
