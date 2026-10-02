@@ -64,27 +64,9 @@ private val MarkRed = ModAccent
 private val MarkBlue = ModInk
 private val MarkDateFormat = DateTimeFormatter.ofPattern("dd MMM yyyy")
 
-enum class MarkRequestFilter(val label: String) {
-    ALL("All"),
-    INCREASES("Increases"),
-    DECREASES("Decreases"),
-    NO_REASON("No reason"),
-    ATTENTION("Needs attention"),
-    BLOCKED("Approval blocked"),
-}
-
 enum class EditRequestTab(val label: String) {
     MARKS("Marks"),
     ATTENDANCE("Attendance"),
-}
-
-enum class AttendanceRequestFilter(val label: String) {
-    ALL("All"),
-    TO_PRESENT("Marked present"),
-    TO_ABSENT("Marked absent"),
-    TO_LEAVE("Marked leave"),
-    NO_REASON("No reason"),
-    BLOCKED("Approval blocked"),
 }
 
 @Composable
@@ -114,14 +96,12 @@ fun MarkEditRequestReviewWorkspace(
     val requests = requests.inScope(filterScope, sessions)
     val attendanceRequests = attendanceRequests.inScope(filterScope, sessions)
     var query by remember { mutableStateOf("") }
-    var filter by remember { mutableStateOf(MarkRequestFilter.ALL) }
     var approvalTarget by remember { mutableStateOf<MarkEditRequest?>(null) }
     var rejectionTarget by remember { mutableStateOf<MarkEditRequest?>(null) }
     var tab by remember { mutableStateOf(EditRequestTab.MARKS) }
     var attendanceApproval by remember { mutableStateOf<AttendanceEditRequest?>(null) }
     var attendanceRejection by remember { mutableStateOf<AttendanceEditRequest?>(null) }
     var attendanceQuery by remember { mutableStateOf("") }
-    var attendanceFilter by remember { mutableStateOf(AttendanceRequestFilter.ALL) }
 
     fun sessionLabel(sessionId: String): String {
         val session = sessions.firstOrNull { it.sessionId == sessionId }
@@ -133,21 +113,10 @@ fun MarkEditRequestReviewWorkspace(
         details[request.id]?.studentName?.takeIf { it.isNotBlank() } ?: "Student name unavailable"
 
     val filtered = requests.filter { request ->
-        val quality = markEditReviewQuality(request)
-        val delta = request.requestedScore - (request.currentScore ?: 0)
-        val matchesQuery = query.isBlank() ||
+        query.isBlank() ||
             studentName(request).contains(query, ignoreCase = true) ||
             request.rollNumber.contains(query, ignoreCase = true) ||
             request.courseCode.contains(query, ignoreCase = true)
-        val matchesFilter = when (filter) {
-            MarkRequestFilter.ALL -> true
-            MarkRequestFilter.INCREASES -> delta > 0
-            MarkRequestFilter.DECREASES -> delta < 0
-            MarkRequestFilter.NO_REASON -> request.reason.isNullOrBlank()
-            MarkRequestFilter.ATTENTION -> quality.needsAttention
-            MarkRequestFilter.BLOCKED -> quality.blocksApproval
-        }
-        matchesQuery && matchesFilter
     }
 
     val visible = filtered.sortedByDescending { it.requestedAt }
@@ -156,20 +125,10 @@ fun MarkEditRequestReviewWorkspace(
         details[request.id]?.studentName?.takeIf { it.isNotBlank() } ?: "Student name unavailable"
 
     val attendanceFiltered = attendanceRequests.filter { request ->
-        val issues = attendanceEditReviewIssues(request)
-        val matchesQuery = attendanceQuery.isBlank() ||
+        attendanceQuery.isBlank() ||
             attendanceStudentName(request).contains(attendanceQuery, ignoreCase = true) ||
             request.rollNumber.contains(attendanceQuery, ignoreCase = true) ||
             request.courseCode.contains(attendanceQuery, ignoreCase = true)
-        val matchesFilter = when (attendanceFilter) {
-            AttendanceRequestFilter.ALL -> true
-            AttendanceRequestFilter.TO_PRESENT -> request.requestedStatus == AttendanceStatus.PRESENT
-            AttendanceRequestFilter.TO_ABSENT -> request.requestedStatus == AttendanceStatus.ABSENT
-            AttendanceRequestFilter.TO_LEAVE -> request.requestedStatus == AttendanceStatus.LEAVE
-            AttendanceRequestFilter.NO_REASON -> request.reason.isNullOrBlank()
-            AttendanceRequestFilter.BLOCKED -> issues.isNotEmpty()
-        }
-        matchesQuery && matchesFilter
     }
 
     val attendanceVisible = attendanceFiltered.sortedByDescending { it.requestedAt }
@@ -208,15 +167,6 @@ fun MarkEditRequestReviewWorkspace(
                         placeholder = { Text("Search by student, roll, or course") },
                         singleLine = true,
                     )
-                    Spacer(Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        AttendanceRequestFilter.entries.forEach { option ->
-                            CmsChip(option.label, selected = attendanceFilter == option, onClick = { attendanceFilter = option })
-                        }
-                    }
                 }
             }
 
@@ -224,7 +174,7 @@ fun MarkEditRequestReviewWorkspace(
                 loading -> items(3) { SkeletonRow() }
                 attendanceRequests.isEmpty() -> item { MarkRequestEmpty(filtered = false, onClearFilters = {}, attendance = true) }
                 attendanceVisible.isEmpty() -> item {
-                    MarkRequestEmpty(filtered = true, onClearFilters = { attendanceQuery = ""; attendanceFilter = AttendanceRequestFilter.ALL }, attendance = true)
+                    MarkRequestEmpty(filtered = true, onClearFilters = { attendanceQuery = "" }, attendance = true)
                 }
                 else -> items(attendanceVisible, key = { it.id }) { request ->
                     AttendanceRequestCard(
@@ -251,22 +201,13 @@ fun MarkEditRequestReviewWorkspace(
                     placeholder = { Text("Search by student, roll, or course") },
                     singleLine = true,
                 )
-                Spacer(Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    MarkRequestFilter.entries.forEach { option ->
-                        CmsChip(option.label, selected = filter == option, onClick = { filter = option })
-                    }
-                }
             }
         }
 
         when {
             loading -> items(3) { SkeletonRow() }
             requests.isEmpty() -> item { MarkRequestEmpty(filtered = false, onClearFilters = {}) }
-            visible.isEmpty() -> item { MarkRequestEmpty(filtered = true, onClearFilters = { query = ""; filter = MarkRequestFilter.ALL }) }
+            visible.isEmpty() -> item { MarkRequestEmpty(filtered = true, onClearFilters = { query = "" }) }
             else -> items(visible, key = { it.id }) { request ->
                 MarkRequestCard(
                     request = request,
@@ -400,7 +341,7 @@ private fun MarkRequestEmpty(filtered: Boolean, onClearFilters: () -> Unit, atte
             Spacer(Modifier.height(4.dp))
             Text(
                 when {
-                    filtered -> "Try a different search or filter."
+                    filtered -> "Try a different search."
                     attendance -> "There are no pending attendance changes. New teacher requests will appear here."
                     else -> "There are no pending score changes. New teacher requests will appear here."
                 },
