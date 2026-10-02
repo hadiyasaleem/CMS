@@ -28,6 +28,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -218,33 +219,43 @@ private fun StudentProfileHero(
     onPickPhotoClick: () -> Unit,
 ) {
     Surface(shape = RoundedCornerShape(18.dp), color = ModInk) {
-        Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(contentAlignment = Alignment.BottomEnd) {
-                ProfilePhotoAvatar(profile.name, profile.photoPath, size = 52, onLoadPhoto = onLoadPhoto, cacheKey = profile.updatedAt)
-                Surface(
-                    modifier = Modifier.clickable(enabled = !photoBusy, onClick = onPickPhotoClick),
-                    shape = CircleShape,
-                    color = CmsTheme.colors.accent,
-                ) {
-                    Box(Modifier.size(26.dp), contentAlignment = Alignment.Center) {
-                        if (photoBusy) {
-                            CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp, color = CmsTheme.colors.onInk)
-                        } else {
-                            Icon(TablerIcons.Camera, contentDescription = "Change photo", tint = CmsTheme.colors.onInk, modifier = Modifier.size(16.dp))
+        Column(Modifier.padding(20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(contentAlignment = Alignment.BottomEnd) {
+                    ProfilePhotoAvatar(profile.name, profile.photoPath, size = 52, onLoadPhoto = onLoadPhoto, cacheKey = profile.updatedAt)
+                    Surface(
+                        modifier = Modifier.clickable(enabled = !photoBusy, onClick = onPickPhotoClick),
+                        shape = CircleShape,
+                        color = CmsTheme.colors.accent,
+                    ) {
+                        Box(Modifier.size(26.dp), contentAlignment = Alignment.Center) {
+                            if (photoBusy) {
+                                CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp, color = CmsTheme.colors.onInk)
+                            } else {
+                                Icon(TablerIcons.Camera, contentDescription = "Change photo", tint = CmsTheme.colors.onInk, modifier = Modifier.size(16.dp))
+                            }
                         }
                     }
                 }
+                Spacer(Modifier.width(14.dp))
+                Column(Modifier.weight(1f)) {
+                    Text("STUDENT RECORD", color = CmsTheme.colors.onInk.copy(alpha = 0.7f), style = CmsTextStyles.eyebrow)
+                    Text(profile.name, color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+                    Text("Roll ${profile.rollNumber} · ${session?.label ?: "Session"}", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
+                }
             }
-            Spacer(Modifier.width(14.dp))
-            Column(Modifier.weight(1f)) {
-                Text("STUDENT RECORD", color = CmsTheme.colors.onInk.copy(alpha = 0.7f), style = CmsTextStyles.eyebrow)
-                Text(profile.name, color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-                Text("Roll ${profile.rollNumber} · ${session?.label ?: "Session"}", color = CmsTheme.colors.onInkMuted, style = MaterialTheme.typography.bodySmall)
+            Spacer(Modifier.height(16.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("PROFILE COMPLETION", modifier = Modifier.weight(1f), color = CmsTheme.colors.onInkMuted, style = CmsTextStyles.eyebrow)
+                Text("$completion%", color = if (completion == 100) ProfileGreen else ProfileGold, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             }
-            Column(horizontalAlignment = Alignment.End) {
-                Text("$completion%", color = if (completion == 100) ProfileGreen else ProfileGold, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-                Text("PROFILE COMPLETION", color = CmsTheme.colors.onInkMuted, style = CmsTextStyles.eyebrow)
-            }
+            Spacer(Modifier.height(8.dp))
+            LinearProgressIndicator(
+                progress = { completion / 100f },
+                modifier = Modifier.fillMaxWidth().height(6.dp),
+                color = if (completion == 100) ProfileGreen else ProfileGold,
+                trackColor = CmsTheme.colors.onInk.copy(alpha = 0.2f),
+            )
         }
     }
 }
