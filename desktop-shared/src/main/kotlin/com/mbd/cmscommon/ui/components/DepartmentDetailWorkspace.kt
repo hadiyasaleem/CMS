@@ -8,8 +8,6 @@ import com.mbd.cmscommon.domain.model.ShiftMode
 import com.mbd.cmscommon.domain.model.ProgramType
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,8 +48,6 @@ import com.mbd.cmscommon.ui.theme.ModInk
 import com.mbd.cmscommon.ui.theme.ModMuted
 import com.mbd.cmscommon.ui.theme.ModTrack
 import com.mbd.cmscommon.ui.theme.ModSurface
-import com.mbd.cmscommon.ui.theme.ModSuccess
-import java.util.Locale
 
 @Composable
 fun DepartmentDetailWorkspace(
@@ -98,44 +94,6 @@ fun DepartmentDetailWorkspace(
             }
             if (!actionMessage.isNullOrBlank()) {
                 fullSpanItem { CmsNotice(actionMessage, tone = NoticeTone.Success, onDismiss = onConsumeNotice) }
-            }
-
-            fullSpanItem {
-                DepartmentSummary(
-                    sessionCount = snapshot.sessions.size,
-                    studentCount = snapshot.studentCount,
-                    totalCapacity = snapshot.totalCapacity,
-                    remainingSeats = snapshot.remainingSeats,
-                    occupiedPercent = snapshot.occupancyPercent,
-                    sessionsNeedingSetup = snapshot.sessionsNeedingSetup,
-                    hasHod = !department?.hodEmail.isNullOrBlank(),
-                )
-            }
-
-            fullSpanItem {
-                Text("Current intakes", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-            }
-
-            fullSpanItem {
-                Column(Modifier.fillMaxWidth()) {
-                    OutlinedTextField(
-                        value = query,
-                        onValueChange = { query = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Search intakes or programs") },
-                        singleLine = true,
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        CmsChip("All shifts", selected = shiftFilter == null, onClick = { shiftFilter = null })
-                        Session.entries.forEach { shift ->
-                            CmsChip(shift.label, selected = shiftFilter == shift, onClick = { shiftFilter = shift })
-                        }
-                    }
-                }
             }
 
             if (snapshot.sessions.isEmpty()) {
@@ -224,43 +182,6 @@ private fun DepartmentIdentityCard(department: Department?, fallbackName: String
                 StatusBadge(if (hasHod) "HOD ASSIGNED" else "HOD NOT ASSIGNED", if (hasHod) BadgeTone.Success else BadgeTone.Warning)
             }
             TextButton(onClick = onEdit) { Text("Edit", color = CmsTheme.colors.onInk) }
-        }
-    }
-}
-
-@Composable
-private fun DepartmentSummary(
-    sessionCount: Int,
-    studentCount: Int,
-    totalCapacity: Int,
-    remainingSeats: Int,
-    occupiedPercent: Float,
-    sessionsNeedingSetup: Int,
-    hasHod: Boolean,
-) {
-    Column(Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            SessionMetric("Sessions", sessionCount.toString(), Modifier.weight(1f))
-            SessionMetric("Students", studentCount.toString(), Modifier.weight(1f))
-            SessionMetric("Seats left", remainingSeats.toString(), Modifier.weight(1f))
-        }
-        Spacer(Modifier.height(10.dp))
-        CapacityBar(count = studentCount, max = totalCapacity.coerceAtLeast(1))
-        Spacer(Modifier.height(10.dp))
-        Text(
-            if (sessionsNeedingSetup > 0) "$sessionsNeedingSetup session(s) need program or in-charge" else "Sessions and HOD configured",
-            color = if (sessionsNeedingSetup > 0 || !hasHod) CmsTheme.colors.accent else ModSuccess,
-            style = MaterialTheme.typography.bodySmall,
-        )
-    }
-}
-
-@Composable
-private fun SessionMetric(label: String, value: String, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Column(Modifier.padding(14.dp)) {
-            Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-            Text(label.uppercase(Locale.ROOT), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }
