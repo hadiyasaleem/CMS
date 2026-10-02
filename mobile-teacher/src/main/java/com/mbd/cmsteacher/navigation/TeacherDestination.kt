@@ -2,10 +2,10 @@ package com.mbd.cmsteacher.navigation
 
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Calendar
+import compose.icons.tablericons.Certificate
 import compose.icons.tablericons.ClipboardCheck
 import compose.icons.tablericons.Home
 import compose.icons.tablericons.Menu2
-import compose.icons.tablericons.Notebook
 import androidx.compose.ui.graphics.vector.ImageVector
 
 sealed class TeacherDestination(
@@ -18,7 +18,7 @@ sealed class TeacherDestination(
     data object Attendance : TeacherDestination("attendance", "Mark Attendance", "Attend", TablerIcons.ClipboardCheck)
     data object AttendanceHistory : TeacherDestination("attendance_history/{sessionId}/{courseCode}/{shift}", "Attendance History")
     data object AttendanceStudent : TeacherDestination("attendance_student/{sessionId}/{courseCode}/{rollNumber}", "Student Attendance")
-    data object ExamsHub : TeacherDestination("exams_hub", "Exams", "Exams", TablerIcons.Notebook)
+    data object ExamsHub : TeacherDestination("exams_hub", "Exams", "Exams", TablerIcons.Certificate)
     data object Marks : TeacherDestination("marks", "Marks Entry")
     data object SemesterResults : TeacherDestination("semester_results", "Semester Results")
     data object ExamPaper : TeacherDestination("exam_paper", "Submit Exam Paper")
