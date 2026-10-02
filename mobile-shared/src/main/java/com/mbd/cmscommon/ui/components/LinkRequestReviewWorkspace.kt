@@ -62,16 +62,6 @@ private val LinkGold = ModWarn
 private val LinkRed = ModAccent
 private val LinkClaimDateFormat = DateTimeFormatter.ofPattern("dd MMM yyyy")
 
-enum class LinkRequestFilter(val label: String) {
-    ALL("All requests"),
-    READY("Ready"),
-    NEEDS_ROSTER("Needs roster"),
-    IDENTITY_MISMATCH("Identity conflict"),
-    CLAIM_ISSUE("Claim issue"),
-    RELINK("Relink"),
-    RETRIES("Repeat attempts"),
-}
-
 enum class LinkRequestSort(val label: String) {
     OLDEST("Oldest first"),
     NEWEST("Newest first"),
@@ -101,7 +91,6 @@ fun LinkRequestReviewWorkspace(
     var filterScope by remember { mutableStateOf(ShiftScope.ALL) }
     val requests = requests.inScope(filterScope, sessions)
     var query by remember { mutableStateOf("") }
-    var filter by remember { mutableStateOf(LinkRequestFilter.ALL) }
     var sort by remember { mutableStateOf(LinkRequestSort.NEWEST) }
     var approvalTarget by remember { mutableStateOf<StudentLinkRequest?>(null) }
     var rejectionTarget by remember { mutableStateOf<StudentLinkRequest?>(null) }
@@ -120,22 +109,10 @@ fun LinkRequestReviewWorkspace(
     }
 
     val filtered = requests.filter { request ->
-        val key = linkRequestVerificationKey(request)
-        val verification = verifications[key]
-        val matchesQuery = query.isBlank() ||
+        query.isBlank() ||
             (request.nameClaimed ?: "").contains(query, ignoreCase = true) ||
             request.rollNumberClaimed.contains(query, ignoreCase = true) ||
             request.requestedByUid.contains(query, ignoreCase = true)
-        val matchesFilter = when (filter) {
-            LinkRequestFilter.ALL -> true
-            LinkRequestFilter.READY -> verification?.state == RosterVerificationState.MATCHED
-            LinkRequestFilter.NEEDS_ROSTER -> verification?.state == RosterVerificationState.MISSING
-            LinkRequestFilter.IDENTITY_MISMATCH -> verification?.state == RosterVerificationState.IDENTITY_MISMATCH
-            LinkRequestFilter.CLAIM_ISSUE -> linkRequestClaimQuality(request).issues.isNotEmpty()
-            LinkRequestFilter.RELINK -> verification?.state == RosterVerificationState.RELINK
-            LinkRequestFilter.RETRIES -> request.attemptCount > 1
-        }
-        matchesQuery && matchesFilter
     }
 
     val visible = when (sort) {
@@ -169,17 +146,6 @@ fun LinkRequestReviewWorkspace(
                     singleLine = true,
                 )
                 Spacer(Modifier.height(8.dp))
-                Text("SHOW", color = ModMuted, style = CmsTextStyles.eyebrow)
-                Spacer(Modifier.height(6.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    LinkRequestFilter.entries.forEach { option ->
-                        CmsChip(option.label, selected = filter == option, onClick = { filter = option })
-                    }
-                }
-                Spacer(Modifier.height(8.dp))
                 Text("SORT", color = ModMuted, style = CmsTextStyles.eyebrow)
                 Spacer(Modifier.height(6.dp))
                 Row(
@@ -196,7 +162,7 @@ fun LinkRequestReviewWorkspace(
         when {
             loading -> items(3) { SkeletonRow() }
             requests.isEmpty() -> item { LinkRequestEmptyState(filtered = false, onClearFilters = {}) }
-            visible.isEmpty() -> item { LinkRequestEmptyState(filtered = true, onClearFilters = { query = ""; filter = LinkRequestFilter.ALL }) }
+            visible.isEmpty() -> item { LinkRequestEmptyState(filtered = true, onClearFilters = { query = "" }) }
             else -> items(visible, key = { it.requestId }) { request ->
                 val key = linkRequestVerificationKey(request)
                 LinkRequestCard(
@@ -416,7 +382,7 @@ private fun LinkRequestEmptyState(filtered: Boolean, onClearFilters: () -> Unit)
             Text(if (filtered) "No matching requests" else "Review queue is clear", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(4.dp))
             Text(
-                if (filtered) "Try another search or review filter." else "There are no pending student account claims.",
+                if (filtered) "Try another search." else "There are no pending student account claims.",
                 color = ModMuted,
                 style = MaterialTheme.typography.bodySmall,
             )
