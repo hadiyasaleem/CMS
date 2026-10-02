@@ -11,10 +11,8 @@ import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.StudentLinkRequestRepository
 import com.mbd.cmscommon.domain.repository.TeacherRepository
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
@@ -25,20 +23,6 @@ class DashboardController(
     linkRequestRepository: StudentLinkRequestRepository,
     scope: CoroutineScope,
 ) : ScreenController(scope) {
-
-    private val _filterScope = MutableStateFlow(ShiftScope.ALL)
-
-    /** The Department -> Session -> Shift filter the counters follow. */
-    val filterScope: StateFlow<ShiftScope> = _filterScope.asStateFlow()
-
-    fun setFilterScope(scope: ShiftScope) {
-        _filterScope.value = scope
-    }
-
-    val filterOptions: StateFlow<ScopeFilterOptions> =
-        combine(departmentRepository.observeActiveDepartments(), sessionRepository.observeAllSessions()) { departments, sessions ->
-            ScopeFilterOptions.of(departments, sessions)
-        }.stateIn(scope, SharingStarted.WhileSubscribed(5000), ScopeFilterOptions())
 
     private val sources = combine(
         sessionRepository.observeActiveSessionStudentCount(),
@@ -51,9 +35,8 @@ class DashboardController(
     val state: StateFlow<DashboardState> = combine(
         sources,
         linkRequestRepository.observePendingRequests(),
-        _filterScope,
-    ) { sources, requests, filter ->
-        dashboardState(sources, requests, filter)
+    ) { sources, requests ->
+        dashboardState(sources, requests, ShiftScope.ALL)
     }.stateIn(scope, SharingStarted.WhileSubscribed(5000), DashboardState())
 }
 
