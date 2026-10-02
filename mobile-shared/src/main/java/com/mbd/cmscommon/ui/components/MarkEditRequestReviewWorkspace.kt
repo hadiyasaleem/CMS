@@ -77,12 +77,6 @@ enum class EditRequestTab(val label: String) {
     ATTENDANCE("Attendance"),
 }
 
-enum class MarkRequestSort(val label: String) {
-    OLDEST("Oldest"),
-    NEWEST("Newest"),
-    LARGEST_CHANGE("Largest change"),
-}
-
 enum class AttendanceRequestFilter(val label: String) {
     ALL("All"),
     TO_PRESENT("Marked present"),
@@ -90,11 +84,6 @@ enum class AttendanceRequestFilter(val label: String) {
     TO_LEAVE("Marked leave"),
     NO_REASON("No reason"),
     BLOCKED("Approval blocked"),
-}
-
-enum class AttendanceRequestSort(val label: String) {
-    OLDEST("Oldest"),
-    NEWEST("Newest"),
 }
 
 @Composable
@@ -125,7 +114,6 @@ fun MarkEditRequestReviewWorkspace(
     val attendanceRequests = attendanceRequests.inScope(filterScope, sessions)
     var query by remember { mutableStateOf("") }
     var filter by remember { mutableStateOf(MarkRequestFilter.ALL) }
-    var sort by remember { mutableStateOf(MarkRequestSort.NEWEST) }
     var approvalTarget by remember { mutableStateOf<MarkEditRequest?>(null) }
     var rejectionTarget by remember { mutableStateOf<MarkEditRequest?>(null) }
     var tab by remember { mutableStateOf(EditRequestTab.MARKS) }
@@ -133,7 +121,6 @@ fun MarkEditRequestReviewWorkspace(
     var attendanceRejection by remember { mutableStateOf<AttendanceEditRequest?>(null) }
     var attendanceQuery by remember { mutableStateOf("") }
     var attendanceFilter by remember { mutableStateOf(AttendanceRequestFilter.ALL) }
-    var attendanceSort by remember { mutableStateOf(AttendanceRequestSort.NEWEST) }
 
     fun sessionLabel(sessionId: String): String {
         val session = sessions.firstOrNull { it.sessionId == sessionId }
@@ -162,11 +149,7 @@ fun MarkEditRequestReviewWorkspace(
         matchesQuery && matchesFilter
     }
 
-    val visible = when (sort) {
-        MarkRequestSort.OLDEST -> filtered.sortedBy { it.requestedAt }
-        MarkRequestSort.NEWEST -> filtered.sortedByDescending { it.requestedAt }
-        MarkRequestSort.LARGEST_CHANGE -> filtered.sortedByDescending { kotlin.math.abs(it.requestedScore - (it.currentScore ?: 0)) }
-    }
+    val visible = filtered.sortedByDescending { it.requestedAt }
 
     fun attendanceStudentName(request: AttendanceEditRequest): String =
         details[request.id]?.studentName?.takeIf { it.isNotBlank() } ?: "Student name unavailable"
@@ -188,10 +171,7 @@ fun MarkEditRequestReviewWorkspace(
         matchesQuery && matchesFilter
     }
 
-    val attendanceVisible = when (attendanceSort) {
-        AttendanceRequestSort.OLDEST -> attendanceFiltered.sortedBy { it.requestedAt }
-        AttendanceRequestSort.NEWEST -> attendanceFiltered.sortedByDescending { it.requestedAt }
-    }
+    val attendanceVisible = attendanceFiltered.sortedByDescending { it.requestedAt }
 
     LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { ShiftScopeSelector(filterScope, departmentScopeOptions(departments), sessions, { filterScope = it }) }
@@ -232,17 +212,6 @@ fun MarkEditRequestReviewWorkspace(
                     ) {
                         AttendanceRequestFilter.entries.forEach { option ->
                             CmsChip(option.label, selected = attendanceFilter == option, onClick = { attendanceFilter = option })
-                        }
-                    }
-                    Spacer(Modifier.height(8.dp))
-                    Text("SORT: ${attendanceSort.label}", color = ModMuted, style = CmsTextStyles.eyebrow)
-                    Spacer(Modifier.height(6.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        AttendanceRequestSort.entries.forEach { option ->
-                            CmsChip(option.label, selected = attendanceSort == option, onClick = { attendanceSort = option })
                         }
                     }
                 }
@@ -286,17 +255,6 @@ fun MarkEditRequestReviewWorkspace(
                 ) {
                     MarkRequestFilter.entries.forEach { option ->
                         CmsChip(option.label, selected = filter == option, onClick = { filter = option })
-                    }
-                }
-                Spacer(Modifier.height(8.dp))
-                Text("SORT: ${sort.label}", color = ModMuted, style = CmsTextStyles.eyebrow)
-                Spacer(Modifier.height(6.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    MarkRequestSort.entries.forEach { option ->
-                        CmsChip(option.label, selected = sort == option, onClick = { sort = option })
                     }
                 }
             }
