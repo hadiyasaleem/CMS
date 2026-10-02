@@ -4,38 +4,38 @@ import compose.icons.TablerIcons
 import compose.icons.tablericons.CircleCheck
 import compose.icons.tablericons.Eye
 import compose.icons.tablericons.EyeOff
-import compose.icons.tablericons.History
+import compose.icons.tablericons.DotsVertical
 import compose.icons.tablericons.Login
 import compose.icons.tablericons.Search
 import compose.icons.tablericons.Shield
 import compose.icons.tablericons.ShieldCheck
-import compose.icons.tablericons.Users
 import compose.icons.tablericons.X
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -46,8 +46,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -59,6 +57,7 @@ import com.mbd.cmscommon.ui.theme.CmsTheme
 import com.mbd.cmscommon.ui.theme.ModInk
 import com.mbd.cmscommon.ui.theme.ModMuted
 import com.mbd.cmscommon.ui.theme.ModTrack
+import com.mbd.cmscommon.ui.theme.ModSurface
 import com.mbd.cmscommon.ui.theme.ModSuccess
 import com.mbd.cmscommon.util.FieldValidators
 import com.mbd.cmscommon.util.PasswordRule
@@ -81,13 +80,6 @@ enum class AdministratorSort(val label: String) {
     NEWEST("Newest"),
 }
 
-data class AdministratorSummary(
-    val label: String,
-    val value: String,
-    val detail: String?,
-    val icon: ImageVector,
-)
-
 @Composable
 fun AdministratorDirectoryWorkspace(
     administrators: List<AdministratorAccount>,
@@ -95,10 +87,16 @@ fun AdministratorDirectoryWorkspace(
     loading: Boolean,
     creating: Boolean,
     createdEmail: String?,
+    busyAdminKey: String?,
+    notice: String?,
     errorMessage: String?,
     onRefresh: () -> Unit,
     onCreate: (String, String) -> Unit,
     onConsumeCreated: () -> Unit,
+    onSetStatus: (AdministratorAccount, String) -> Unit,
+    onResetPassword: (AdministratorAccount, String) -> Unit,
+    onDelete: (AdministratorAccount) -> Unit,
+    onConsumeNotice: () -> Unit,
     onClearError: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -106,6 +104,10 @@ fun AdministratorDirectoryWorkspace(
     var filter by remember { mutableStateOf(AdministratorFilter.ALL) }
     var sort by remember { mutableStateOf(AdministratorSort.EMAIL) }
     var showCreateDialog by remember { mutableStateOf(false) }
+    var detailAccount by remember { mutableStateOf<AdministratorAccount?>(null) }
+    var pendingStatus by remember { mutableStateOf<Pair<AdministratorAccount, String>?>(null) }
+    var pendingDelete by remember { mutableStateOf<AdministratorAccount?>(null) }
+    var pendingResetPassword by remember { mutableStateOf<AdministratorAccount?>(null) }
 
     val now = Instant.now()
     val directory = administratorDirectorySnapshot(administrators, now)
@@ -134,76 +136,90 @@ fun AdministratorDirectoryWorkspace(
         AdministratorSort.NEWEST -> filtered.sortedByDescending { it.createdAt }
     }
 
-    val summaries = listOf(
-        AdministratorSummary("Total admins", directory.accounts.size.toString(), null, TablerIcons.Users),
-        AdministratorSummary("Active", directory.activeCount.toString(), "${directory.unavailableCount} unavailable", TablerIcons.CircleCheck),
-        AdministratorSummary("Recent", directory.recentlyActiveCount.toString(), null, TablerIcons.Login),
-        AdministratorSummary("Pending use", directory.neverSignedInCount.toString(), null, TablerIcons.History),
-    )
+    fun isSelf(account: AdministratorAccount): Boolean =
+        currentKey != null && (account.id == currentKey || account.email.equals(currentKey, ignoreCase = true))
 
-    Scaffold(
-        modifier = modifier,
-        containerColor = MaterialTheme.colorScheme.background,
-        floatingActionButton = { CmsFab(onClick = { showCreateDialog = true }, contentDescription = "Add administrator") },
-    ) { padding ->
-        RefreshBox(isRefreshing = loading, onRefresh = onRefresh, modifier = Modifier.padding(padding)) {
-            LazyColumn(Modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp)) {
-                item { AdministratorHero(directory.accounts.size) }
+    Box(modifier.fillMaxSize()) {
+        CardGrid(Modifier.fillMaxWidth()) {
+            fullSpanItem { AdministratorHero(directory.accounts.size) }
 
-                if (!createdEmail.isNullOrBlank()) {
-                    item {
-                        Spacer(Modifier.height(12.dp))
-                        AdministratorCreatedBanner(createdEmail, onConsumeCreated)
-                    }
-                }
+            if (!createdEmail.isNullOrBlank()) {
+                fullSpanItem { AdministratorCreatedBanner(createdEmail, onConsumeCreated) }
+            }
 
-                item {
+            fullSpanItem { SecurityNotice() }
+
+            fullSpanItem {
+                Column(Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = query,
+                        onValueChange = { query = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("Search by email") },
+                        leadingIcon = { Icon(TablerIcons.Search, contentDescription = null) },
+                        singleLine = true,
+                    )
                     Spacer(Modifier.height(12.dp))
-                    SecurityNotice()
+                    Text("SHOW", color = ModMuted, style = CmsTextStyles.eyebrow)
+                    Spacer(Modifier.height(6.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        AdministratorFilter.entries.forEach { option ->
+                            CmsChip(option.label, selected = filter == option, onClick = { filter = option })
+                        }
+                    }
+                    Spacer(Modifier.height(12.dp))
+                    Text("SORT", color = ModMuted, style = CmsTextStyles.eyebrow)
+                    Spacer(Modifier.height(6.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        AdministratorSort.entries.forEach { option ->
+                            CmsChip(option.label, selected = sort == option, onClick = { sort = option })
+                        }
+                    }
+                    Spacer(Modifier.height(10.dp))
+                    Text("Showing ${visibleAdministrators.size} of ${directory.accounts.size} accounts", color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
+            }
 
-                item {
-                    Spacer(Modifier.height(16.dp))
-                    AdministratorSummaryGrid(summaries)
+            when {
+                loading -> fullSpanItems(3) { SkeletonRow() }
+                directory.accounts.isEmpty() -> fullSpanItem {
+                    AdministratorEmptyState(filtered = false, onAdd = { showCreateDialog = true }, onClearFilters = {})
                 }
-
-                item {
-                    Spacer(Modifier.height(16.dp))
-                    AdministratorDirectoryControls(
-                        query = query,
-                        onQueryChange = { query = it },
-                        filter = filter,
-                        onFilterChange = { filter = it },
-                        sort = sort,
-                        onSortChange = { sort = it },
-                        visibleCount = visibleAdministrators.size,
-                        totalCount = directory.accounts.size,
+                visibleAdministrators.isEmpty() -> fullSpanItem {
+                    AdministratorEmptyState(
+                        filtered = true,
+                        onAdd = { showCreateDialog = true },
+                        onClearFilters = { query = ""; filter = AdministratorFilter.ALL },
                     )
                 }
-
-                item { Spacer(Modifier.height(12.dp)) }
-
-                if (!loading && directory.accounts.isEmpty()) {
-                    item { AdministratorEmptyState(filtered = false, onAdd = { showCreateDialog = true }, onClearFilters = {}) }
-                } else if (visibleAdministrators.isEmpty()) {
-                    item {
-                        AdministratorEmptyState(
-                            filtered = true,
-                            onAdd = { showCreateDialog = true },
-                            onClearFilters = { query = ""; filter = AdministratorFilter.ALL },
-                        )
-                    }
-                } else {
-                    items(visibleAdministrators, key = { it.id }) { account ->
-                        val isCurrent = currentKey != null && (account.id == currentKey || account.email.equals(currentKey, ignoreCase = true))
-                        Spacer(Modifier.height(10.dp))
-                        AdministratorCard(account, isCurrent, now)
-                    }
+                else -> items(visibleAdministrators, key = { it.id }) { account ->
+                    val isCurrent = isSelf(account)
+                    AdministratorCard(
+                        account = account,
+                        isCurrent = isCurrent,
+                        now = now,
+                        busy = busyAdminKey == account.id,
+                        onEdit = { detailAccount = account },
+                        onRequestStatus = { status -> pendingStatus = account to status },
+                        onRequestResetPassword = { pendingResetPassword = account },
+                        onRequestDelete = { pendingDelete = account },
+                    )
                 }
-
-                item { Spacer(Modifier.height(88.dp)) }
             }
+
+            fullSpanItem { Spacer(Modifier.height(72.dp)) }
         }
+        CmsFab(
+            onClick = { showCreateDialog = true },
+            contentDescription = "Add administrator",
+            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+        )
     }
 
     if (showCreateDialog) {
@@ -218,8 +234,61 @@ fun AdministratorDirectoryWorkspace(
         )
     }
 
+    detailAccount?.let { account ->
+        AdministratorDetailDialog(
+            account = account,
+            isCurrent = isSelf(account),
+            now = now,
+            busy = busyAdminKey == account.id,
+            onDismiss = { detailAccount = null },
+            onRequestStatus = { status -> pendingStatus = account to status },
+            onRequestResetPassword = { pendingResetPassword = account },
+            onRequestDelete = { pendingDelete = account },
+        )
+    }
+
+    pendingStatus?.let { (account, status) ->
+        val label = if (status == "ACTIVE") "Reactivate" else "Disable account"
+        AlertDialog(
+            onDismissRequest = { pendingStatus = null },
+            title = { Text(label, style = MaterialTheme.typography.headlineSmall) },
+            text = { DialogScrollBody { Text("Current status: ${account.status}. This changes ${account.email}'s sign-in access.") } },
+            confirmButton = {
+                TextButton(onClick = { onSetStatus(account, status); pendingStatus = null; detailAccount = null }) { Text(label) }
+            },
+            dismissButton = { TextButton(onClick = { pendingStatus = null }) { Text("Cancel") } },
+        )
+    }
+
+    pendingDelete?.let { account ->
+        ConfirmDestructiveActionDialog(
+            title = "Remove administrator",
+            dependentSummary = "Removes ${account.email}'s administrator account and revokes access.",
+            onConfirm = { onDelete(account); pendingDelete = null; detailAccount = null },
+            onDismiss = { pendingDelete = null },
+        )
+    }
+
+    pendingResetPassword?.let { account ->
+        AdministratorResetPasswordDialog(
+            account = account,
+            busy = busyAdminKey == account.id,
+            onConfirm = { newPassword -> onResetPassword(account, newPassword); pendingResetPassword = null },
+            onDismiss = { pendingResetPassword = null },
+        )
+    }
+
     if (!errorMessage.isNullOrBlank()) {
         CmsErrorDialog(message = errorMessage, title = "Couldn't update administrators", onDismiss = onClearError)
+    }
+
+    if (!notice.isNullOrBlank()) {
+        AlertDialog(
+            onDismissRequest = onConsumeNotice,
+            title = { Text("Success", style = MaterialTheme.typography.headlineSmall) },
+            text = { DialogScrollBody { Text(notice) } },
+            confirmButton = { TextButton(onClick = onConsumeNotice) { Text("OK") } },
+        )
     }
 }
 
@@ -265,115 +334,76 @@ private fun AdministratorCreatedBanner(email: String, onDismiss: () -> Unit, mod
     }
 }
 
-@Composable
-private fun AdministratorSummaryGrid(summaries: List<AdministratorSummary>, modifier: Modifier = Modifier) {
-    BoxWithConstraints(modifier.fillMaxWidth()) {
-        val columns = if (maxWidth >= 900.dp) summaries.size else 2
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            summaries.chunked(columns).forEach { rowItems ->
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    rowItems.forEach { summary -> AdministratorSummaryCard(summary, Modifier.weight(1f)) }
-                    repeat(columns - rowItems.size) { Spacer(Modifier.weight(1f)) }
-                }
-            }
-        }
-    }
+/** Two-letter avatar initials derived from an email local-part, e.g. "john.doe" -> "JD". */
+private fun administratorAvatarLabel(email: String): String {
+    val local = email.substringBefore('@')
+    val parts = local.split('.', '_', '-').filter { it.isNotBlank() }
+    return if (parts.size >= 2) "${parts[0]} ${parts[1]}" else local
 }
 
 @Composable
-private fun AdministratorSummaryCard(summary: AdministratorSummary, modifier: Modifier = Modifier) {
-    CmsCard(modifier) {
-        Column(Modifier.padding(16.dp)) {
-            Icon(summary.icon, contentDescription = null, tint = CmsTheme.colors.accent, modifier = Modifier.size(20.dp))
-            Spacer(Modifier.height(10.dp))
-            Text(summary.value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
-            Text(summary.label.uppercase(Locale.ROOT), color = ModMuted, style = CmsTextStyles.eyebrow)
-            if (summary.detail != null) {
-                Text(summary.detail, color = ModMuted, style = MaterialTheme.typography.bodySmall)
-            }
-        }
-    }
-}
-
-@Composable
-private fun AdministratorDirectoryControls(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    filter: AdministratorFilter,
-    onFilterChange: (AdministratorFilter) -> Unit,
-    sort: AdministratorSort,
-    onSortChange: (AdministratorSort) -> Unit,
-    visibleCount: Int,
-    totalCount: Int,
+private fun AdministratorCard(
+    account: AdministratorAccount,
+    isCurrent: Boolean,
+    now: Instant,
+    busy: Boolean,
+    onEdit: () -> Unit,
+    onRequestStatus: (String) -> Unit,
+    onRequestResetPassword: () -> Unit,
+    onRequestDelete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier.fillMaxWidth()) {
-        OutlinedTextField(
-            value = query,
-            onValueChange = onQueryChange,
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Search by email") },
-            leadingIcon = { Icon(TablerIcons.Search, contentDescription = null) },
-            singleLine = true,
-        )
-        Spacer(Modifier.height(12.dp))
-        Text("SHOW", color = ModMuted, style = CmsTextStyles.eyebrow)
-        Spacer(Modifier.height(6.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            AdministratorFilter.entries.forEach { option ->
-                CmsChip(option.label, selected = filter == option, onClick = { onFilterChange(option) })
-            }
-        }
-        Spacer(Modifier.height(12.dp))
-        Text("SORT", color = ModMuted, style = CmsTextStyles.eyebrow)
-        Spacer(Modifier.height(6.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            AdministratorSort.entries.forEach { option ->
-                CmsChip(option.label, selected = sort == option, onClick = { onSortChange(option) })
-            }
-        }
-        Spacer(Modifier.height(10.dp))
-        Text("Showing $visibleCount of $totalCount accounts", color = ModMuted, style = MaterialTheme.typography.bodySmall)
-    }
-}
-
-@Composable
-private fun AdministratorCard(account: AdministratorAccount, isCurrent: Boolean, now: Instant, modifier: Modifier = Modifier) {
+    var menuExpanded by remember { mutableStateOf(false) }
     val active = account.status.equals("ACTIVE", ignoreCase = true)
-    CmsCard(modifier.fillMaxWidth()) {
+
+    Surface(
+        modifier = modifier.fillMaxWidth().clickable(onClick = onEdit),
+        shape = RoundedCornerShape(16.dp),
+        color = ModSurface,
+        border = BorderStroke(1.dp, ModTrack),
+    ) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                AvatarInitials(account.email.substringBefore('@'), size = 42)
+                AvatarInitials(administratorAvatarLabel(account.email), size = 42)
                 Spacer(Modifier.size(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text(account.email, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                 }
+                if (isCurrent) {
+                    StatusBadge("YOU", BadgeTone.Navy)
+                } else {
+                    Box {
+                        IconButton(onClick = { menuExpanded = true }, enabled = !busy) {
+                            Icon(TablerIcons.DotsVertical, contentDescription = "More")
+                        }
+                        DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                            if (active) {
+                                DropdownMenuItem(text = { Text("Disable") }, onClick = { menuExpanded = false; onRequestStatus("DISABLED") })
+                            } else {
+                                DropdownMenuItem(text = { Text("Reactivate") }, onClick = { menuExpanded = false; onRequestStatus("ACTIVE") })
+                            }
+                            DropdownMenuItem(text = { Text("Reset password") }, onClick = { menuExpanded = false; onRequestResetPassword() })
+                            DropdownMenuItem(
+                                text = { Text("Remove", color = CmsTheme.colors.accent) },
+                                onClick = { menuExpanded = false; onRequestDelete() },
+                            )
+                        }
+                    }
+                }
             }
             Spacer(Modifier.height(14.dp))
-            Row {
-                val status = account.status.ifBlank { "UNKNOWN" }.uppercase(Locale.ROOT)
-                StatusBadge(status, if (active) BadgeTone.Success else BadgeTone.Neutral)
-                Spacer(Modifier.size(8.dp))
-                StatusBadge(if (isCurrent) "YOU" else "FULL ACCESS", if (isCurrent) BadgeTone.Navy else BadgeTone.Warning)
-            }
+            val status = account.status.ifBlank { "UNKNOWN" }.uppercase(Locale.ROOT)
+            StatusBadge(status, if (active) BadgeTone.Success else BadgeTone.Neutral)
             Spacer(Modifier.height(14.dp))
             HorizontalDivider(color = ModTrack)
             Spacer(Modifier.height(13.dp))
             AdministratorDetailRow(TablerIcons.Login, "Last sign-in", relativeActivity(account.lastLoginAt, now))
-            Spacer(Modifier.height(9.dp))
-            AdministratorDetailRow(TablerIcons.ShieldCheck, "Scope", "College-wide administration")
         }
     }
 }
 
 @Composable
-private fun AdministratorDetailRow(icon: ImageVector, label: String, value: String, modifier: Modifier = Modifier) {
+private fun AdministratorDetailRow(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, value: String, modifier: Modifier = Modifier) {
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Icon(icon, contentDescription = null, tint = ModMuted, modifier = Modifier.size(16.dp))
         Spacer(Modifier.size(8.dp))
@@ -384,7 +414,7 @@ private fun AdministratorDetailRow(icon: ImageVector, label: String, value: Stri
 
 @Composable
 private fun AdministratorEmptyState(filtered: Boolean, onAdd: () -> Unit, onClearFilters: () -> Unit, modifier: Modifier = Modifier) {
-    CmsCard(modifier.fillMaxWidth()) {
+    Surface(modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 if (filtered) "No matching administrators" else "No administrators found",
@@ -404,6 +434,99 @@ private fun AdministratorEmptyState(filtered: Boolean, onAdd: () -> Unit, onClea
             )
         }
     }
+}
+
+@Composable
+private fun AdministratorDetailDialog(
+    account: AdministratorAccount,
+    isCurrent: Boolean,
+    now: Instant,
+    busy: Boolean,
+    onDismiss: () -> Unit,
+    onRequestStatus: (String) -> Unit,
+    onRequestResetPassword: () -> Unit,
+    onRequestDelete: () -> Unit,
+) {
+    val active = account.status.equals("ACTIVE", ignoreCase = true)
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(account.email, style = MaterialTheme.typography.headlineSmall) },
+        text = {
+            DialogScrollBody {
+                Column {
+                    StatusBadge(account.status.ifBlank { "UNKNOWN" }.uppercase(Locale.ROOT), if (active) BadgeTone.Success else BadgeTone.Neutral)
+                    Spacer(Modifier.height(12.dp))
+                    AdministratorDetailRow(TablerIcons.Login, "Last sign-in", relativeActivity(account.lastLoginAt, now))
+                    Spacer(Modifier.height(8.dp))
+                    AdministratorDetailRow(TablerIcons.ShieldCheck, "Created", formatAdministratorDate(account.createdAt))
+                    if (!isCurrent) {
+                        Spacer(Modifier.height(16.dp))
+                        HorizontalDivider(color = ModTrack)
+                        Spacer(Modifier.height(12.dp))
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            CmsPrimaryButton(
+                                text = if (active) "Disable account" else "Reactivate",
+                                onClick = { onRequestStatus(if (active) "DISABLED" else "ACTIVE") },
+                                enabled = !busy,
+                            )
+                            TextButton(onClick = onRequestResetPassword, enabled = !busy) { Text("Reset password") }
+                            TextButton(onClick = onRequestDelete, enabled = !busy) { Text("Remove administrator", color = CmsTheme.colors.accent) }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } },
+    )
+}
+
+@Composable
+private fun AdministratorResetPasswordDialog(
+    account: AdministratorAccount,
+    busy: Boolean,
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var newPassword by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    val passwordError = FieldValidators.passwordError(newPassword)
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Reset ${account.email}'s password", style = MaterialTheme.typography.headlineSmall) },
+        text = {
+            DialogScrollBody {
+                Column {
+                    Text(
+                        "Set a new temporary password. Share it with ${account.email} directly -- they'll sign in with it.",
+                        color = ModMuted,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    OutlinedTextField(
+                        value = newPassword,
+                        onValueChange = { newPassword = it },
+                        label = { Text("New temporary password") },
+                        isError = newPassword.isNotBlank() && passwordError != null,
+                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                Icon(if (passwordVisible) TablerIcons.EyeOff else TablerIcons.Eye, contentDescription = if (passwordVisible) "Hide password" else "Show password")
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(newPassword) }, enabled = passwordError == null && !busy) {
+                Text(if (busy) "Resetting" else "Reset password")
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss, enabled = !busy) { Text("Cancel") } },
+    )
 }
 
 @Composable

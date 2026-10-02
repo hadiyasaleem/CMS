@@ -20,6 +20,8 @@ fun AdministratorsScreen(repository: AdministratorRepository, currentAccountKey:
     val creating by controller.creating.collectAsState()
     val createdEmail by controller.createdEmail.collectAsState()
     val errorMessage by controller.error.collectAsState()
+    val busyAdminKey by controller.busyAdminKey.collectAsState()
+    val notice by controller.notice.collectAsState()
 
     AdministratorDirectoryWorkspace(
         administrators = administrators,
@@ -27,10 +29,16 @@ fun AdministratorsScreen(repository: AdministratorRepository, currentAccountKey:
         loading = loading,
         creating = creating,
         createdEmail = createdEmail,
+        busyAdminKey = busyAdminKey,
+        notice = notice,
         errorMessage = errorMessage,
         onRefresh = controller::refresh,
         onCreate = controller::create,
         onConsumeCreated = controller::consumeCreated,
+        onSetStatus = controller::setStatus,
+        onResetPassword = controller::resetPassword,
+        onDelete = controller::deleteAdministrator,
+        onConsumeNotice = controller::consumeNotice,
         onClearError = controller::clearError,
     )
 }

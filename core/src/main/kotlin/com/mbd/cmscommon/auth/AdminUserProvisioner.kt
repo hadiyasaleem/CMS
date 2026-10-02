@@ -77,4 +77,14 @@ class AdminUserProvisioner @Inject constructor(
         // that type info inside the builder lambda and fails at runtime with a null Content-Type.
         EdgeFunctionErrors.translate { functions.invoke(SupabaseTables.FN_RESET_TEACHER_PASSWORD, body) }
     }
+
+    suspend fun setAdministratorStatus(email: String, status: String) {
+        val body = SetStatusRequest(email.normalizeEmail(), status)
+        functions.invoke(SupabaseTables.FN_SET_ADMINISTRATOR_STATUS, body)
+    }
+
+    suspend fun resetAdministratorPassword(email: String, newPassword: String) {
+        val body = ResetPasswordRequest(email.normalizeEmail(), newPassword)
+        functions.invoke(SupabaseTables.FN_RESET_ADMINISTRATOR_PASSWORD, body)
+    }
 }

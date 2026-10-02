@@ -46,4 +46,6 @@ object SupabaseTables {
     const val FN_SET_TEACHER_STATUS = "set-teacher-status"
     const val FN_REVOKE_STUDENT_LINK = "revoke-student-link"
     const val FN_RESET_TEACHER_PASSWORD = "reset-teacher-password"
+    const val FN_SET_ADMINISTRATOR_STATUS = "set-administrator-status"
+    const val FN_RESET_ADMINISTRATOR_PASSWORD = "reset-administrator-password"
 }

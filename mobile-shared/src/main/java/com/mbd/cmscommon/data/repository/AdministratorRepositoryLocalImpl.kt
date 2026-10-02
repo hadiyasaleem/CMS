@@ -121,6 +121,20 @@ class AdministratorRepositoryLocalImpl @Inject constructor(
         )
     }
 
+    override suspend fun setStatus(email: String, status: String) {
+        provisioner.setAdministratorStatus(email.normalizeEmail(), status)
+        sync()
+    }
+
+    override suspend fun resetPassword(email: String, newPassword: String) {
+        provisioner.resetAdministratorPassword(email.normalizeEmail(), newPassword)
+    }
+
+    override suspend fun deleteAdministrator(email: String) {
+        provisioner.setAdministratorStatus(email.normalizeEmail(), "DELETE")
+        sync()
+    }
+
     private companion object {
         const val PAGE_SIZE = 500L
     }
