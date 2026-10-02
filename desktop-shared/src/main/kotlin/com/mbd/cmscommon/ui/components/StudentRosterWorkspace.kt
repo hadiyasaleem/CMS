@@ -52,7 +52,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.controller.BulkImportSummary
 import com.mbd.cmscommon.domain.model.AcademicSession
@@ -105,8 +104,6 @@ fun StudentRosterWorkspace(
     }
     val maxStudents = session?.maxStudents ?: 0
     val isFull = maxStudents > 0 && students.size >= maxStudents
-    val withGpa = students.count { it.cgpa != null }
-    val avgCgpa = students.mapNotNull { it.cgpa }.takeIf { it.isNotEmpty() }?.average()
 
     // All | Morning | Evening -- a single-shift session shows All plus its own shift.
     val tabs = rosterTabs(session)
@@ -134,8 +131,6 @@ fun StudentRosterWorkspace(
         if (onExport != null) {
             fullSpanItem { ExportBar(onExport, build = { studentRosterExport(session, visible, activeTab) }, enabled = visible.isNotEmpty()) }
         }
-
-        fullSpanItem { RosterSummaryCard(students.size, avgCgpa, withGpa, (maxStudents - students.size).coerceAtLeast(0)) }
 
         fullSpanItem {
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -230,26 +225,6 @@ private fun RosterHero(
             )
             Spacer(Modifier.height(8.dp))
             TextButton(onClick = onImport, enabled = !importing) { Text(if (importing) "Importing" else "Import file", color = CmsTheme.colors.onInk) }
-        }
-    }
-}
-
-@Composable
-private fun RosterSummaryCard(enrolled: Int, avgCgpa: Double?, gpaRecords: Int, seatsRemaining: Int) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        RosterMetric("Enrolled", enrolled.toString(), Modifier.weight(1f))
-        RosterMetric("Avg CGPA", avgCgpa?.let { "%.2f".format(it) } ?: "--", Modifier.weight(1f))
-        RosterMetric("GPA records", gpaRecords.toString(), Modifier.weight(1f))
-        RosterMetric("Seats remaining", seatsRemaining.toString(), Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun RosterMetric(label: String, value: String, modifier: Modifier = Modifier) {
-    Surface(modifier = modifier, shape = RoundedCornerShape(14.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Column(Modifier.padding(14.dp)) {
-            Text(value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(label.uppercase(), color = ModMuted, style = CmsTextStyles.eyebrow)
         }
     }
 }
