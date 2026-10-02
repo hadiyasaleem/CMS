@@ -81,6 +81,7 @@ fun StudentExamsHubWorkspace(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        item { StudentExamsHeader(heroPainter) }
         if (!errorMessage.isNullOrBlank()) {
             item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         }
@@ -119,6 +120,27 @@ private fun buildStudentExamCards(snapshot: StudentExamsHubSnapshot): List<Stude
         StudentExamCard("Results", null, resultsValue, "current CGPA", resultsStatus, resultsTone, TablerIcons.TrendingUp, StudentExamsDestination.RESULTS),
         StudentExamCard("Datesheets", datesheetSubtitle, snapshot.upcomingPapers.toString(), "upcoming papers", datesheetStatus, datesheetTone, TablerIcons.CalendarStats, StudentExamsDestination.DATESHEETS),
     )
+}
+
+@Composable
+private fun StudentExamsHeader(heroPainter: Painter) {
+    Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = ModInk) {
+        Box(Modifier.fillMaxSize()) {
+            Image(
+                painter = heroPainter,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                alignment = Alignment.CenterEnd,
+                contentScale = ContentScale.Crop,
+                alpha = 0.35f,
+            )
+            Column(Modifier.align(Alignment.CenterStart).padding(20.dp)) {
+                Text("ASSESSMENT WORKSPACE", color = StudentExamsGold, style = CmsTextStyles.eyebrow)
+                Spacer(Modifier.height(6.dp))
+                Text("Exams", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+            }
+        }
+    }
 }
 
 @Composable

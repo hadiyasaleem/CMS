@@ -84,6 +84,7 @@ fun RecordsHubWorkspace(
     modifier: Modifier = Modifier,
 ) {
     CardGrid(modifier.fillMaxWidth().background(RecordsCanvas)) {
+        fullSpanItem { RecordsHeader(heroPainter) }
         if (!errorMessage.isNullOrBlank()) {
             fullSpanItem { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         }
@@ -98,6 +99,27 @@ fun RecordsHubWorkspace(
         }
 
         fullSpanItem { Spacer(Modifier.height(72.dp)) }
+    }
+}
+
+@Composable
+private fun RecordsHeader(heroPainter: Painter) {
+    Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = ModInk) {
+        Box(Modifier.fillMaxSize()) {
+            Image(
+                painter = heroPainter,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                alignment = Alignment.CenterEnd,
+                contentScale = ContentScale.Crop,
+                alpha = 0.35f,
+            )
+            Column(Modifier.align(Alignment.CenterStart).padding(20.dp)) {
+                Text("COLLEGE RECORDS", color = RecordsGold, style = CmsTextStyles.eyebrow)
+                Spacer(Modifier.height(6.dp))
+                Text("Records", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+            }
+        }
     }
 }
 

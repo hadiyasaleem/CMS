@@ -107,12 +107,34 @@ fun ExamsHubWorkspace(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        item { ExamHeader(heroPainter) }
         if (!errorMessage.isNullOrBlank()) {
             item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         }
         item { ExamMetrics(snapshot, loading) }
         items(actions, key = { it.destination }) { action -> ExamActionCard(action, onClick = { onOpen(action.destination) }) }
         item { Spacer(Modifier.height(72.dp)) }
+    }
+}
+
+@Composable
+private fun ExamHeader(heroPainter: Painter) {
+    Surface(modifier = Modifier.fillMaxWidth().height(140.dp), shape = RoundedCornerShape(18.dp), color = ModInk) {
+        Box(Modifier.fillMaxSize()) {
+            Image(
+                painter = heroPainter,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                alignment = Alignment.CenterEnd,
+                contentScale = ContentScale.Crop,
+                alpha = 0.35f,
+            )
+            Column(Modifier.align(Alignment.CenterStart).padding(20.dp)) {
+                Text("ASSESSMENT WORKSPACE", color = ExamGold, style = CmsTextStyles.eyebrow)
+                Spacer(Modifier.height(6.dp))
+                Text("Exams hub", color = CmsTheme.colors.onInk, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
+            }
+        }
     }
 }
 
