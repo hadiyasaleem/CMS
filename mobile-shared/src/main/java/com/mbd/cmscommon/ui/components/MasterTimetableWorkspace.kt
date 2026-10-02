@@ -349,40 +349,50 @@ private fun MasterGridSection(
         }
     }
 
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.weight(1f)) { MasterGridTitleBlock(grid) }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (pending.isNotEmpty()) {
-                    TextButton(onClick = onDiscard) { Text("Discard") }
-                    TextButton(onClick = onSave) { Text("Save changes") }
-                }
-                ExportMenuButton(onExport = { format -> onExport(masterGridExport(grid), format) })
-            }
-        }
-        if (timeSlots.isEmpty()) {
-            MasterEmptyCard("No periods yet", "This grid has no timetable periods scheduled.")
-        } else {
-            MasterTimetableGrid(
-                timeSlots = timeSlots,
-                rows = rows,
-                onCellClick = { rowKey, slot -> periodsByRowKey[rowKey].orEmpty()[slot]?.let(onCellClick) },
-                onEditColumn = { slot, newStart, newEnd ->
-                    val effKey = slotKey(slot)
-                    val effShifts = timeSlotCascade(effColumns, effKey, newStart, newEnd)
-                    if (effShifts.isNotEmpty()) {
-                        val effToOrig = allPeriods
-                            .map { originalKeyOf(it) to effectiveKeyOf(it, pending) }
-                            .distinct()
-                            .groupBy({ it.second }, { it.first })
-                        val updated = pending.toMutableMap()
-                        for ((oldEff, newEff) in effShifts) {
-                            effToOrig[oldEff].orEmpty().forEach { orig -> updated[orig] = newEff }
-                        }
-                        onStageEdit(updated)
+    CmsCard(Modifier.fillMaxWidth()) {
+        Column {
+            Row(
+                Modifier.fillMaxWidth().padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(Modifier.weight(1f)) { MasterGridTitleBlock(grid) }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (pending.isNotEmpty()) {
+                        TextButton(onClick = onDiscard) { Text("Discard") }
+                        TextButton(onClick = onSave) { Text("Save changes") }
                     }
-                },
-            )
+                    ExportMenuButton(onExport = { format -> onExport(masterGridExport(grid), format) })
+                }
+            }
+            if (timeSlots.isEmpty()) {
+                Column(Modifier.padding(horizontal = 16.dp, vertical = 16.dp)) {
+                    Text("No periods yet", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.height(4.dp))
+                    Text("This grid has no timetable periods scheduled.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                }
+            } else {
+                MasterTimetableGridBody(
+                    timeSlots = timeSlots,
+                    rows = rows,
+                    onCellClick = { rowKey, slot -> periodsByRowKey[rowKey].orEmpty()[slot]?.let(onCellClick) },
+                    onEditColumn = { slot, newStart, newEnd ->
+                        val effKey = slotKey(slot)
+                        val effShifts = timeSlotCascade(effColumns, effKey, newStart, newEnd)
+                        if (effShifts.isNotEmpty()) {
+                            val effToOrig = allPeriods
+                                .map { originalKeyOf(it) to effectiveKeyOf(it, pending) }
+                                .distinct()
+                                .groupBy({ it.second }, { it.first })
+                            val updated = pending.toMutableMap()
+                            for ((oldEff, newEff) in effShifts) {
+                                effToOrig[oldEff].orEmpty().forEach { orig -> updated[orig] = newEff }
+                            }
+                            onStageEdit(updated)
+                        }
+                    },
+                )
+            }
         }
     }
 }
@@ -411,7 +421,7 @@ private val MasterSlotW = 120.dp
  * while scrolling — DEPT and DAYS columns scroll away with the time slots, all under one scroll state,
  * and there's a dedicated DAYS column instead of a sublabel under the department code. */
 @Composable
-private fun MasterTimetableGrid(
+private fun MasterTimetableGridBody(
     timeSlots: List<String>,
     rows: List<MasterRow>,
     onCellClick: (String, String) -> Unit,
@@ -420,52 +430,50 @@ private fun MasterTimetableGrid(
     val hScroll = rememberScrollState()
     var editingSlot by remember { mutableStateOf<String?>(null) }
 
-    CmsCard(Modifier.fillMaxWidth()) {
-        Column {
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth().background(CmsTheme.colors.ink).horizontalScroll(hScroll).padding(vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            MasterHeaderCell("Departments", MasterDeptW)
+            MasterHeaderCell("DAYS", MasterDaysW)
+            timeSlots.forEach { slot -> MasterHeaderCell(slot, MasterSlotW, onClick = { editingSlot = slot }) }
+        }
+        HorizontalDivider(thickness = 2.dp, color = CmsTheme.colors.rule)
+        rows.forEach { row ->
             Row(
-                modifier = Modifier.fillMaxWidth().background(CmsTheme.colors.ink).horizontalScroll(hScroll).padding(vertical = 16.dp),
+                modifier = Modifier.fillMaxWidth().horizontalScroll(hScroll),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                MasterHeaderCell("Departments", MasterDeptW)
-                MasterHeaderCell("DAYS", MasterDaysW)
-                timeSlots.forEach { slot -> MasterHeaderCell(slot, MasterSlotW, onClick = { editingSlot = slot }) }
-            }
-            HorizontalDivider(thickness = 2.dp, color = CmsTheme.colors.rule)
-            rows.forEach { row ->
-                Row(
-                    modifier = Modifier.fillMaxWidth().horizontalScroll(hScroll),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(Modifier.width(MasterDeptW).padding(horizontal = 6.dp, vertical = 8.dp), contentAlignment = Alignment.Center) {
-                        Text(
-                            row.deptLabel,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                            style = MaterialTheme.typography.titleSmall,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
-                    Box(Modifier.width(MasterDaysW).padding(horizontal = 6.dp, vertical = 8.dp), contentAlignment = Alignment.Center) {
-                        Text(
-                            row.daysLabel,
-                            color = ModMuted,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                            style = MaterialTheme.typography.bodySmall,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
-                    timeSlots.forEach { slot ->
-                        GridCellBox(
-                            cell = row.cells[slot],
-                            width = MasterSlotW,
-                            onClick = { onCellClick(row.rowKey, slot) },
-                        )
-                    }
+                Box(Modifier.width(MasterDeptW).padding(horizontal = 6.dp, vertical = 8.dp), contentAlignment = Alignment.Center) {
+                    Text(
+                        row.deptLabel,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.titleSmall,
+                        textAlign = TextAlign.Center,
+                    )
                 }
-                HorizontalDivider(color = CmsTheme.colors.rule.copy(alpha = 0.35f))
+                Box(Modifier.width(MasterDaysW).padding(horizontal = 6.dp, vertical = 8.dp), contentAlignment = Alignment.Center) {
+                    Text(
+                        row.daysLabel,
+                        color = ModMuted,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+                timeSlots.forEach { slot ->
+                    GridCellBox(
+                        cell = row.cells[slot],
+                        width = MasterSlotW,
+                        onClick = { onCellClick(row.rowKey, slot) },
+                    )
+                }
             }
+            HorizontalDivider(color = CmsTheme.colors.rule.copy(alpha = 0.35f))
         }
     }
 
