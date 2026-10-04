@@ -84,20 +84,18 @@ class SessionShiftRulesTest {
     }
 
     @Test
-    fun capacityChangeMustKeepRollBlocks() {
-        val students = listOf(student("IT-22-45", Session.MORNING), student("IT-22-51", Session.EVENING))
-        // BOTH with 80 seats -> Morning block 1-40, so IT-22-45 would fall out of it.
-        assertEquals(
-            "Morning roll numbers use serials 1-40; IT-22-45 is outside that range. Adjust the capacity or renumber that student first.",
-            shiftModeChangeError(both, ShiftMode.BOTH, 80, students, emptyList(), emptyList(), emptyList()),
+    fun capacityChangeMustFitEachShift() {
+        val students = listOf(
+            student("IT-22-01", Session.MORNING), student("IT-22-02", Session.MORNING), student("IT-22-03", Session.MORNING),
+            student("IT-22-51", Session.EVENING),
         )
-        // Raising it moves the Morning block up (120 seats -> 1-60), which would swallow Evening's IT-22-51.
+        // BOTH with 4 seats -> 2 per shift, so Morning's 3 students no longer fit.
         assertEquals(
-            "Evening roll numbers start after serial 60; IT-22-51 is in the Morning range. Adjust the capacity or renumber that student first.",
-            shiftModeChangeError(both, ShiftMode.BOTH, 120, students, emptyList(), emptyList(), emptyList()),
+            "The Morning shift has 3 student(s), above the new limit of 2. Increase the capacity before saving this change.",
+            shiftModeChangeError(both, ShiftMode.BOTH, 4, students, emptyList(), emptyList(), emptyList()),
         )
-        // 90 seats -> Morning 1-45: both students still fit.
-        assertNull(shiftModeChangeError(both, ShiftMode.BOTH, 90, listOf(student("IT-22-30", Session.MORNING), student("IT-22-51", Session.EVENING)), emptyList(), emptyList(), emptyList()))
+        // 10 seats -> 5 per shift: both shifts fit.
+        assertNull(shiftModeChangeError(both, ShiftMode.BOTH, 10, students, emptyList(), emptyList(), emptyList()))
     }
 
     @Test

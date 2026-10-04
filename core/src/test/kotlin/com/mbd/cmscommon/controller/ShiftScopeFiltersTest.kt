@@ -69,17 +69,19 @@ class ShiftScopeFiltersTest {
     }
 
     @Test
-    fun reviewQueuesUseTheRollNumbersShift() {
+    fun reviewQueuesMatchEitherShiftOfTheirSession() {
+        // These requests only know their roll number, not a shift -- a free-form roll number can't
+        // say which shift, so they show up under either shift filter as long as the session runs it.
         fun edit(roll: String, session: String = "IT_2022") =
             MarkEditRequest(roll, session, 3, "IT-301", ExamType.MIDTERM, roll, 10, 12, null, MarkEditStatus.PENDING, "t", null, Instant.EPOCH, null)
         val edits = listOf(edit("IT-22-05"), edit("IT-22-55"), edit("CS-22-60", "CS_2022"))
-        assertEquals(listOf("IT-22-55"), edits.inScope(itEvening, sessions).map { it.rollNumber })
+        assertEquals(listOf("IT-22-05", "IT-22-55"), edits.inScope(itEvening, sessions).map { it.rollNumber })
         assertEquals(listOf("IT-22-05", "IT-22-55"), edits.inScope(ShiftScope(deptId = "IT"), sessions).map { it.rollNumber })
 
         fun link(roll: String, session: String?) =
             StudentLinkRequest("r$roll", "u", session, roll, null, null, null, status = LinkRequestStatus.PENDING, reviewedBy = null, reviewedAt = null, createdAt = Instant.EPOCH)
         val links = listOf(link("IT-22-02", "IT_2022"), link("IT-22-52", "IT_2022"), link("X-1", null))
-        assertEquals(listOf("IT-22-52"), links.inScope(itEvening, sessions).map { it.rollNumberClaimed })
+        assertEquals(listOf("IT-22-02", "IT-22-52"), links.inScope(itEvening, sessions).map { it.rollNumberClaimed })
         // A request without a claimed session only shows under "All".
         assertEquals(3, links.inScope(ShiftScope.ALL, sessions).size)
         assertEquals(2, links.inScope(ShiftScope(deptId = "IT"), sessions).size)

@@ -2,7 +2,6 @@ package com.mbd.cmscommon.ui.components
 
 import compose.icons.TablerIcons
 import compose.icons.tablericons.Camera
-import com.mbd.cmscommon.controller.rollBlockHint
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -327,11 +326,6 @@ private fun AcademicAndRolesCard(
         Column(Modifier.padding(16.dp)) {
             Text("Academic standing & class roles", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Text("Grades are read-only and update from recorded results.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
-            // The roll number's serial decides the shift, so it isn't edited here.
-            rollBlockHint(session)?.let { hint ->
-                Spacer(Modifier.height(4.dp))
-                Text("Shift follows the roll number. $hint", color = ModMuted, style = MaterialTheme.typography.bodySmall)
-            }
             if (profile.linkedEmail.isNotBlank()) {
                 Spacer(Modifier.height(6.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {

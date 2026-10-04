@@ -10,7 +10,6 @@ import com.mbd.cmscommon.domain.model.StudentLinkRequest
 import com.mbd.cmscommon.domain.model.TaughtClass
 import com.mbd.cmscommon.domain.model.ExamStat
 import com.mbd.cmscommon.domain.model.SessionOverview
-import com.mbd.cmscommon.domain.model.shiftForRoll
 import com.mbd.cmscommon.domain.model.Department
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.SessionPeriod
@@ -102,12 +101,9 @@ fun scopeInsights(
     sessions: Collection<AcademicSession>,
 ): ScopedInsights {
     if (scope.isEmpty) return ScopedInsights(overviews, atRisk, examStats)
-    // Older cached risk rows have no shift: the roll number's serial block tells Morning from Evening.
-    fun riskShift(student: AtRiskStudent): Session? =
-        student.shift ?: sessions.firstOrNull { it.sessionId == student.sessionId }?.let { shiftForRoll(it, student.rollNumber) }
     return ScopedInsights(
         overviews = overviews.filter { scope.matches(it.deptId, it.sessionId, it.shift) },
-        atRisk = atRisk.filter { scope.matchesSessionItem(it.sessionId, riskShift(it), sessions) },
+        atRisk = atRisk.filter { scope.matchesSessionItem(it.sessionId, it.shift, sessions) },
         examStats = examStats.filter { scope.matchesSessionItem(it.sessionId, it.shift, sessions) },
     )
 }
@@ -129,26 +125,21 @@ fun classesInScope(classes: List<Pair<String, String>>, scope: ShiftScope, sessi
         scope.matchesSessionItem(sessionId, shift, sessions)
     }
 
-/** A student's shift from their roll number's serial block (Morning 1-50, Evening from 51). */
-fun rollShift(sessionId: String?, rollNumber: String?, sessions: Collection<AcademicSession>): Session? {
-    if (sessionId.isNullOrBlank() || rollNumber.isNullOrBlank()) return null
-    return sessions.firstOrNull { it.sessionId == sessionId }?.let { shiftForRoll(it, rollNumber) }
-}
-
+/** These requests only know their roll number, not a shift -- a free-form roll number can't be used to infer one, so they match either shift of their session. */
 @JvmName("markEditRequestsInScope")
 fun List<MarkEditRequest>.inScope(scope: ShiftScope, sessions: Collection<AcademicSession>): List<MarkEditRequest> =
-    if (scope.isEmpty) this else filter { scope.matchesSessionItem(it.sessionId, rollShift(it.sessionId, it.rollNumber, sessions), sessions) }
+    if (scope.isEmpty) this else filter { scope.matchesSessionItem(it.sessionId, null, sessions) }
 
 @JvmName("attendanceEditRequestsInScope")
 fun List<AttendanceEditRequest>.inScope(scope: ShiftScope, sessions: Collection<AcademicSession>): List<AttendanceEditRequest> =
-    if (scope.isEmpty) this else filter { scope.matchesSessionItem(it.sessionId, rollShift(it.sessionId, it.rollNumber, sessions), sessions) }
+    if (scope.isEmpty) this else filter { scope.matchesSessionItem(it.sessionId, null, sessions) }
 
-/** Link requests by the session and roll number the student claimed; a request without a session only matches "All". */
+/** Link requests by the session the student claimed; a request without a session only matches "All". */
 @JvmName("linkRequestsInScope")
 fun List<StudentLinkRequest>.inScope(scope: ShiftScope, sessions: Collection<AcademicSession>): List<StudentLinkRequest> =
     if (scope.isEmpty) this else filter {
         val sessionId = it.sessionIdClaimed ?: return@filter false
-        scope.matchesSessionItem(sessionId, rollShift(sessionId, it.rollNumberClaimed, sessions), sessions)
+        scope.matchesSessionItem(sessionId, null, sessions)
     }
 
 /**

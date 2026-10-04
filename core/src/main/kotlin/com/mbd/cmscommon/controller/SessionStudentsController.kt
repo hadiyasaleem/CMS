@@ -1,8 +1,6 @@
 package com.mbd.cmscommon.controller
 
-import com.mbd.cmscommon.domain.model.rollBlockError
 import com.mbd.cmscommon.domain.model.Session
-import com.mbd.cmscommon.domain.model.shiftForRoll
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
@@ -80,6 +78,8 @@ class SessionStudentsController(
         _importing.value = true
         try {
             val knownRolls = students.value.map { it.rollNumber.uppercase() }.toMutableSet()
+            // Grows as rows succeed, so a batch that fills a shift partway through is still caught.
+            val soFar = students.value.toMutableList()
             val currentSession = session.value
             val deptCode = resolveDepartmentCode(currentSession)
             val failures = mutableListOf<String>()
@@ -96,10 +96,11 @@ class SessionStudentsController(
                     !knownRolls.add(normalizedRoll) -> failures += "Row ${row.rowNumber}: Roll number $normalizedRoll is already enrolled."
                     else -> {
                         try {
-                            // A "Shift" column wins; otherwise the roll number's block decides.
-                            val shift = row.shift ?: currentSession?.let { shiftForRoll(it, normalizedRoll) } ?: Session.MORNING
-                            currentSession?.let { rollBlockError(it, shift, normalizedRoll) }.orThrowValidation("rollNumber")
+                            // A "Shift" column wins; otherwise the session's default shift is used.
+                            val shift = row.shift ?: currentSession?.shifts?.firstOrNull() ?: Session.MORNING
+                            addStudentError(currentSession, shift, normalizedRoll, soFar).orThrowValidation("rollNumber")
                             repo.addStudent(sessionId, normalizedRoll, normalizedName, shift, null, null)
+                            soFar += SessionStudent(SessionStudent.buildId(sessionId, normalizedRoll), sessionId, deptCode.orEmpty(), normalizedRoll, normalizedName, shift)
                             succeeded++
                         } catch (t: Throwable) {
                             failures += "Row ${row.rowNumber}: ${t.userMessageLogged("Could not add this student.")}"

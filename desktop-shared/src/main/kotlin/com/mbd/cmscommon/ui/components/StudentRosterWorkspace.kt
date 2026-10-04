@@ -6,11 +6,10 @@ import compose.icons.tablericons.Upload
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.controller.addStudentError
 import com.mbd.cmscommon.controller.defaultShiftForNewStudent
-import com.mbd.cmscommon.controller.rollBlockHint
+import com.mbd.cmscommon.controller.shiftCapacityHint
 import com.mbd.cmscommon.controller.rosterTabLabel
 import com.mbd.cmscommon.controller.rosterTabs
 import com.mbd.cmscommon.controller.studentsForTab
-import com.mbd.cmscommon.controller.suggestedRollNumber
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import com.mbd.cmscommon.export.ExportDocument
@@ -168,7 +167,6 @@ fun StudentRosterWorkspace(
         AddRosterStudentDialog(
             session = session,
             students = students,
-            departmentCode = departmentCode,
             rollPrefix = rollPrefix,
             initialShift = defaultShiftForNewStudent(session, activeTab),
             isFull = isFull,
@@ -265,7 +263,6 @@ private fun RosterEmptyState(hasStudents: Boolean, isFull: Boolean, onAdd: () ->
 private fun AddRosterStudentDialog(
     session: AcademicSession?,
     students: List<SessionStudent>,
-    departmentCode: String?,
     rollPrefix: String?,
     initialShift: Session,
     isFull: Boolean,
@@ -273,24 +270,14 @@ private fun AddRosterStudentDialog(
     onConfirm: (String, String, Session) -> Unit,
 ) {
     var shift by remember { mutableStateOf(initialShift) }
-    fun suggestion(forShift: Session) = suggestedRollNumber(session, departmentCode, forShift, students)
-    var roll by remember { mutableStateOf(suggestion(initialShift).orEmpty()) }
-    var serial by remember { mutableStateOf(rollPrefix?.let { suggestion(initialShift)?.removePrefix(it) }.orEmpty()) }
+    var roll by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
-    val effectiveRoll = if (rollPrefix != null) "$rollPrefix$serial" else roll
-    val blank = if (rollPrefix != null) serial.isBlank() else roll.isBlank()
+    val blank = roll.isBlank()
     val shifts = session?.shifts ?: listOf(shift)
     val error = when {
         isFull -> "Roster is full"
         blank -> null
-        else -> addStudentError(session, shift, effectiveRoll, students)
-    }
-
-    fun pickShift(picked: Session) {
-        shift = picked
-        // Each shift has its own roll-number block, so re-suggest the next free number in it.
-        val next = suggestion(picked)
-        if (rollPrefix != null) serial = next?.removePrefix(rollPrefix).orEmpty() else roll = next.orEmpty()
+        else -> addStudentError(session, shift, roll, students)
     }
 
     AlertDialog(
@@ -302,37 +289,25 @@ private fun AddRosterStudentDialog(
                 Spacer(Modifier.height(6.dp))
                 if (shifts.size > 1) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        shifts.forEach { option -> CmsChip(option.label, selected = shift == option, onClick = { pickShift(option) }) }
+                        shifts.forEach { option -> CmsChip(option.label, selected = shift == option, onClick = { shift = option }) }
                     }
                 } else {
                     Text("${shift.label} (this session runs ${shift.label} only)", style = MaterialTheme.typography.bodyMedium)
                 }
-                rollBlockHint(session)?.let { hint ->
+                shiftCapacityHint(session, shift, students)?.let { hint ->
                     Spacer(Modifier.height(4.dp))
                     Text(hint, color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
                 Spacer(Modifier.height(10.dp))
                 Text("Class roll number *", style = MaterialTheme.typography.labelLarge, color = ModMuted)
                 Spacer(Modifier.height(6.dp))
-                if (rollPrefix != null) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Surface(shape = RoundedCornerShape(8.dp), color = ModTrack) {
-                            Text(rollPrefix, modifier = Modifier.padding(horizontal = 12.dp, vertical = 16.dp), fontWeight = FontWeight.Bold)
-                        }
-                        Spacer(Modifier.width(8.dp))
-                        OutlinedTextField(
-                            value = serial,
-                            onValueChange = { input -> serial = input.filter { it.isDigit() }.take(3) },
-                            placeholder = { Text("09") },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true,
-                        )
-                    }
-                    Spacer(Modifier.height(6.dp))
-                    Text("The next free number for this shift is filled in; change it if needed.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
-                } else {
-                    OutlinedTextField(value = roll, onValueChange = { roll = it }, placeholder = { Text("IT-21-09") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-                }
+                OutlinedTextField(
+                    value = roll,
+                    onValueChange = { roll = it },
+                    placeholder = { Text(rollPrefix?.let { "${it}09" } ?: "IT-21-09") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                )
                 Spacer(Modifier.height(10.dp))
                 OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Full name *") }, placeholder = { Text("Student name") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                 if (error != null) {
@@ -342,7 +317,7 @@ private fun AddRosterStudentDialog(
             }
         }},
         confirmButton = {
-            TextButton(onClick = { onConfirm(effectiveRoll.trim(), name.trim(), shift) }, enabled = !blank && name.isNotBlank() && error == null) { Text("Add") }
+            TextButton(onClick = { onConfirm(roll.trim(), name.trim(), shift) }, enabled = !blank && name.isNotBlank() && error == null) { Text("Add") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     )

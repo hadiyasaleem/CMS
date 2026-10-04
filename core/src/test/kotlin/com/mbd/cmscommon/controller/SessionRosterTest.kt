@@ -49,21 +49,13 @@ class SessionRosterTest {
     }
 
     @Test
-    fun suggestedRollContinuesTheShiftsBlock() {
-        assertEquals("IT-22-03", suggestedRollNumber(both, "IT", Session.MORNING, roster))
-        assertEquals("IT-22-52", suggestedRollNumber(both, "IT", Session.EVENING, roster))
-        assertNull(suggestedRollNumber(both, null, Session.MORNING, roster))
-    }
-
-    @Test
-    fun addingChecksSeatsDuplicatesAndTheBlock() {
+    fun addingChecksShiftCapacityAndDuplicates() {
         assertNull(addStudentError(both, Session.MORNING, "IT-22-03", roster))
         assertNull(addStudentError(both, Session.EVENING, "it-22-52", roster))
         assertEquals("Roll number IT-22-02 is already enrolled in this session.", addStudentError(both, Session.MORNING, "IT-22-02", roster))
-        assertEquals("Morning roll numbers use serials 1-50; IT-22-60 is outside that range.", addStudentError(both, Session.MORNING, "IT-22-60", roster))
-        assertEquals("Evening roll numbers start after serial 50; IT-22-10 is in the Morning range.", addStudentError(both, Session.EVENING, "IT-22-10", roster))
         assertEquals("This session does not run the Evening shift.", addStudentError(morningOnly, Session.EVENING, "IT-22-60", roster))
-        assertEquals("This session is full (3 students).", addStudentError(both.copy(maxStudents = 3), Session.MORNING, "IT-22-03", roster))
+        assertEquals("Morning is full (2 students).", addStudentError(both.copy(maxStudents = 4), Session.MORNING, "IT-22-03", roster))
+        assertEquals("Enter a roll number.", addStudentError(both, Session.MORNING, "  ", roster))
     }
 
     @Test
@@ -80,13 +72,10 @@ class SessionRosterTest {
     }
 
     @Test
-    fun shiftFollowsTheRollNumber() {
-        val profile = StudentProfile(sessionId = "IT_2022", rollNumber = "IT-22-03", name = "A", shift = Session.EVENING)
-        assertEquals("Evening roll numbers start after serial 50; IT-22-03 is in the Morning range.", profileShiftError(both, profile))
-        assertNull(profileShiftError(both, profile.copy(shift = Session.MORNING)))
-        assertEquals("Morning uses serials 01–50; Evening starts at 51.", rollBlockHint(both))
-        assertEquals("Morning uses serials 01–50.", rollBlockHint(morningOnly))
-        assertEquals("Evening uses serials from 51.", rollBlockHint(both.copy(shiftMode = ShiftMode.EVENING, maxStudents = 50)))
+    fun shiftCapacityHintReportsSeatsUsed() {
+        assertEquals("2 of 50 seats used in Morning.", shiftCapacityHint(both, Session.MORNING, roster))
+        assertEquals("1 of 50 seats used in Evening.", shiftCapacityHint(both, Session.EVENING, roster))
+        assertNull(shiftCapacityHint(null, Session.MORNING, roster))
     }
 
     @Test
@@ -96,7 +85,7 @@ class SessionRosterTest {
         )
         assertEquals(listOf(Session.MORNING, Session.EVENING, null), result.rows.map { it.shift })
         assertEquals(listOf("Row 5: shift 'Night' must be Morning or Evening — skipped."), result.errors)
-        // Files without the column still import; the roll number's block decides the shift later.
+        // Files without the column still import; a default shift is applied when the rows are saved.
         assertEquals(listOf<Session?>(null), StudentImportParser.parseCsv("Roll,Name\nIT-22-01,Ali\n").rows.map { it.shift })
     }
 }

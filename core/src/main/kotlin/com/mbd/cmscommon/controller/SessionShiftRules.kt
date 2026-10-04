@@ -8,7 +8,6 @@ import com.mbd.cmscommon.domain.model.SessionPeriod
 import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.domain.model.ShiftMode
 import com.mbd.cmscommon.domain.model.ProgramType
-import com.mbd.cmscommon.domain.model.rollBlockError
 
 /*
  * Rules behind the create-session and edit-session forms. The database enforces the same limits
@@ -57,7 +56,7 @@ fun studentCountsByShift(students: List<SessionStudent>): Map<Session, Int> =
  * - Adding a shift is always fine.
  * - Dropping a shift is blocked while it still has students, a fee structure, timetable periods or a
  *   datesheet. The message says what must be moved or removed first.
- * - Every enrolled student must still fit their shift's roll-number block and the new capacity.
+ * - Every shift [target] keeps must still fit its share of the new capacity.
  */
 fun shiftModeChangeError(
     session: AcademicSession,
@@ -81,9 +80,11 @@ fun shiftModeChangeError(
         }
     }
     capacityError(maxStudents.toString(), students.size)?.let { return it }
-    for (student in students) {
-        rollBlockError(target, maxStudents, student.shift, student.rollNumber)?.let {
-            return "$it Adjust the capacity or renumber that student first."
+    val cap = if (target == ShiftMode.BOTH) maxStudents / 2 else maxStudents
+    for (shift in target.shifts) {
+        val n = students.count { it.shift == shift }
+        if (n > cap) {
+            return "The ${shift.label} shift has $n student(s), above the new limit of $cap. Increase the capacity before saving this change."
         }
     }
     return null

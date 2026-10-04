@@ -134,6 +134,9 @@ interface SessionStudentDao {
     @Query("SELECT COUNT(*) FROM session_students WHERE sessionId = :sessionId AND isDeleted = 0")
     suspend fun countForSession(sessionId: String): Int
 
+    @Query("SELECT COUNT(*) FROM session_students WHERE sessionId = :sessionId AND shift = :shift AND isDeleted = 0")
+    suspend fun countForSessionShift(sessionId: String, shift: String): Int
+
     @Query("SELECT * FROM session_students WHERE sessionId = :sessionId AND isDeleted = 0")
     fun observeForSession(sessionId: String): Flow<List<SessionStudentEntity>>
 

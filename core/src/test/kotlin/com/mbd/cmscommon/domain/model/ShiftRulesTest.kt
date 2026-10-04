@@ -5,7 +5,6 @@ import java.time.DayOfWeek
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ShiftRulesTest {
@@ -40,53 +39,14 @@ class ShiftRulesTest {
     }
 
     @Test
-    fun rollSerialIsTheTrailingNumber() {
-        assertEquals(9, rollSerial("IT-22-09"))
-        assertEquals(51, rollSerial("IT-22-51 "))
-        assertNull(rollSerial("IT-22-AB"))
-        assertNull(rollSerial("IT-22-1234567"))
+    fun shiftCapacityIsHalfForBothOtherwiseTheWhole() {
+        assertEquals(50, shiftCapacity(session(ShiftMode.BOTH, 100)))
+        assertEquals(50, shiftCapacity(session(ShiftMode.MORNING, 50)))
+        assertEquals(50, shiftCapacity(session(ShiftMode.EVENING, 50)))
     }
 
     @Test
-    fun morningAndEveningBlocks() {
-        val both = session(ShiftMode.BOTH, 100)
-        assertEquals(50, morningCapacity(both))
-        assertNull(rollBlockError(both, Session.MORNING, "IT-22-01"))
-        assertNull(rollBlockError(both, Session.MORNING, "IT-22-50"))
-        assertNull(rollBlockError(both, Session.EVENING, "IT-22-51"))
-        assertEquals("Morning roll numbers use serials 1-50; IT-22-60 is outside that range.", rollBlockError(both, Session.MORNING, "IT-22-60"))
-        assertEquals("Evening roll numbers start after serial 50; IT-22-10 is in the Morning range.", rollBlockError(both, Session.EVENING, "IT-22-10"))
-        assertTrue(rollBlockError(both, Session.MORNING, "IT-22-00")!!.startsWith("Morning roll numbers"))
-        assertEquals("Roll number IT-22-AB must end with a serial number, e.g. IT-22-09.", rollBlockError(both, Session.MORNING, "IT-22-AB"))
-
-        // A single-shift session's Morning block is its whole capacity; Evening still starts above it,
-        // so the numbering survives a later switch to BOTH.
-        val eveningOnly = session(ShiftMode.EVENING, 50)
-        assertNull(rollBlockError(eveningOnly, Session.EVENING, "IT-22-51"))
-        assertEquals("This session does not run the Morning shift.", rollBlockError(eveningOnly, Session.MORNING, "IT-22-01"))
-    }
-
-    @Test
-    fun nextRollContinuesEachBlock() {
-        val both = session(ShiftMode.BOTH, 100)
-        val prefix = rollPrefix("it", 2022)
-        assertEquals("IT-22-", prefix)
-        assertEquals("IT-22-01", nextRollFor(both, Session.MORNING, emptyList(), prefix))
-        assertEquals("IT-22-51", nextRollFor(both, Session.EVENING, emptyList(), prefix))
-        val existing = listOf("IT-22-01", "IT-22-02", "IT-22-51")
-        assertEquals("IT-22-03", nextRollFor(both, Session.MORNING, existing, prefix))
-        assertEquals("IT-22-52", nextRollFor(both, Session.EVENING, existing, prefix))
-        // Morning block full.
-        assertNull(nextRollFor(both, Session.MORNING, listOf("IT-22-50"), prefix))
-        assertNull(nextRollFor(session(ShiftMode.MORNING, 50), Session.EVENING, existing, prefix))
-    }
-
-    @Test
-    fun shiftForRollFollowsTheBlock() {
-        val both = session(ShiftMode.BOTH, 100)
-        assertEquals(Session.MORNING, shiftForRoll(both, "IT-22-50"))
-        assertEquals(Session.EVENING, shiftForRoll(both, "IT-22-51"))
-        assertNull(shiftForRoll(both, "IT-22-XX"))
-        assertEquals(Session.EVENING, shiftForRoll(session(ShiftMode.EVENING, 50), "IT-22-XX"))
+    fun rollPrefixIsDeptCodeAndTwoDigitYear() {
+        assertEquals("IT-22-", rollPrefix("it", 2022))
     }
 }

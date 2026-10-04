@@ -1,19 +1,15 @@
 package com.mbd.cmscommon.controller
 
-import com.mbd.cmscommon.domain.model.ShiftMode
-import com.mbd.cmscommon.domain.model.morningCapacity
+import com.mbd.cmscommon.domain.model.shiftCapacity
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.SessionStudent
 import com.mbd.cmscommon.domain.model.StudentProfile
-import com.mbd.cmscommon.domain.model.nextRollFor
-import com.mbd.cmscommon.domain.model.rollBlockError
-import com.mbd.cmscommon.domain.model.rollPrefix
 
 /*
  * Roster rules for one session: All / Morning / Evening tabs, adding a student to exactly one shift, and
- * class roles per shift. A student's shift is fixed by their roll number's serial (Morning 1..capacity,
- * Evening above it), so the database's roll_block_error and these helpers always agree.
+ * class roles per shift. Roll numbers are free-form; a shift simply holds up to shiftCapacity(session)
+ * students, mirrored by the database's fn_enforce_roster_cap.
  */
 
 /** Tabs for the roster: `null` (All) first, then each shift the session runs. */
@@ -34,18 +30,16 @@ fun rosterTabLabel(tab: Session?, students: List<SessionStudent>): String =
 fun defaultShiftForNewStudent(session: AcademicSession?, tab: Session?): Session =
     tab?.takeIf { session?.runs(it) == true } ?: session?.shifts?.firstOrNull() ?: Session.MORNING
 
-/** The next free roll number in [shift]'s block ("IT-22-03", "IT-22-51"), or null when unknown/full. */
-fun suggestedRollNumber(session: AcademicSession?, departmentCode: String?, shift: Session, students: List<SessionStudent>): String? {
-    if (session == null || departmentCode.isNullOrBlank()) return null
-    return nextRollFor(session, shift, students.map { it.rollNumber }, rollPrefix(departmentCode, session.startYear))
-}
-
-/** Why [roll] can't be added to [shift], or null. Checks seats, duplicates and the shift's roll block. */
+/** Why [roll] can't be added to [shift], or null. Checks the shift's seat cap and duplicate roll numbers. */
 fun addStudentError(session: AcademicSession?, shift: Session, roll: String, students: List<SessionStudent>): String? {
     val normalized = roll.trim().uppercase()
-    if (session != null && students.size >= session.maxStudents) return "This session is full (${session.maxStudents} students)."
+    if (normalized.isBlank()) return "Enter a roll number."
+    if (session != null && !session.shiftMode.allows(shift)) return "This session does not run the ${shift.label} shift."
+    if (session != null && students.count { it.shift == shift } >= shiftCapacity(session)) {
+        return "${shift.label} is full (${shiftCapacity(session)} students)."
+    }
     if (students.any { it.rollNumber.equals(normalized, ignoreCase = true) }) return "Roll number $normalized is already enrolled in this session."
-    return session?.let { rollBlockError(it, shift, normalized) }
+    return null
 }
 
 /**
@@ -63,20 +57,9 @@ fun classRoleConflict(edited: StudentProfile, classmates: List<StudentProfile>):
     return null
 }
 
-/** Why [edited]'s shift can't be saved for [session], or null. The roll number decides the shift. */
-fun profileShiftError(session: AcademicSession?, edited: StudentProfile): String? =
-    session?.let { rollBlockError(it, edited.shift, edited.rollNumber) }
-
-/** Explains how roll numbers map to shifts for [session], e.g. "Morning uses serials 01–50; Evening starts at 51." */
-fun rollBlockHint(session: AcademicSession?): String? {
+/** How many more students [shift] can take in [session], e.g. "12 of 50 seats used in Morning." */
+fun shiftCapacityHint(session: AcademicSession?, shift: Session, students: List<SessionStudent>): String? {
     session ?: return null
-    val cap = morningCapacity(session)
-    val first = "01"
-    val last = cap.toString().padStart(2, '0')
-    val eveningStart = (cap + 1).toString().padStart(2, '0')
-    return when (session.shiftMode) {
-        ShiftMode.BOTH -> "Morning uses serials $first–$last; Evening starts at $eveningStart."
-        ShiftMode.MORNING -> "Morning uses serials $first–$last."
-        ShiftMode.EVENING -> "Evening uses serials from $eveningStart."
-    }
+    val used = students.count { it.shift == shift }
+    return "$used of ${shiftCapacity(session)} seats used in ${shift.label}."
 }

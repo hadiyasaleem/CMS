@@ -1,6 +1,5 @@
 package com.mbd.cmscommon.controller
 
-import com.mbd.cmscommon.domain.model.shiftForRoll
 import kotlinx.coroutines.flow.first
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.AcademicSession
@@ -44,8 +43,8 @@ class StudentProfileEditController(
                     sessionId = sessionId,
                     rollNumber = rollNumber,
                     name = "",
-                    // No profile cached yet: the roll number's serial block decides the shift.
-                    shift = sessionRepository.observeSession(sessionId).first()?.let { shiftForRoll(it, rollNumber) } ?: Session.MORNING,
+                    // No profile cached yet: fall back to the roster's own shift for this student.
+                    shift = sessionRepository.observeStudents(sessionId).first().firstOrNull { it.rollNumber.equals(rollNumber, ignoreCase = true) }?.shift ?: Session.MORNING,
                 )
         }
     }
@@ -80,7 +79,6 @@ class StudentProfileEditController(
                 specialNeeds = edited.specialNeeds?.trim(),
             )
             validateStudentProfile(normalized).orThrowValidation()
-            profileShiftError(session.value, normalized).orThrowValidation()
             if (normalized.isCr || normalized.isGr) {
                 val classmates = sessionRepository.observeAllStudentProfiles().first().filter { it.sessionId == sessionId }
                 classRoleConflict(normalized, classmates).orThrowValidation()

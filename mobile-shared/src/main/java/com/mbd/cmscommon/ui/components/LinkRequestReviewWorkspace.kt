@@ -3,7 +3,6 @@ package com.mbd.cmscommon.ui.components
 import com.mbd.cmscommon.controller.inScope
 import com.mbd.cmscommon.domain.model.ShiftScope
 import com.mbd.cmscommon.controller.departmentScopeOptions
-import com.mbd.cmscommon.domain.model.shiftForRoll
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
@@ -100,12 +99,10 @@ fun LinkRequestReviewWorkspace(
         return
     }
 
-    // The claimed roll number's serial decides the shift (Morning block first, Evening above it).
     fun sessionLabel(request: StudentLinkRequest): String {
         val session = sessions.firstOrNull { it.sessionId == request.sessionIdClaimed }
         val dept = departments.firstOrNull { it.deptId == session?.deptId }?.name
-        val shift = session?.let { shiftForRoll(it, request.rollNumberClaimed)?.label ?: it.shiftMode.label }
-        return if (session != null) "${dept ?: session.deptId} ${session.label} · $shift" else "No session selected"
+        return if (session != null) "${dept ?: session.deptId} ${session.label} · ${session.shiftMode.label}" else "No session selected"
     }
 
     val filtered = requests.filter { request ->

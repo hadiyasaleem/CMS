@@ -30,7 +30,6 @@ import com.mbd.cmscommon.domain.model.StudentProfile
 import com.mbd.cmscommon.domain.model.parseShift
 import com.mbd.cmscommon.domain.model.parseShiftMode
 import com.mbd.cmscommon.domain.model.parseProgramType
-import com.mbd.cmscommon.domain.model.rollBlockError
 import com.mbd.cmscommon.domain.repository.AvailableRollNumber
 import com.mbd.cmscommon.domain.model.profilePhotoExtension
 import com.mbd.cmscommon.domain.model.profilePhotoUploadError
@@ -255,16 +254,14 @@ class AcademicSessionRepositoryImpl @Inject constructor(
         val deptId = cachedSession?.deptId ?: ""
         // Older caches may hold maxStudents = 0 (cap not set yet); treat a non-positive cap as the default.
         val maxStudents = cachedSession?.maxStudents?.takeIf { it > 0 } ?: AcademicSession.MAX_STUDENTS
-        val count = studentDao.countForSession(sessionId)
-        if (count >= maxStudents) {
-            throw CmsException.Conflict("This session is full ($maxStudents students maximum). Raise the session capacity before adding more students.")
+        // Friendly pre-check of the per-shift seat cap; the database enforces the same rule.
+        val mode = parseShiftMode(cachedSession?.shiftMode)
+        val shiftCap = if (mode == ShiftMode.BOTH) maxStudents / 2 else maxStudents
+        val shiftCount = studentDao.countForSessionShift(sessionId, shift.name)
+        if (shiftCount >= shiftCap) {
+            throw CmsException.Conflict("The ${shift.name.lowercase().replaceFirstChar { it.uppercase() }} shift is full ($shiftCap students maximum). Raise the session capacity before adding more students.")
         }
         val roll = FieldValidators.normalizeRollNumber(rollNumber)
-        // Friendly pre-check of the roll-number block; the database enforces the same rule.
-        val mode = parseShiftMode(cachedSession?.shiftMode)
-        if (mode != null) {
-            rollBlockError(mode, maxStudents, shift, roll).orThrowValidation("rollNumber")
-        }
         val dto = SessionStudentDto(sessionId = sessionId, rollNumber = roll, name = name.trim(), shift = shift.name, gpa = gpa, cgpa = cgpa)
         postgrest.from(SupabaseTables.SESSION_STUDENTS).upsert(dto) { onConflict = "session_id,roll_number" }
         studentDao.upsert(
