@@ -197,7 +197,12 @@ fun MasterTimetableWorkspace(
         LaunchedEffect(period.id) { subjects = onLoadSubjects(period.sessionId, semester) }
         // The clicked cell may collapse several identical days into one (e.g. "Mon & Tue"), so the
         // dialog needs every sibling day from this period's own row, not just the one that was clicked.
-        val siblingPeriods = grids.flatMap { it.rows }.firstOrNull { it.session.sessionId == period.sessionId }?.periods.orEmpty()
+        // A session running both shifts has a separate row per shift (Morning sorts first), so the
+        // search must be narrowed to the period's own shift -- otherwise editing an Evening period on
+        // a both-shift session would search the Morning row instead, find no real siblings, and tick
+        // only the clicked day.
+        val siblingPeriods = grids.filter { it.shift == period.shift }.flatMap { it.rows }
+            .firstOrNull { it.session.sessionId == period.sessionId }?.periods.orEmpty()
         PeriodEditorDialog(
             day = period.day,
             existing = period,

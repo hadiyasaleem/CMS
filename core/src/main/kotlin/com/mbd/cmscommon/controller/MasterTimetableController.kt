@@ -408,8 +408,8 @@ class MasterTimetableController(
                 replaces
             } else {
                 sessionPeriods.firstOrNull {
-                    it.day == day && it.startTime == replaces.startTime && it.endTime == replaces.endTime &&
-                        it.courseCode == replaces.courseCode && it.hasSameTeachersAs(replaces)
+                    it.shift == replaces.shift && it.day == day && it.startTime == replaces.startTime &&
+                        it.endTime == replaces.endTime && it.courseCode == replaces.courseCode && it.hasSameTeachersAs(replaces)
                 }
             }
             val period = SessionPeriod(
