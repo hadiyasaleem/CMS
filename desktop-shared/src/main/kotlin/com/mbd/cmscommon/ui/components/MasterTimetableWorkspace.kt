@@ -366,7 +366,10 @@ private fun MasterGridSection(
     val effColumns = allPeriods.map { effectiveKeyOf(it, pending) }.distinct().sortedBy { parseClock(it.first) }
     val timeSlots = effColumns.map(::slotLabel)
 
-    val clustersByRow = grid.rows.map { row -> row to dayClustersFor(row.periods) }
+    // A department with no periods at all for this grid still gets a row from buildMasterGrids (one
+    // per session+shift); dayClustersFor represents that as a single cluster with no days and no
+    // periods. Drop it here so the grid shows only rows that actually have something scheduled.
+    val clustersByRow = grid.rows.map { row -> row to dayClustersFor(row.periods).filter { it.periods.isNotEmpty() } }
     val periodsByRowKey = clustersByRow
         .flatMap { (row, clusters) ->
             clusters.mapIndexed { i, c -> "${row.session.sessionId}_$i" to c.periods.associateBy { p -> slotLabel(effectiveKeyOf(p, pending)) } }
