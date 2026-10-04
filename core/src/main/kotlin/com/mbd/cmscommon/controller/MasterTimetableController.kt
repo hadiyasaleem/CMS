@@ -387,7 +387,20 @@ class MasterTimetableController(
         val deptList = departments.value
 
         days.forEach { day ->
-            val dayReplaces = if (day == replaces.day) replaces else null
+            // The dialog pre-ticks every sibling day sharing this slot (e.g. "Mon & Tue" collapsed into
+            // one row, see siblingDaysFor), so a ticked day other than the one that was clicked is still
+            // an edit of its own already-existing period, not a brand-new one -- look it up by the same
+            // criteria the dialog used to find it, so it's excluded from the conflict check and updated
+            // in place instead of colliding with itself. A day the user ticked manually, with no such
+            // sibling, still goes through as a genuinely new period (and still conflicts if one clashes).
+            val dayReplaces = if (day == replaces.day) {
+                replaces
+            } else {
+                sessionPeriods.firstOrNull {
+                    it.day == day && it.startTime == replaces.startTime && it.endTime == replaces.endTime &&
+                        it.courseCode == replaces.courseCode && it.hasSameTeachersAs(replaces)
+                }
+            }
             val period = SessionPeriod(
                 id = SessionPeriod.buildId(replaces.sessionId, replaces.shift, day, normalizedStart),
                 sessionId = replaces.sessionId,
