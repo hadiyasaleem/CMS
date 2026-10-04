@@ -522,6 +522,7 @@ fun PeriodEditorDialog(
                         options = subjects.map { CmsEntityOption(it.courseCode, it.name) },
                         onSelected = { subjectCode = it ?: "" },
                         optional = true,
+                        error = if (subjects.isEmpty()) "No subjects configured for this semester yet — add them in Curriculum first." else null,
                     )
                     Spacer(Modifier.height(10.dp))
                     CmsEntityPicker(
