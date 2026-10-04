@@ -63,6 +63,7 @@ class MasterTimetableViewModel @Inject constructor(
     // from refreshError -- surfaced too, since a rejected edit (e.g. a scheduling conflict) must not
     // fail silently.
     val actionError = controller.error
+    val actionMessage = controller.actionMessage
     val teachers = controller.teachers
     val buildings = controller.buildings
     val rooms = controller.rooms
@@ -89,6 +90,7 @@ class MasterTimetableViewModel @Inject constructor(
         effectiveFrom: LocalDate?,
         effectiveTo: LocalDate?,
     ) = controller.savePeriod(replaces, days, start, end, subject, teachers, periodType, roomNo, building, notes, effectiveFrom, effectiveTo)
+    fun consumeActionMessage() = controller.consumeActionMessage()
 }
 
 @Composable
@@ -109,6 +111,7 @@ fun MasterTimetableScreen(
     val actionError by viewModel.actionError.collectAsState()
     val error = actionError ?: refreshError
     val errorTitle = if (actionError != null) "Couldn't save this change" else "Couldn't load timetable"
+    val actionMessage by viewModel.actionMessage.collectAsState()
     val teachers by viewModel.teachers.collectAsState()
     val buildings by viewModel.buildings.collectAsState()
     val rooms by viewModel.rooms.collectAsState()
@@ -125,6 +128,8 @@ fun MasterTimetableScreen(
         loading = loading,
         errorMessage = error,
         errorTitle = errorTitle,
+        actionMessage = actionMessage,
+        onConsumeActionMessage = viewModel::consumeActionMessage,
         onSelectSemester = viewModel::selectSemester,
         onSelectShift = viewModel::selectShift,
         onSelectDepartment = viewModel::selectDepartment,

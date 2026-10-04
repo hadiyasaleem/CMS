@@ -85,6 +85,8 @@ fun MasterTimetableWorkspace(
     loading: Boolean,
     errorMessage: String?,
     errorTitle: String = "Couldn't load timetable",
+    actionMessage: String? = null,
+    onConsumeActionMessage: () -> Unit = {},
     onSelectSemester: (Int?) -> Unit,
     onSelectShift: (Session?) -> Unit,
     onSelectDepartment: (String?) -> Unit,
@@ -117,6 +119,10 @@ fun MasterTimetableWorkspace(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        if (!actionMessage.isNullOrBlank()) {
+            item { CmsNotice(actionMessage, tone = NoticeTone.Success, onDismiss = onConsumeActionMessage) }
+        }
+
         item {
             MasterFilterBar(
                 departments = departments,

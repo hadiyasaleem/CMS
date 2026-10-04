@@ -206,6 +206,16 @@ class MasterTimetableController(
     private val _refreshError = MutableStateFlow<String?>(null)
     val refreshError: StateFlow<String?> = _refreshError.asStateFlow()
 
+    /** Confirms a successful [savePeriod] -- without it, saving a period that happens to come out
+     * unchanged (e.g. re-picking the subject it already had) looks identical to the save silently
+     * doing nothing, since the only other feedback this screen gives is [error] on failure. */
+    private val _actionMessage = MutableStateFlow<String?>(null)
+    val actionMessage: StateFlow<String?> = _actionMessage.asStateFlow()
+
+    fun consumeActionMessage() {
+        _actionMessage.value = null
+    }
+
     val departments: StateFlow<List<Department>> =
         departmentRepository.observeActiveDepartments().stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -345,6 +355,7 @@ class MasterTimetableController(
                 }
             }
         }
+        _actionMessage.value = "Column times updated."
     }
 
     /** The subjects offered for one row's own session+semester -- fetched on demand when its edit
@@ -434,5 +445,6 @@ class MasterTimetableController(
         if (replaces.day !in days) {
             timetableRepository.removePeriod(replaces)
         }
+        _actionMessage.value = "Period saved."
     }
 }

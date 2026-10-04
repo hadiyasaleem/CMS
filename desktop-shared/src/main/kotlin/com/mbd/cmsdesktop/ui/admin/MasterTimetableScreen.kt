@@ -50,6 +50,7 @@ fun MasterTimetableScreen(
     val actionError by controller.error.collectAsState()
     val errorMessage = actionError ?: refreshError
     val errorTitle = if (actionError != null) "Couldn't save this change" else "Couldn't load timetable"
+    val actionMessage by controller.actionMessage.collectAsState()
 
     MasterTimetableWorkspace(
         departments = departments,
@@ -63,6 +64,8 @@ fun MasterTimetableScreen(
         loading = loading,
         errorMessage = errorMessage,
         errorTitle = errorTitle,
+        actionMessage = actionMessage,
+        onConsumeActionMessage = controller::consumeActionMessage,
         onSelectSemester = controller::selectSemester,
         onSelectShift = controller::selectShift,
         onSelectDepartment = controller::selectDepartment,
