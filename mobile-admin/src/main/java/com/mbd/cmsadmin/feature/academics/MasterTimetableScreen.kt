@@ -55,6 +55,7 @@ class MasterTimetableViewModel @Inject constructor(
     val selectedShift = controller.selectedShift
     val selectedDeptId = controller.selectedDeptId
     val selectedProgramType = controller.selectedProgramType
+    val allSessions = controller.sessions
     val grids = controller.filteredGrids
     val periodConflicts = controller.periodConflicts
     val loading = controller.loading
@@ -91,6 +92,22 @@ class MasterTimetableViewModel @Inject constructor(
         effectiveTo: LocalDate?,
     ) = controller.savePeriod(replaces, days, start, end, subject, teachers, periodType, roomNo, building, notes, effectiveFrom, effectiveTo)
     fun consumeActionMessage() = controller.consumeActionMessage()
+    fun setPeriodLink(period: SessionPeriod, targetSessionId: String, link: Boolean) = controller.setPeriodLink(period, targetSessionId, link)
+    fun unmergeSession(
+        period: SessionPeriod,
+        unlinkSessionId: String,
+        days: Set<DayOfWeek>,
+        start: String,
+        end: String,
+        subject: SemesterSubject?,
+        teachers: List<Teacher>,
+        periodType: PeriodType,
+        roomNo: String,
+        building: String,
+        notes: String,
+        effectiveFrom: LocalDate?,
+        effectiveTo: LocalDate?,
+    ) = controller.unmergeSession(period, unlinkSessionId, days, start, end, subject, teachers, periodType, roomNo, building, notes, effectiveFrom, effectiveTo)
 }
 
 @Composable
@@ -104,6 +121,7 @@ fun MasterTimetableScreen(
     val selectedShift by viewModel.selectedShift.collectAsState()
     val selectedDeptId by viewModel.selectedDeptId.collectAsState()
     val selectedProgramType by viewModel.selectedProgramType.collectAsState()
+    val allSessions by viewModel.allSessions.collectAsState()
     val grids by viewModel.grids.collectAsState()
     val periodConflicts by viewModel.periodConflicts.collectAsState()
     val loading by viewModel.loading.collectAsState()
@@ -145,6 +163,11 @@ fun MasterTimetableScreen(
         onLoadSubjects = viewModel::subjectsFor,
         onSavePeriod = { replaces, days, start, end, subject, teacher, type, room, building, notes, from, to ->
             viewModel.savePeriod(replaces, days, start, end, subject, teacher, type, room, building, notes, from, to)
+        },
+        allSessions = allSessions,
+        onSetLink = viewModel::setPeriodLink,
+        onUnmergeSession = { period, sid, days, start, end, subject, teacher, type, room, building, notes, from, to ->
+            viewModel.unmergeSession(period, sid, days, start, end, subject, teacher, type, room, building, notes, from, to)
         },
     )
 }

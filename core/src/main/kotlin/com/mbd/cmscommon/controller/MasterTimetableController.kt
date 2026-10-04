@@ -364,6 +364,95 @@ class MasterTimetableController(
     suspend fun subjectsFor(sessionId: String, semester: Int): List<SemesterSubject> =
         curriculumRepository.observeSemesterSubjects(sessionId, semester).first()
 
+    /** Sessions that could still be merged into [period]'s lecture. */
+    fun eligibleMergeSessions(period: SessionPeriod): List<AcademicSession> =
+        com.mbd.cmscommon.controller.eligibleMergeSessions(period, sessions.value)
+
+    /** Merges [targetSessionId] into [period]'s lecture, or removes it from the merge ([link] = false). */
+    fun setPeriodLink(period: SessionPeriod, targetSessionId: String, link: Boolean) =
+        launch(if (link) "merge the class" else "remove the class from the merge") {
+            timetableRepository.setPeriodLink(period, targetSessionId, link)
+            _actionMessage.value = if (link) "Classes merged." else "Class removed from the merge."
+        }
+
+    /**
+     * Unmerges [unlinkSessionId] from [period]'s lecture. [period]'s own session keeps the lecture at the
+     * new values given here (teacher or time slot must change), while [unlinkSessionId] keeps the lecture
+     * as it was, as its own period -- mirrors [SessionTimetableController.unmergeSession] for the cross-session grid.
+     */
+    fun unmergeSession(
+        period: SessionPeriod,
+        unlinkSessionId: String,
+        days: Set<DayOfWeek>,
+        start: String,
+        end: String,
+        subject: SemesterSubject?,
+        teachers: List<Teacher>,
+        periodType: PeriodType,
+        roomNo: String?,
+        building: String?,
+        notes: String?,
+        effectiveFrom: LocalDate?,
+        effectiveTo: LocalDate?,
+    ) = launch("unmerge the class") {
+        requireValid(period.isOwnRow && unlinkSessionId in period.linkedSessionIds) { "That session is not merged into this lecture." }
+        requireValid(days.size == 1) { "Choose a single day to unmerge." }
+        requireValid(periodType == PeriodType.BREAK || subject != null) { "Choose a subject for this period." }
+        val day = days.first()
+        val normalizedStart = start.trim()
+        val normalizedEnd = end.trim()
+        val sameSlot = day == period.day && clockDisplay(normalizedStart) == clockDisplay(period.startTime) && clockDisplay(normalizedEnd) == clockDisplay(period.endTime)
+        requireValid(!sameSlot || teachers.map { it.teacherId } != period.teacherIds) {
+            "To unmerge, change the teacher or the time slot for this class."
+        }
+        val updated = SessionPeriod(
+            id = SessionPeriod.buildId(period.sessionId, period.shift, day, normalizedStart),
+            sessionId = period.sessionId,
+            shift = period.shift,
+            day = day,
+            startTime = normalizedStart,
+            endTime = normalizedEnd,
+            courseCode = subject?.courseCode ?: "BREAK",
+            subjectName = subject?.name ?: "Break",
+            teacherId = periodTeachers(periodType, teachers).firstOrNull()?.teacherId ?: "",
+            teacherName = periodTeachers(periodType, teachers).firstOrNull()?.name ?: "",
+            coTeacherIds = periodTeachers(periodType, teachers).drop(1).map { it.teacherId },
+            coTeacherNames = periodTeachers(periodType, teachers).drop(1).map { it.name },
+            periodType = periodType,
+            creditHours = subject?.creditHours,
+            roomNo = roomNo?.trim()?.takeIf { it.isNotBlank() },
+            building = building?.trim()?.takeIf { it.isNotBlank() },
+            notes = notes?.trim()?.takeIf { it.isNotBlank() },
+            effectiveFrom = effectiveFrom,
+            effectiveTo = effectiveTo,
+        )
+        val guest = period.copy(
+            id = SessionPeriod.buildId(unlinkSessionId, period.shift, period.day, period.startTime),
+            sessionId = unlinkSessionId,
+            linkedSessionIds = emptySet(),
+            isOwnRow = true,
+        )
+        val sessionPeriods = timetableRepository.observeWeek(period.sessionId).first()
+        validateTimetablePeriod(updated, period, sessionPeriods).orThrowValidation()
+        val rest = allPeriods.value.filter { it.id != period.id }
+        describeTimetableConflict(updated, rest, sessions.value, departments.value)?.let { throw CmsException.Conflict(it) }
+        describeTimetableConflict(guest, rest + updated, sessions.value, departments.value)?.let { throw CmsException.Conflict(it) }
+
+        timetableRepository.setPeriodLink(period, unlinkSessionId, false)
+        timetableRepository.savePeriod(updated)
+        if (!sameSlot) {
+            // Moving the slot replaces the row (and drops its links), so re-attach the sessions that stay merged
+            // to the row it became.
+            timetableRepository.removePeriod(period)
+            val moved = timetableRepository.observeWeek(period.sessionId).first().firstOrNull {
+                it.isOwnRow && it.shift == updated.shift && it.day == day && clockDisplay(it.startTime) == clockDisplay(normalizedStart)
+            }
+            if (moved != null) (period.linkedSessionIds - unlinkSessionId).forEach { timetableRepository.setPeriodLink(moved, it, true) }
+        }
+        timetableRepository.savePeriod(guest)
+        _actionMessage.value = "Unmerged."
+    }
+
     /**
      * Edits one existing period from the grid (subject, teacher, room, building, time, notes, or its
      * day). [replaces] is the period being edited; a day removed from [days] deletes its own row, a

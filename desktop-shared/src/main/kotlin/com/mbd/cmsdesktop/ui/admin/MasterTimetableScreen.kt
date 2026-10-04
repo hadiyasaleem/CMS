@@ -40,6 +40,7 @@ fun MasterTimetableScreen(
     val selectedShift by controller.selectedShift.collectAsState()
     val selectedDeptId by controller.selectedDeptId.collectAsState()
     val selectedProgramType by controller.selectedProgramType.collectAsState()
+    val allSessions by controller.sessions.collectAsState()
     val grids by controller.filteredGrids.collectAsState()
     val periodConflicts by controller.periodConflicts.collectAsState()
     val loading by controller.loading.collectAsState()
@@ -81,6 +82,11 @@ fun MasterTimetableScreen(
         onLoadSubjects = controller::subjectsFor,
         onSavePeriod = { replaces, days, start, end, subject, teacher, type, room, building, notes, from, to ->
             controller.savePeriod(replaces, days, start, end, subject, teacher, type, room, building, notes, from, to)
+        },
+        allSessions = allSessions,
+        onSetLink = controller::setPeriodLink,
+        onUnmergeSession = { period, sid, days, start, end, subject, teacher, type, room, building, notes, from, to ->
+            controller.unmergeSession(period, sid, days, start, end, subject, teacher, type, room, building, notes, from, to)
         },
     )
 }

@@ -36,6 +36,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.Building
 import com.mbd.cmscommon.domain.model.Department
 import com.mbd.cmscommon.domain.model.PeriodType
@@ -103,10 +104,19 @@ fun MasterTimetableWorkspace(
     rooms: List<Room> = emptyList(),
     onLoadSubjects: suspend (sessionId: String, semester: Int) -> List<SemesterSubject> = { _, _ -> emptyList() },
     onSavePeriod: (SessionPeriod, Set<DayOfWeek>, String, String, SemesterSubject?, List<Teacher>, PeriodType, String, String, String, LocalDate?, LocalDate?) -> Unit = { _, _, _, _, _, _, _, _, _, _, _, _ -> },
+    /** Every active session, for the "merge with another class" picker on an existing lecture. */
+    allSessions: List<AcademicSession> = emptyList(),
+    /** (period, sessionId, link): merge/unmerge [sessionId] into/from [period]'s lecture. */
+    onSetLink: (SessionPeriod, String, Boolean) -> Unit = { _, _, _ -> },
+    onUnmergeSession: (SessionPeriod, String, Set<DayOfWeek>, String, String, SemesterSubject?, List<Teacher>, PeriodType, String, String, String, LocalDate?, LocalDate?) -> Unit =
+        { _, _, _, _, _, _, _, _, _, _, _, _, _ -> },
     modifier: Modifier = Modifier,
 ) {
     var detailContext by remember { mutableStateOf<Pair<SessionPeriod, Int>?>(null) }
     var editingContext by remember { mutableStateOf<Pair<SessionPeriod, Int>?>(null) }
+    // Unmerging opens a second edit dialog on the same period: this session's lecture takes whatever
+    // is saved there (teacher or time slot must change), while the named session keeps today's values.
+    var unmergingContext by remember { mutableStateOf<Triple<SessionPeriod, Int, String>?>(null) }
     var dismissedError by remember { mutableStateOf<String?>(null) }
     // Column edits are staged here (per grid, keyed by title) and only reach onSaveShifts on an explicit Save.
     var pendingByGrid by remember { mutableStateOf<Map<String, Map<Pair<String, String>, Pair<String, String>>>>(emptyMap()) }
@@ -214,10 +224,33 @@ fun MasterTimetableWorkspace(
             rooms = rooms,
             currentSemesterTerm = null,
             initialDays = siblingDaysFor(period, siblingPeriods),
+            allSessions = allSessions,
+            onSetLink = onSetLink,
+            onUnmergeSession = { sid -> unmergingContext = Triple(period, semester, sid); editingContext = null },
             onDismiss = { editingContext = null },
             onSave = { days, start, end, subject, teacher, type, room, buildingName, notes, from, to ->
                 onSavePeriod(period, days, start, end, subject, teacher, type, room, buildingName, notes, from, to)
                 editingContext = null
+            },
+        )
+    }
+
+    unmergingContext?.let { (period, semester, unlinkSessionId) ->
+        var subjects by remember(period.id) { mutableStateOf<List<SemesterSubject>>(emptyList()) }
+        LaunchedEffect(period.id) { subjects = onLoadSubjects(period.sessionId, semester) }
+        PeriodEditorDialog(
+            day = period.day,
+            existing = period.copy(linkedSessionIds = emptySet()),
+            subjects = subjects,
+            teachers = teachers,
+            buildings = buildings,
+            rooms = rooms,
+            currentSemesterTerm = null,
+            requireChangeFrom = period,
+            onDismiss = { unmergingContext = null },
+            onSave = { days, start, end, subject, teacher, type, room, buildingName, notes, from, to ->
+                onUnmergeSession(period, unlinkSessionId, days, start, end, subject, teacher, type, room, buildingName, notes, from, to)
+                unmergingContext = null
             },
         )
     }
