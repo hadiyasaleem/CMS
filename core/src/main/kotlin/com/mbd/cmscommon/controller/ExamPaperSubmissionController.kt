@@ -47,7 +47,10 @@ class ExamPaperSubmissionController(
 
     /** Every subject this teacher teaches that also has a slot on a published datesheet -- there is
      * no datesheet-side notion of "who set this paper," so the join is on (sessionId, courseCode)
-     * against the teacher's own timetable-driven assignments. */
+     * against the teacher's own timetable-driven assignments. Both sides are normalized (trimmed,
+     * case-folded) before matching -- the timetable period and the datesheet slot each snapshot
+     * their own copy of the course code, so a stray space or casing difference between the two
+     * must not silently drop a subject the teacher actually teaches. */
     val slots: StateFlow<List<TeacherPaperSlot>> = combine(
         datesheetRepository.observeDatesheets(),
         datesheetRepository.observeAllSlots(),
@@ -55,12 +58,13 @@ class ExamPaperSubmissionController(
         assignmentsProvider.observeAssignmentsFor(teacherId),
     ) { datesheets, allSlots, submissions, assignments ->
         val published = datesheets.filter { it.published }.associateBy { it.id }
-        val myKeys = assignments.map { it.sessionId to it.courseCode }.toSet()
+        val myKeys = assignments.map { it.sessionId.trim().lowercase() to it.courseCode.trim().uppercase() }.toSet()
         val submissionBySlot = submissions.associateBy { it.datesheetSlotId }
         allSlots
             .mapNotNull { slot ->
                 val sheet = published[slot.datesheetId] ?: return@mapNotNull null
-                if ((sheet.sessionId to slot.courseCode) !in myKeys) return@mapNotNull null
+                val key = sheet.sessionId.trim().lowercase() to slot.courseCode.trim().uppercase()
+                if (key !in myKeys) return@mapNotNull null
                 TeacherPaperSlot(sheet, slot, submissionBySlot[slot.id])
             }
             .sortedWith(compareBy({ it.datesheet.sessionId }, { it.slot.courseCode }))
