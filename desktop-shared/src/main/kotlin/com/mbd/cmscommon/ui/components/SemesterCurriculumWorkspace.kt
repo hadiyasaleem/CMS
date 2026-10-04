@@ -30,6 +30,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -94,6 +95,17 @@ fun SemesterCurriculumWorkspace(
     var showTermEditor by remember { mutableStateOf(false) }
     var pendingRemove by remember { mutableStateOf<SemesterSubject?>(null) }
 
+    // The subject editor used to close itself the instant Save was tapped, before the async save's
+    // outcome was known -- a rename blocked by existing timetable periods would fail silently behind
+    // the now-closed dialog, with only an easy-to-miss banner on the page underneath. It now stays
+    // open until the save actually succeeds (a fresh [notice]); [errorMessage] shows inside it instead.
+    LaunchedEffect(notice) {
+        if (!notice.isNullOrBlank() && (addingSubject || subjectEditor != null)) {
+            addingSubject = false
+            subjectEditor = null
+        }
+    }
+
     val visible = subjects.filter { query.isBlank() || it.name.contains(query, ignoreCase = true) || it.courseCode.contains(query, ignoreCase = true) }
         .sortedBy { it.courseCode }
 
@@ -156,11 +168,12 @@ fun SemesterCurriculumWorkspace(
         SubjectEditorDialog(
             existing = subjectEditor,
             existingCodes = subjects.map { it.courseCode.uppercase() }.toSet(),
-            onDismiss = { addingSubject = false; subjectEditor = null },
+            serverError = errorMessage,
+            onDismiss = { addingSubject = false; subjectEditor = null; onClearError() },
             onSave = { code, name, credits, type, courseType, elective, outline ->
                 onSaveSubject(subjectEditor?.courseCode ?: code, code, name, credits, type, courseType, elective, outline)
-                addingSubject = false
-                subjectEditor = null
+                // Stays open until onSaveSubject's async result lands -- see the LaunchedEffect(notice)
+                // above, which closes it on success. On failure, [errorMessage] shows inside it instead.
             },
         )
     }
@@ -268,6 +281,10 @@ private fun CurriculumEmptyState(hasSubjects: Boolean, onAdd: () -> Unit, onClea
 private fun SubjectEditorDialog(
     existing: SemesterSubject?,
     existingCodes: Set<String>,
+    /** The controller's own error for the save attempt just made (e.g. a rename blocked because the
+     * old code still has timetable periods on record) -- shown here, inside the still-open dialog,
+     * since the dialog no longer closes itself before the save's outcome is known. */
+    serverError: String?,
     onDismiss: () -> Unit,
     onSave: (String, String, Int, SubjectType, CourseCategory, Boolean, String) -> Unit,
 ) {
@@ -326,6 +343,10 @@ private fun SubjectEditorDialog(
                 if (error != null) {
                     Spacer(Modifier.height(8.dp))
                     Text(error, color = CurriculumRed, style = MaterialTheme.typography.bodySmall)
+                }
+                if (serverError != null) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(serverError, color = CurriculumRed, style = MaterialTheme.typography.bodySmall)
                 }
             }
         }},
