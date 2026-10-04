@@ -20,6 +20,7 @@ class CopyAllSemesterSubjectsTest {
         override fun observePoolSubjects(): Flow<List<PoolSubject>> = flowOf(emptyList())
         override suspend fun getSemesterTerm(sessionId: String, semester: Int): SemesterTerm? = null
         override suspend fun saveSemesterSubject(subject: SemesterSubject) {}
+        override suspend fun renameSubject(oldCourseCode: String, subject: SemesterSubject) {}
         override suspend fun linkSemesterSubject(sessionId: String, semester: Int, courseCode: String, isElective: Boolean) {}
         override suspend fun copySemesterSubjects(fromSessionId: String, fromSemester: Int, toSessionId: String, toSemester: Int) {
             copied += Triple(fromSemester, toSemester, fromSessionId to toSessionId)

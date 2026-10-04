@@ -89,6 +89,13 @@ interface CurriculumRepository {
     /** Creates or edits a course's own definition in the pool, and links it to [subject]'s session+semester. */
     suspend fun saveSemesterSubject(subject: SemesterSubject)
 
+    /** Renames a course's code and/or other fields in place (an actual update of the existing pool row, not
+     * a new one), carrying [subject]'s new values. The database cascades the new course code into every
+     * timetable period, datesheet slot, attendance/mark record and exam paper submission that referenced
+     * [oldCourseCode] -- across every session and semester that shares this college-wide course, not just
+     * [subject]'s own -- so nothing is left pointing at a code that no longer exists. */
+    suspend fun renameSubject(oldCourseCode: String, subject: SemesterSubject)
+
     /** Attaches an existing pool subject to a session+semester without touching the pool's own fields. */
     suspend fun linkSemesterSubject(sessionId: String, semester: Int, courseCode: String, isElective: Boolean)
 

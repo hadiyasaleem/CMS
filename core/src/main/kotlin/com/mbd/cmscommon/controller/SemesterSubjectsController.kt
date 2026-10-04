@@ -123,12 +123,6 @@ class SemesterSubjectsController(
         requireValid(!conflict) { "Course code $normalizedCode already exists in this semester." }
 
         val renamed = originalCourseCode != null && !originalCourseCode.equals(normalizedCode, ignoreCase = true)
-        if (renamed) {
-            // The course code is changing: retire the old link *before* creating the new one, so a
-            // subject with existing attendance/marks/timetable data (blocked by deleteSemesterSubject)
-            // fails cleanly instead of leaving both the old and new codes behind as duplicates.
-            repo.deleteSemesterSubject(sessionId, semester, originalCourseCode!!)
-        }
 
         val subject = SemesterSubject(
             sessionId = sessionId,
@@ -141,7 +135,10 @@ class SemesterSubjectsController(
             isElective = isElective,
             outline = outline?.trim()?.takeIf { it.isNotBlank() },
         )
-        repo.saveSemesterSubject(subject)
+        // A code change is an in-place rename, cascaded by the database to every timetable period,
+        // datesheet slot, attendance/mark record and exam paper submission that used the old code --
+        // not a delete-and-recreate, which would have orphaned all of that against the new code.
+        if (renamed) repo.renameSubject(originalCourseCode!!, subject) else repo.saveSemesterSubject(subject)
         _notice.value = if (originalCourseCode != null) "$normalizedCode updated." else "$normalizedCode added."
     }
 

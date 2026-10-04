@@ -149,6 +149,38 @@ class CurriculumRepositoryImpl @Inject constructor(
         subjectDao.upsertAll(listOf(linkDto.copy(subjectPool = savedPool).toEntity()))
     }
 
+    override suspend fun renameSubject(oldCourseCode: String, subject: SemesterSubject) {
+        // An in-place UPDATE of the pool row's own primary key (not an upsert under the new code) --
+        // the database's trg_cascade_subject_rename then carries the new code/name into every other
+        // table that snapshots it (timetable periods, datesheet slots, attendance, marks, exam papers,
+        // edit requests), for every session and semester that shares this college-wide course, not just
+        // this one. A new-code collision with another pool row surfaces as the database's own unique-
+        // constraint error, same as any other duplicate-code save.
+        val result = postgrest.from(SupabaseTables.SUBJECT_POOL).update({
+            set("course_code", subject.courseCode)
+            set("name", subject.name)
+            set("credit_hours", subject.creditHours)
+            set("subject_type", subject.subjectType.name)
+            set("course_type", subject.courseType.name)
+            set("outline", subject.outline)
+        }) {
+            select()
+            filter { eq("course_code", oldCourseCode) }
+        }
+        result.requireAffected(onNone = { throw CmsException.NotFound("This subject no longer exists. Refresh and try again.") })
+        val updatedPool = result.decodeList<PoolSubjectDto>().first()
+        poolDao.deleteByCodes(listOf(oldCourseCode))
+        poolDao.upsertAll(listOf(updatedPool.toEntity()))
+
+        // The link row's own course_code cascades server-side (the FK's ON UPDATE CASCADE); refresh this
+        // session+semester's local copy immediately instead of waiting for the next sync. Any OTHER
+        // session/semester sharing the old code, and every other cascaded table, picks up the rename on
+        // its own next normal incremental sync, the same way any other client's change would arrive.
+        val linkDto = SemesterSubjectDto(sessionId = subject.sessionId, semester = subject.semester, courseCode = subject.courseCode, isElective = subject.isElective)
+        subjectDao.deleteByCourseCode(subject.sessionId, subject.semester, oldCourseCode)
+        subjectDao.upsertAll(listOf(linkDto.copy(subjectPool = updatedPool).toEntity()))
+    }
+
     override suspend fun linkSemesterSubject(sessionId: String, semester: Int, courseCode: String, isElective: Boolean) {
         val linkDto = SemesterSubjectDto(sessionId = sessionId, semester = semester, courseCode = courseCode, isElective = isElective)
         postgrest.from(SupabaseTables.SESSION_SUBJECTS).upsert(linkDto) { onConflict = "session_id,semester,course_code" }
