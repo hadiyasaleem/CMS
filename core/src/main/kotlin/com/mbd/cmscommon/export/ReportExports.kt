@@ -178,27 +178,6 @@ fun marksSheetExport(
     )
 }
 
-fun semesterResultsExport(
-    sessionLabel: String,
-    semester: Int,
-    roster: List<SessionStudent>,
-    results: Map<String, SemesterGpa>,
-): ExportDocument {
-    val header = listOf("Roll", "Name", "GPA", "CGPA", "Result", "Position", "Supply courses", "Remarks")
-    val rows = roster.sortedBy { it.rollNumber }.map { s ->
-        val r = results[s.rollNumber]
-        listOf(
-            s.rollNumber, s.name, num(r?.gpa), num(r?.cgpa), r?.resultStatus?.let(::titleCase) ?: "Not recorded",
-            r?.classPosition?.toString() ?: "", r?.supplyCourses?.joinToString(", ").orEmpty(), r?.remarks.orEmpty(),
-        )
-    }
-    return ExportDocument(
-        fileBase = "results_${sessionLabel}_sem$semester",
-        title = listOf("Semester Results", "$sessionLabel · Semester $semester"),
-        sections = listOf(ExportSection("Results", header, rows)),
-    )
-}
-
 /** [assignment] is null for the combined "All classes" roster (every student this teacher has, across every class). */
 fun myStudentsExport(
     assignment: ResolvedAssignment?,

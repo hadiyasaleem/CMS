@@ -19,7 +19,6 @@ import com.mbd.cmsteacher.feature.linkrequests.LinkRequestsScreen
 import com.mbd.cmsteacher.feature.marks.MarksEntryScreen
 import com.mbd.cmsteacher.feature.notifications.NotificationsScreen
 import com.mbd.cmsteacher.feature.profile.ProfileScreen
-import com.mbd.cmsteacher.feature.results.SemesterResultsScreen
 import com.mbd.cmsteacher.feature.schedule.ScheduleScreen
 import com.mbd.cmsteacher.feature.students.MyStudentsScreen
 
@@ -45,7 +44,6 @@ fun TeacherNavHost(navController: NavHostController, onSignedOut: () -> Unit, re
         }
 
         composable(TeacherDestination.Marks.route) { MarksEntryScreen() }
-        composable(TeacherDestination.SemesterResults.route) { SemesterResultsScreen() }
         composable(TeacherDestination.ExamPaper.route) { ExamPaperSubmissionScreen() }
         composable(TeacherDestination.Notifications.route) { NotificationsScreen(refreshVersion = refreshVersion) }
         composable(TeacherDestination.LinkRequests.route) { LinkRequestsScreen() }

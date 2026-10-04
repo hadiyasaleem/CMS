@@ -24,7 +24,6 @@ sealed interface AdminScreen {
     data object FeeStructures : AdminScreen
     data class CollegeFees(val shift: com.mbd.cmscommon.domain.model.Session) : AdminScreen
     data object Insights : AdminScreen
-    data object SemesterResults : AdminScreen
     data object Notifications : AdminScreen
     data object AppLogs : AdminScreen
     data object Profile : AdminScreen
@@ -60,7 +59,6 @@ fun AdminScreen.title(): String = when (this) {
     AdminScreen.FeeStructures -> "Fee Structures"
     is AdminScreen.CollegeFees -> "College Fees"
     AdminScreen.Insights -> "Insights"
-    AdminScreen.SemesterResults -> "Semester Results"
     AdminScreen.Notifications -> "Notifications"
     AdminScreen.AppLogs -> "App Logs"
     AdminScreen.Profile -> "Profile"

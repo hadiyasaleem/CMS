@@ -6,7 +6,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.mbd.cmsadmin.feature.academics.MasterDatesheetScreen
 import com.mbd.cmsadmin.feature.academics.MasterTimetableScreen
-import com.mbd.cmsadmin.feature.academics.SemesterResultsScreen
 import com.mbd.cmsadmin.feature.academics.SemesterSubjectsScreen
 import com.mbd.cmsadmin.feature.academics.SessionDatesheetScreen
 import com.mbd.cmsadmin.feature.academics.SessionDetailScreen
@@ -67,7 +66,6 @@ fun AdminNavHost(navController: NavHostController, onSignedOut: () -> Unit, refr
                         RecordsDestination.TIMETABLE -> AdminLeaf.MASTER_TIMETABLE
                         RecordsDestination.FEES -> AdminLeaf.FEE_STRUCTURES
                         RecordsDestination.INSIGHTS -> AdminLeaf.INSIGHTS
-                        RecordsDestination.SEMESTER_RESULTS -> AdminLeaf.SEMESTER_RESULTS
                     },
                 )
             })
@@ -122,7 +120,6 @@ fun AdminNavHost(navController: NavHostController, onSignedOut: () -> Unit, refr
             MasterDatesheetScreen(onOpenSession = { go(AdminRoutes.sessionDatesheet(it)) })
         }
         composable(AdminLeaf.INSIGHTS) { com.mbd.cmsadmin.feature.insights.InsightsScreen(refreshVersion = refreshVersion) }
-        composable(AdminLeaf.SEMESTER_RESULTS) { SemesterResultsScreen() }
         composable(AdminLeaf.BUILDINGS_ROOMS) { BuildingsRoomsScreen() }
 
         // ── Department drill-down ──

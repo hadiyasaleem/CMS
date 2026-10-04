@@ -20,7 +20,6 @@ sealed class TeacherDestination(
     data object AttendanceStudent : TeacherDestination("attendance_student/{sessionId}/{courseCode}/{rollNumber}", "Student Attendance")
     data object ExamsHub : TeacherDestination("exams_hub", "Exams", "Exams", TablerIcons.Certificate)
     data object Marks : TeacherDestination("marks", "Marks Entry")
-    data object SemesterResults : TeacherDestination("semester_results", "Semester Results")
     data object ExamPaper : TeacherDestination("exam_paper", "Submit Exam Paper")
     data object Schedule : TeacherDestination("schedule", "Schedule", "Schedule", TablerIcons.Calendar)
     data object MenuHub : TeacherDestination("menu_hub", "Menu", "Menu", TablerIcons.Menu2)
@@ -36,7 +35,7 @@ sealed class TeacherDestination(
         val bottomNavItems = listOf(Home, Attendance, ExamsHub, Schedule, MenuHub)
 
         val entries = listOf(
-            Home, Attendance, AttendanceHistory, AttendanceStudent, ExamsHub, Marks, SemesterResults,
+            Home, Attendance, AttendanceHistory, AttendanceStudent, ExamsHub, Marks,
             ExamPaper, Schedule, MenuHub, Notifications, LinkRequests, MyStudents, Events, Datesheets,
             Insights, Profile,
         )

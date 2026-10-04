@@ -53,7 +53,6 @@ fun ExamsHubScreen(onOpen: (String) -> Unit, viewModel: ExamsHubViewModel = hilt
                 when (destination) {
                     ExamsDestination.MARKS -> TeacherDestination.Marks.route
                     ExamsDestination.EXAM_PAPER -> TeacherDestination.ExamPaper.route
-                    ExamsDestination.RESULTS -> TeacherDestination.SemesterResults.route
                     ExamsDestination.DATESHEETS -> TeacherDestination.Datesheets.route
                 },
             )
