@@ -93,6 +93,12 @@ class ErrorClassifierTest {
     }
 
     @Test
+    fun duplicateCourseCodeNamesTheCode() {
+        val c = classify(unique("subject_pool_pkey", "Key (course_code)=(GISL-101) already exists."))
+        assertEquals("A course with code GISL-101 already exists.", c.userMessage)
+    }
+
+    @Test
     fun namedUniqueConstraintsGetTheirOwnSentence() {
         assertEquals("This class already has a period at that day and time.", classify(unique("uq_session_slot", null)).userMessage)
         assertEquals("This building already has a room with that number.", classify(unique("rooms_building_id_room_no_key", null)).userMessage)

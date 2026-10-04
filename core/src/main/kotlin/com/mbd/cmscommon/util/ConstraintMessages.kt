@@ -39,6 +39,7 @@ internal object ConstraintMessages {
         "session_subjects" to "subject",
         "student_link_requests" to "link request",
         "student_semester_gpa" to "semester result",
+        "subject_pool" to "course",
         "teachers" to "teacher",
         "timetable_periods" to "timetable period",
     )
@@ -138,6 +139,7 @@ internal object ConstraintMessages {
             "departments_pkey" -> return quoted("A department with code", keys["dept_id"], "already exists.")
             "buildings_pkey" -> return "A building with that name already exists."
             "rooms_pkey" -> return "That room already exists."
+            "subject_pool_pkey" -> return quoted("A course with code", keys["course_code"], "already exists.")
         }
         constraint?.let { UNIQUE_BY_CONSTRAINT[it] }?.let { return it }
 
