@@ -88,7 +88,22 @@ class SessionTimetableRepositoryImpl @Inject constructor(
         periodDao.observeForDay(day.name).map { rows -> rows.map { AcademicStructureMapper.periodEntityToDomain(it) } }
 
     override suspend fun savePeriod(period: SessionPeriod) {
+        // The upsert below targets the (session, shift, day, start_time) unique index, not the primary
+        // key, so an edit that doesn't carry the row's own id would let Postgres default a fresh one for
+        // the conflict trigger's self-exclusion check (p.id <> new.id) -- making every edit of a taught
+        // period look like a brand-new lecture clashing with the very row it's replacing. Looking up the
+        // existing row's real id first and sending it keeps that id stable across the edit.
+        val existingId = postgrest.from(SupabaseTables.TIMETABLE_PERIODS).select {
+            filter {
+                eq("primary_session_id", period.sessionId)
+                eq("shift", period.shift.name)
+                eq("day", period.day.name)
+                eq("start_time", period.startTime)
+                eq("is_deleted", false)
+            }
+        }.decodeList<TimetablePeriodDto>().firstOrNull()?.id
         val dto = TimetablePeriodDto(
+            id = existingId,
             sessionId = period.sessionId,
             shift = period.shift.name,
             day = period.day.name,
