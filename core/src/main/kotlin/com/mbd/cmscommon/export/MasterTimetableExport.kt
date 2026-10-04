@@ -81,8 +81,8 @@ fun masterGridTitleLines(grid: MasterGrid): List<String> {
 }
 
 /** The room a department uses most, written once under its code; a period held elsewhere still prints its own room
- * on the cell. Ties go to the room used first. */
-internal fun dominantLocation(periods: List<SessionPeriod>): String? =
+ * on the cell. Ties go to the room used first. Shared with the on-screen grid so both agree on which room is "usual". */
+fun dominantLocation(periods: List<SessionPeriod>): String? =
     periods.filter { it.periodType != PeriodType.BREAK }.mapNotNull { periodLocation(it) }
         .groupingBy { it }.eachCount().let { counts ->
             val best = counts.values.maxOrNull() ?: return null
@@ -90,7 +90,7 @@ internal fun dominantLocation(periods: List<SessionPeriod>): String? =
         }
 
 /** "R#12", "BS Block R#22", or null when neither is recorded. */
-private fun periodLocation(period: SessionPeriod): String? =
+fun periodLocation(period: SessionPeriod): String? =
     listOfNotNull(period.building?.ifBlank { null }, period.roomNo?.ifBlank { null }).joinToString(" ").ifBlank { null }
 
 /** Same shape as the on-screen grid, ready for a merged-cell printed rendering: one column per

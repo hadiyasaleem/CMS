@@ -52,9 +52,11 @@ import com.mbd.cmscommon.controller.PeriodConflict
 import com.mbd.cmscommon.controller.timeSlotCascade
 import com.mbd.cmscommon.export.ExportDocument
 import com.mbd.cmscommon.export.ExportFormat
+import com.mbd.cmscommon.export.dominantLocation
 import com.mbd.cmscommon.export.masterGridExport
 import com.mbd.cmscommon.export.masterGridsExport
 import com.mbd.cmscommon.export.masterGridTitleLines
+import com.mbd.cmscommon.export.periodLocation
 import com.mbd.cmscommon.util.clockDisplay
 import com.mbd.cmscommon.util.isTimeRangeInvalid
 import com.mbd.cmscommon.util.parseClock
@@ -295,6 +297,7 @@ private fun MasterFilterBar(
 private data class MasterRow(
     val rowKey: String,
     val deptLabel: String,
+    val roomLabel: String,
     val daysLabel: String,
     val cells: Map<String, GridCell?>,
 )
@@ -337,23 +340,27 @@ private fun MasterGridSection(
         }
         .toMap()
     val rows = clustersByRow.flatMap { (row, clusters) ->
+        val usualRoom = dominantLocation(row.periods)
         clusters.mapIndexed { index, cluster ->
             val byRange = periodsByRowKey["${row.session.sessionId}_$index"].orEmpty()
             MasterRow(
                 rowKey = "${row.session.sessionId}_$index",
                 deptLabel = if (index == 0) (row.department?.code ?: row.session.deptId) else "",
+                roomLabel = if (index == 0) usualRoom.orEmpty() else "",
                 daysLabel = dayRangeLabel(cluster.days),
                 cells = timeSlots.associateWith { slot ->
                     byRange[slot]?.let { period ->
                         val isBreak = period.periodType == PeriodType.BREAK
                         val codeLine = period.courseCode + (period.creditHours?.let { "($it+0)" } ?: "")
-                        val location = listOfNotNull(period.building?.ifBlank { null }, period.roomNo?.ifBlank { null }).joinToString(" ").ifBlank { "No room" }
+                        // The usual room is already printed once under the department code -- a cell only
+                        // repeats its room when it differs from that (e.g. a lab held elsewhere).
+                        val location = periodLocation(period)?.takeIf { it != usualRoom }
                         val hasConflict = !isBreak && periodConflicts[period.id.substringBefore("::")].orEmpty().isNotEmpty()
                         val incomplete = !isBreak && (period.teacherId.isBlank() || period.roomNo.isNullOrBlank())
                         GridCell(
                             title = if (isBreak) "BREAK" else period.subjectName,
                             subtitle = if (isBreak) "" else listOfNotNull(codeLine.takeIf { it.isNotBlank() }, period.teacherLabel.ifBlank { "Unassigned" }).joinToString(" · "),
-                            meta = if (isBreak) "" else location + mergedTag(period, grid),
+                            meta = if (isBreak) "" else listOfNotNull(location, mergedTag(period, grid).removePrefix(" · ").takeIf { it.isNotBlank() }).joinToString(" · "),
                             isBreak = isBreak,
                             isAlert = hasConflict,
                             isWarning = incomplete && !hasConflict,
@@ -460,7 +467,10 @@ private fun MasterTimetableGridBody(
                 modifier = Modifier.fillMaxWidth().horizontalScroll(hScroll),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(Modifier.width(MasterDeptW).padding(horizontal = 6.dp, vertical = 8.dp), contentAlignment = Alignment.Center) {
+                Column(
+                    Modifier.width(MasterDeptW).padding(horizontal = 6.dp, vertical = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
                     Text(
                         row.deptLabel,
                         color = MaterialTheme.colorScheme.onSurface,
@@ -469,6 +479,16 @@ private fun MasterTimetableGridBody(
                         style = MaterialTheme.typography.titleSmall,
                         textAlign = TextAlign.Center,
                     )
+                    if (row.roomLabel.isNotBlank()) {
+                        Text(
+                            row.roomLabel,
+                            color = ModMuted,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
                 }
                 Box(Modifier.width(MasterDaysW).padding(horizontal = 6.dp, vertical = 8.dp), contentAlignment = Alignment.Center) {
                     Text(
