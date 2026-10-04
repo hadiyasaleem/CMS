@@ -38,7 +38,6 @@ object AdminLeaf {
     const val CALENDAR = "calendar"
     const val DATESHEETS = "datesheets"
     const val INSIGHTS = "insights"
-    const val SEMESTER_RESULTS = "semester_results"
     const val STUDENT_DIRECTORY = "student_directory"
 }
 
@@ -93,7 +92,6 @@ fun adminScreenTitle(route: String?): String = when (route) {
     AdminLeaf.CALENDAR -> "Calendar"
     AdminLeaf.DATESHEETS -> "Master Datesheet"
     AdminLeaf.INSIGHTS -> "Insights"
-    AdminLeaf.SEMESTER_RESULTS -> "Semester Results"
     AdminLeaf.STUDENT_DIRECTORY -> "Students"
     AdminRoutes.DEPT_DETAIL -> "Department"
     AdminRoutes.SESSION_DETAIL -> "Session"

@@ -218,7 +218,6 @@ fun TeacherNavHost(role: UserRole.Teacher, component: DesktopAppComponent, windo
                         screen = when (destination) {
                             ExamsDestination.MARKS -> TeacherScreen.Marks
                             ExamsDestination.EXAM_PAPER -> TeacherScreen.ExamPaper
-                            ExamsDestination.RESULTS -> TeacherScreen.SemesterResults
                             ExamsDestination.DATESHEETS -> TeacherScreen.Datesheets
                         }
                     },
@@ -239,14 +238,6 @@ fun TeacherNavHost(role: UserRole.Teacher, component: DesktopAppComponent, windo
                     assignmentsProvider = assignmentsProvider,
                     academicSessionRepository = component.academicSessionRepository(),
                     window = window,
-                )
-
-                TeacherScreen.SemesterResults -> SemesterResultsScreen(
-                    teacherId = teacherId,
-                    sessionRepository = component.academicSessionRepository(),
-                    marksRepository = component.sessionMarksRepository(),
-                    curriculumRepository = component.curriculumRepository(),
-                    assignmentsProvider = assignmentsProvider,
                 )
 
                 TeacherScreen.Schedule -> ScheduleScreen(

@@ -17,7 +17,6 @@ sealed interface TeacherScreen {
     data object ExamsHub : TeacherScreen
     data object Marks : TeacherScreen
     data object ExamPaper : TeacherScreen
-    data object SemesterResults : TeacherScreen
     data object Schedule : TeacherScreen
     data object MenuHub : TeacherScreen
     data object Notifications : TeacherScreen
@@ -39,7 +38,6 @@ fun TeacherScreen.title(): String = when (this) {
     is TeacherScreen.AttendanceStudentSummary -> "Student Attendance"
     TeacherScreen.Marks -> "Marks Entry"
     TeacherScreen.ExamPaper -> "Submit Exam Paper"
-    TeacherScreen.SemesterResults -> "Semester Results"
     TeacherScreen.Notifications -> "Notifications"
     TeacherScreen.LinkRequests -> "Link Requests"
     TeacherScreen.MyStudents -> "My Students"

@@ -6,7 +6,6 @@ import compose.icons.tablericons.CalendarEvent
 import compose.icons.tablericons.ChartBar
 import compose.icons.tablericons.Clock
 import compose.icons.tablericons.CreditCard
-import compose.icons.tablericons.TrendingUp
 import compose.icons.tablericons.UserCheck
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -63,7 +62,7 @@ private val RecordsGreen = ModSuccess
 private val RecordsGold = ModWarn
 private val RecordsRed = ModAccent
 
-enum class RecordsDestination { ATTENDANCE, CALENDAR, DATESHEETS, TIMETABLE, FEES, INSIGHTS, SEMESTER_RESULTS }
+enum class RecordsDestination { ATTENDANCE, CALENDAR, DATESHEETS, TIMETABLE, FEES, INSIGHTS }
 
 private data class RecordsCard(
     val destination: RecordsDestination,
@@ -164,12 +163,6 @@ private fun recordsCards(snapshot: RecordsHubSnapshot): List<RecordsCard> = list
         "${snapshot.atRiskStudents} student(s) flagged",
         TablerIcons.ChartBar, if (snapshot.atRiskStudents > 0) RecordsRed else RecordsGreen, RecordsSummarySource.INSIGHTS,
         RecordsSummarySource.INSIGHTS in snapshot.unavailableSources,
-    ),
-    RecordsCard(
-        RecordsDestination.SEMESTER_RESULTS, "Semester Results",
-        "${snapshot.activeSessions} session(s) in scope",
-        TablerIcons.TrendingUp, RecordsGreen, RecordsSummarySource.SESSIONS,
-        RecordsSummarySource.SESSIONS in snapshot.unavailableSources,
     ),
 )
 

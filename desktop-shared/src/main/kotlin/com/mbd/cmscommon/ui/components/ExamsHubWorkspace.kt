@@ -3,7 +3,6 @@ package com.mbd.cmscommon.ui.components
 import compose.icons.TablerIcons
 import compose.icons.tablericons.CalendarStats
 import compose.icons.tablericons.Clipboard
-import compose.icons.tablericons.TrendingUp
 import compose.icons.tablericons.Upload
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
@@ -55,7 +54,7 @@ private val ExamGreen = ModSuccess
 private val ExamGold = ModWarn
 private val ExamRed = ModAccent
 
-enum class ExamsDestination { MARKS, EXAM_PAPER, RESULTS, DATESHEETS }
+enum class ExamsDestination { MARKS, EXAM_PAPER, DATESHEETS }
 
 data class ExamAction(
     val destination: ExamsDestination,
@@ -85,11 +84,6 @@ fun ExamsHubWorkspace(
             ExamsDestination.EXAM_PAPER, "Submit Exam Paper",
             "${snapshot.classesWithPapers}/${snapshot.assignedClasses} covered · ${snapshot.paperSubmissions} file(s)",
             TablerIcons.Upload, if (snapshot.paperCoveragePercent >= 100) ExamGreen else ExamGold,
-        ),
-        ExamAction(
-            ExamsDestination.RESULTS, "Semester Results",
-            "${snapshot.assignedSessions} assigned session(s)",
-            TablerIcons.TrendingUp, ExamGreen,
         ),
         ExamAction(
             ExamsDestination.DATESHEETS, "Datesheets",
