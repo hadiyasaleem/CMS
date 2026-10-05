@@ -363,13 +363,19 @@ private fun MasterGridSection(
     val allPeriods = grid.rows.flatMap { it.periods }
     // The columns actually shown reflect any not-yet-saved edits — editing a second column cascades
     // against what's currently on screen, not what's still in the database.
-    val effColumns = allPeriods.map { effectiveKeyOf(it, pending) }.distinct().sortedBy { parseClock(it.first) }
+    // Friday runs the same period sequence as the rest of the week but at its own (shorter) clock
+    // times, so its times are kept out of the main column set and shown as an extra time row instead
+    // of as additional distinct columns.
+    val nonFridayColumns = allPeriods.filter { it.day != DayOfWeek.FRIDAY }.map { effectiveKeyOf(it, pending) }.distinct().sortedBy { parseClock(it.first) }
+    val fridayColumns = allPeriods.filter { it.day == DayOfWeek.FRIDAY }.map { effectiveKeyOf(it, pending) }.distinct().sortedBy { parseClock(it.first) }
+    val effColumns = nonFridayColumns.ifEmpty { fridayColumns }
     val timeSlots = effColumns.map(::slotLabel)
+    val fridayTimeSlots = fridayColumns.takeIf { it.isNotEmpty() && it.size == effColumns.size && it != effColumns }?.map(::slotLabel)
 
     // A department with no periods at all for this grid still gets a row from buildMasterGrids (one
     // per session+shift); dayClustersFor represents that as a single cluster with no days and no
     // periods. Drop it here so the grid shows only rows that actually have something scheduled.
-    val clustersByRow = grid.rows.map { row -> row to dayClustersFor(row.periods).filter { it.periods.isNotEmpty() } }
+    val clustersByRow = grid.rows.map { row -> row to masterDayClustersFor(row.periods).filter { it.periods.isNotEmpty() } }
     val periodsByRowKey = clustersByRow
         .flatMap { (row, clusters) ->
             clusters.mapIndexed { i, c -> "${row.session.sessionId}_$i" to c.periods.associateBy { p -> slotLabel(effectiveKeyOf(p, pending)) } }
@@ -432,6 +438,7 @@ private fun MasterGridSection(
             } else {
                 MasterTimetableGridBody(
                     timeSlots = timeSlots,
+                    fridayTimeSlots = fridayTimeSlots,
                     rows = rows,
                     onCellClick = { rowKey, slot -> periodsByRowKey[rowKey].orEmpty()[slot]?.let(onCellClick) },
                     onEditColumn = { slot, newStart, newEnd ->
@@ -481,6 +488,7 @@ private val MasterSlotW = 120.dp
 @Composable
 private fun MasterTimetableGridBody(
     timeSlots: List<String>,
+    fridayTimeSlots: List<String>?,
     rows: List<MasterRow>,
     onCellClick: (String, String) -> Unit,
     onEditColumn: (String, String, String) -> Unit,
@@ -496,6 +504,18 @@ private fun MasterTimetableGridBody(
             MasterHeaderCell("Departments", MasterDeptW)
             MasterHeaderCell("DAYS", MasterDaysW)
             timeSlots.forEach { slot -> MasterHeaderCell(slot, MasterSlotW, onClick = { editingSlot = slot }) }
+        }
+        // Friday runs the same period sequence at its own, shorter times -- shown as its own time row
+        // under the normal header instead of as extra columns.
+        if (fridayTimeSlots != null) {
+            Row(
+                modifier = Modifier.fillMaxWidth().background(CmsTheme.colors.ink.copy(alpha = 0.75f)).horizontalScroll(hScroll).padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                MasterHeaderCell("Friday", MasterDeptW)
+                MasterHeaderCell("", MasterDaysW)
+                fridayTimeSlots.forEach { slot -> MasterHeaderCell(slot, MasterSlotW) }
+            }
         }
         HorizontalDivider(thickness = 2.dp, color = CmsTheme.colors.rule)
         rows.forEach { row ->

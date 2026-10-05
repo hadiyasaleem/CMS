@@ -24,12 +24,17 @@ data class TimetableGridBlock(val deptLines: List<String>, val subRows: List<Tim
 
 /** A full printed-style timetable grid: centered title block, period columns, department blocks.
  * [secondColumnHeader] is the "Days" column's header text; null hides that column entirely for grids
- * where it has no meaning (e.g. a datesheet, where each column is already a single absolute date). */
+ * where it has no meaning (e.g. a datesheet, where each column is already a single absolute date).
+ * [fridayTimeLabels], when set, is one "start-end" label per column (same order and count as
+ * [columns]) giving Friday's own, shorter times for that same period sequence -- rendered as an extra
+ * time row under the normal header instead of as separate columns, since Friday runs identical
+ * periods in identical order, just at different clock times. */
 data class TimetableGridLayout(
     val titleLines: List<String>,
     val columns: List<TimetableGridColumn>,
     val blocks: List<TimetableGridBlock>,
     val secondColumnHeader: String? = "Days",
+    val fridayTimeLabels: List<String>? = null,
 )
 
 /** The lines a period cell prints as, each paired with whether it's drawn bold: course code +

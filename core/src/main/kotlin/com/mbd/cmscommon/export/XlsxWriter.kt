@@ -147,8 +147,20 @@ object XlsxWriter {
         val headerRow2 = r
         layout.columns.forEachIndexed { i, col -> body.append(richCell(columnName(slotColOffset + i) + r, listOf(col.timeLabel to false), STYLE_GRID_HEADER, size = 12, white = true)) }
         closeRow()
-        merges += "${columnName(0)}$headerRow1:${columnName(0)}$headerRow2"
-        if (hasDaysCol) merges += "${columnName(1)}$headerRow1:${columnName(1)}$headerRow2"
+        var headerRowLast = headerRow2
+        val fridayLabels = layout.fridayTimeLabels
+        if (fridayLabels != null) {
+            openRow(18f)
+            val headerRow3 = r
+            body.append(richCell(columnName(0) + r, listOf("Friday" to true), STYLE_GRID_HEADER, size = 12, white = true))
+            fridayLabels.forEachIndexed { i, label -> body.append(richCell(columnName(slotColOffset + i) + r, listOf(label to false), STYLE_GRID_HEADER, size = 12, white = true)) }
+            closeRow()
+            if (hasDaysCol) merges += "${columnName(1)}$headerRow1:${columnName(1)}$headerRow3"
+            headerRowLast = headerRow3
+        } else if (hasDaysCol) {
+            merges += "${columnName(1)}$headerRow1:${columnName(1)}$headerRow2"
+        }
+        merges += "${columnName(0)}$headerRow1:${columnName(0)}$headerRowLast"
 
         layout.blocks.forEach { block ->
             val deptLines = block.deptLines.mapIndexed { i, v -> v to (i == 0) }

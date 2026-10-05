@@ -34,6 +34,34 @@ fun dayClustersFor(periods: List<SessionPeriod>): List<DayCluster> {
         .sortedBy { WeekOrder.indexOf(it.days.first()) }
 }
 
+/** Same grouping as [dayClustersFor], but by course sequence only -- not exact clock time -- so Friday
+ * (same subjects, shorter periods per the college's own Friday-timing rule) clusters with the rest of
+ * the week instead of splitting into its own row. Used only by the Master Timetable, which renders
+ * Friday's differing times as a separate header row rather than as separate columns; every other
+ * weekly grid (e.g. a teacher's own schedule) keeps using [dayClustersFor] and still shows Friday as
+ * its own column/row since it has no such secondary time row. */
+fun masterDayClustersFor(periods: List<SessionPeriod>): List<DayCluster> {
+    val byDay = periods.groupBy { it.day }
+    if (byDay.isEmpty()) return listOf(DayCluster(emptyList(), emptyList()))
+    fun signature(dayPeriods: List<SessionPeriod>) = dayPeriods
+        .sortedBy { it.startTime }
+        .joinToString("|") { it.courseCode }
+    return byDay.entries
+        .groupBy({ signature(it.value) }, { it.key to it.value })
+        .values
+        .map { entries ->
+            val sorted = entries.sortedBy { WeekOrder.indexOf(it.first) }
+            // Prefer a non-Friday day's periods as the cluster's representative so its own times line
+            // up with the grid's normal (non-Friday) time columns.
+            val representative = sorted.firstOrNull { it.first != DayOfWeek.FRIDAY } ?: sorted.first()
+            DayCluster(
+                days = sorted.map { it.first },
+                periods = representative.second,
+            )
+        }
+        .sortedBy { WeekOrder.indexOf(it.days.first()) }
+}
+
 fun dayRangeLabel(days: List<DayOfWeek>): String =
     days.joinToString(" & ") { it.getDisplayName(TextStyle.SHORT, Locale.ENGLISH) }
 

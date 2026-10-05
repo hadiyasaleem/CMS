@@ -145,15 +145,17 @@ object DocumentExporter {
             val daysW = if (daysHeader != null) 78f else 0f
             val slotW = ((usable - deptW - daysW) / layout.columns.size.coerceAtLeast(1)).coerceAtLeast(64f)
 
+            val fridayLabels = layout.fridayTimeLabels
             data class RowLayout(val daysLines: List<Pair<String, Boolean>>, val cellLines: List<List<Pair<String, Boolean>>>, val rowH: Float)
             data class BlockLayout(val deptLines: List<Pair<String, Boolean>>, val rows: List<RowLayout>, val blockHeight: Float)
-            data class Measurement(val titleSizes: List<Float>, val cellSize: Float, val headerH: Float, val deptFontSize: Float, val blocks: List<BlockLayout>, val totalHeight: Float)
+            data class Measurement(val titleSizes: List<Float>, val cellSize: Float, val headerH: Float, val fridayHeaderH: Float, val deptFontSize: Float, val blocks: List<BlockLayout>, val totalHeight: Float)
 
             fun measure(scale: Float): Measurement {
                 val titleSizes = listOf(15f, 14f, 11f, 11f).map { it * scale }
                 val cellSize = 8.5f * scale
                 val lineH = cellSize + 4.5f * scale
                 val headerH = 32f * scale
+                val fridayHeaderH = if (fridayLabels != null) 22f * scale else 0f
                 val deptFontSize = 9.5f * scale
                 val rowPad = 8f * scale
 
@@ -168,8 +170,8 @@ object DocumentExporter {
                     BlockLayout(deptLines, rows, rows.sumOf { it.rowH.toDouble() }.toFloat())
                 }
                 val titleHeight = titleSizes.sumOf { (it + 5f * scale).toDouble() }.toFloat() + 6f * scale
-                val total = titleHeight + headerH + blocks.sumOf { it.blockHeight.toDouble() }.toFloat()
-                return Measurement(titleSizes, cellSize, headerH, deptFontSize, blocks, total)
+                val total = titleHeight + headerH + fridayHeaderH + blocks.sumOf { it.blockHeight.toDouble() }.toFloat()
+                return Measurement(titleSizes, cellSize, headerH, fridayHeaderH, deptFontSize, blocks, total)
             }
 
             // Remaining room on the current page, not a fixed one-page assumption -- drawTimetableGrid
@@ -185,7 +187,7 @@ object DocumentExporter {
                 scale = (scale - 0.03f).coerceAtLeast(MIN_GRID_SCALE)
                 measured = measure(scale)
             }
-            val (titleSizes, cellSize, headerH, deptFontSize, blocks) = measured
+            val (titleSizes, cellSize, headerH, fridayHeaderH, deptFontSize, blocks) = measured
             val gridLineH = cellSize + 4.5f * scale
             val deptLineH = deptFontSize + 4.5f * scale
 
@@ -199,26 +201,40 @@ object DocumentExporter {
             }
             y += 6f * scale
 
-            fun headerCell(x: Float, w: Float, lines: List<Pair<String, Boolean>>) {
+            fun headerCell(x: Float, w: Float, h: Float, lines: List<Pair<String, Boolean>>) {
                 val canvas = page!!.canvas
-                canvas.drawRect(x, y, x + w, y + headerH, Paint().apply { style = Paint.Style.FILL; color = Color.BLACK })
-                canvas.drawRect(x, y, x + w, y + headerH, Paint().apply { style = Paint.Style.STROKE; strokeWidth = 0.6f; color = Color.WHITE })
-                drawCenteredLines(canvas, lines, x, w, y, headerH, cellSize, gridLineH, white = true)
+                canvas.drawRect(x, y, x + w, y + h, Paint().apply { style = Paint.Style.FILL; color = Color.BLACK })
+                canvas.drawRect(x, y, x + w, y + h, Paint().apply { style = Paint.Style.STROKE; strokeWidth = 0.6f; color = Color.WHITE })
+                drawCenteredLines(canvas, lines, x, w, y, h, cellSize, gridLineH, white = true)
             }
 
             fun drawGridHeader() {
                 var x = margin
-                headerCell(x, deptW, listOf("Departments" to true))
+                headerCell(x, deptW, headerH, listOf("Departments" to true))
                 x += deptW
                 if (daysHeader != null) {
-                    headerCell(x, daysW, listOf(daysHeader to true))
+                    headerCell(x, daysW, headerH, listOf(daysHeader to true))
                     x += daysW
                 }
                 layout.columns.forEach { col ->
-                    headerCell(x, slotW, listOf(col.index to true, col.timeLabel to false))
+                    headerCell(x, slotW, headerH, listOf(col.index to true, col.timeLabel to false))
                     x += slotW
                 }
                 y += headerH
+                if (fridayLabels != null) {
+                    x = margin
+                    headerCell(x, deptW, fridayHeaderH, listOf("Friday" to true))
+                    x += deptW
+                    if (daysHeader != null) {
+                        headerCell(x, daysW, fridayHeaderH, emptyList())
+                        x += daysW
+                    }
+                    fridayLabels.forEach { label ->
+                        headerCell(x, slotW, fridayHeaderH, listOf(label to false))
+                        x += slotW
+                    }
+                    y += fridayHeaderH
+                }
             }
 
             if (y + headerH * 3 > pageH - margin) newPage()

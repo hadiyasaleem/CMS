@@ -25,16 +25,23 @@ private data class MasterExportDayCluster(val days: List<DayOfWeek>, val periods
 private fun masterExportDayClusters(periods: List<SessionPeriod>): List<MasterExportDayCluster> {
     val byDay = periods.groupBy { it.day }
     if (byDay.isEmpty()) return emptyList()
+    // Course + room only -- not exact clock time -- so Friday (same subjects, shorter periods per the
+    // college's own Friday-timing rule) clusters with the rest of the week instead of splitting into
+    // its own row. A different room is still a different row.
     fun signature(dayPeriods: List<SessionPeriod>) = dayPeriods
         .sortedBy { it.startTime }
-        .joinToString("|") { "${it.courseCode}@${it.startTime}-${it.endTime}@${periodLocation(it).orEmpty()}" } // a different room is a different row
+        .joinToString("|") { "${it.courseCode}@${periodLocation(it).orEmpty()}" }
     return byDay.entries
         .groupBy({ signature(it.value) }, { it.key to it.value })
         .values
         .map { entries ->
+            val sorted = entries.sortedBy { MasterExportWeekOrder.indexOf(it.first) }
+            // Prefer a non-Friday day's periods as the cluster's representative so its own times line
+            // up with the grid's normal (non-Friday) time columns.
+            val representative = sorted.firstOrNull { it.first != DayOfWeek.FRIDAY } ?: sorted.first()
             MasterExportDayCluster(
-                days = entries.map { it.first }.sortedBy { MasterExportWeekOrder.indexOf(it) },
-                periods = entries.first().second,
+                days = sorted.map { it.first },
+                periods = representative.second,
             )
         }
         .sortedBy { MasterExportWeekOrder.indexOf(it.days.first()) }
@@ -98,9 +105,19 @@ fun periodLocation(period: SessionPeriod): String? =
  * one block per department, split into sub-rows wherever its days don't share periods. */
 fun masterGridLayout(grid: MasterGrid, breakSlot: Pair<String, String>? = null): TimetableGridLayout {
     val allPeriods = grid.rows.flatMap { it.periods }
-    val realKeys = allPeriods.map { clockDisplay(it.startTime) to clockDisplay(it.endTime) }.distinct()
-    val slotKeys = (realKeys + listOfNotNull(breakSlot)).distinct().sortedBy { parseClock(it.first) }
+    // Friday runs the same period sequence as the rest of the week but at its own (shorter) clock
+    // times, so its columns are kept separate here and only surfaced as an extra time row below the
+    // normal header -- never as additional distinct columns.
+    val nonFridayKeys = allPeriods.filter { it.day != DayOfWeek.FRIDAY }
+        .map { clockDisplay(it.startTime) to clockDisplay(it.endTime) }.distinct()
+    val fridayKeys = allPeriods.filter { it.day == DayOfWeek.FRIDAY }
+        .map { clockDisplay(it.startTime) to clockDisplay(it.endTime) }.distinct().sortedBy { parseClock(it.first) }
+    val slotKeys = ((nonFridayKeys + listOfNotNull(breakSlot)).distinct().sortedBy { parseClock(it.first) })
+        .ifEmpty { fridayKeys }
     val columns = slotKeys.mapIndexed { i, key -> TimetableGridColumn(i.toString(), "${key.first}-${key.second}") }
+    val fridayTimeLabels = fridayKeys
+        .takeIf { it.isNotEmpty() && it.size == slotKeys.size && it != slotKeys }
+        ?.map { "${it.first}-${it.second}" }
 
     val blocks = grid.rows.map { row ->
         val deptLabel = row.department?.code ?: row.session.deptId
@@ -119,7 +136,7 @@ fun masterGridLayout(grid: MasterGrid, breakSlot: Pair<String, String>? = null):
         }
         TimetableGridBlock(listOfNotNull(deptLabel, usualRoom), subRows)
     }
-    return TimetableGridLayout(masterGridTitleLines(grid), columns, blocks)
+    return TimetableGridLayout(masterGridTitleLines(grid), columns, blocks, fridayTimeLabels = fridayTimeLabels)
 }
 
 /** One grid (a single "Semester X Morning/Evening" card) as its own export, e.g. from that grid's own
