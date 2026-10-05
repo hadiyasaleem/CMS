@@ -162,9 +162,7 @@ fun MasterTimetableWorkspace(
         }
 
         when {
-            // Only the genuinely-nothing-cached-yet case shows the skeleton -- a background refresh
-            // of an already-populated screen must not cover real data with placeholders.
-            loading && grids.isEmpty() -> items(2) { MasterGridSkeleton() }
+            loading -> items(2) { MasterGridSkeleton() }
             grids.isEmpty() -> item {
                 MasterEmptyCard(
                     if (anyFilterActive) "No timetable matches these filters" else "No timetable periods yet",

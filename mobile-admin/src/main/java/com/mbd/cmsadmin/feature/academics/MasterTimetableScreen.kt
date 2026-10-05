@@ -1,7 +1,6 @@
 package com.mbd.cmsadmin.feature.academics
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -116,11 +115,6 @@ fun MasterTimetableScreen(
     onOpenSession: (String) -> Unit,
     viewModel: MasterTimetableViewModel = hiltViewModel(),
 ) {
-    // Room's cached grids render instantly if present; this kicks off the network sync behind them
-    // so a genuinely first-ever open (nothing cached yet) shows the loading skeleton instead of the
-    // empty-state card.
-    LaunchedEffect(Unit) { viewModel.refresh() }
-
     val departments by viewModel.departments.collectAsState()
     val availableSemesters by viewModel.availableSemesters.collectAsState()
     val selectedSemester by viewModel.selectedSemester.collectAsState()
