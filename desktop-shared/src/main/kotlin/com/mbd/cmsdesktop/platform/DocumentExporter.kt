@@ -46,8 +46,10 @@ object DocumentExporter {
     private val regular = PDType1Font(Standard14Fonts.FontName.HELVETICA)
     private val bold = PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD)
 
-    private const val PAGE_W = 842f
-    private const val PAGE_H = 595f
+    // A3 landscape, not A4 -- gives a wide grid (a full week's worth of departments and periods) enough
+    // room to lay out at a readable size on one page instead of shrinking to MIN_GRID_SCALE or spilling.
+    private const val PAGE_W = 1190f
+    private const val PAGE_H = 842f
     private const val MARGIN = 28f
     private const val ROW_H = 16f
     /** How far [DocumentExporter.writePdf]'s grid renderer will shrink font/row-height to keep a whole

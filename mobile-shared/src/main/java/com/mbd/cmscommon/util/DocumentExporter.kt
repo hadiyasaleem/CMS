@@ -49,9 +49,11 @@ object DocumentExporter {
 
     private fun writePdf(doc: ExportDocument, file: File) {
         val pdf = PdfDocument()
-        // Landscape A4 so wide registers fit.
-        val pageW = 842
-        val pageH = 595
+        // Landscape A3, not A4 -- gives a wide grid (a full week's worth of departments and periods)
+        // enough room to lay out at a readable size on one page instead of shrinking to
+        // MIN_GRID_SCALE or spilling.
+        val pageW = 1190
+        val pageH = 842
         val margin = 28f
         val rowH = 16f
         // How far drawTimetableGrid will shrink font/row-height to keep a whole printed timetable
