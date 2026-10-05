@@ -1,6 +1,7 @@
 package com.mbd.cmsdesktop.ui.admin
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -31,6 +32,11 @@ fun MasterTimetableScreen(
     val controller = remember(departmentRepository, sessionRepository, timetableRepository, curriculumRepository, teacherRepository, buildingRepository, roomRepository) {
         MasterTimetableController(departmentRepository, sessionRepository, timetableRepository, curriculumRepository, teacherRepository, buildingRepository, roomRepository, scope)
     }
+    // Room's cached grids render instantly if present; this kicks off the network sync behind them
+    // so a genuinely first-ever open (nothing cached yet) shows the loading skeleton instead of the
+    // empty-state card.
+    LaunchedEffect(Unit) { controller.refresh() }
+
     val teachers by controller.teachers.collectAsState()
     val buildings by controller.buildings.collectAsState()
     val rooms by controller.rooms.collectAsState()
