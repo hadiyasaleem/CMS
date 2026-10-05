@@ -1,5 +1,10 @@
 package com.mbd.cmscommon.ui.components
 
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -17,6 +22,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
@@ -32,6 +38,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -156,7 +165,7 @@ fun MasterTimetableWorkspace(
         }
 
         when {
-            loading -> item { SkeletonRow() }
+            loading -> items(2) { MasterGridSkeleton() }
             grids.isEmpty() -> item {
                 MasterEmptyCard(
                     if (anyFilterActive) "No timetable matches these filters" else "No timetable periods yet",
@@ -457,6 +466,50 @@ private fun MasterGridSection(
                         }
                     },
                 )
+            }
+        }
+    }
+}
+
+/** A shimmering stand-in for [MasterGridSection], shaped like a real grid card (title, header row,
+ * a few department rows) instead of a generic list-row placeholder, so the loading state reads as
+ * "the timetable grid is loading" rather than "a list is loading". */
+@Composable
+private fun MasterGridSkeleton() {
+    val transition = rememberInfiniteTransition(label = "master-grid-skeleton")
+    val alpha by transition.animateFloat(
+        initialValue = 0.35f,
+        targetValue = 0.85f,
+        animationSpec = infiniteRepeatable(tween(800), RepeatMode.Reverse),
+        label = "alpha",
+    )
+    fun Modifier.shimmerBlock(color: Color) = this.clip(RoundedCornerShape(4.dp)).background(color).alpha(alpha)
+    val hScroll = rememberScrollState()
+
+    Surface(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
+        Column {
+            Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.Center) {
+                Box(Modifier.width(260.dp).height(16.dp).shimmerBlock(ModTrack))
+            }
+            Row(
+                Modifier.fillMaxWidth().background(CmsTheme.colors.ink).horizontalScroll(hScroll).padding(vertical = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(Modifier.width(MasterDeptW).padding(horizontal = 10.dp).height(14.dp).shimmerBlock(ModMuted))
+                Box(Modifier.width(MasterDaysW).padding(horizontal = 10.dp).height(14.dp).shimmerBlock(ModMuted))
+                repeat(5) { Box(Modifier.width(MasterSlotW).padding(horizontal = 10.dp).height(14.dp).shimmerBlock(ModMuted)) }
+            }
+            HorizontalDivider(thickness = 2.dp, color = CmsTheme.colors.rule)
+            repeat(3) { rowIndex ->
+                Row(
+                    Modifier.fillMaxWidth().horizontalScroll(hScroll).padding(vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(Modifier.width(MasterDeptW).padding(horizontal = 10.dp).height(14.dp).shimmerBlock(ModTrack))
+                    Box(Modifier.width(MasterDaysW).padding(horizontal = 10.dp).height(14.dp).shimmerBlock(ModTrack))
+                    repeat(5) { Box(Modifier.width(MasterSlotW).padding(horizontal = 10.dp).height(36.dp).shimmerBlock(ModTrack)) }
+                }
+                if (rowIndex < 2) HorizontalDivider(color = CmsTheme.colors.rule.copy(alpha = 0.35f))
             }
         }
     }
