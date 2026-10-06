@@ -54,7 +54,7 @@ class AppRootViewModel @Inject constructor(
 
             runCatching { userRepository.resolveRole(accountKey) }.orLogCritical("AppRootViewModel.resolveRole")
 
-            val completed = runCatching { dataBootstrapper.refreshAll() }.orLogCritical("AppRootViewModel.refreshAll", false)
+            val completed = runCatching { dataBootstrapper.refreshStudent() }.orLogCritical("AppRootViewModel.refreshStudent", false)
             if (completed) {
                 runCatching {
                     startupBootstrapTracker.markComplete(StartupBootstrapTracker.REFERENCE_DATA, accountKey)

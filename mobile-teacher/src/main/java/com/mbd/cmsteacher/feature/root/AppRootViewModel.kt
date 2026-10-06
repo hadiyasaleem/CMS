@@ -53,7 +53,7 @@ class AppRootViewModel @Inject constructor(
             runCatching { userRepository.resolveRole(accountKey) }.orLogCritical("AppRootViewModel.resolveRole")
             runCatching { teacherRepository.syncSelf(accountKey) }.orLogCritical("AppRootViewModel.syncSelf")
 
-            val completed = runCatching { dataBootstrapper.refreshAll() }.orLogCritical("AppRootViewModel.refreshAll", false)
+            val completed = runCatching { dataBootstrapper.refreshTeacher() }.orLogCritical("AppRootViewModel.refreshTeacher", false)
             if (completed) {
                 runCatching {
                     startupBootstrapTracker.markComplete(StartupBootstrapTracker.REFERENCE_DATA, accountKey)

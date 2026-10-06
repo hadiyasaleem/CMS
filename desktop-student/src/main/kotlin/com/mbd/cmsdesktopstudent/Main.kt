@@ -78,7 +78,7 @@ fun main() = application {
         if (role == null) return@LaunchedEffect
         roleRefreshInProgress = true
         try {
-            component.adminDataBootstrapper().refreshAll()
+            component.adminDataBootstrapper().refreshStudent()
         } finally {
             roleRefreshInProgress = false
         }

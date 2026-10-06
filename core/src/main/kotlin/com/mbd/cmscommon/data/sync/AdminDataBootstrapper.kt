@@ -124,6 +124,103 @@ class AdminDataBootstrapper @Inject constructor(
         return SyncReport(failures)
     }
 
+    /** Cold-start sync for the TEACHER apps -- everything a teacher's own screens actually read from
+     * cache (schedule, students, marks, attendance, exam papers, datesheets, insights, their own
+     * link-request approvals, their own notifications), skipping tables only admin uses
+     * (administrators, the institution-wide session/student bulk sync, fees, the admin log viewer).
+     * Teacher screens sync their own session/roster data on demand (see
+     * [com.mbd.cmscommon.domain.repository.AcademicSessionRepository.syncStudents]), so this never
+     * needs [com.mbd.cmscommon.domain.repository.AcademicSessionRepository.syncAllSessions] or
+     * `syncAllStudents` at all. */
+    suspend fun refreshTeacher(onTaskDone: () -> Unit = {}): Boolean = refreshTeacherReport(onTaskDone).successful
+
+    suspend fun refreshTeacherReport(onTaskDone: () -> Unit = {}): SyncReport {
+        val failures = mutableListOf<LoadFailure>()
+
+        failures += supervisorScope {
+            listOf(
+                async { step("departments", "sync.departments", onTaskDone) { departmentRepository.sync() } },
+                async { step("buildings", "sync.buildings", onTaskDone) { buildingRepository.sync() } },
+                async { step("rooms", "sync.rooms", onTaskDone) { roomRepository.sync() } },
+                async { step("teachers", "sync.teachers", onTaskDone) { teacherRepository.sync() } },
+                async { step("calendar", "sync.calendar", onTaskDone) { calendarRepository.sync() } },
+                async { step("datesheets", "sync.datesheets", onTaskDone) { datesheetRepository.sync() } },
+                async { step("insights", "sync.insights", onTaskDone) { insightsRepository.sync() } },
+                async { step("edit requests", "sync.markEditRequests", onTaskDone) { markEditRequestRepository.sync() } },
+            ).awaitAll().filterNotNull()
+        }
+
+        failures += supervisorScope {
+            listOf(
+                async { step("curriculum", "sync.curriculum", onTaskDone) { curriculumRepository.syncAll() } },
+                async { step("timetables", "sync.timetable", onTaskDone) { timetableRepository.syncAll() } },
+                async { step("attendance", "sync.attendance", onTaskDone) { attendanceRepository.syncAll() } },
+                async { step("marks", "sync.marks", onTaskDone) { marksRepository.syncAll() } },
+                async { step("exam papers", "sync.examPapers", onTaskDone) { examPaperRepository.syncAll() } },
+                async { step("datesheet slots", "sync.datesheetSlots", onTaskDone) { datesheetRepository.syncAllSlots() } },
+            ).awaitAll().filterNotNull()
+        }
+
+        failures += supervisorScope {
+            listOf(
+                async { step("link requests", "sync.linkRequests", onTaskDone) { linkRequestRepository.sync() } },
+                async { step("notifications", "sync.notifications.teacher", onTaskDone) { notificationRepository.sync(NotificationTargetRole.TEACHER) } },
+            ).awaitAll().filterNotNull()
+        }
+
+        // Upload any locally-buffered crash/critical logs -- infrastructure, not a feature, so this
+        // runs for every role. The admin log VIEWER's own download (`appLogRepository.sync()`) is
+        // skipped here; no teacher screen reads that table.
+        runCatching { appLogRepository.flush() }
+        onTaskDone()
+
+        return SyncReport(failures)
+    }
+
+    /** Cold-start sync for the STUDENT apps -- everything a student's own screens actually read from
+     * cache (timetable, attendance, marks/GPA, fee challans, datesheets, their own link request,
+     * their own notifications), skipping tables only admin/teacher use (administrators, teachers,
+     * buildings/rooms -- a timetable period already carries its own room/teacher name, so no live
+     * lookup is needed -- insights, mark-edit-requests, exam paper submissions, the admin log viewer,
+     * and the institution-wide session/student bulk sync, which students never need since their own
+     * session lands via [com.mbd.cmsstudent.feature.common.CurrentStudentProvider]'s own scoped sync). */
+    suspend fun refreshStudent(onTaskDone: () -> Unit = {}): Boolean = refreshStudentReport(onTaskDone).successful
+
+    suspend fun refreshStudentReport(onTaskDone: () -> Unit = {}): SyncReport {
+        val failures = mutableListOf<LoadFailure>()
+
+        failures += supervisorScope {
+            listOf(
+                async { step("departments", "sync.departments", onTaskDone) { departmentRepository.sync() } },
+                async { step("calendar", "sync.calendar", onTaskDone) { calendarRepository.sync() } },
+                async { step("datesheets", "sync.datesheets", onTaskDone) { datesheetRepository.sync() } },
+            ).awaitAll().filterNotNull()
+        }
+
+        failures += supervisorScope {
+            listOf(
+                async { step("curriculum", "sync.curriculum", onTaskDone) { curriculumRepository.syncAll() } },
+                async { step("timetables", "sync.timetable", onTaskDone) { timetableRepository.syncAll() } },
+                async { step("attendance", "sync.attendance", onTaskDone) { attendanceRepository.syncAll() } },
+                async { step("marks", "sync.marks", onTaskDone) { marksRepository.syncAll() } },
+                async { step("fees", "sync.fees", onTaskDone) { feeRepository.syncAll() } },
+                async { step("datesheet slots", "sync.datesheetSlots", onTaskDone) { datesheetRepository.syncAllSlots() } },
+            ).awaitAll().filterNotNull()
+        }
+
+        failures += supervisorScope {
+            listOf(
+                async { step("link requests", "sync.linkRequests", onTaskDone) { linkRequestRepository.sync() } },
+                async { step("notifications", "sync.notifications.student", onTaskDone) { notificationRepository.sync(NotificationTargetRole.STUDENT) } },
+            ).awaitAll().filterNotNull()
+        }
+
+        runCatching { appLogRepository.flush() }
+        onTaskDone()
+
+        return SyncReport(failures)
+    }
+
     /** Runs one sync task; a failure is logged (CRITICAL ones) under [tag] and returned, named [label], for the report. */
     private suspend fun step(label: String, tag: String, onTaskDone: () -> Unit, block: suspend () -> Unit): LoadFailure? {
         val result = runCatching { block() }
@@ -135,8 +232,14 @@ class AdminDataBootstrapper @Inject constructor(
     }
 
     companion object {
-        /** Must track the exact number of `onTaskDone()` calls in [refreshAllReport] -- 10 + 9 + 4 sync
+        /** Must track the exact number of `onTaskDone()` calls in [refreshAllReport] -- 10 + 8 + 4 sync
          * tasks plus the final log flush. Drives the refresh progress dialog's determinate bar. */
         const val TOTAL_SYNC_TASKS = 23
+
+        /** Must track [refreshTeacherReport]'s own `onTaskDone()` calls -- 8 + 6 + 2 sync tasks plus the final log flush. */
+        const val TOTAL_SYNC_TASKS_TEACHER = 17
+
+        /** Must track [refreshStudentReport]'s own `onTaskDone()` calls -- 3 + 6 + 2 sync tasks plus the final log flush. */
+        const val TOTAL_SYNC_TASKS_STUDENT = 12
     }
 }

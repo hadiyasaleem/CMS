@@ -121,6 +121,22 @@ class AdminDataBootstrapperTest {
     }
 
     @Test
+    fun teacherRefreshReportsItsOwnSmallerTaskCount() = runBlocking {
+        val done = AtomicInteger()
+        val report = bootstrapper().refreshTeacherReport { done.incrementAndGet() }
+        assertTrue(report.successful)
+        assertEquals("the teacher progress bar total must match the number of tasks", AdminDataBootstrapper.TOTAL_SYNC_TASKS_TEACHER, done.get())
+    }
+
+    @Test
+    fun studentRefreshReportsItsOwnSmallerTaskCount() = runBlocking {
+        val done = AtomicInteger()
+        val report = bootstrapper().refreshStudentReport { done.incrementAndGet() }
+        assertTrue(report.successful)
+        assertEquals("the student progress bar total must match the number of tasks", AdminDataBootstrapper.TOTAL_SYNC_TASKS_STUDENT, done.get())
+    }
+
+    @Test
     fun aCancelledRefreshIsPassedOnNotReportedAsAFailure() {
         try {
             runBlocking { bootstrapper(mapOf("SessionFeeRepository" to { CancellationException("left the screen") })).refreshAllReport() }
