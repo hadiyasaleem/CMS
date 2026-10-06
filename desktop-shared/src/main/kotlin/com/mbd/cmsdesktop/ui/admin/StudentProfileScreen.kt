@@ -15,6 +15,7 @@ import com.mbd.cmscommon.controller.StudentProfileEditController
 import com.mbd.cmscommon.domain.model.PROFILE_PHOTO_COMPRESSED_TARGET_BYTES
 import com.mbd.cmscommon.domain.model.StudentProfile
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
+import com.mbd.cmscommon.domain.repository.SessionMarksRepository
 import com.mbd.cmscommon.ui.components.StudentProfileWorkspace
 import com.mbd.cmscommon.util.orLogCritical
 import com.mbd.cmsdesktop.platform.AwtDesktopPlatformServices
@@ -30,18 +31,21 @@ fun StudentProfileScreen(
     sessionId: String,
     rollNumber: String,
     sessionRepository: AcademicSessionRepository,
+    marksRepository: SessionMarksRepository,
     sessionManager: SessionManager,
     window: ComposeWindow,
 ) {
     val scope = rememberCoroutineScope()
-    val controller = remember(sessionId, rollNumber, sessionRepository) {
-        StudentProfileEditController(sessionId, rollNumber, sessionRepository, sessionManager.accountKey.orEmpty(), scope)
+    val controller = remember(sessionId, rollNumber, sessionRepository, marksRepository) {
+        StudentProfileEditController(sessionId, rollNumber, sessionRepository, marksRepository, sessionManager.accountKey.orEmpty(), scope)
     }
     val profile by controller.profile.collectAsState()
     val session by controller.session.collectAsState()
     val saveState by controller.saveState.collectAsState()
     val errorMessage by controller.error.collectAsState()
     val photoBusy by controller.photoBusy.collectAsState()
+    val semesterResults by controller.semesterResults.collectAsState()
+    val semesterResultSaveState by controller.semesterResultSaveState.collectAsState()
     val photoCacheDir = remember { File(System.getProperty("java.io.tmpdir"), "cms_student_photos").apply { mkdirs() } }
 
     val loadedProfile = profile
@@ -55,6 +59,9 @@ fun StudentProfileScreen(
         onSave = controller::save,
         onDelink = controller::delinkAccount,
         onClearError = controller::clearError,
+        semesterResults = semesterResults,
+        semesterResultSaveOutcome = semesterResultSaveState,
+        onSaveSemesterResult = controller::saveSemesterResult,
         onPickPhoto = { onPicked ->
             val file = AwtDesktopPlatformServices.pickFile(window, "Choose a photo (JPEG/PNG/WebP)")
             if (file != null) {

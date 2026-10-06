@@ -449,6 +449,7 @@ fun AdminNavHost(role: UserRole.Admin, component: DesktopAppComponent, window: C
                         sessionId = current.sessionId,
                         rollNumber = current.roll,
                         sessionRepository = component.academicSessionRepository(),
+                        marksRepository = component.sessionMarksRepository(),
                         sessionManager = component.sessionManager(),
                         window = window,
                     )

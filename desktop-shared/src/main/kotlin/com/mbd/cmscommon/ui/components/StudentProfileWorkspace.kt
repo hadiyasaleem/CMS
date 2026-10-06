@@ -47,7 +47,9 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.domain.model.AcademicSession
+import com.mbd.cmscommon.domain.model.SemesterGpa
 import com.mbd.cmscommon.domain.model.StudentProfile
+import com.mbd.cmscommon.domain.model.gradePointValidationMessage
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
 import com.mbd.cmscommon.ui.theme.ModInk
@@ -80,6 +82,9 @@ fun StudentProfileWorkspace(
     onSavePhoto: (ImageBitmap) -> Unit,
     photoBusy: Boolean,
     onLoadPhoto: suspend (String) -> ImageBitmap?,
+    semesterResults: List<SemesterGpa> = emptyList(),
+    semesterResultSaveOutcome: Outcome<Unit>? = null,
+    onSaveSemesterResult: (semester: Int, gpa: Double, cgpa: Double) -> Unit = { _, _, _ -> },
     modifier: Modifier = Modifier,
 ) {
     var profile by remember(loadedProfile.rollNumber) { mutableStateOf(loadedProfile) }
@@ -186,6 +191,15 @@ fun StudentProfileWorkspace(
                     delinkAttempted = true
                     onDelink()
                 },
+            )
+        }
+
+        item {
+            SemesterResultsCard(
+                currentSemester = session?.currentSemester,
+                results = semesterResults,
+                saveOutcome = semesterResultSaveOutcome,
+                onSave = onSaveSemesterResult,
             )
         }
 
@@ -370,6 +384,76 @@ private fun AcademicAndRolesCard(
             onConfirm = { onDelink(); confirmDelink = false },
             onDismiss = { confirmDelink = false },
         )
+    }
+}
+
+/** One row per completed semester (1 until the student's current semester) for entering that
+ * semester's GPA/CGPA -- these feed the read-only grades shown elsewhere on the profile. A student
+ * still in semester 1 has nothing to enter yet; [currentSemester] null (session not loaded) also
+ * shows no rows rather than guessing. */
+@Composable
+private fun SemesterResultsCard(
+    currentSemester: Int?,
+    results: List<SemesterGpa>,
+    saveOutcome: Outcome<Unit>?,
+    onSave: (semester: Int, gpa: Double, cgpa: Double) -> Unit,
+) {
+    val resultBySemester = results.associateBy { it.semester }
+    val completedSemesters = if (currentSemester != null) (1 until currentSemester).toList() else emptyList()
+
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
+        Column(Modifier.padding(16.dp)) {
+            Text("Semester results", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+            Text("GPA and CGPA for each semester the student has completed", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+            when (saveOutcome) {
+                is Outcome.Success -> { Spacer(Modifier.height(6.dp)); CmsNotice("Semester result saved.", tone = NoticeTone.Success) }
+                is Outcome.Error -> { Spacer(Modifier.height(6.dp)); CmsNotice(saveOutcome.message, tone = NoticeTone.Error) }
+                else -> {}
+            }
+            Spacer(Modifier.height(10.dp))
+            if (completedSemesters.isEmpty()) {
+                Text("No completed semesters yet.", color = ModMuted, style = MaterialTheme.typography.bodySmall)
+            } else {
+                completedSemesters.forEach { semester ->
+                    SemesterResultRow(semester = semester, existing = resultBySemester[semester], onSave = onSave)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SemesterResultRow(semester: Int, existing: SemesterGpa?, onSave: (semester: Int, gpa: Double, cgpa: Double) -> Unit) {
+    var gpaText by remember(existing?.gpa) { mutableStateOf(existing?.gpa?.let { "%.2f".format(it) } ?: "") }
+    var cgpaText by remember(existing?.cgpa) { mutableStateOf(existing?.cgpa?.let { "%.2f".format(it) } ?: "") }
+    val gpaError = gradePointValidationMessage(gpaText)
+    val cgpaError = gradePointValidationMessage(cgpaText)
+    val dirty = gpaText != (existing?.gpa?.let { "%.2f".format(it) } ?: "") || cgpaText != (existing?.cgpa?.let { "%.2f".format(it) } ?: "")
+
+    Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text("Semester $semester", modifier = Modifier.width(96.dp), style = MaterialTheme.typography.bodyMedium)
+        OutlinedTextField(
+            value = gpaText,
+            onValueChange = { gpaText = it },
+            label = { Text("GPA") },
+            isError = gpaError != null && gpaText.isNotBlank(),
+            modifier = Modifier.width(100.dp),
+            singleLine = true,
+        )
+        Spacer(Modifier.width(8.dp))
+        OutlinedTextField(
+            value = cgpaText,
+            onValueChange = { cgpaText = it },
+            label = { Text("CGPA") },
+            isError = cgpaError != null && cgpaText.isNotBlank(),
+            modifier = Modifier.width(100.dp),
+            singleLine = true,
+        )
+        Spacer(Modifier.width(8.dp))
+        TextButton(
+            enabled = dirty && gpaError == null && cgpaError == null,
+            onClick = { onSave(semester, gpaText.trim().toDouble(), cgpaText.trim().toDouble()) },
+        ) { Text("Save") }
     }
 }
 

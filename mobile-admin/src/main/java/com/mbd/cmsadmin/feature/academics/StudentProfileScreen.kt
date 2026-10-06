@@ -31,6 +31,7 @@ import com.mbd.cmscommon.controller.StudentProfileEditController
 import com.mbd.cmscommon.domain.model.PROFILE_PHOTO_COMPRESSED_TARGET_BYTES
 import com.mbd.cmscommon.domain.model.StudentProfile
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
+import com.mbd.cmscommon.domain.repository.SessionMarksRepository
 import com.mbd.cmscommon.ui.components.StudentProfileWorkspace
 import com.mbd.cmscommon.util.orLogCritical
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -45,12 +46,14 @@ import kotlinx.coroutines.withContext
 class StudentProfileViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val sessionRepository: AcademicSessionRepository,
+    marksRepository: SessionMarksRepository,
     sessionManager: SessionManager,
 ) : ViewModel() {
     private val controller = StudentProfileEditController(
         sessionId = checkNotNull(savedStateHandle["sessionId"]),
         rollNumber = checkNotNull(savedStateHandle["roll"]),
         sessionRepository = sessionRepository,
+        marksRepository = marksRepository,
         issuedBy = sessionManager.accountKey.orEmpty(),
         scope = viewModelScope,
     )
@@ -60,12 +63,15 @@ class StudentProfileViewModel @Inject constructor(
     val saveState = controller.saveState
     val error = controller.error
     val photoBusy = controller.photoBusy
+    val semesterResults = controller.semesterResults
+    val semesterResultSaveState = controller.semesterResultSaveState
 
     fun save(profile: StudentProfile) = controller.save(profile)
     fun delinkAccount() = controller.delinkAccount()
     fun clearError() = controller.clearError()
     fun uploadPhoto(imageBytes: ByteArray, mimeType: String) = controller.uploadPhoto(imageBytes, mimeType)
     fun reportPhotoPickFailure(t: Throwable) = controller.reportPhotoPickFailure(t)
+    fun saveSemesterResult(semester: Int, gpa: Double, cgpa: Double) = controller.saveSemesterResult(semester, gpa, cgpa)
     suspend fun downloadPhotoBytes(photoPath: String): ByteArray? = sessionRepository.downloadStudentPhoto(photoPath)
 }
 
@@ -76,6 +82,8 @@ fun StudentProfileScreen(viewModel: StudentProfileViewModel = hiltViewModel()) {
     val saveState by viewModel.saveState.collectAsState()
     val errorMessage by viewModel.error.collectAsState()
     val photoBusy by viewModel.photoBusy.collectAsState()
+    val semesterResults by viewModel.semesterResults.collectAsState()
+    val semesterResultSaveState by viewModel.semesterResultSaveState.collectAsState()
 
     val loadedProfile = profile
     if (loadedProfile == null) {
@@ -114,6 +122,9 @@ fun StudentProfileScreen(viewModel: StudentProfileViewModel = hiltViewModel()) {
         onSave = viewModel::save,
         onDelink = viewModel::delinkAccount,
         onClearError = viewModel::clearError,
+        semesterResults = semesterResults,
+        semesterResultSaveOutcome = semesterResultSaveState,
+        onSaveSemesterResult = viewModel::saveSemesterResult,
         onPickPhoto = { onPicked -> pendingOnPicked = onPicked; pickPhoto.launch("image/*") },
         onSavePhoto = { cropped ->
             scope.launch {

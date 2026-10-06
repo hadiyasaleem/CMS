@@ -262,16 +262,3 @@ data class SemesterGpaDto(
     val deletedAt: String? = null,
     val deletedBy: String? = null,
 )
-
-@Serializable
-data class RecordResultParams(
-    val session: String,
-    val roll: String,
-    val semester: Int,
-    val gpa: Double,
-    val cgpa: Double,
-    val termLabel: String?,
-    val result: String,
-    val classPosition: Int?,
-    val remarks: String?,
-)
