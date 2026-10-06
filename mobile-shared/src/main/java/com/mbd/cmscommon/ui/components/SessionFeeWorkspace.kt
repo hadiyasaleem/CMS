@@ -346,7 +346,7 @@ private fun PaymentDetailsCard(
         Column(Modifier.padding(16.dp)) {
             Text("Payment details", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(10.dp))
-            OutlinedTextField(value = academicYear, onValueChange = onAcademicYear, label = { Text("Academic year (optional)") }, placeholder = { Text("2026-2027") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+            OutlinedTextField(value = academicYear, onValueChange = onAcademicYear, label = { Text("Academic year (optional)") }, placeholder = { Text("2026") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
             Spacer(Modifier.height(10.dp))
             CmsDateField(value = dueDate, onValueChange = onDueDate, label = "Due date", optional = true)
             Spacer(Modifier.height(10.dp))

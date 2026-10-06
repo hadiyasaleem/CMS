@@ -170,7 +170,8 @@ class AdminDataBootstrapper @Inject constructor(
 
         // Upload any locally-buffered crash/critical logs -- infrastructure, not a feature, so this
         // runs for every role. The admin log VIEWER's own download (`appLogRepository.sync()`) is
-        // skipped here; no teacher screen reads that table.
+        // skipped here; no teacher screen reads that table. Best-effort: never allowed to affect the
+        // report or throw, since no screen here depends on it.
         runCatching { appLogRepository.flush() }
         onTaskDone()
 
@@ -215,6 +216,7 @@ class AdminDataBootstrapper @Inject constructor(
             ).awaitAll().filterNotNull()
         }
 
+        // Best-effort: never allowed to affect the report or throw, since no screen here depends on it.
         runCatching { appLogRepository.flush() }
         onTaskDone()
 

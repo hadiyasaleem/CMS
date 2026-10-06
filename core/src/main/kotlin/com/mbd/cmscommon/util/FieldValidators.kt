@@ -9,7 +9,7 @@ object FieldValidators {
     private val departmentCodePattern = Regex("^[A-Z][A-Z0-9]{1,9}\$")
     private val rollNumberPattern = Regex("^([A-Z][A-Z0-9]{1,9})-(\\d{2})-(\\d{2,3})\$")
     private val courseCodePattern = Regex("^[A-Z][A-Z0-9]{1,9}(?:-[A-Z0-9]{1,8})?\$")
-    private val academicYearPattern = Regex("^(\\d{4})-(\\d{4})\$")
+    private val academicYearPattern = Regex("^\\d{4}\$")
 
     fun normalizeEmail(value: String): String = value.trim().lowercase(Locale.ROOT)
 
@@ -128,10 +128,7 @@ object FieldValidators {
     fun academicYearError(value: String, required: Boolean = false): String? {
         val clean = value.trim()
         if (clean.isEmpty()) return if (required) "Academic year is required." else null
-        val match = academicYearPattern.matchEntire(clean) ?: return "Use academic year format YYYY-YYYY."
-        val start = match.groupValues[1].toInt()
-        val end = match.groupValues[2].toInt()
-        return if (end == start + 1) null else "Academic year must cover consecutive years."
+        return if (academicYearPattern.matches(clean)) null else "Use a 4-digit year, e.g. 2026."
     }
 
     fun positiveDecimalError(value: String, label: String = "Amount", maximum: Double? = null): String? {
