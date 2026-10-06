@@ -13,6 +13,7 @@ import com.mbd.cmscommon.data.remote.dto.SemesterGpaDto
 import com.mbd.cmscommon.data.sync.SyncCheckpoint
 import com.mbd.cmscommon.data.sync.SyncCheckpointDefaults
 import com.mbd.cmscommon.data.sync.SyncCheckpointStore
+import com.mbd.cmscommon.data.sync.fetchPagesConcurrently
 import com.mbd.cmscommon.data.sync.maxRemoteUpdatedAt
 import com.mbd.cmscommon.domain.model.ExamType
 import com.mbd.cmscommon.domain.model.SemesterGpa
@@ -208,18 +209,14 @@ class SessionMarksRepositoryImpl @Inject constructor(
         val since = checkpoint?.lastUpdatedAt ?: SyncCheckpointDefaults.EPOCH
         var maxUpdatedAt = since
 
-        var offset = 0L
-        while (true) {
-            val page = fetchPage(since, offset)
-            if (page.isEmpty()) break
-
+        fetchPagesConcurrently(
+            pageSize = PAGE_SIZE,
+            fetchPage = { from, _ -> fetchPage(since, from) },
+        ) { page ->
             val entities = page.mapNotNull { it.toEntity() }
             val (deleted, active) = entities.partition { it.isDeleted }
             markDao.applyDelta(active, deleted.map { it.id })
             maxUpdatedAt = page.maxRemoteUpdatedAt(maxUpdatedAt) { it.updatedAt }
-
-            if (page.size < PAGE_SIZE) break
-            offset += PAGE_SIZE
         }
 
         checkpointStore.upsert(SyncCheckpoint(ownerKey, SupabaseTables.SESSION_MARKS, scopeKey, maxUpdatedAt, PgTime.format(Instant.now()) ?: since))
@@ -325,18 +322,14 @@ class SessionMarksRepositoryImpl @Inject constructor(
         val since = checkpoint?.lastUpdatedAt ?: SyncCheckpointDefaults.EPOCH
         var maxUpdatedAt = since
 
-        var offset = 0L
-        while (true) {
-            val page = fetchPage(since, offset)
-            if (page.isEmpty()) break
-
+        fetchPagesConcurrently(
+            pageSize = PAGE_SIZE,
+            fetchPage = { from, _ -> fetchPage(since, from) },
+        ) { page ->
             val entities = page.map { it.toEntity() }
             val (deleted, active) = entities.partition { it.isDeleted }
             gpaDao.applyDelta(active, deleted.map { it.id })
             maxUpdatedAt = page.maxRemoteUpdatedAt(maxUpdatedAt) { it.updatedAt }
-
-            if (page.size < PAGE_SIZE) break
-            offset += PAGE_SIZE
         }
 
         checkpointStore.upsert(SyncCheckpoint(ownerKey, SupabaseTables.STUDENT_SEMESTER_GPA, scopeKey, maxUpdatedAt, PgTime.format(Instant.now()) ?: since))

@@ -2,8 +2,47 @@ package com.mbd.cmscommon.data.sync
 
 import com.mbd.cmscommon.data.remote.PgTime
 import java.time.Instant
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 
 const val DEFAULT_DELTA_PAGE_SIZE = 500L
+
+/**
+ * Same end result as a plain `while (true) { fetch a page; apply it; stop once it's short }` loop, but
+ * up to [concurrency] pages are ever in flight at once instead of exactly one -- page N+1's network
+ * round trip overlaps page N's instead of waiting for it to finish first, so a large table's sync takes
+ * roughly (page count / concurrency) round trips' worth of wall-clock time instead of (page count).
+ *
+ * [onPage] still runs exactly once per non-empty page, strictly in ascending offset order, and a page
+ * beyond the first short one is never fetched -- every existing per-page side effect (a DAO upsert, a
+ * running max-updated-at) behaves identically to the sequential loop this replaces; only the network
+ * waiting is overlapped; the fetch/apply order is not.
+ */
+suspend fun <T> fetchPagesConcurrently(
+    pageSize: Long,
+    concurrency: Int = 4,
+    fetchPage: suspend (from: Long, to: Long) -> List<T>,
+    onPage: suspend (List<T>) -> Unit,
+) = coroutineScope {
+    var nextOffset = 0L
+    val inFlight = ArrayDeque<Deferred<List<T>>>()
+    fun launchNext() {
+        val offset = nextOffset
+        inFlight.addLast(async { fetchPage(offset, offset + pageSize - 1) })
+        nextOffset += pageSize
+    }
+    repeat(concurrency) { launchNext() }
+
+    while (inFlight.isNotEmpty()) {
+        val page = inFlight.removeFirst().await()
+        if (page.isEmpty()) continue
+        onPage(page)
+        // Only keep launching while pages keep coming back full -- a short page is the standard
+        // "that was the last one" signal, so nothing past it is ever requested.
+        if (page.size.toLong() == pageSize) launchNext()
+    }
+}
 
 /**
  * Downloads one table/scope delta, persists it through [applyDelta], then advances its checkpoint.
@@ -23,12 +62,12 @@ suspend fun <T> fetchIncrementalDelta(
     val checkpoint = checkpointStore.get(ownerKey, tableName, scopeKey)
     val since = checkpoint?.lastUpdatedAt ?: SyncCheckpointDefaults.EPOCH
     var maxUpdatedAt = since
-    var offset = 0L
     val delta = mutableListOf<T>()
 
-    while (true) {
-        val page = fetchPage(since, offset, offset + pageSize - 1)
-        if (page.isEmpty()) break
+    fetchPagesConcurrently(
+        pageSize = pageSize,
+        fetchPage = { from, to -> fetchPage(since, from, to) },
+    ) { page ->
         delta += page
         for (row in page) {
             val candidate = updatedAtOf(row) ?: continue
@@ -36,8 +75,6 @@ suspend fun <T> fetchIncrementalDelta(
                 maxUpdatedAt = candidate
             }
         }
-        if (page.size < pageSize) break
-        offset += pageSize
     }
 
     applyDelta(delta)

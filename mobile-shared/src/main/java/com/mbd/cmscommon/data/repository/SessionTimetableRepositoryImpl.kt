@@ -13,6 +13,7 @@ import com.mbd.cmscommon.data.remote.dto.TimetablePeriodDto
 import com.mbd.cmscommon.data.sync.SyncCheckpoint
 import com.mbd.cmscommon.data.sync.SyncCheckpointDefaults
 import com.mbd.cmscommon.data.sync.SyncCheckpointStore
+import com.mbd.cmscommon.data.sync.fetchPagesConcurrently
 import com.mbd.cmscommon.data.sync.maxRemoteUpdatedAt
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.SessionPeriod
@@ -265,22 +266,20 @@ class SessionTimetableRepositoryImpl @Inject constructor(
         val since = checkpoint?.lastUpdatedAt ?: SyncCheckpointDefaults.EPOCH
         var maxUpdatedAt = since
 
-        var offset = 0L
-        while (true) {
-            val page = postgrest.from(SupabaseTables.TIMETABLE_PERIODS).select {
-                filter { gt("updated_at", since) }
-                order("updated_at", Order.ASCENDING)
-                range(offset, offset + PAGE_SIZE - 1)
-            }.decodeList<TimetablePeriodDto>()
-            if (page.isEmpty()) break
-
+        fetchPagesConcurrently(
+            pageSize = PAGE_SIZE,
+            fetchPage = { from, to ->
+                postgrest.from(SupabaseTables.TIMETABLE_PERIODS).select {
+                    filter { gt("updated_at", since) }
+                    order("updated_at", Order.ASCENDING)
+                    range(from, to)
+                }.decodeList<TimetablePeriodDto>()
+            },
+        ) { page ->
             val entities = page.map { dto -> val sid = dto.sessionId ?: ""; dto.toEntity(sid, deptOf(sid)) }
             val (deleted, active) = entities.partition { it.isDeleted }
             periodDao.applyDelta(active, deleted.map { it.id })
             maxUpdatedAt = page.maxRemoteUpdatedAt(maxUpdatedAt) { it.updatedAt }
-
-            if (page.size < PAGE_SIZE) break
-            offset += PAGE_SIZE
         }
 
         checkpointStore.upsert(SyncCheckpoint(ownerKey, SupabaseTables.TIMETABLE_PERIODS, scopeKey, maxUpdatedAt, PgTime.format(Instant.now()) ?: since))

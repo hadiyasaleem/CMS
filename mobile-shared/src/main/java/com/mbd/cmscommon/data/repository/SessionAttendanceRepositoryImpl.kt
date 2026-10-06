@@ -11,6 +11,7 @@ import com.mbd.cmscommon.data.remote.dto.AttendanceRowDto
 import com.mbd.cmscommon.data.sync.SyncCheckpoint
 import com.mbd.cmscommon.data.sync.SyncCheckpointDefaults
 import com.mbd.cmscommon.data.sync.SyncCheckpointStore
+import com.mbd.cmscommon.data.sync.fetchPagesConcurrently
 import com.mbd.cmscommon.data.sync.maxRemoteUpdatedAt
 import com.mbd.cmscommon.domain.model.AttendanceEntry
 import com.mbd.cmscommon.domain.model.AttendanceStatus
@@ -191,18 +192,14 @@ class SessionAttendanceRepositoryImpl @Inject constructor(
         val since = checkpoint?.lastUpdatedAt ?: SyncCheckpointDefaults.EPOCH
         var maxUpdatedAt = since
 
-        var offset = 0L
-        while (true) {
-            val page = fetchPage(since, offset)
-            if (page.isEmpty()) break
-
+        fetchPagesConcurrently(
+            pageSize = PAGE_SIZE,
+            fetchPage = { from, _ -> fetchPage(since, from) },
+        ) { page ->
             val entities = page.map { it.toEntity() }
             val (deleted, active) = entities.partition { it.isDeleted }
             attendanceDao.applyRowDelta(active, deleted.map { it.id })
             maxUpdatedAt = page.maxRemoteUpdatedAt(maxUpdatedAt) { it.updatedAt }
-
-            if (page.size < PAGE_SIZE) break
-            offset += PAGE_SIZE
         }
 
         checkpointStore.upsert(SyncCheckpoint(ownerKey, SupabaseTables.SESSION_ATTENDANCE, scopeKey, maxUpdatedAt, PgTime.format(Instant.now()) ?: since))

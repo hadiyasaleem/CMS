@@ -19,6 +19,7 @@ import com.mbd.cmscommon.data.remote.dto.StudentProfileDto
 import com.mbd.cmscommon.data.sync.SyncCheckpoint
 import com.mbd.cmscommon.data.sync.SyncCheckpointDefaults
 import com.mbd.cmscommon.data.sync.SyncCheckpointStore
+import com.mbd.cmscommon.data.sync.fetchPagesConcurrently
 import com.mbd.cmscommon.data.sync.maxRemoteUpdatedAt
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.Session
@@ -490,24 +491,22 @@ class AcademicSessionRepositoryImpl @Inject constructor(
         val since = checkpoint?.lastUpdatedAt ?: SyncCheckpointDefaults.EPOCH
         var maxUpdatedAt = since
 
-        var offset = 0L
-        while (true) {
-            val page = postgrest.from(SupabaseTables.ACADEMIC_SESSIONS).select {
-                filter { gt("updated_at", since) }
-                order("updated_at", Order.ASCENDING)
-                range(offset, offset + PAGE_SIZE - 1)
-            }.decodeList<AcademicSessionDto>()
-            if (page.isEmpty()) break
-
+        fetchPagesConcurrently(
+            pageSize = PAGE_SIZE,
+            fetchPage = { from, to ->
+                postgrest.from(SupabaseTables.ACADEMIC_SESSIONS).select {
+                    filter { gt("updated_at", since) }
+                    order("updated_at", Order.ASCENDING)
+                    range(from, to)
+                }.decodeList<AcademicSessionDto>()
+            },
+        ) { page ->
             val entities = page.map { it.toEntity(it.deptId ?: "") }
             val (deleted, active) = entities.partition { it.isDeleted }
             sessionDao.applyDelta(active, deleted.map { it.sessionId })
             // A deleted session takes its roster and timetable with it (the server has removed those rows without tombstones).
             deleted.forEach { studentDao.deleteForSession(it.sessionId); periodDao.deleteForSession(it.sessionId) }
             maxUpdatedAt = page.maxRemoteUpdatedAt(maxUpdatedAt) { it.updatedAt }
-
-            if (page.size < PAGE_SIZE) break
-            offset += PAGE_SIZE
         }
 
         checkpointStore.upsert(SyncCheckpoint(ownerKey, SupabaseTables.ACADEMIC_SESSIONS, scopeKey, maxUpdatedAt, PgTime.format(Instant.now()) ?: since))
@@ -520,22 +519,20 @@ class AcademicSessionRepositoryImpl @Inject constructor(
         val since = checkpoint?.lastUpdatedAt ?: SyncCheckpointDefaults.EPOCH
         var maxUpdatedAt = since
 
-        var offset = 0L
-        while (true) {
-            val page = postgrest.from(SupabaseTables.SESSION_STUDENTS).select {
-                filter { gt("updated_at", since) }
-                order("updated_at", Order.ASCENDING)
-                range(offset, offset + PAGE_SIZE - 1)
-            }.decodeList<StudentProfileDto>()
-            if (page.isEmpty()) break
-
+        fetchPagesConcurrently(
+            pageSize = PAGE_SIZE,
+            fetchPage = { from, to ->
+                postgrest.from(SupabaseTables.SESSION_STUDENTS).select {
+                    filter { gt("updated_at", since) }
+                    order("updated_at", Order.ASCENDING)
+                    range(from, to)
+                }.decodeList<StudentProfileDto>()
+            },
+        ) { page ->
             val entities = page.map { dto -> val sid = dto.sessionId ?: ""; dto.toEntity(sid, deptOf(sid)) }
             val (deleted, active) = entities.partition { it.isDeleted }
             studentDao.applyDelta(active, deleted.map { it.id })
             maxUpdatedAt = page.maxRemoteUpdatedAt(maxUpdatedAt) { it.updatedAt }
-
-            if (page.size < PAGE_SIZE) break
-            offset += PAGE_SIZE
         }
 
         checkpointStore.upsert(SyncCheckpoint(ownerKey, SupabaseTables.SESSION_STUDENTS, scopeKey, maxUpdatedAt, PgTime.format(Instant.now()) ?: since))
