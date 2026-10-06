@@ -22,6 +22,7 @@ import com.mbd.cmscommon.data.sync.SyncCheckpoint
 import com.mbd.cmscommon.data.sync.SyncCheckpointDefaults
 import com.mbd.cmscommon.data.sync.SyncCheckpointStore
 import com.mbd.cmscommon.data.sync.fetchIncrementalDelta
+import com.mbd.cmscommon.data.sync.fetchPagesConcurrently
 import com.mbd.cmscommon.data.sync.maxRemoteUpdatedAt
 import com.mbd.cmscommon.domain.model.PoolSubject
 import com.mbd.cmscommon.domain.model.SemesterSubject
@@ -296,25 +297,23 @@ class CurriculumRepositoryImpl @Inject constructor(
         val since = checkpoint?.lastUpdatedAt ?: SyncCheckpointDefaults.EPOCH
         var maxUpdatedAt = since
 
-        var offset = 0L
-        while (true) {
-            val page = postgrest.from(SupabaseTables.SESSION_SUBJECTS).select(Columns.raw(LINK_WITH_POOL)) {
-                filter {
-                    eq("session_id", sessionId)
-                    gt("updated_at", since)
-                }
-                order("updated_at", Order.ASCENDING)
-                range(offset, offset + PAGE_SIZE - 1)
-            }.decodeList<SemesterSubjectDto>()
-            if (page.isEmpty()) break
-
+        fetchPagesConcurrently(
+            pageSize = PAGE_SIZE,
+            fetchPage = { from, to ->
+                postgrest.from(SupabaseTables.SESSION_SUBJECTS).select(Columns.raw(LINK_WITH_POOL)) {
+                    filter {
+                        eq("session_id", sessionId)
+                        gt("updated_at", since)
+                    }
+                    order("updated_at", Order.ASCENDING)
+                    range(from, to)
+                }.decodeList<SemesterSubjectDto>()
+            },
+        ) { page ->
             val entities = page.map { it.toEntity() }
             val (deleted, active) = entities.partition { it.isDeleted }
             subjectDao.applyDelta(active, deleted.map { it.id })
             maxUpdatedAt = page.maxRemoteUpdatedAt(maxUpdatedAt) { it.updatedAt }
-
-            if (page.size < PAGE_SIZE) break
-            offset += PAGE_SIZE
         }
 
         checkpointStore.upsert(SyncCheckpoint(ownerKey, SupabaseTables.SESSION_SUBJECTS, scopeKey, maxUpdatedAt, PgTime.format(Instant.now()) ?: since))
@@ -350,22 +349,20 @@ class CurriculumRepositoryImpl @Inject constructor(
         val since = checkpoint?.lastUpdatedAt ?: SyncCheckpointDefaults.EPOCH
         var maxUpdatedAt = since
 
-        var offset = 0L
-        while (true) {
-            val page = postgrest.from(SupabaseTables.SESSION_SUBJECTS).select(Columns.raw(LINK_WITH_POOL)) {
-                filter { gt("updated_at", since) }
-                order("updated_at", Order.ASCENDING)
-                range(offset, offset + PAGE_SIZE - 1)
-            }.decodeList<SemesterSubjectDto>()
-            if (page.isEmpty()) break
-
+        fetchPagesConcurrently(
+            pageSize = PAGE_SIZE,
+            fetchPage = { from, to ->
+                postgrest.from(SupabaseTables.SESSION_SUBJECTS).select(Columns.raw(LINK_WITH_POOL)) {
+                    filter { gt("updated_at", since) }
+                    order("updated_at", Order.ASCENDING)
+                    range(from, to)
+                }.decodeList<SemesterSubjectDto>()
+            },
+        ) { page ->
             val entities = page.map { it.toEntity() }
             val (deleted, active) = entities.partition { it.isDeleted }
             subjectDao.applyDelta(active, deleted.map { it.id })
             maxUpdatedAt = page.maxRemoteUpdatedAt(maxUpdatedAt) { it.updatedAt }
-
-            if (page.size < PAGE_SIZE) break
-            offset += PAGE_SIZE
         }
 
         checkpointStore.upsert(SyncCheckpoint(ownerKey, SupabaseTables.SESSION_SUBJECTS, scopeKey, maxUpdatedAt, PgTime.format(Instant.now()) ?: since))

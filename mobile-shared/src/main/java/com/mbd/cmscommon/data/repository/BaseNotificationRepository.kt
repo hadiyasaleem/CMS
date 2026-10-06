@@ -13,6 +13,7 @@ import com.mbd.cmscommon.data.remote.dto.NotificationDto
 import com.mbd.cmscommon.data.sync.SyncCheckpoint
 import com.mbd.cmscommon.data.sync.SyncCheckpointDefaults
 import com.mbd.cmscommon.data.sync.SyncCheckpointStore
+import com.mbd.cmscommon.data.sync.fetchPagesConcurrently
 import com.mbd.cmscommon.data.sync.maxRemoteUpdatedAt
 import com.mbd.cmscommon.domain.model.Notification
 import com.mbd.cmscommon.domain.model.NotificationPriority
@@ -72,27 +73,29 @@ abstract class BaseNotificationRepository(
         val scopeKey = SyncCheckpointDefaults.scoped("role" to role.name, "session" to context.sessionId, "dept" to context.departmentId, "shift" to context.shift?.name)
         val since = checkpointStore.get(ownerKey, SupabaseTables.NOTIFICATIONS, scopeKey)?.lastUpdatedAt ?: SyncCheckpointDefaults.EPOCH
         var maxUpdatedAt = since
-        var offset = 0L
-        while (true) {
-            val page = postgrest.from(SupabaseTables.NOTIFICATIONS).select {
-                filter {
-                    or {
-                        eq("target_role", role.name)
-                        eq("target_role", "ALL")
+
+        fetchPagesConcurrently(
+            pageSize = PAGE_SIZE,
+            fetchPage = { from, to ->
+                postgrest.from(SupabaseTables.NOTIFICATIONS).select {
+                    filter {
+                        or {
+                            eq("target_role", role.name)
+                            eq("target_role", "ALL")
+                        }
+                        gt("updated_at", since)
                     }
-                    gt("updated_at", since)
-                }
-                order("updated_at", Order.ASCENDING)
-                range(offset, offset + PAGE_SIZE - 1)
-            }.decodeList<NotificationDto>()
-            if (page.isEmpty()) break
+                    order("updated_at", Order.ASCENDING)
+                    range(from, to)
+                }.decodeList<NotificationDto>()
+            },
+        ) { page ->
             val entities = page.map(NotificationMapper::dtoToEntity)
             val (deleted, active) = entities.partition { it.isDeleted }
             notificationDao.applyDelta(active, deleted.map { it.notificationId })
             maxUpdatedAt = page.maxRemoteUpdatedAt(maxUpdatedAt) { it.updatedAt }
-            if (page.size < PAGE_SIZE) break
-            offset += PAGE_SIZE
         }
+
         checkpointStore.upsert(SyncCheckpoint(ownerKey, SupabaseTables.NOTIFICATIONS, scopeKey, maxUpdatedAt, PgTime.format(Instant.now()) ?: since))
     }
 

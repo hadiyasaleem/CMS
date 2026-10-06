@@ -11,6 +11,7 @@ import com.mbd.cmscommon.data.remote.dto.ExamPaperSubmissionDto
 import com.mbd.cmscommon.data.sync.SyncCheckpoint
 import com.mbd.cmscommon.data.sync.SyncCheckpointDefaults
 import com.mbd.cmscommon.data.sync.SyncCheckpointStore
+import com.mbd.cmscommon.data.sync.fetchPagesConcurrently
 import com.mbd.cmscommon.data.sync.maxRemoteUpdatedAt
 import com.mbd.cmscommon.domain.model.ExamPaperSubmission
 import com.mbd.cmscommon.domain.model.examPaperUploadError
@@ -125,22 +126,20 @@ class ExamPaperSubmissionRepositoryImpl @Inject constructor(
         val since = checkpoint?.lastUpdatedAt ?: SyncCheckpointDefaults.EPOCH
         var maxUpdatedAt = since
 
-        var offset = 0L
-        while (true) {
-            val page = postgrest.from(SupabaseTables.EXAM_PAPER_SUBMISSIONS).select {
-                filter { gt("updated_at", since) }
-                order("updated_at", Order.ASCENDING)
-                range(offset, offset + PAGE_SIZE - 1)
-            }.decodeList<ExamPaperSubmissionDto>()
-            if (page.isEmpty()) break
-
+        fetchPagesConcurrently(
+            pageSize = PAGE_SIZE,
+            fetchPage = { from, to ->
+                postgrest.from(SupabaseTables.EXAM_PAPER_SUBMISSIONS).select {
+                    filter { gt("updated_at", since) }
+                    order("updated_at", Order.ASCENDING)
+                    range(from, to)
+                }.decodeList<ExamPaperSubmissionDto>()
+            },
+        ) { page ->
             val entities = page.map { ExamPaperSubmissionMapper.dtoToEntity(it) }
             val (deleted, active) = entities.partition { it.isDeleted }
             submissionDao.applyDelta(active, deleted.map { it.submissionId })
             maxUpdatedAt = page.maxRemoteUpdatedAt(maxUpdatedAt) { it.updatedAt }
-
-            if (page.size < PAGE_SIZE) break
-            offset += PAGE_SIZE
         }
 
         checkpointStore.upsert(SyncCheckpoint(ownerKey, SupabaseTables.EXAM_PAPER_SUBMISSIONS, scopeKey, maxUpdatedAt, PgTime.format(Instant.now()) ?: since))

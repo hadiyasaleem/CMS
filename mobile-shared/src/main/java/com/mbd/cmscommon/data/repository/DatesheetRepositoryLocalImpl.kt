@@ -11,6 +11,7 @@ import com.mbd.cmscommon.data.remote.dto.DatesheetSlotDto
 import com.mbd.cmscommon.data.sync.SyncCheckpoint
 import com.mbd.cmscommon.data.sync.SyncCheckpointDefaults
 import com.mbd.cmscommon.data.sync.SyncCheckpointStore
+import com.mbd.cmscommon.data.sync.fetchPagesConcurrently
 import com.mbd.cmscommon.data.sync.maxRemoteUpdatedAt
 import com.mbd.cmscommon.domain.model.Datesheet
 import com.mbd.cmscommon.domain.model.DatesheetDraft
@@ -208,22 +209,20 @@ class DatesheetRepositoryLocalImpl @Inject constructor(
         val since = checkpoint?.lastUpdatedAt ?: SyncCheckpointDefaults.EPOCH
         var maxUpdatedAt = since
 
-        var offset = 0L
-        while (true) {
-            val page = postgrest.from(SupabaseTables.DATESHEETS).select {
-                filter { gt("updated_at", since) }
-                order("updated_at", Order.ASCENDING)
-                range(offset, offset + PAGE_SIZE - 1)
-            }.decodeList<DatesheetDto>()
-            if (page.isEmpty()) break
-
+        fetchPagesConcurrently(
+            pageSize = PAGE_SIZE,
+            fetchPage = { from, to ->
+                postgrest.from(SupabaseTables.DATESHEETS).select {
+                    filter { gt("updated_at", since) }
+                    order("updated_at", Order.ASCENDING)
+                    range(from, to)
+                }.decodeList<DatesheetDto>()
+            },
+        ) { page ->
             val entities = page.map { DatesheetMapper.dtoToEntity(it) }
             val (deleted, active) = entities.partition { it.isDeleted }
             datesheetDao.applyDatesheetDelta(active, deleted.map { it.datesheetId })
             maxUpdatedAt = page.maxRemoteUpdatedAt(maxUpdatedAt) { it.updatedAt }
-
-            if (page.size < PAGE_SIZE) break
-            offset += PAGE_SIZE
         }
 
         checkpointStore.upsert(SyncCheckpoint(ownerKey, SupabaseTables.DATESHEETS, scopeKey, maxUpdatedAt, PgTime.format(Instant.now()) ?: since))
@@ -236,22 +235,20 @@ class DatesheetRepositoryLocalImpl @Inject constructor(
         val since = checkpoint?.lastUpdatedAt ?: SyncCheckpointDefaults.EPOCH
         var maxUpdatedAt = since
 
-        var offset = 0L
-        while (true) {
-            val page = postgrest.from(SupabaseTables.DATESHEET_SLOTS).select {
-                filter { gt("updated_at", since) }
-                order("updated_at", Order.ASCENDING)
-                range(offset, offset + PAGE_SIZE - 1)
-            }.decodeList<DatesheetSlotDto>()
-            if (page.isEmpty()) break
-
+        fetchPagesConcurrently(
+            pageSize = PAGE_SIZE,
+            fetchPage = { from, to ->
+                postgrest.from(SupabaseTables.DATESHEET_SLOTS).select {
+                    filter { gt("updated_at", since) }
+                    order("updated_at", Order.ASCENDING)
+                    range(from, to)
+                }.decodeList<DatesheetSlotDto>()
+            },
+        ) { page ->
             val entities = page.map { DatesheetMapper.slotDtoToEntity(it) }
             val (deleted, active) = entities.partition { it.isDeleted }
             datesheetDao.applySlotDelta(active, deleted.map { it.slotId })
             maxUpdatedAt = page.maxRemoteUpdatedAt(maxUpdatedAt) { it.updatedAt }
-
-            if (page.size < PAGE_SIZE) break
-            offset += PAGE_SIZE
         }
 
         checkpointStore.upsert(SyncCheckpoint(ownerKey, SupabaseTables.DATESHEET_SLOTS, scopeKey, maxUpdatedAt, PgTime.format(Instant.now()) ?: since))

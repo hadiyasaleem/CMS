@@ -13,6 +13,7 @@ import com.mbd.cmscommon.data.remote.SupabaseTables
 import com.mbd.cmscommon.data.sync.SyncCheckpoint
 import com.mbd.cmscommon.data.sync.SyncCheckpointDefaults
 import com.mbd.cmscommon.data.sync.SyncCheckpointStore
+import com.mbd.cmscommon.data.sync.fetchPagesConcurrently
 import com.mbd.cmscommon.data.sync.maxRemoteUpdatedAt
 import com.mbd.cmscommon.domain.model.AppLogRecord
 import com.mbd.cmscommon.domain.model.AppLogStatus
@@ -45,19 +46,21 @@ class AppLogRepositoryImpl @Inject constructor(
         val scopeKey = SyncCheckpointDefaults.globalScope()
         val since = checkpointStore.get(ownerKey, SupabaseTables.APP_LOGS, scopeKey)?.lastUpdatedAt ?: SyncCheckpointDefaults.EPOCH
         var maxOccurredAt = since
-        var offset = 0L
-        while (true) {
-            val page = postgrest.from(SupabaseTables.APP_LOGS).select {
-                filter { gt("occurred_at", since) }
-                order("occurred_at", Order.ASCENDING)
-                range(offset, offset + PAGE_SIZE - 1)
-            }.decodeList<AppLogDto>()
-            if (page.isEmpty()) break
+
+        fetchPagesConcurrently(
+            pageSize = PAGE_SIZE,
+            fetchPage = { from, to ->
+                postgrest.from(SupabaseTables.APP_LOGS).select {
+                    filter { gt("occurred_at", since) }
+                    order("occurred_at", Order.ASCENDING)
+                    range(from, to)
+                }.decodeList<AppLogDto>()
+            },
+        ) { page ->
             appLogCacheDao.upsertAll(page.map(AppLogMapper::dtoToCacheEntity))
             maxOccurredAt = page.maxRemoteUpdatedAt(maxOccurredAt) { it.occurredAt }
-            if (page.size < PAGE_SIZE) break
-            offset += PAGE_SIZE
         }
+
         appLogCacheDao.trimOldest(MAX_VIEW_ROWS)
         checkpointStore.upsert(SyncCheckpoint(ownerKey, SupabaseTables.APP_LOGS, scopeKey, maxOccurredAt, PgTime.format(Instant.now()) ?: since))
     }
