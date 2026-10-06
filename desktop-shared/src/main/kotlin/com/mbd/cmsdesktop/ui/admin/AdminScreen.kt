@@ -64,7 +64,7 @@ fun AdminScreen.title(): String = when (this) {
     AdminScreen.Profile -> "Profile"
     is AdminScreen.DeptDetail -> "Department"
     is AdminScreen.SessionDetail -> "Session"
-    is AdminScreen.SessionStudents -> "Session Students"
+    is AdminScreen.SessionStudents -> "Students"
     is AdminScreen.StudentProfile -> "Student Profile"
     AdminScreen.StudentDirectory -> "Students"
     is AdminScreen.StudentRecord -> "Student Record"

@@ -96,7 +96,7 @@ fun adminScreenTitle(route: String?): String = when (route) {
     AdminRoutes.DEPT_DETAIL -> "Department"
     AdminRoutes.SESSION_DETAIL -> "Session"
     AdminRoutes.SEMESTER_SUBJECTS -> "Curriculum"
-    AdminRoutes.SESSION_STUDENTS -> "Session Students"
+    AdminRoutes.SESSION_STUDENTS -> "Students"
     AdminRoutes.STUDENT_PROFILE -> "Student Profile"
     AdminRoutes.SESSION_TIMETABLE -> "Timetable"
     AdminRoutes.SESSION_DATESHEET -> "Datesheet"
