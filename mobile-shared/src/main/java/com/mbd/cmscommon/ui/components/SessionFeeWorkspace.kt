@@ -168,7 +168,7 @@ fun SessionFeeWorkspace(
 
         item {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text("Fee heads", modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.weight(1f))
                 TextButton(onClick = { showSampleChallan = true }, enabled = heads.isNotEmpty()) { Text("View sample challan") }
                 TextButton(onClick = { addingHead = true }) { Text("Add fee head") }
             }
