@@ -30,12 +30,14 @@ import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalTime
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
@@ -230,6 +232,10 @@ class MasterTimetableController(
      * conflict with a period outside the current filter is still detected and explained. */
     val periodConflicts: StateFlow<Map<String, List<PeriodConflict>>> = allPeriods
         .map { masterTimetableConflicts(it) }
+        // Pairwise overlap-checking every lecture against every other one on its day is real CPU work
+        // once the college has hundreds of periods -- run it off the caller's scope (Main on both
+        // Android and desktop Compose) so it can't freeze the UI thread while it churns.
+        .flowOn(Dispatchers.Default)
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
     /** Every distinct semester number with an active session, low to high (1, 3, 5, 7, …). */
@@ -254,7 +260,11 @@ class MasterTimetableController(
     /** Every semester+shift grid the college runs, department rows sorted by code. */
     val grids: StateFlow<List<MasterGrid>> = combine(sessions, departments, allPeriods) { sessionList, deptList, periods ->
         buildMasterGrids(sessionList, deptList, periods)
-    }.stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
+    }
+        // Grouping every period (hundreds of rows, institution-wide) into grids/rows is real CPU work;
+        // see periodConflicts above for why this can't run on the caller's (Main) scope.
+        .flowOn(Dispatchers.Default)
+        .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     /** [grids] narrowed by the active filters. Each dropdown defaults to "All" (null), which lets
      * every grid through; picking a value narrows to matching grids (or rows, for department). */
