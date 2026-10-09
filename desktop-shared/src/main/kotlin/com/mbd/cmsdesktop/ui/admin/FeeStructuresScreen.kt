@@ -31,9 +31,12 @@ fun FeeStructuresScreen(
     val grids by controller.grids.collectAsState()
     val loading by controller.loading.collectAsState()
     val error by controller.error.collectAsState()
-    val filterScope by controller.filterScope.collectAsState()
     val filterOptions by controller.filterOptions.collectAsState()
-    val programType by controller.programType.collectAsState()
+    val availableSemesters by controller.availableSemesters.collectAsState()
+    val selectedDeptId by controller.selectedDeptId.collectAsState()
+    val selectedSemester by controller.selectedSemester.collectAsState()
+    val selectedShift by controller.selectedShift.collectAsState()
+    val selectedProgramType by controller.selectedProgramType.collectAsState()
 
     // Coming back from editing the base or a class: show what was just saved.
     LaunchedEffect(controller) { controller.refresh(fetchRemote = false) }
@@ -43,11 +46,17 @@ fun FeeStructuresScreen(
         grids = grids,
         loading = loading,
         errorMessage = error,
-        filterScope = filterScope,
         filterOptions = filterOptions,
-        programType = programType,
-        onFilterScope = controller::setFilterScope,
-        onProgramType = controller::setProgramType,
+        availableSemesters = availableSemesters,
+        selectedDeptId = selectedDeptId,
+        selectedSemester = selectedSemester,
+        selectedShift = selectedShift,
+        selectedProgramType = selectedProgramType,
+        onSelectDepartment = controller::selectDepartment,
+        onSelectSemester = controller::selectSemester,
+        onSelectShift = controller::selectShift,
+        onSelectProgramType = controller::selectProgramType,
+        onClearFilters = controller::clearFilters,
         onEditCollege = onEditCollege,
         onOpenClass = onOpenClass,
         onRetry = { controller.refresh() },

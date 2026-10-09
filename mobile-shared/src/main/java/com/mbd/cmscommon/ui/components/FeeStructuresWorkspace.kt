@@ -37,7 +37,6 @@ import com.mbd.cmscommon.domain.model.FeeType
 import com.mbd.cmscommon.domain.model.ProgramType
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.SessionFeeStructure
-import com.mbd.cmscommon.domain.model.ShiftScope
 import com.mbd.cmscommon.export.ExportDocument
 import com.mbd.cmscommon.export.ExportFormat
 import com.mbd.cmscommon.export.feeGridExport
@@ -73,11 +72,17 @@ fun FeeStructuresWorkspace(
     grids: List<FeeGrid>,
     loading: Boolean,
     errorMessage: String?,
-    filterScope: ShiftScope,
     filterOptions: ScopeFilterOptions,
-    programType: ProgramType?,
-    onFilterScope: (ShiftScope) -> Unit,
-    onProgramType: (ProgramType?) -> Unit,
+    availableSemesters: List<Int>,
+    selectedDeptId: String?,
+    selectedSemester: Int?,
+    selectedShift: Session?,
+    selectedProgramType: ProgramType?,
+    onSelectDepartment: (String?) -> Unit,
+    onSelectSemester: (Int?) -> Unit,
+    onSelectShift: (Session?) -> Unit,
+    onSelectProgramType: (ProgramType?) -> Unit,
+    onClearFilters: () -> Unit,
     onEditCollege: (Session) -> Unit,
     onOpenClass: (sessionId: String, shift: Session) -> Unit,
     onRetry: () -> Unit,
@@ -85,6 +90,7 @@ fun FeeStructuresWorkspace(
     modifier: Modifier = Modifier,
 ) {
     val hasRows = grids.any { it.rows.isNotEmpty() }
+    val anyFilterActive = selectedDeptId != null || selectedSemester != null || selectedShift != null || selectedProgramType != null
 
     TopBarActions {
         ExportMenuButton(
@@ -112,16 +118,21 @@ fun FeeStructuresWorkspace(
             }
         }
 
-        item { ShiftScopeSelector(filterScope, filterOptions.departments, filterOptions.sessions, onFilterScope, label = "CLASSES") }
         item {
-            Column {
-                Text("PROGRAM", color = ModMuted, style = CmsTextStyles.eyebrow)
-                Spacer(Modifier.height(6.dp))
-                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    CmsChip("All", selected = programType == null, onClick = { onProgramType(null) })
-                    ProgramType.entries.forEach { type -> CmsChip(type.label, selected = programType == type, onClick = { onProgramType(type) }) }
-                }
-            }
+            FeeFilterBar(
+                departments = filterOptions.departments,
+                availableSemesters = availableSemesters,
+                selectedDeptId = selectedDeptId,
+                selectedSemester = selectedSemester,
+                selectedShift = selectedShift,
+                selectedProgramType = selectedProgramType,
+                anyFilterActive = anyFilterActive,
+                onSelectDepartment = onSelectDepartment,
+                onSelectSemester = onSelectSemester,
+                onSelectShift = onSelectShift,
+                onSelectProgramType = onSelectProgramType,
+                onClearFilters = onClearFilters,
+            )
         }
 
         when {
@@ -160,6 +171,63 @@ private fun BaseCard(shift: Session, fee: SessionFeeStructure?, onEdit: () -> Un
                 Text("${planLabel(fee.cadence)} · ${fee.heads.size} fee head(s)", color = ModMuted, style = MaterialTheme.typography.bodySmall)
             }
             TextButton(onClick = onEdit) { Text(if (fee == null) "Set up" else "Edit") }
+        }
+    }
+}
+
+/** Department/Semester/Shift/Program dropdown filters, identical in layout and behaviour to the master
+ * timetable's own filter bar ([MasterFilterBar]) -- each defaults to "All" and narrows independently. */
+@Composable
+private fun FeeFilterBar(
+    departments: List<Pair<String, String>>,
+    availableSemesters: List<Int>,
+    selectedDeptId: String?,
+    selectedSemester: Int?,
+    selectedShift: Session?,
+    selectedProgramType: ProgramType?,
+    anyFilterActive: Boolean,
+    onSelectDepartment: (String?) -> Unit,
+    onSelectSemester: (Int?) -> Unit,
+    onSelectShift: (Session?) -> Unit,
+    onSelectProgramType: (ProgramType?) -> Unit,
+    onClearFilters: () -> Unit,
+) {
+    val deptOptions = departments.map { CmsEntityOption(it.first, it.second) }
+    val semesterOptions = availableSemesters.map { CmsEntityOption(it.toString(), "Semester $it") }
+    val shiftOptions = Session.entries.map { CmsEntityOption(it.name, it.label) }
+    val programOptions = ProgramType.entries.map { CmsEntityOption(it.name, it.label) }
+
+    Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                DropdownChip(
+                    selectedLabel = deptOptions.firstOrNull { it.id == selectedDeptId }?.label,
+                    emptyLabel = "All departments",
+                    options = deptOptions,
+                    onSelected = onSelectDepartment,
+                )
+                DropdownChip(
+                    selectedLabel = semesterOptions.firstOrNull { it.id == selectedSemester?.toString() }?.label,
+                    emptyLabel = "All semesters",
+                    options = semesterOptions,
+                    onSelected = { id -> onSelectSemester(id?.toIntOrNull()) },
+                )
+                DropdownChip(
+                    selectedLabel = shiftOptions.firstOrNull { it.id == selectedShift?.name }?.label,
+                    emptyLabel = "All shifts",
+                    options = shiftOptions,
+                    onSelected = { id -> onSelectShift(id?.let { name -> Session.entries.firstOrNull { it.name == name } }) },
+                )
+                DropdownChip(
+                    selectedLabel = programOptions.firstOrNull { it.id == selectedProgramType?.name }?.label,
+                    emptyLabel = "All programs",
+                    options = programOptions,
+                    onSelected = { id -> onSelectProgramType(id?.let { name -> ProgramType.entries.firstOrNull { it.name == name } }) },
+                )
+            }
+            if (anyFilterActive) {
+                TextButton(onClick = onClearFilters) { Text("Clear filters") }
+            }
         }
     }
 }

@@ -100,13 +100,33 @@ class FeeStructuresController(
     private val departments: StateFlow<List<Department>> =
         departmentRepository.observeActiveDepartments().stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    private val _filterScope = MutableStateFlow(ShiftScope.ALL)
-    val filterScope: StateFlow<ShiftScope> = _filterScope.asStateFlow()
-    private val _programType = MutableStateFlow<ProgramType?>(null)
-    val programType: StateFlow<ProgramType?> = _programType.asStateFlow()
+    /** Every distinct semester number with an active session, low to high -- mirrors
+     * [MasterTimetableController.availableSemesters], for the same "Semester" dropdown. */
+    val availableSemesters: StateFlow<List<Int>> = sessions
+        .map { list -> list.map { it.currentSemester }.distinct().sorted() }
+        .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    fun setFilterScope(value: ShiftScope) { _filterScope.value = value }
-    fun setProgramType(value: ProgramType?) { _programType.value = value }
+    /** null means "All" -- the dropdown's default, unfiltered state (same convention as the master timetable's filters). */
+    private val _selectedDeptId = MutableStateFlow<String?>(null)
+    val selectedDeptId: StateFlow<String?> = _selectedDeptId.asStateFlow()
+    private val _selectedSemester = MutableStateFlow<Int?>(null)
+    val selectedSemester: StateFlow<Int?> = _selectedSemester.asStateFlow()
+    private val _selectedShift = MutableStateFlow<Session?>(null)
+    val selectedShift: StateFlow<Session?> = _selectedShift.asStateFlow()
+    private val _selectedProgramType = MutableStateFlow<ProgramType?>(null)
+    val selectedProgramType: StateFlow<ProgramType?> = _selectedProgramType.asStateFlow()
+
+    fun selectDepartment(deptId: String?) { _selectedDeptId.value = deptId }
+    fun selectSemester(semester: Int?) { _selectedSemester.value = semester }
+    fun selectShift(shift: Session?) { _selectedShift.value = shift }
+    fun selectProgramType(programType: ProgramType?) { _selectedProgramType.value = programType }
+
+    fun clearFilters() {
+        _selectedDeptId.value = null
+        _selectedSemester.value = null
+        _selectedShift.value = null
+        _selectedProgramType.value = null
+    }
 
     val filterOptions: StateFlow<ScopeFilterOptions> = combine(departments, sessions) { d, s -> ScopeFilterOptions.of(d, s) }
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), ScopeFilterOptions())
@@ -120,12 +140,12 @@ class FeeStructuresController(
     private val _loading = MutableStateFlow(true)
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
 
-    private data class Filters(val scope: ShiftScope, val program: ProgramType?)
+    private data class Filters(val deptId: String?, val semester: Int?, val shift: Session?, val program: ProgramType?)
 
     val rows: StateFlow<List<FeeRow>> = combine(
         sessions, departments, _own, _base,
-        combine(_filterScope, _programType) { s, p -> Filters(s, p) },
-    ) { s, d, own, base, f -> feeRows(s, d, own, base, f.scope, f.program, semester = null) }
+        combine(_selectedDeptId, _selectedSemester, _selectedShift, _selectedProgramType) { d, sem, sh, p -> Filters(d, sem, sh, p) },
+    ) { s, d, own, base, f -> feeRows(s, d, own, base, ShiftScope(deptId = f.deptId, shift = f.shift), f.program, f.semester) }
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     /** [rows] grouped into one grid per semester+program+shift -- see [FeeGrid]. */
