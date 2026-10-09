@@ -9,8 +9,6 @@ import com.mbd.cmscommon.domain.model.ShiftScope
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.repository.SessionFeeRepository
-import com.mbd.cmscommon.export.ExportDocument
-import com.mbd.cmscommon.export.feeStructuresExport
 import com.mbd.cmscommon.util.FailureSummary
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -158,7 +156,4 @@ class FeeStructuresController(
             }
         }
     }
-
-    /** The grid as one document: the college base per shift, then a row per class with a column per fee head. */
-    fun exportDocument(): ExportDocument = feeStructuresExport(_base.value, rows.value)
 }

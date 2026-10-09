@@ -39,7 +39,10 @@ import com.mbd.cmscommon.domain.model.ProgramType
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.SessionFeeStructure
 import com.mbd.cmscommon.domain.model.ShiftScope
+import com.mbd.cmscommon.export.ExportDocument
 import com.mbd.cmscommon.export.ExportFormat
+import com.mbd.cmscommon.export.feeGridExport
+import com.mbd.cmscommon.export.feeStructuresExport
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
 import com.mbd.cmscommon.ui.theme.ModAccent
@@ -79,13 +82,17 @@ fun FeeStructuresWorkspace(
     onEditCollege: (Session) -> Unit,
     onOpenClass: (sessionId: String, shift: Session) -> Unit,
     onRetry: () -> Unit,
-    onExport: (ExportFormat) -> Unit,
+    onExport: (ExportDocument, ExportFormat) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val hasRows = grids.any { it.rows.isNotEmpty() }
 
     TopBarActions {
-        ExportMenuButton(onExport = onExport, enabled = hasRows && !loading, tint = CmsTheme.colors.onInk)
+        ExportMenuButton(
+            onExport = { format -> onExport(feeStructuresExport(base, grids.flatMap { it.rows }), format) },
+            enabled = hasRows && !loading,
+            tint = CmsTheme.colors.onInk,
+        )
     }
 
     val listState = rememberLazyListState()
@@ -129,7 +136,7 @@ fun FeeStructuresWorkspace(
                 }
             }
             else -> {
-                grids.forEach { grid -> item { FeeGridSection(grid, onOpenClass) } }
+                grids.forEach { grid -> item { FeeGridSection(grid, onOpenClass, onExport) } }
                 item {
                     Text(
                         "Select a row to change that class's fees. Classes marked College base follow the structure above; saving a change gives the class its own.",
@@ -166,18 +173,25 @@ private fun BaseCard(shift: Session, fee: SessionFeeStructure?, onEdit: () -> Un
  * one row per department (a department appears at most once per grid) and a column per fee head that
  * grid's classes actually use. */
 @Composable
-private fun FeeGridSection(grid: FeeGrid, onOpenClass: (String, Session) -> Unit) {
+private fun FeeGridSection(grid: FeeGrid, onOpenClass: (String, Session) -> Unit, onExport: (ExportDocument, ExportFormat) -> Unit) {
     val headLabels = grid.rows.flatMap { row -> row.structure?.heads?.map { it.label }.orEmpty() }.distinct()
     val scroll = rememberScrollState()
     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
         Column {
-            Text(
-                grid.title,
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.titleMedium,
-            )
+            Row(
+                Modifier.fillMaxWidth().padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    grid.title,
+                    modifier = Modifier.weight(1f),
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                ExportMenuButton(onExport = { format -> onExport(feeGridExport(grid), format) })
+            }
             Column(Modifier.horizontalScroll(scroll)) {
                 Row(Modifier.background(ModInk).height(40.dp), verticalAlignment = Alignment.CenterVertically) {
                     GridHead("DEPARTMENT", GridDeptWidth)

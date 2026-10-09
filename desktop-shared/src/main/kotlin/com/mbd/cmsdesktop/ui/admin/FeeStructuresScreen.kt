@@ -34,7 +34,6 @@ fun FeeStructuresScreen(
     val filterScope by controller.filterScope.collectAsState()
     val filterOptions by controller.filterOptions.collectAsState()
     val programType by controller.programType.collectAsState()
-    val export = rememberDocumentExport()
 
     // Coming back from editing the base or a class: show what was just saved.
     LaunchedEffect(controller) { controller.refresh(fetchRemote = false) }
@@ -52,6 +51,6 @@ fun FeeStructuresScreen(
         onEditCollege = onEditCollege,
         onOpenClass = onOpenClass,
         onRetry = { controller.refresh() },
-        onExport = { format -> export(controller.exportDocument(), format) },
+        onExport = rememberDocumentExport(),
     )
 }
