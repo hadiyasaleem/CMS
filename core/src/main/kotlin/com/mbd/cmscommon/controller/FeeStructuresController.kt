@@ -19,10 +19,30 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 /** Where a class's fee structure comes from. */
 enum class FeeSource { CUSTOM, COLLEGE, NONE }
+
+/** One titled grid of fee rows for a single semester+program+shift, one row per department --
+ * mirrors the master timetable's grids (see [buildMasterGrids]): splitting the shift into the
+ * grid's own identity (rather than a row or column) is what keeps a department from appearing
+ * twice in the same grid when its session runs both shifts. */
+data class FeeGrid(
+    val semester: Int,
+    val programType: ProgramType,
+    val shift: Session,
+    val rows: List<FeeRow>,
+) {
+    val title: String get() = "Semester $semester${if (programType == ProgramType.MA_REPLACEMENT) " (Intake)" else ""} ${shift.label}"
+}
+
+/** Groups flat fee [rows] into one grid per semester+program+shift, department rows sorted by name. */
+fun buildFeeGrids(rows: List<FeeRow>): List<FeeGrid> =
+    rows.groupBy { Triple(it.session.currentSemester, it.session.programType, it.shift) }
+        .map { (key, grouped) -> FeeGrid(key.first, key.second, key.third, grouped.sortedBy { it.departmentName }) }
+        .sortedWith(compareBy({ it.semester }, { it.programType }, { it.shift }))
 
 /** One class (session + shift) in the fee overview, with the structure it pays. */
 data class FeeRow(
@@ -86,12 +106,9 @@ class FeeStructuresController(
     val filterScope: StateFlow<ShiftScope> = _filterScope.asStateFlow()
     private val _programType = MutableStateFlow<ProgramType?>(null)
     val programType: StateFlow<ProgramType?> = _programType.asStateFlow()
-    private val _semester = MutableStateFlow<Int?>(null)
-    val semester: StateFlow<Int?> = _semester.asStateFlow()
 
     fun setFilterScope(value: ShiftScope) { _filterScope.value = value }
     fun setProgramType(value: ProgramType?) { _programType.value = value }
-    fun setSemester(value: Int?) { _semester.value = value }
 
     val filterOptions: StateFlow<ScopeFilterOptions> = combine(departments, sessions) { d, s -> ScopeFilterOptions.of(d, s) }
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), ScopeFilterOptions())
@@ -105,12 +122,16 @@ class FeeStructuresController(
     private val _loading = MutableStateFlow(true)
     val loading: StateFlow<Boolean> = _loading.asStateFlow()
 
-    private data class Filters(val scope: ShiftScope, val program: ProgramType?, val semester: Int?)
+    private data class Filters(val scope: ShiftScope, val program: ProgramType?)
 
     val rows: StateFlow<List<FeeRow>> = combine(
         sessions, departments, _own, _base,
-        combine(_filterScope, _programType, _semester) { s, p, m -> Filters(s, p, m) },
-    ) { s, d, own, base, f -> feeRows(s, d, own, base, f.scope, f.program, f.semester) }
+        combine(_filterScope, _programType) { s, p -> Filters(s, p) },
+    ) { s, d, own, base, f -> feeRows(s, d, own, base, f.scope, f.program, semester = null) }
+        .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /** [rows] grouped into one grid per semester+program+shift -- see [FeeGrid]. */
+    val grids: StateFlow<List<FeeGrid>> = rows.map { buildFeeGrids(it) }
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     init {

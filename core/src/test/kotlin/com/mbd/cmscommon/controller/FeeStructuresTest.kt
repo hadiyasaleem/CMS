@@ -68,6 +68,17 @@ class FeeStructuresTest {
     }
 
     @Test
+    fun gridsSplitByShiftSoNoDepartmentRepeatsWithinOne() {
+        // itBoth runs both shifts, so flat rows has two "it" entries -- one grid per shift keeps each to one row.
+        val grids = buildFeeGrids(rows())
+        assertEquals(listOf("Semester 1 Morning", "Semester 1 Evening", "Semester 3 Morning", "Semester 5 (Intake) Evening"), grids.map { it.title })
+        val semester1Morning = grids.first { it.title == "Semester 1 Morning" }
+        assertEquals(listOf("it_2026"), semester1Morning.rows.map { it.session.sessionId })
+        val semester1Evening = grids.first { it.title == "Semester 1 Evening" }
+        assertEquals(listOf("it_2026"), semester1Evening.rows.map { it.session.sessionId })
+    }
+
+    @Test
     fun theExportHasABaseSectionAndAColumnPerFeeHead() {
         val doc = feeStructuresExport(listOf(morningBase, eveningBase), rows())
         assertEquals(listOf("College-wide base", "Fee structure by class"), doc.sections.map { it.name })

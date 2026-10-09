@@ -35,13 +35,12 @@ fun FeeStructuresScreen(
 ) {
     val controller = viewModel.controller
     val base by controller.base.collectAsState()
-    val rows by controller.rows.collectAsState()
+    val grids by controller.grids.collectAsState()
     val loading by controller.loading.collectAsState()
     val error by controller.error.collectAsState()
     val filterScope by controller.filterScope.collectAsState()
     val filterOptions by controller.filterOptions.collectAsState()
     val programType by controller.programType.collectAsState()
-    val semester by controller.semester.collectAsState()
     val export = rememberDocumentExport()
 
     // Coming back from editing the base or a class: show what was just saved.
@@ -49,16 +48,14 @@ fun FeeStructuresScreen(
 
     FeeStructuresWorkspace(
         base = base,
-        rows = rows,
+        grids = grids,
         loading = loading,
         errorMessage = error,
         filterScope = filterScope,
         filterOptions = filterOptions,
         programType = programType,
-        semester = semester,
         onFilterScope = controller::setFilterScope,
         onProgramType = controller::setProgramType,
-        onSemester = controller::setSemester,
         onEditCollege = onEditCollege,
         onOpenClass = onOpenClass,
         onRetry = { controller.refresh() },

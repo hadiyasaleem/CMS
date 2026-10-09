@@ -28,9 +28,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.mbd.cmscommon.controller.FeeRow
+import com.mbd.cmscommon.controller.FeeGrid
 import com.mbd.cmscommon.controller.FeeSource
 import com.mbd.cmscommon.controller.ScopeFilterOptions
 import com.mbd.cmscommon.domain.model.FeeType
@@ -38,12 +39,10 @@ import com.mbd.cmscommon.domain.model.ProgramType
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.SessionFeeStructure
 import com.mbd.cmscommon.domain.model.ShiftScope
-import com.mbd.cmscommon.export.ExportDocument
 import com.mbd.cmscommon.export.ExportFormat
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.CmsTheme
 import com.mbd.cmscommon.ui.theme.ModAccent
-import com.mbd.cmscommon.ui.theme.ModGround
 import com.mbd.cmscommon.ui.theme.ModInk
 import com.mbd.cmscommon.ui.theme.ModMuted
 import com.mbd.cmscommon.ui.theme.ModSuccess
@@ -51,8 +50,7 @@ import com.mbd.cmscommon.ui.theme.ModSurface
 import com.mbd.cmscommon.ui.theme.ModTrack
 import java.util.Locale
 
-private val GridClassWidth = 190.dp
-private val GridShiftWidth = 80.dp
+private val GridDeptWidth = 190.dp
 private val GridHeadWidth = 96.dp
 private val GridTotalWidth = 90.dp
 private val GridSourceWidth = 110.dp
@@ -64,32 +62,30 @@ private fun planLabel(type: FeeType) = if (type == FeeType.ANNUAL) "annual" else
 
 /**
  * Every class's fees on one screen. At the top, the college-wide base for each shift (Morning and Evening can
- * differ) applies to all classes until one gets a structure of its own; below, filters and a grid with one row
- * per class and a column per fee head, which can be exported.
+ * differ) applies to all classes until one gets a structure of its own; below, filters and, like the master
+ * timetable, one grid per semester+program+shift with one row per department and a column per fee head.
  */
 @Composable
 fun FeeStructuresWorkspace(
     base: List<SessionFeeStructure>,
-    rows: List<FeeRow>,
+    grids: List<FeeGrid>,
     loading: Boolean,
     errorMessage: String?,
     filterScope: ShiftScope,
     filterOptions: ScopeFilterOptions,
     programType: ProgramType?,
-    semester: Int?,
     onFilterScope: (ShiftScope) -> Unit,
     onProgramType: (ProgramType?) -> Unit,
-    onSemester: (Int?) -> Unit,
     onEditCollege: (Session) -> Unit,
     onOpenClass: (sessionId: String, shift: Session) -> Unit,
     onRetry: () -> Unit,
     onExport: (ExportFormat) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val headLabels = rows.flatMap { row -> row.structure?.heads?.map { it.label }.orEmpty() }.distinct()
+    val hasRows = grids.any { it.rows.isNotEmpty() }
 
     TopBarActions {
-        ExportMenuButton(onExport = onExport, enabled = rows.isNotEmpty() && !loading, tint = CmsTheme.colors.onInk)
+        ExportMenuButton(onExport = onExport, enabled = hasRows && !loading, tint = CmsTheme.colors.onInk)
     }
 
     val listState = rememberLazyListState()
@@ -122,33 +118,25 @@ fun FeeStructuresWorkspace(
                     CmsChip("All", selected = programType == null, onClick = { onProgramType(null) })
                     ProgramType.entries.forEach { type -> CmsChip(type.label, selected = programType == type, onClick = { onProgramType(type) }) }
                 }
-                Spacer(Modifier.height(10.dp))
-                Text("SEMESTER", color = ModMuted, style = CmsTextStyles.eyebrow)
-                Spacer(Modifier.height(6.dp))
-                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    CmsChip("All", selected = semester == null, onClick = { onSemester(null) })
-                    (1..8).forEach { sem -> CmsChip("Sem $sem", selected = semester == sem, onClick = { onSemester(sem) }) }
-                }
             }
         }
 
-        item { Text("FEE GRID", color = ModMuted, style = CmsTextStyles.eyebrow) }
-        if (loading && rows.isEmpty()) {
-            items(3) { SkeletonRow() }
-        } else if (rows.isEmpty()) {
-            item {
+        when {
+            loading && grids.isEmpty() -> items(3) { SkeletonRow() }
+            !hasRows -> item {
                 Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
                     Text("No classes match these filters.", modifier = Modifier.padding(24.dp), color = ModMuted, style = MaterialTheme.typography.bodyMedium)
                 }
             }
-        } else {
-            item { FeeGrid(rows, headLabels, onOpenClass) }
-            item {
-                Text(
-                    "Select a row to change that class's fees. Classes marked College base follow the structure above; saving a change gives the class its own.",
-                    color = ModMuted,
-                    style = MaterialTheme.typography.bodySmall,
-                )
+            else -> {
+                grids.forEach { grid -> item { FeeGridSection(grid, onOpenClass) } }
+                item {
+                    Text(
+                        "Select a row to change that class's fees. Classes marked College base follow the structure above; saving a change gives the class its own.",
+                        color = ModMuted,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
             }
         }
         item { Spacer(Modifier.height(72.dp)) }
@@ -174,51 +162,59 @@ private fun BaseCard(shift: Session, fee: SessionFeeStructure?, onEdit: () -> Un
     }
 }
 
+/** One semester+program+shift grid, mirroring the master timetable's per-grid sections: a title, then
+ * one row per department (a department appears at most once per grid) and a column per fee head that
+ * grid's classes actually use. */
 @Composable
-private fun FeeGrid(rows: List<FeeRow>, headLabels: List<String>, onOpenClass: (String, Session) -> Unit) {
+private fun FeeGridSection(grid: FeeGrid, onOpenClass: (String, Session) -> Unit) {
+    val headLabels = grid.rows.flatMap { row -> row.structure?.heads?.map { it.label }.orEmpty() }.distinct()
     val scroll = rememberScrollState()
     Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
-        Column(Modifier.horizontalScroll(scroll)) {
-            Row(Modifier.background(ModInk).height(40.dp), verticalAlignment = Alignment.CenterVertically) {
-                GridHead("CLASS", GridClassWidth)
-                GridHead("SHIFT", GridShiftWidth)
-                headLabels.forEach { GridHead(it.uppercase(), GridHeadWidth) }
-                GridHead("TOTAL", GridTotalWidth)
-                GridHead("SOURCE", GridSourceWidth)
-            }
-            rows.forEachIndexed { index, row ->
-                val fee = row.structure
-                val byLabel = fee?.heads?.associate { it.label to it.amount }.orEmpty()
-                Row(
-                    Modifier.clickable { onOpenClass(row.session.sessionId, row.shift) }.height(GridRowHeight),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(Modifier.width(GridClassWidth).padding(horizontal = 8.dp)) {
-                        Text(row.departmentName, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodySmall)
-                        Text(
-                            "${row.session.label} · Sem ${row.session.currentSemester} · ${row.session.programType.label}",
-                            color = ModMuted, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.labelSmall,
-                        )
-                    }
-                    Box(Modifier.width(GridShiftWidth).padding(horizontal = 8.dp)) { Text(row.shift.label, style = MaterialTheme.typography.bodySmall) }
-                    headLabels.forEach { label ->
-                        Box(Modifier.width(GridHeadWidth).padding(horizontal = 8.dp)) {
-                            Text(byLabel[label]?.let(::money) ?: "-", color = if (label in byLabel) CmsTheme.colors.ink else ModMuted, style = MaterialTheme.typography.bodySmall)
-                        }
-                    }
-                    Box(Modifier.width(GridTotalWidth).padding(horizontal = 8.dp)) {
-                        Text(fee?.let { money(it.totalAmount) } ?: "-", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodySmall)
-                    }
-                    Box(Modifier.width(GridSourceWidth).padding(horizontal = 8.dp)) {
-                        val (text, color) = when (row.source) {
-                            FeeSource.CUSTOM -> "Own structure" to ModSuccess
-                            FeeSource.COLLEGE -> "College base" to ModMuted
-                            FeeSource.NONE -> "Not set" to ModAccent
-                        }
-                        Text(text, color = color, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall)
-                    }
+        Column {
+            Text(
+                grid.title,
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.titleMedium,
+            )
+            Column(Modifier.horizontalScroll(scroll)) {
+                Row(Modifier.background(ModInk).height(40.dp), verticalAlignment = Alignment.CenterVertically) {
+                    GridHead("DEPARTMENT", GridDeptWidth)
+                    headLabels.forEach { GridHead(it.uppercase(), GridHeadWidth) }
+                    GridHead("TOTAL", GridTotalWidth)
+                    GridHead("SOURCE", GridSourceWidth)
                 }
-                if (index < rows.lastIndex) HorizontalDivider(color = ModTrack)
+                grid.rows.forEachIndexed { index, row ->
+                    val fee = row.structure
+                    val byLabel = fee?.heads?.associate { it.label to it.amount }.orEmpty()
+                    Row(
+                        Modifier.clickable { onOpenClass(row.session.sessionId, row.shift) }.height(GridRowHeight),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.width(GridDeptWidth).padding(horizontal = 8.dp)) {
+                            Text(row.departmentName, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodySmall)
+                            Text(row.session.label, color = ModMuted, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.labelSmall)
+                        }
+                        headLabels.forEach { label ->
+                            Box(Modifier.width(GridHeadWidth).padding(horizontal = 8.dp)) {
+                                Text(byLabel[label]?.let(::money) ?: "-", color = if (label in byLabel) CmsTheme.colors.ink else ModMuted, style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+                        Box(Modifier.width(GridTotalWidth).padding(horizontal = 8.dp)) {
+                            Text(fee?.let { money(it.totalAmount) } ?: "-", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodySmall)
+                        }
+                        Box(Modifier.width(GridSourceWidth).padding(horizontal = 8.dp)) {
+                            val (text, color) = when (row.source) {
+                                FeeSource.CUSTOM -> "Own structure" to ModSuccess
+                                FeeSource.COLLEGE -> "College base" to ModMuted
+                                FeeSource.NONE -> "Not set" to ModAccent
+                            }
+                            Text(text, color = color, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                    if (index < grid.rows.lastIndex) HorizontalDivider(color = ModTrack)
+                }
             }
         }
     }
