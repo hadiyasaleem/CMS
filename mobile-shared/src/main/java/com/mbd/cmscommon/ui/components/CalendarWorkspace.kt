@@ -3,8 +3,10 @@ package com.mbd.cmscommon.ui.components
 import compose.icons.TablerIcons
 import compose.icons.tablericons.ChevronLeft
 import compose.icons.tablericons.ChevronRight
+import com.mbd.cmscommon.controller.availableSemesters
 import com.mbd.cmscommon.controller.inScope
 import com.mbd.cmscommon.controller.departmentScopeOptions
+import com.mbd.cmscommon.domain.model.DeptSemesterScope
 import com.mbd.cmscommon.domain.model.ShiftScope
 import com.mbd.cmscommon.domain.model.CalendarViewerRole
 import com.mbd.cmscommon.util.clockDisplay
@@ -96,8 +98,8 @@ fun CalendarWorkspace(
     var pendingDelete by remember { mutableStateOf<CalendarEvent?>(null) }
 
     val today = LocalDate.now()
-    // Admins narrow the calendar by Department -> Session -> Shift; teachers and students see their own audience.
-    var filterScope by remember { mutableStateOf(ShiftScope.ALL) }
+    // Admins narrow the calendar by Department / Semester / Shift; teachers and students see their own audience.
+    var filterScope by remember { mutableStateOf(DeptSemesterScope.ALL) }
     val relevant = events.filter { isVisibleTo(it, viewer) }.inScope(filterScope, sessions)
 
     Box(modifier.fillMaxSize()) {
@@ -107,7 +109,7 @@ fun CalendarWorkspace(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         if (viewer.role == CalendarViewerRole.ADMIN) {
-            item { ShiftScopeSelector(filterScope, departmentScopeOptions(departments), sessions, { filterScope = it }) }
+            item { DeptSemesterScopeSelector(filterScope, departmentScopeOptions(departments), sessions.availableSemesters(), { filterScope = it }) }
         }
 
         if (!errorMessage.isNullOrBlank()) {

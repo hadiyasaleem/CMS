@@ -120,7 +120,7 @@ class ShiftScopeFiltersTest {
     fun papersAreSharedByBothShiftsOfTheirSession() {
         fun paper(session: String) = ExamPaperSubmission("p$session", "slot", session, 3, "IT-301", "t@x", "path", "f.pdf", uploadedAt = Instant.EPOCH, createdBy = "t")
         val papers = listOf(paper("IT_2022"), paper("IT_2023"), paper("CS_2022"))
-        assertEquals(listOf("IT_2022"), submittedPapersMatching(papers, SubmittedPapersFilters(deptId = "IT", sessionId = "IT_2022", shift = Session.EVENING), sessions).map { it.offeringId })
+        assertEquals(listOf("IT_2022"), submittedPapersMatching(papers, SubmittedPapersFilters(deptId = "IT", semester = 3, shift = Session.EVENING), sessions).map { it.offeringId })
         // IT 2023 runs Morning only, so it has no Evening papers.
         assertEquals(listOf("IT_2022", "CS_2022"), submittedPapersMatching(papers, SubmittedPapersFilters(shift = Session.EVENING), sessions).map { it.offeringId })
     }

@@ -1,6 +1,6 @@
 package com.mbd.cmscommon.controller
 
-import com.mbd.cmscommon.domain.model.ShiftScope
+import com.mbd.cmscommon.domain.model.DeptSemesterScope
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.Department
 import com.mbd.cmscommon.domain.model.ExamPaperSubmission
@@ -24,17 +24,17 @@ data class SubmittedPapersFilters(
     val deptId: String? = null,
     val semester: Int? = null,
     val shift: Session? = null,
-    val sessionId: String? = null,
 ) {
-    /** The Department -> Session -> Shift part of the filters. */
-    val scope: ShiftScope get() = ShiftScope(deptId, sessionId, shift)
+    /** The Department / Semester / Shift part of the filters. */
+    val scope: DeptSemesterScope get() = DeptSemesterScope(deptId, semester, shift)
 
-    val isEmpty: Boolean get() = teacherEmail == null && scope.isEmpty && semester == null
+    val isEmpty: Boolean get() = teacherEmail == null && scope.isEmpty
 }
 
 /**
- * Papers matching the filters. A paper is set per session and subject and serves both shifts, so a shift filter
- * keeps papers of sessions that run that shift.
+ * Papers matching the filters. A paper's own [ExamPaperSubmission.semester] is used as-is (not the
+ * session's current one, which may have moved on since); a shift filter keeps papers of sessions that
+ * run that shift, since a paper is set per session and serves both shifts.
  */
 fun submittedPapersMatching(
     submissions: List<ExamPaperSubmission>,
@@ -42,8 +42,7 @@ fun submittedPapersMatching(
     sessions: Collection<AcademicSession>,
 ): List<ExamPaperSubmission> = submissions.filter { sub ->
     (filters.teacherEmail == null || sub.teacherId.equals(filters.teacherEmail, ignoreCase = true)) &&
-        (filters.semester == null || sub.semester == filters.semester) &&
-        filters.scope.matchesSessionItem(sub.offeringId, null, sessions)
+        filters.scope.matchesSessionItem(sub.offeringId, sub.semester, null, sessions)
 }
 
 /** Admin's browse/download screen for teacher-submitted exam papers -- collected to print, not
@@ -102,11 +101,8 @@ class SubmittedPapersController(
     }
 
     fun setTeacherFilter(email: String?) { _filters.value = _filters.value.copy(teacherEmail = email) }
-    fun setDeptFilter(deptId: String?) { _filters.value = _filters.value.copy(deptId = deptId) }
-    fun setSemesterFilter(semester: Int?) { _filters.value = _filters.value.copy(semester = semester) }
-    fun setShiftFilter(shift: Session?) { _filters.value = _filters.value.copy(shift = shift) }
-    fun setScope(scope: ShiftScope) {
-        _filters.value = _filters.value.copy(deptId = scope.deptId, sessionId = scope.sessionId, shift = scope.shift)
+    fun setScope(scope: DeptSemesterScope) {
+        _filters.value = _filters.value.copy(deptId = scope.deptId, semester = scope.semester, shift = scope.shift)
     }
     fun clearFilters() { _filters.value = SubmittedPapersFilters() }
 

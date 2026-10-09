@@ -10,10 +10,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.domain.model.AcademicSession
+import com.mbd.cmscommon.domain.model.DeptSemesterScope
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.ShiftScope
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
@@ -71,6 +73,63 @@ fun ShiftScopeSelector(
                 onSelected = { name -> onScopeChange(scope.withShift(Session.entries.firstOrNull { it.name == name })) },
             )
             trailingContent()
+        }
+    }
+}
+
+/**
+ * The Department / Semester / Shift filter bar for browse/list screens (vs. [ShiftScopeSelector]'s
+ * Department -> Session -> Shift cascade, used where picking one exact academic batch is the point --
+ * composing a notification's audience, creating a calendar event, a teacher's own class picker). Every
+ * level is independent and defaults to "All ..."; a "Clear filters" action appears once any is chosen --
+ * the same look and behaviour as the master timetable's own filter bar.
+ */
+@Composable
+fun DeptSemesterScopeSelector(
+    scope: DeptSemesterScope,
+    departments: List<Pair<String, String>>,
+    availableSemesters: List<Int>,
+    onScopeChange: (DeptSemesterScope) -> Unit,
+    modifier: Modifier = Modifier,
+    label: String? = "SHOW",
+    /** False when the caller already renders its own "Clear filters" covering more than this scope
+     * (e.g. also a teacher filter) -- avoids showing two clear actions at once. */
+    showClearAction: Boolean = true,
+    trailingContent: @Composable RowScope.() -> Unit = {},
+) {
+    val deptOptions = departments.map { (id, name) -> CmsEntityOption(id, name) }
+    val semesterOptions = availableSemesters.map { CmsEntityOption(it.toString(), "Semester $it") }
+    val shiftOptions = Session.entries.map { CmsEntityOption(it.name, it.label) }
+
+    Column(modifier.fillMaxWidth()) {
+        if (label != null) {
+            Text(label, color = ModMuted, style = CmsTextStyles.eyebrow)
+            Spacer(Modifier.height(6.dp))
+        }
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            DropdownChip(
+                selectedLabel = deptOptions.firstOrNull { it.id == scope.deptId }?.label ?: scope.deptId,
+                emptyLabel = "All departments",
+                options = deptOptions,
+                onSelected = { onScopeChange(scope.copy(deptId = it)) },
+            )
+            DropdownChip(
+                selectedLabel = semesterOptions.firstOrNull { it.id == scope.semester?.toString() }?.label,
+                emptyLabel = "All semesters",
+                options = semesterOptions,
+                onSelected = { id -> onScopeChange(scope.copy(semester = id?.toIntOrNull())) },
+            )
+            DropdownChip(
+                selectedLabel = scope.shift?.label,
+                emptyLabel = "All shifts",
+                options = shiftOptions,
+                onSelected = { name -> onScopeChange(scope.copy(shift = name?.let { n -> Session.entries.firstOrNull { it.name == n } })) },
+            )
+            trailingContent()
+        }
+        if (showClearAction && !scope.isEmpty) {
+            Spacer(Modifier.height(8.dp))
+            TextButton(onClick = { onScopeChange(DeptSemesterScope.ALL) }) { Text("Clear filters") }
         }
     }
 }

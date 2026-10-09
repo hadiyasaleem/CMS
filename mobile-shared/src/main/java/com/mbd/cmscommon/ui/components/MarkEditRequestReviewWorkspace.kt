@@ -1,7 +1,8 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.controller.availableSemesters
 import com.mbd.cmscommon.controller.inScope
-import com.mbd.cmscommon.domain.model.ShiftScope
+import com.mbd.cmscommon.domain.model.DeptSemesterScope
 import com.mbd.cmscommon.controller.departmentScopeOptions
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.horizontalScroll
@@ -90,8 +91,8 @@ fun MarkEditRequestReviewWorkspace(
     onClearError: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // Department -> Session -> Shift filter: a request's shift comes from its student's roll number.
-    var filterScope by remember { mutableStateOf(ShiftScope.ALL) }
+    // Department / Semester / Shift filter: a request's shift comes from its student's roll number.
+    var filterScope by remember { mutableStateOf(DeptSemesterScope.ALL) }
     val requests = requests.inScope(filterScope, sessions)
     val attendanceRequests = attendanceRequests.inScope(filterScope, sessions)
     var query by remember { mutableStateOf("") }
@@ -133,7 +134,7 @@ fun MarkEditRequestReviewWorkspace(
     val attendanceVisible = attendanceFiltered.sortedByDescending { it.requestedAt }
 
     LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { ShiftScopeSelector(filterScope, departmentScopeOptions(departments), sessions, { filterScope = it }) }
+        item { DeptSemesterScopeSelector(filterScope, departmentScopeOptions(departments), sessions.availableSemesters(), { filterScope = it }) }
 
         if (!errorMessage.isNullOrBlank()) {
             item { CmsNotice(errorMessage, tone = NoticeTone.Error, onDismiss = onClearError) }

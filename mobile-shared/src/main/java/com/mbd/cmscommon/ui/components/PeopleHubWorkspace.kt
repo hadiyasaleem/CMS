@@ -7,7 +7,7 @@ import compose.icons.tablericons.School
 import compose.icons.tablericons.UserCheck
 import compose.icons.tablericons.Users
 import com.mbd.cmscommon.controller.ScopeFilterOptions
-import com.mbd.cmscommon.domain.model.ShiftScope
+import com.mbd.cmscommon.domain.model.DeptSemesterScope
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -75,10 +75,11 @@ fun PeopleHubWorkspace(
     loading: Boolean,
     errorMessage: String?,
     onRetry: () -> Unit,
-    /** The Department -> Session -> Shift filter for the counts; hidden when [filterOptions] is null. */
-    filterScope: ShiftScope = ShiftScope.ALL,
+    /** The Department / Semester / Shift filter for the counts; hidden when [filterOptions] is null. */
+    filterScope: DeptSemesterScope = DeptSemesterScope.ALL,
     filterOptions: ScopeFilterOptions? = null,
-    onFilterScope: (ShiftScope) -> Unit = {},
+    availableSemesters: List<Int> = emptyList(),
+    onFilterScope: (DeptSemesterScope) -> Unit = {},
     onOpen: (PeopleDestination) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -88,7 +89,7 @@ fun PeopleHubWorkspace(
             fullSpanItem { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
         }
         if (filterOptions != null) {
-            fullSpanItem { ShiftScopeSelector(filterScope, filterOptions.departments, filterOptions.sessions, onFilterScope) }
+            fullSpanItem { DeptSemesterScopeSelector(filterScope, filterOptions.departments, availableSemesters, onFilterScope) }
         }
         if (loading && snapshot == null) {
             fullSpanItems(3) { PeopleSkeleton() }

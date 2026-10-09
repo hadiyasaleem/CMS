@@ -3,9 +3,10 @@ package com.mbd.cmscommon.ui.components
 import compose.icons.TablerIcons
 import compose.icons.tablericons.AlertTriangle
 import compose.icons.tablericons.CircleCheck
+import com.mbd.cmscommon.controller.availableSemesters
 import com.mbd.cmscommon.controller.inScope
 import com.mbd.cmscommon.controller.ownScopeOptions
-import com.mbd.cmscommon.domain.model.ShiftScope
+import com.mbd.cmscommon.domain.model.DeptSemesterScope
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -81,8 +82,8 @@ fun ExamPaperSubmissionWorkspace(
     onDelete: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // Department -> Session -> Shift filter over the datesheets this teacher sets papers for.
-    var filterScope by remember { mutableStateOf(ShiftScope.ALL) }
+    // Department / Semester / Shift filter over the datesheets this teacher sets papers for.
+    var filterScope by remember { mutableStateOf(DeptSemesterScope.ALL) }
     val filterOptions = ownScopeOptions(slots.map { it.datesheet.sessionId }.toSet(), sessions)
     val slots = slots.inScope(filterScope, sessions)
     var deleteTarget by remember { mutableStateOf<ExamPaperSubmission?>(null) }
@@ -98,7 +99,7 @@ fun ExamPaperSubmissionWorkspace(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         if (filterOptions.sessions.isNotEmpty()) {
-            item { ShiftScopeSelector(filterScope, filterOptions.departments, filterOptions.sessions, { filterScope = it }) }
+            item { DeptSemesterScopeSelector(filterScope, filterOptions.departments, filterOptions.sessions.availableSemesters(), { filterScope = it }) }
         }
 
         if (slots.isEmpty()) {

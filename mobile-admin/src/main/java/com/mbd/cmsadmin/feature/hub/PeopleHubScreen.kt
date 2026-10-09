@@ -1,6 +1,6 @@
 package com.mbd.cmsadmin.feature.hub
 
-import com.mbd.cmscommon.domain.model.ShiftScope
+import com.mbd.cmscommon.domain.model.DeptSemesterScope
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -45,8 +45,9 @@ class PeopleHubViewModel @Inject constructor(
     val error = controller.loadError
     val filterScope = controller.filterScope
     val filterOptions = controller.filterOptions
+    val availableSemesters = controller.availableSemesters
     fun refresh() = controller.refresh()
-    fun setFilterScope(scope: ShiftScope) = controller.setFilterScope(scope)
+    fun setFilterScope(scope: DeptSemesterScope) = controller.setFilterScope(scope)
 }
 
 @Composable
@@ -59,6 +60,7 @@ fun PeopleHubScreen(
     val error by viewModel.error.collectAsState()
     val filterScope by viewModel.filterScope.collectAsState()
     val filterOptions by viewModel.filterOptions.collectAsState()
+    val availableSemesters by viewModel.availableSemesters.collectAsState()
 
     PeopleHubWorkspace(
         heroPainter = painterResource(R.drawable.admin_people_hero),
@@ -68,6 +70,7 @@ fun PeopleHubScreen(
         onRetry = viewModel::refresh,
         filterScope = filterScope,
         filterOptions = filterOptions,
+        availableSemesters = availableSemesters,
         onFilterScope = viewModel::setFilterScope,
         onOpen = onOpen,
     )

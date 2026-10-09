@@ -2,8 +2,8 @@ package com.mbd.cmscommon.controller
 
 import com.mbd.cmscommon.util.FailureSummary
 import com.mbd.cmscommon.domain.model.AcademicSession
+import com.mbd.cmscommon.domain.model.DeptSemesterScope
 import com.mbd.cmscommon.domain.model.ExamPaperSubmission
-import com.mbd.cmscommon.domain.model.ShiftScope
 import com.mbd.cmscommon.domain.model.StudentProfile
 import com.mbd.cmscommon.domain.repository.DepartmentRepository
 import com.mbd.cmscommon.domain.model.MarkEditRequest
@@ -35,15 +35,18 @@ class PeopleHubController(
     private val departmentRepository: DepartmentRepository? = null,
 ) : ScreenController(scope) {
 
-    private val _filterScope = MutableStateFlow(ShiftScope.ALL)
+    private val _filterScope = MutableStateFlow(DeptSemesterScope.ALL)
 
-    /** The Department -> Session -> Shift filter the hub's counts follow. */
-    val filterScope: StateFlow<ShiftScope> = _filterScope.asStateFlow()
+    /** The Department / Semester / Shift filter the hub's counts follow. */
+    val filterScope: StateFlow<DeptSemesterScope> = _filterScope.asStateFlow()
 
     private val _filterOptions = MutableStateFlow(ScopeFilterOptions())
     val filterOptions: StateFlow<ScopeFilterOptions> = _filterOptions.asStateFlow()
 
-    fun setFilterScope(scope: ShiftScope) {
+    private val _availableSemesters = MutableStateFlow<List<Int>>(emptyList())
+    val availableSemesters: StateFlow<List<Int>> = _availableSemesters.asStateFlow()
+
+    fun setFilterScope(scope: DeptSemesterScope) {
         _filterScope.value = scope
         publish()
     }
@@ -137,6 +140,7 @@ class PeopleHubController(
                         cachedProfiles = profiles
                         _filterOptions.value = departments?.let { ScopeFilterOptions.of(it, sessions) }
                             ?: ScopeFilterOptions(sessions.map { it.deptId to it.deptId.uppercase() }.distinct(), sessions)
+                        _availableSemesters.value = sessions.availableSemesters()
                     }
 
                     publish()
@@ -177,16 +181,22 @@ data class PeopleHubSources(
 )
 
 /** The People hub counts inside a scope; with nothing chosen they are college-wide. */
-fun peopleHubSnapshotInScope(sources: PeopleHubSources, scope: ShiftScope): PeopleHubSnapshot {
+fun peopleHubSnapshotInScope(sources: PeopleHubSources, scope: DeptSemesterScope): PeopleHubSnapshot {
     if (scope.isEmpty) {
         return peopleHubSnapshot(sources.teachers, sources.activeStudentCount, sources.linkRequests, sources.markEdits, sources.submissions.size)
     }
     val activeIds = sources.sessions.filter { it.isActive && scope.matches(it) }.map { it.sessionId }.toSet()
     return peopleHubSnapshot(
         teachers = sources.teachers.filter { scope.deptId == null || it.deptId == scope.deptId },
-        studentCount = sources.profiles.count { it.sessionId in activeIds && scope.matches(deptOfSession(it.sessionId, sources.sessions), it.sessionId, it.shift) },
+        studentCount = sources.profiles.count { profile ->
+            profile.sessionId in activeIds && scope.matchesSessionItem(profile.sessionId, null, profile.shift, sources.sessions)
+        },
         linkRequests = sources.linkRequests.inScope(scope, sources.sessions),
         markEditRequests = sources.markEdits.inScope(scope, sources.sessions),
-        submittedPapers = submittedPapersMatching(sources.submissions, SubmittedPapersFilters(deptId = scope.deptId, sessionId = scope.sessionId, shift = scope.shift), sources.sessions).size,
+        submittedPapers = submittedPapersMatching(
+            sources.submissions,
+            SubmittedPapersFilters(deptId = scope.deptId, semester = scope.semester, shift = scope.shift),
+            sources.sessions,
+        ).size,
     )
 }

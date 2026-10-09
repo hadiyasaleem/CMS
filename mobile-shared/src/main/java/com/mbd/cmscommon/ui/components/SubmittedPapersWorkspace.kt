@@ -1,7 +1,8 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.controller.availableSemesters
 import com.mbd.cmscommon.controller.departmentScopeOptions
-import com.mbd.cmscommon.domain.model.ShiftScope
+import com.mbd.cmscommon.domain.model.DeptSemesterScope
 import com.mbd.cmscommon.domain.model.AcademicSession
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -58,7 +59,7 @@ fun SubmittedPapersWorkspace(
     notice: String?,
     onSetTeacherFilter: (String?) -> Unit,
     sessions: List<AcademicSession>,
-    onSetScope: (ShiftScope) -> Unit,
+    onSetScope: (DeptSemesterScope) -> Unit,
     onClearFilters: () -> Unit,
     onDownload: (ExamPaperSubmission) -> Unit,
     onConsumeNotice: () -> Unit,
@@ -122,7 +123,7 @@ private fun PapersFilterBar(
     filters: SubmittedPapersFilters,
     onSetTeacherFilter: (String?) -> Unit,
     sessions: List<AcademicSession>,
-    onSetScope: (ShiftScope) -> Unit,
+    onSetScope: (DeptSemesterScope) -> Unit,
     onClearFilters: () -> Unit,
 ) {
     val teacherOptions = teachers.sortedBy { it.name }.map { CmsEntityOption(it.email, it.name) }
@@ -135,7 +136,7 @@ private fun PapersFilterBar(
             }
         }
         Spacer(Modifier.height(6.dp))
-        ShiftScopeSelector(filters.scope, departmentScopeOptions(departments), sessions, onSetScope, label = null) {
+        DeptSemesterScopeSelector(filters.scope, departmentScopeOptions(departments), sessions.availableSemesters(), onSetScope, label = null, showClearAction = false) {
             DropdownChip(
                 selectedLabel = teacherOptions.firstOrNull { it.id == filters.teacherEmail }?.label,
                 emptyLabel = "All teachers",

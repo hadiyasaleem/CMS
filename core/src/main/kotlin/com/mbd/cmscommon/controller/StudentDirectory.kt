@@ -1,6 +1,6 @@
 package com.mbd.cmscommon.controller
 
-import com.mbd.cmscommon.domain.model.ShiftScope
+import com.mbd.cmscommon.domain.model.DeptSemesterScope
 import com.mbd.cmscommon.util.StudentIdCodec
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.Department
@@ -44,18 +44,18 @@ enum class StudentAccountFilter(val label: String) {
 data class StudentDirectoryQuery(
     val search: String = "",
     val deptId: String? = null,
-    val sessionId: String? = null,
+    val semester: Int? = null,
     val shift: Session? = null,
     val enrollmentStatus: String? = null,
     val account: StudentAccountFilter = StudentAccountFilter.ALL,
     val sort: StudentDirectorySort = StudentDirectorySort.ROLL,
     val page: Int = 0,
 ) {
-    /** The Department -> Session -> Shift part of the query. */
-    val scope: ShiftScope get() = ShiftScope(deptId, sessionId, shift)
+    /** The Department / Semester / Shift part of the query. */
+    val scope: DeptSemesterScope get() = DeptSemesterScope(deptId, semester, shift)
 
     val hasFilters: Boolean
-        get() = search.isNotBlank() || deptId != null || sessionId != null || shift != null ||
+        get() = search.isNotBlank() || deptId != null || semester != null || shift != null ||
             enrollmentStatus != null || account != StudentAccountFilter.ALL
 }
 
@@ -76,7 +76,7 @@ fun studentDirectoryPage(all: List<StudentDirectoryRow>, query: StudentDirectory
         val p = row.profile
         (search.isEmpty() || listOfNotNull(p.name, p.rollNumber, p.universityRollNo, p.registrationNo, p.linkedEmail, p.fatherName)
             .any { it.contains(search, ignoreCase = true) }) &&
-            query.scope.matches(row.session?.deptId ?: StudentIdCodec.deptIdOf(p.sessionId), p.sessionId, p.shift) &&
+            query.scope.matches(row.session?.deptId ?: StudentIdCodec.deptIdOf(p.sessionId), row.session?.currentSemester, p.shift) &&
             (query.enrollmentStatus == null || p.enrollmentStatus.equals(query.enrollmentStatus, ignoreCase = true)) &&
             when (query.account) {
                 StudentAccountFilter.ALL -> true
@@ -141,25 +141,13 @@ class StudentDirectoryController(
 
     fun setSearch(value: String) = _query.update { it.copy(search = value, page = 0) }
 
-    fun setDepartment(deptId: String?) = _query.update {
-        val keepSession = it.sessionId != null && sessions.value.firstOrNull { s -> s.sessionId == it.sessionId }?.deptId == deptId
-        it.copy(deptId = deptId, sessionId = if (keepSession) it.sessionId else null, page = 0)
-    }
-
-    fun setSession(sessionId: String?) = _query.update {
-        val session = sessions.value.firstOrNull { s -> s.sessionId == sessionId }
-        it.copy(
-            sessionId = sessionId,
-            deptId = session?.deptId ?: it.deptId,
-            shift = it.shift?.takeIf { shift -> session == null || session.runs(shift) },
-            page = 0,
-        )
-    }
+    fun setDepartment(deptId: String?) = _query.update { it.copy(deptId = deptId, page = 0) }
+    fun setSemester(semester: Int?) = _query.update { it.copy(semester = semester, page = 0) }
     fun setShift(shift: Session?) = _query.update { it.copy(shift = shift, page = 0) }
 
-    /** Applies the shared Department -> Session -> Shift filter in one step. */
-    fun setScope(scope: ShiftScope) = _query.update {
-        it.copy(deptId = scope.deptId, sessionId = scope.sessionId, shift = scope.shift, page = 0)
+    /** Applies the shared Department / Semester / Shift filter in one step. */
+    fun setScope(scope: DeptSemesterScope) = _query.update {
+        it.copy(deptId = scope.deptId, semester = scope.semester, shift = scope.shift, page = 0)
     }
     fun setEnrollmentStatus(status: String?) = _query.update { it.copy(enrollmentStatus = status, page = 0) }
     fun setAccount(account: StudentAccountFilter) = _query.update { it.copy(account = account, page = 0) }
@@ -170,5 +158,5 @@ class StudentDirectoryController(
 
     /** Exports every student matching the current filters, not just the visible page. */
     fun exportDocument(): ExportDocument =
-        studentDirectoryExport(page.value.matches, _query.value.hasFilters, _query.value.scope.title(departments.value, sessions.value))
+        studentDirectoryExport(page.value.matches, _query.value.hasFilters, _query.value.scope.title(departments.value))
 }

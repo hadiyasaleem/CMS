@@ -1,11 +1,12 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.controller.availableSemesters
 import com.mbd.cmscommon.controller.departmentScopeOptions
 import com.mbd.cmscommon.controller.scopeDepartments
 import com.mbd.cmscommon.controller.scopeSessions
 import com.mbd.cmscommon.controller.scopeInsights
 import com.mbd.cmscommon.controller.title
-import com.mbd.cmscommon.domain.model.ShiftScope
+import com.mbd.cmscommon.domain.model.DeptSemesterScope
 import com.mbd.cmscommon.export.ExportDocument
 import com.mbd.cmscommon.export.ExportFormat
 import com.mbd.cmscommon.export.insightsExport
@@ -101,7 +102,7 @@ fun InsightsWorkspace(
 ) {
     var tab by remember { mutableStateOf(InsightsTab.SESSIONS) }
     var query by remember { mutableStateOf("") }
-    var filterScope by remember { mutableStateOf(ShiftScope.ALL) }
+    var filterScope by remember { mutableStateOf(DeptSemesterScope.ALL) }
     var examTypeFilter by remember { mutableStateOf<ExamType?>(null) }
 
     val scope = if (viewer == InsightsViewer.TEACHER) {
@@ -109,7 +110,7 @@ fun InsightsWorkspace(
     } else {
         null
     }
-    // Department -> Session -> Shift filter: a teacher's options are the sessions they teach.
+    // Department / Semester / Shift filter: a teacher's department options are the ones they teach in.
     val filterDepartments = if (viewer == InsightsViewer.TEACHER) assignments.scopeDepartments() else departmentScopeOptions(departments)
     val filterSessions = if (viewer == InsightsViewer.TEACHER) assignments.scopeSessions() else sessions
     val inScope = scopeInsights(scope?.overviews ?: overviews, scope?.atRisk ?: atRisk, scope?.examStats ?: examStats, filterScope, sessions)
@@ -144,7 +145,7 @@ fun InsightsWorkspace(
     if (onExport != null) {
         TopBarActions {
             ExportMenuButton(
-                onExport = { format -> onExport(insightsExport(filteredOverviews, filteredRisk, filteredExams, ::sessionLabel, filterScope.title(filterDepartments, sessions)), format) },
+                onExport = { format -> onExport(insightsExport(filteredOverviews, filteredRisk, filteredExams, ::sessionLabel, filterScope.title(filterDepartments)), format) },
                 enabled = !loading,
                 tint = CmsTheme.colors.onInk,
             )
@@ -181,7 +182,7 @@ fun InsightsWorkspace(
                     singleLine = true,
                 )
                 Spacer(Modifier.height(8.dp))
-                ShiftScopeSelector(filterScope, filterDepartments, filterSessions, { filterScope = it }, label = null)
+                DeptSemesterScopeSelector(filterScope, filterDepartments, filterSessions.availableSemesters(), { filterScope = it }, label = null)
                 if (tab == InsightsTab.ASSESSMENTS) {
                     Spacer(Modifier.height(8.dp))
                     Row(

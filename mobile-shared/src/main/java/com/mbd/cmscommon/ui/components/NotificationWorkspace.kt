@@ -4,8 +4,10 @@ import com.mbd.cmscommon.controller.NotificationPublisherKind
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.ShiftMode
+import com.mbd.cmscommon.controller.availableSemesters
 import com.mbd.cmscommon.controller.inScope
 import com.mbd.cmscommon.controller.departmentScopeOptions
+import com.mbd.cmscommon.domain.model.DeptSemesterScope
 import com.mbd.cmscommon.domain.model.ShiftScope
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -71,8 +73,8 @@ fun NotificationControllerWorkspace(controller: NotificationsController, modifie
     val departments by controller.departments.collectAsState()
     val publishSessions by controller.publishSessions.collectAsState()
     val teachingShifts by controller.teachingShifts.collectAsState()
-    // Department -> Session -> Shift filter over each notice's audience (students are already scoped to theirs).
-    var filterScope by remember { mutableStateOf(ShiftScope.ALL) }
+    // Department / Semester / Shift filter over each notice's audience (students are already scoped to theirs).
+    var filterScope by remember { mutableStateOf(DeptSemesterScope.ALL) }
     val showScopeFilter = controller.viewerRole != NotificationTargetRole.STUDENT && publishSessions.isNotEmpty()
     val filterDepartments = if (departments.isNotEmpty()) {
         departmentScopeOptions(departments)
@@ -102,7 +104,7 @@ fun NotificationControllerWorkspace(controller: NotificationsController, modifie
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         if (showScopeFilter) {
-            item { ShiftScopeSelector(filterScope, filterDepartments, publishSessions, { filterScope = it }) }
+            item { DeptSemesterScopeSelector(filterScope, filterDepartments, publishSessions.availableSemesters(), { filterScope = it }) }
         }
 
         if (!loadError.isNullOrBlank()) {

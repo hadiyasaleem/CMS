@@ -1,7 +1,8 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.controller.availableSemesters
 import com.mbd.cmscommon.controller.inScope
-import com.mbd.cmscommon.domain.model.ShiftScope
+import com.mbd.cmscommon.domain.model.DeptSemesterScope
 import com.mbd.cmscommon.controller.departmentScopeOptions
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
@@ -88,7 +89,7 @@ fun LinkRequestReviewWorkspace(
     modifier: Modifier = Modifier,
 ) {
     // Department -> Session -> Shift filter over the claimed session and roll number.
-    var filterScope by remember { mutableStateOf(ShiftScope.ALL) }
+    var filterScope by remember { mutableStateOf(DeptSemesterScope.ALL) }
     val requests = requests.inScope(filterScope, sessions)
     var query by remember { mutableStateOf("") }
     var sort by remember { mutableStateOf(LinkRequestSort.NEWEST) }
@@ -126,7 +127,7 @@ fun LinkRequestReviewWorkspace(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { ShiftScopeSelector(filterScope, departmentScopeOptions(departments), sessions, { filterScope = it }) }
+        item { DeptSemesterScopeSelector(filterScope, departmentScopeOptions(departments), sessions.availableSemesters(), { filterScope = it }) }
 
         if (!errorMessage.isNullOrBlank()) {
             item { CmsNotice(errorMessage, tone = NoticeTone.Error, onDismiss = onClearError) }

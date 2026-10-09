@@ -1,7 +1,8 @@
 package com.mbd.cmscommon.ui.components
 
+import com.mbd.cmscommon.controller.availableSemesters
 import com.mbd.cmscommon.controller.departmentScopeOptions
-import com.mbd.cmscommon.domain.model.ShiftScope
+import com.mbd.cmscommon.domain.model.DeptSemesterScope
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -47,7 +48,6 @@ import com.mbd.cmscommon.controller.StudentDirectoryRow
 import com.mbd.cmscommon.controller.StudentDirectorySort
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.Department
-import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.export.ExportDocument
 import com.mbd.cmscommon.export.ExportFormat
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
@@ -72,11 +72,8 @@ fun StudentDirectoryWorkspace(
     loaded: Boolean,
     errorMessage: String?,
     onSearch: (String) -> Unit,
-    onDepartment: (String?) -> Unit,
-    onSession: (String?) -> Unit,
-    onShift: (Session?) -> Unit,
-    /** The shared Department -> Session -> Shift filter. */
-    onScope: (ShiftScope) -> Unit,
+    /** The shared Department / Semester / Shift filter. */
+    onScope: (DeptSemesterScope) -> Unit,
     onEnrollmentStatus: (String?) -> Unit,
     onAccount: (StudentAccountFilter) -> Unit,
     onSort: (StudentDirectorySort) -> Unit,
@@ -119,7 +116,7 @@ fun StudentDirectoryWorkspace(
                     singleLine = true,
                 )
                 Spacer(Modifier.height(8.dp))
-                ShiftScopeSelector(query.scope, departmentScopeOptions(departments), sessions, onScope, label = "FILTER")
+                DeptSemesterScopeSelector(query.scope, departmentScopeOptions(departments), sessions.availableSemesters(), onScope, label = "FILTER")
                 Spacer(Modifier.height(8.dp))
                 Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterDropdown("Status", query.enrollmentStatus, listOf(null to "Any status") + enrollmentStatuses.map { it to pretty(it) }, onEnrollmentStatus)

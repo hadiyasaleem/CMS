@@ -35,6 +35,7 @@ fun PeopleHubScreen(
     val errorMessage by controller.loadError.collectAsState()
     val filterScope by controller.filterScope.collectAsState()
     val filterOptions by controller.filterOptions.collectAsState()
+    val availableSemesters by controller.availableSemesters.collectAsState()
 
     PeopleHubWorkspace(
         heroPainter = painterResource("admin-people-hero.jpg"),
@@ -44,6 +45,7 @@ fun PeopleHubScreen(
         onRetry = controller::refresh,
         filterScope = filterScope,
         filterOptions = filterOptions,
+        availableSemesters = availableSemesters,
         onFilterScope = controller::setFilterScope,
         onOpen = onOpen,
     )
