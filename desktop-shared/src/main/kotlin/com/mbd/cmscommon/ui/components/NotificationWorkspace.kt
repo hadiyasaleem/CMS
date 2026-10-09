@@ -118,26 +118,30 @@ fun NotificationControllerWorkspace(controller: NotificationsController, modifie
             item { CmsNotice(notice ?: "", tone = NoticeTone.Success, onDismiss = controller::consumeNotice) }
         }
 
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                NoticeTab.entries.forEach { option ->
-                    CmsChip(option.label, selected = tab == option, onClick = { tab = option })
+        val showTabs = controller.publisherKind != NotificationPublisherKind.NONE
+        if (showTabs) {
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    NoticeTab.entries.forEach { option ->
+                        CmsChip(option.label, selected = tab == option, onClick = { tab = option })
+                    }
                 }
             }
         }
 
-        val list = if (tab == NoticeTab.INBOX) inbox else sent
+        val effectiveTab = if (showTabs) tab else NoticeTab.INBOX
+        val list = if (effectiveTab == NoticeTab.INBOX) inbox else sent
         when {
             loading -> items(3) { SkeletonRow() }
-            list.isEmpty() -> item { NotificationEmpty(tab) }
+            list.isEmpty() -> item { NotificationEmpty(effectiveTab) }
             else -> items(list, key = { it.notificationId }) { notification ->
                 NotificationCard(
                     notification = notification,
                     departmentLabel = departments.firstOrNull { it.deptId == notification.targetDeptId }?.name,
-                    sentView = tab == NoticeTab.SENT,
+                    sentView = effectiveTab == NoticeTab.SENT,
                     busy = busyActionId == notification.notificationId,
                     rowError = rowErrors[notification.notificationId],
                     onDelete = { pendingDelete = notification },
