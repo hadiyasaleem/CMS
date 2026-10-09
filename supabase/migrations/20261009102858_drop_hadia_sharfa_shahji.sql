@@ -1,0 +1,1 @@
+drop table if exists public.hadia_sharfa_laraib;
