@@ -260,7 +260,6 @@ fun AttendanceRecordsScreen(
     val fullLoading by viewModel.fullLoading.collectAsState()
 
     // Saveable so the picks survive opening a student and coming back.
-    var semester by rememberSaveable { mutableStateOf<Int?>(null) }
     var mode by rememberSaveable { mutableStateOf(ReportMode.FULL) }
     var month by rememberSaveable { mutableStateOf<YearMonth?>(null) }
     var course by rememberSaveable { mutableStateOf<String?>(null) }
@@ -269,15 +268,15 @@ fun AttendanceRecordsScreen(
     var actionError by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
 
-    // Department/current-semester/shift(/program type, if two share a dept+semester) resolves the
-    // batch; no shift means both shifts of it. "semester" below is separate -- which of that batch's
-    // OWN semesters (1..8) to view, since a batch now in semester 5 can still show semester 3 records.
+    // Department/semester/shift(/program type, if two share a dept+semester) resolves the batch and
+    // is also the semester whose records are shown -- no shift means both shifts of it.
     var batchScope by rememberSaveable(stateSaver = BatchScopeSaver) { mutableStateOf(DeptSemesterScope.ALL) }
     val selectedSession = batchScope.resolveSession(sessions)
     val deptId = batchScope.deptId
     val year = selectedSession?.startYear
     val shift = batchScope.shift
     val sessionId = selectedSession?.sessionId
+    val semester = batchScope.semester
 
     LaunchedEffect(sessionId, semester, shift) {
         val sid = sessionId; val sem = semester; val sh = shift
@@ -337,7 +336,7 @@ fun AttendanceRecordsScreen(
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        SectionHeader(eyebrow = "Reporting", title = "Attendance Records", subtitle = "Find a batch by department/semester/shift, then pick which semester to view")
+        SectionHeader(eyebrow = "Reporting", title = "Attendance Records", subtitle = "Find a batch by department, semester and shift")
 
         // ── Filter header: breadcrumb (collapsed) / Export / expand-collapse toggle ──
         Surface(
@@ -367,15 +366,9 @@ fun AttendanceRecordsScreen(
                         scope = batchScope,
                         departments = departmentScopeOptions(departments),
                         availableSemesters = sessions.availableSemesters(),
-                        onScopeChange = { picked ->
-                            // Only reset the "which semester to view" pick when it actually resolves
-                            // to a different batch -- not just because a filter level changed.
-                            if (picked.resolveSession(sessions)?.sessionId != selectedSession?.sessionId) semester = null
-                            batchScope = picked; course = null; viewModel.clearFull()
-                        },
+                        onScopeChange = { picked -> batchScope = picked; course = null; viewModel.clearFull() },
                         modifier = Modifier.padding(top = 6.dp),
                     )
-                    if (sessionId != null) PickRow("SEMESTER", (selectedSession?.semesterRange ?: 1..8).map { it to "Sem $it" }, semester) { semester = it; course = null; viewModel.clearFull() }
                     if (sessionId != null && semester != null) {
                         Text("VIEW", style = CmsTextStyles.eyebrow, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 10.dp, bottom = 6.dp))
                         ModeSegmented(mode) { selectedMode -> viewModel.clearFull(); mode = selectedMode }
@@ -389,7 +382,7 @@ fun AttendanceRecordsScreen(
         }
 
         when {
-            sessionId == null || semester == null -> EmptyState("Pick a department and current semester to find the batch (add program type if two share it), then choose which semester's records to view.")
+            sessionId == null || semester == null -> EmptyState("Pick a department and semester to find the batch (add program type or shift if two share it).")
             reportLoading -> EmptyState("Loading attendance report…")
             error != null -> ErrorBanner(error!!, onRetry = {
                 viewModel.load(sessionId, semester!!, shift)

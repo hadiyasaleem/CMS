@@ -15,10 +15,8 @@ enum class ReportMode(val label: String, val short: String) {
 
 /** The attendance browser's picks, held by the nav host so they survive opening a student and coming back. */
 class AttendanceRecordsSelection {
-    /** Department/current-semester/shift(/program type) resolves the batch; [semester] below is
-     * separate -- which of that batch's OWN semesters (1..8) to view. */
+    /** Department/semester/shift(/program type) resolves the batch and is also the semester shown. */
     var batchScope by mutableStateOf(DeptSemesterScope.ALL)
-    var semester by mutableStateOf<Int?>(null)
     var mode by mutableStateOf(ReportMode.FULL)
     var month by mutableStateOf<YearMonth?>(null)
     var course by mutableStateOf<String?>(null)

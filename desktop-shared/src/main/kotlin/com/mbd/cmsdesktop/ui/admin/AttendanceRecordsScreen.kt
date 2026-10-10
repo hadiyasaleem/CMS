@@ -106,8 +106,8 @@ private val DAY_W = 30.dp
 private val TOT_W = 38.dp
 
 /**
- * Attendance records browser: pick a department/year/shift to resolve a session, then a
- * semester and (for the full monthly view) a subject + month, and render either the semester
+ * Attendance records browser: pick a department/semester/shift to resolve a session, then
+ * (for the full monthly view) a subject + month, and render either the semester
  * summary report cards, the monthly summary cards, or a day-by-day attendance register grid
  * with per-cell detail. CSV/PDF export uses the shared [buildAttendanceExportPayload] domain
  * helper plus [DocumentExporter].
@@ -136,7 +136,6 @@ fun AttendanceRecordsScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var retryVersion by remember { mutableStateOf(0) }
 
-    var semester by selection::semester
     var mode by selection::mode
     var month by selection::month
     var course by selection::course
@@ -151,15 +150,15 @@ fun AttendanceRecordsScreen(
         sessionRepository.observeAllSessions().collect { sessions = it }
     }
 
-    // Department/current-semester/shift(/program type, if two share a dept+semester) resolves the
-    // batch; no shift means both shifts of it. "semester" below is separate -- which of that batch's
-    // OWN semesters (1..8) to view, since a batch now in semester 5 can still show semester 3 records.
+    // Department/semester/shift(/program type, if two share a dept+semester) resolves the batch and
+    // is also the semester whose records are shown -- no shift means both shifts of it.
     var batchScope by selection::batchScope
     val selectedSession = batchScope.resolveSession(sessions)
     val deptId = batchScope.deptId
     val year = selectedSession?.startYear
     val shift = batchScope.shift
     val sessionId = selectedSession?.sessionId
+    val semester = batchScope.semester
 
     // Reads the cached roster, attendance, term, and curriculum whenever the selected scope changes.
     LaunchedEffect(sessionId, semester, shift, retryVersion) {
@@ -277,7 +276,7 @@ fun AttendanceRecordsScreen(
     }
 
     Column(Modifier.fillMaxWidth()) {
-        SectionHeader("Attendance Records", "Reporting", "Find a batch by department/semester/shift, then pick which semester to view")
+        SectionHeader("Attendance Records", "Reporting", "Find a batch by department, semester and shift")
 
         Surface(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
@@ -308,9 +307,6 @@ fun AttendanceRecordsScreen(
                         departments = departmentScopeOptions(departments),
                         availableSemesters = sessions.availableSemesters(),
                         onScopeChange = { picked ->
-                            // Only reset the "which semester to view" pick when it actually resolves
-                            // to a different batch -- not just because a filter level changed.
-                            if (picked.resolveSession(sessions)?.sessionId != selectedSession?.sessionId) semester = null
                             batchScope = picked
                             course = null
                             full = emptyMap()
@@ -318,14 +314,6 @@ fun AttendanceRecordsScreen(
                         },
                         modifier = Modifier.padding(top = 6.dp),
                     )
-                    if (sessionId != null) {
-                        PickRow("SEMESTER", (selectedSession?.semesterRange ?: 1..8).map { it to "Sem $it" }, semester) {
-                            semester = it
-                            course = null
-                            full = emptyMap()
-                            fullLoading = false
-                        }
-                    }
                     if (sessionId != null && semester != null) {
                         Text(
                             "VIEW",
@@ -353,7 +341,7 @@ fun AttendanceRecordsScreen(
 
         when {
             sessionId == null || semester == null ->
-                EmptyState("Pick a department and current semester to find the batch (add program type if two share it), then choose which semester's records to view.")
+                EmptyState("Pick a department and semester to find the batch (add program type or shift if two share it).")
 
             reportLoading ->
                 EmptyState("Loading attendance report…")
