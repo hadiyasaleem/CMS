@@ -47,7 +47,8 @@ data class StudentAuthUiState(
     val resetMessage: String? = null,
     val resetError: Boolean = false,
     val registerCooldownActive: Boolean = false,
-    /** True once a reset code has been emailed -- reveals the code + new-password step below. */
+    /** True once a reset code has been emailed -- the caller shows [ResetPasswordWorkspace] instead
+     * of [StudentAuthWorkspace] while this is set. */
     val resetCodeStep: Boolean = false,
     val resetToken: String = "",
     val resetNewPassword: String = "",
@@ -73,7 +74,6 @@ data class StudentAuthActions(
 @Composable
 fun StudentAuthWorkspace(state: StudentAuthUiState, actions: StudentAuthActions, modifier: Modifier = Modifier) {
     var showPassword by remember { mutableStateOf(false) }
-    var showResetPassword by remember { mutableStateOf(false) }
 
     val scrollState = rememberScrollState()
     WithVerticalScrollbar(scrollState, modifier.fillMaxSize().background(CmsTheme.colors.faint)) {
@@ -150,59 +150,8 @@ fun StudentAuthWorkspace(state: StudentAuthUiState, actions: StudentAuthActions,
 
             Spacer(Modifier.height(12.dp))
             if (!state.registerMode) {
-                if (state.resetCodeStep) {
-                    Text(
-                        "Enter the 6-digit code we emailed to ${state.email} along with a new password.",
-                        color = CmsTheme.colors.muted,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                    Spacer(Modifier.height(10.dp))
-                    CmsTextField(
-                        value = state.resetToken,
-                        onValueChange = actions.onResetTokenChange,
-                        label = "6-digit code",
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Spacer(Modifier.height(10.dp))
-                    CmsTextField(
-                        value = state.resetNewPassword,
-                        onValueChange = actions.onResetNewPasswordChange,
-                        label = "New password",
-                        isPassword = !showResetPassword,
-                        trailingIcon = {
-                            IconButton(onClick = { showResetPassword = !showResetPassword }) {
-                                Icon(if (showResetPassword) TablerIcons.EyeOff else TablerIcons.Eye, contentDescription = "Toggle password visibility")
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Spacer(Modifier.height(6.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        FieldValidators.passwordRules(state.resetNewPassword).forEach { rule: PasswordRule ->
-                            StatusBadge(rule.label, if (rule.passed) BadgeTone.Success else BadgeTone.Neutral)
-                        }
-                    }
-                    Spacer(Modifier.height(10.dp))
-                    CmsTextField(
-                        value = state.resetConfirmPassword,
-                        onValueChange = actions.onResetConfirmPasswordChange,
-                        label = "Confirm new password",
-                        isPassword = !showResetPassword,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    CmsPrimaryButton(
-                        text = if (state.resetConfirming) "Resetting password…" else "Reset password",
-                        onClick = actions.onConfirmPasswordReset,
-                        enabled = !state.resetConfirming && state.resetToken.isNotBlank() && state.resetNewPassword.isNotBlank() && state.resetConfirmPassword.isNotBlank(),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    TextButton(onClick = actions.onCancelPasswordReset, enabled = !state.resetConfirming) { Text("Back to sign in") }
-                } else {
-                    TextButton(onClick = actions.onPasswordReset, enabled = !state.resetSending) {
-                        Text(if (state.resetSending) "Sending code…" else "Forgot password?")
-                    }
+                TextButton(onClick = actions.onPasswordReset, enabled = !state.resetSending) {
+                    Text(if (state.resetSending) "Sending code…" else "Forgot password?")
                 }
                 if (!state.resetMessage.isNullOrBlank()) {
                     Text(
@@ -212,6 +161,98 @@ fun StudentAuthWorkspace(state: StudentAuthUiState, actions: StudentAuthActions,
                         modifier = Modifier.padding(horizontal = 12.dp),
                     )
                 }
+            }
+
+            Spacer(Modifier.height(20.dp))
+            Text(
+                CollegeInfo.NAME,
+                color = CmsTheme.colors.muted,
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+    }
+}
+
+/** The reset-password step shown once [StudentAuthActions.onPasswordReset] has emailed a code --
+ * a separate screen from [StudentAuthWorkspace], not an inline section of the sign-in form. */
+@Composable
+fun ResetPasswordWorkspace(state: StudentAuthUiState, actions: StudentAuthActions, modifier: Modifier = Modifier) {
+    var showResetPassword by remember { mutableStateOf(false) }
+
+    val scrollState = rememberScrollState()
+    WithVerticalScrollbar(scrollState, modifier.fillMaxSize().background(CmsTheme.colors.faint)) {
+    Column(Modifier.fillMaxSize().verticalScroll(scrollState)) {
+        NavyBrandPanel(
+            collegeName = "Reset password",
+            description = "Enter the code we emailed you along with a new password.",
+            systemLabel = "GGC-MBD - STUDENT PORTAL",
+        )
+        Column(Modifier.fillMaxWidth().padding(24.dp)) {
+            TextButton(onClick = actions.onCancelPasswordReset, enabled = !state.resetConfirming) { Text("← Back to sign in") }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                "Enter the 6-digit code we emailed to ${state.email} along with a new password.",
+                color = CmsTheme.colors.muted,
+                style = MaterialTheme.typography.bodySmall,
+            )
+            Spacer(Modifier.height(16.dp))
+
+            if (!state.resetMessage.isNullOrBlank()) {
+                Text(
+                    state.resetMessage,
+                    color = if (state.resetError) MaterialTheme.colorScheme.error else CmsTheme.colors.success,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Spacer(Modifier.height(8.dp))
+            }
+
+            CmsTextField(
+                value = state.resetToken,
+                onValueChange = actions.onResetTokenChange,
+                label = "6-digit code",
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(Modifier.height(12.dp))
+            CmsTextField(
+                value = state.resetNewPassword,
+                onValueChange = actions.onResetNewPasswordChange,
+                label = "New password",
+                isPassword = !showResetPassword,
+                trailingIcon = {
+                    IconButton(onClick = { showResetPassword = !showResetPassword }) {
+                        Icon(if (showResetPassword) TablerIcons.EyeOff else TablerIcons.Eye, contentDescription = "Toggle password visibility")
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                FieldValidators.passwordRules(state.resetNewPassword).forEach { rule: PasswordRule ->
+                    StatusBadge(rule.label, if (rule.passed) BadgeTone.Success else BadgeTone.Neutral)
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+            CmsTextField(
+                value = state.resetConfirmPassword,
+                onValueChange = actions.onResetConfirmPasswordChange,
+                label = "Confirm new password",
+                isPassword = !showResetPassword,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            Spacer(Modifier.height(16.dp))
+            CmsPrimaryButton(
+                text = if (state.resetConfirming) "Resetting password…" else "Reset password",
+                onClick = actions.onConfirmPasswordReset,
+                enabled = !state.resetConfirming && state.resetToken.isNotBlank() && state.resetNewPassword.isNotBlank() && state.resetConfirmPassword.isNotBlank(),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            if (state.resetConfirming) {
+                Spacer(Modifier.height(8.dp))
+                CircularProgressIndicator(modifier = Modifier.height(20.dp), strokeWidth = 2.dp)
             }
 
             Spacer(Modifier.height(20.dp))

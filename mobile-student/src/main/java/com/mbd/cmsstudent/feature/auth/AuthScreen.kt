@@ -9,6 +9,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.mbd.cmscommon.ui.components.ResetPasswordWorkspace
 import com.mbd.cmscommon.ui.components.StudentAuthActions
 import com.mbd.cmscommon.ui.components.StudentAuthWorkspace
 import com.mbd.cmscommon.ui.theme.CmsTheme
@@ -16,6 +17,18 @@ import com.mbd.cmscommon.ui.theme.CmsTheme
 @Composable
 fun AuthScreen(onLoginSuccess: () -> Unit, viewModel: AuthViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsState()
+    val actions = StudentAuthActions(
+        onEmailChange = viewModel::onEmailChange,
+        onPasswordChange = viewModel::onPasswordChange,
+        onModeChange = viewModel::onModeChange,
+        onSubmit = viewModel::submit,
+        onPasswordReset = viewModel::sendPasswordReset,
+        onResetTokenChange = viewModel::onResetTokenChange,
+        onResetNewPasswordChange = viewModel::onResetNewPasswordChange,
+        onResetConfirmPasswordChange = viewModel::onResetConfirmPasswordChange,
+        onConfirmPasswordReset = viewModel::confirmPasswordReset,
+        onCancelPasswordReset = viewModel::cancelPasswordReset,
+    )
 
     Box(
         modifier = Modifier
@@ -23,20 +36,10 @@ fun AuthScreen(onLoginSuccess: () -> Unit, viewModel: AuthViewModel = hiltViewMo
             .background(CmsTheme.colors.ink)
             .statusBarsPadding(),
     ) {
-        StudentAuthWorkspace(
-            state = state,
-            actions = StudentAuthActions(
-                onEmailChange = viewModel::onEmailChange,
-                onPasswordChange = viewModel::onPasswordChange,
-                onModeChange = viewModel::onModeChange,
-                onSubmit = viewModel::submit,
-                onPasswordReset = viewModel::sendPasswordReset,
-                onResetTokenChange = viewModel::onResetTokenChange,
-                onResetNewPasswordChange = viewModel::onResetNewPasswordChange,
-                onResetConfirmPasswordChange = viewModel::onResetConfirmPasswordChange,
-                onConfirmPasswordReset = viewModel::confirmPasswordReset,
-                onCancelPasswordReset = viewModel::cancelPasswordReset,
-            ),
-        )
+        if (state.resetCodeStep) {
+            ResetPasswordWorkspace(state = state, actions = actions)
+        } else {
+            StudentAuthWorkspace(state = state, actions = actions)
+        }
     }
 }

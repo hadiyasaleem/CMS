@@ -6,6 +6,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import com.mbd.cmscommon.auth.SessionManager
 import com.mbd.cmscommon.domain.model.UserRole
 import com.mbd.cmscommon.domain.repository.UserRepository
+import com.mbd.cmscommon.ui.components.ResetPasswordWorkspace
 import com.mbd.cmscommon.ui.components.StudentAuthActions
 import com.mbd.cmscommon.ui.components.StudentAuthUiState
 import com.mbd.cmscommon.ui.components.StudentAuthWorkspace
@@ -55,5 +56,9 @@ fun StudentAuthScreen(
         onConfirmPasswordReset = { controller.confirmPasswordReset(onResolved) },
         onCancelPasswordReset = controller::cancelPasswordReset,
     )
-    StudentAuthWorkspace(state = state, actions = actions)
+    if (state.resetCodeStep) {
+        ResetPasswordWorkspace(state = state, actions = actions)
+    } else {
+        StudentAuthWorkspace(state = state, actions = actions)
+    }
 }
