@@ -156,7 +156,9 @@ fun MasterTimetableWorkspace(
         }
 
         when {
-            loading -> item { SkeletonRow() }
+            // Only show the skeleton on a genuine first load (no data yet) -- a retry or a save's own
+            // background refresh must never blank out an already-rendered grid while it's loading.
+            loading && grids.isEmpty() -> item { SkeletonRow() }
             grids.isEmpty() -> item {
                 MasterEmptyCard(
                     if (anyFilterActive) "No timetable matches these filters" else "No timetable periods yet",

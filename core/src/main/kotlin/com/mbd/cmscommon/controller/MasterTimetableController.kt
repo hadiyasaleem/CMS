@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -224,8 +225,12 @@ class MasterTimetableController(
     val sessions: StateFlow<List<AcademicSession>> =
         sessionRepository.observeAllSessions().stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    /** A single [savePeriod]/[applyShifts] call writes several rows (e.g. one upsert per day, plus any
+     * merged-session shadow rows), each invalidating the local cache's own query on its own -- without
+     * this debounce the grid would recompute and flash once per write instead of once for the whole
+     * save. Short enough that a genuine first load or an unrelated refresh never feels delayed. */
     private val allPeriods: StateFlow<List<SessionPeriod>> =
-        timetableRepository.observeAll().stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
+        timetableRepository.observeAll().debounce(200).stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     /** Every teacher/room double-booking across the whole college, keyed by period id -- see
      * [masterTimetableConflicts]. Computed from every period regardless of the active filters, so a
@@ -285,6 +290,7 @@ class MasterTimetableController(
 
     fun refresh() = launch("refresh the master timetable") {
         _loading.value = true
+        clearError()
         try {
             val failures = mutableListOf<LoadFailure>()
 
