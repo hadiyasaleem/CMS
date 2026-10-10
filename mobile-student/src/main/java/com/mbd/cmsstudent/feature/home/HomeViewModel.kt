@@ -40,7 +40,7 @@ class HomeViewModel @Inject constructor(
                 controller = c
                 combine(c.ui, c.me) { ui, student ->
                     studentHomeSnapshot(
-                        name = context.name,
+                        name = context.name.ifBlank { "Student" },
                         rollNumber = context.rollNumber,
                         session = context.session,
                         gpa = context.gpa,

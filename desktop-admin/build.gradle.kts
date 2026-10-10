@@ -38,7 +38,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi)
             packageName = "CMS Admin Desktop"
-            packageVersion = "1.0.141"
+            packageVersion = "1.0.142"
 
             windows {
                 iconFile.set(project.file("src/main/resources/icon.ico"))

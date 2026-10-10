@@ -54,7 +54,7 @@ class CurrentStudentProvider @Inject constructor(
                             sessionId = sessionId,
                             deptId = deptId,
                             rollNumber = rollNumber,
-                            name = matched?.name ?: rollNumber,
+                            name = matched?.name.orEmpty(),
                             session = session,
                             shift = matched?.shift,
                             gpa = matched?.gpa,
