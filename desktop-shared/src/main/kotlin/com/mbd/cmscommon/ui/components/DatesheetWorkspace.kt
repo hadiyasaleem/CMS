@@ -2,6 +2,7 @@ package com.mbd.cmscommon.ui.components
 
 import compose.icons.TablerIcons
 import compose.icons.tablericons.AlertTriangle
+import com.mbd.cmscommon.controller.TeacherDatesheetGrid
 import com.mbd.cmscommon.controller.availableSemesters
 import com.mbd.cmscommon.controller.departmentScopeOptions
 import com.mbd.cmscommon.domain.model.DeptSemesterScope
@@ -260,6 +261,57 @@ fun StudentDatesheetWorkspace(
             item { Text(datesheetLabel(sheet, session, null), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) }
             items(slots.sortedWith(compareBy { it.examDate ?: "9999-99-99" }), key = { it.id }) { slot ->
                 PaperRow(slot = slot, sheet = sheet, canManage = false, identityKey = null, onEdit = {}, onRemove = {})
+            }
+        }
+        item { Spacer(Modifier.height(72.dp)) }
+    }
+    }
+}
+
+/** The teacher's own read-only "My Datesheet" screen: no filters, pre-loaded with every subject
+ * they teach, one grid per semester they currently teach in. */
+@Composable
+fun TeacherDatesheetWorkspace(
+    grids: List<TeacherDatesheetGrid>,
+    identityKey: String?,
+    loading: Boolean,
+    errorMessage: String?,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val listState = rememberLazyListState()
+    WithVerticalScrollbar(listState) {
+    LazyColumn( state = listState,
+        modifier = modifier.fillMaxWidth().background(DatesheetCanvas),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        if (!errorMessage.isNullOrBlank()) {
+            item { CmsNotice(errorMessage, tone = NoticeTone.Error, actionLabel = "Retry", onAction = onRetry) }
+        }
+        if (loading && grids.isEmpty()) {
+            item { SkeletonRow() }
+        } else if (grids.isEmpty()) {
+            item {
+                Surface(shape = RoundedCornerShape(16.dp), color = ModSurface, border = BorderStroke(1.dp, ModTrack)) {
+                    Text(
+                        "No published exam dates for your subjects yet.",
+                        modifier = Modifier.padding(24.dp),
+                        color = ModMuted,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            }
+        } else {
+            grids.forEach { grid ->
+                item { Text(grid.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) }
+                items(grid.rows, key = { it.slot.id }) { row ->
+                    Column {
+                        Text(row.sessionLabel, color = ModMuted, style = MaterialTheme.typography.labelSmall)
+                        Spacer(Modifier.height(4.dp))
+                        PaperRow(slot = row.slot, sheet = row.sheet, canManage = false, identityKey = identityKey, onEdit = {}, onRemove = {})
+                    }
+                }
             }
         }
         item { Spacer(Modifier.height(72.dp)) }

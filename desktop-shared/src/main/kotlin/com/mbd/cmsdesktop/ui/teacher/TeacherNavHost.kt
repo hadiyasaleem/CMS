@@ -33,8 +33,6 @@ import com.mbd.cmscommon.controller.NotificationPublisherKind
 import com.mbd.cmscommon.data.sync.AdminDataBootstrapper
 import com.mbd.cmscommon.domain.model.CalendarViewerContext
 import com.mbd.cmscommon.domain.model.CalendarViewerRole
-import com.mbd.cmscommon.domain.model.DatesheetViewerContext
-import com.mbd.cmscommon.domain.model.DatesheetViewerRole
 import com.mbd.cmscommon.domain.model.NotificationTargetRole
 import com.mbd.cmscommon.domain.model.UserRole
 import com.mbd.cmscommon.domain.model.teacherMenuSnapshot
@@ -295,18 +293,8 @@ fun TeacherNavHost(role: UserRole.Teacher, component: DesktopAppComponent, windo
                 TeacherScreen.Datesheets -> {
                     DatesheetsScreen(
                         datesheetRepository = component.datesheetRepository(),
-                        sessionRepository = component.academicSessionRepository(),
-                        departmentRepository = component.departmentRepository(),
-                        curriculumRepository = component.curriculumRepository(),
-                        teacherRepository = component.teacherRepository(),
-                        buildingRepository = component.buildingRepository(),
-                        roomRepository = component.roomRepository(),
-                        // Datesheet management is admin-app-only now -- teachers always view-only.
-                        viewer = DatesheetViewerContext(
-                            role = DatesheetViewerRole.TEACHER,
-                            identityKey = teacherId,
-                        ),
-                        createdBy = component.sessionManager().accountKey.orEmpty(),
+                        assignmentsProvider = assignmentsProvider,
+                        identityKey = teacherId,
                     )
                 }
 

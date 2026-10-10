@@ -3,87 +3,22 @@ package com.mbd.cmscommon.ui.datesheets
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mbd.cmscommon.auth.SessionManager
-import com.mbd.cmscommon.controller.DatesheetBrowseController
-import com.mbd.cmscommon.controller.DatesheetEditorController
-import com.mbd.cmscommon.domain.model.Building
-import com.mbd.cmscommon.domain.model.DatesheetSlot
-import com.mbd.cmscommon.domain.model.Room
-import com.mbd.cmscommon.domain.model.DatesheetViewerContext
-import com.mbd.cmscommon.domain.model.DatesheetViewerRole
-import com.mbd.cmscommon.domain.model.UserRole
-import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
-import com.mbd.cmscommon.domain.repository.BuildingRepository
-import com.mbd.cmscommon.domain.repository.CurriculumRepository
+import com.mbd.cmscommon.controller.TeacherDatesheetController
 import com.mbd.cmscommon.domain.repository.DatesheetRepository
-import com.mbd.cmscommon.domain.repository.DepartmentRepository
-import com.mbd.cmscommon.domain.repository.RoomRepository
-import com.mbd.cmscommon.domain.repository.TeacherRepository
-import com.mbd.cmscommon.domain.repository.UserRepository
+import com.mbd.cmscommon.teacher.TeacherAssignmentsProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 
-/** Admin/teacher Datesheets screen support: the browse cascade plus whichever datesheet is open. */
+/** Teacher-only "My Datesheet" screen support: no filters, pre-loaded with the teacher's own
+ * subjects' published exam slots. */
 @HiltViewModel
 class DatesheetsViewModel @Inject constructor(
-    private val datesheetRepository: DatesheetRepository,
-    private val sessionRepository: AcademicSessionRepository,
-    departmentRepository: DepartmentRepository,
-    private val curriculumRepository: CurriculumRepository,
-    private val teacherRepository: TeacherRepository,
-    private val buildingRepository: BuildingRepository,
-    private val roomRepository: RoomRepository,
-    userRepository: UserRepository,
+    datesheetRepository: DatesheetRepository,
+    assignmentsProvider: TeacherAssignmentsProvider,
     private val sessionManager: SessionManager,
 ) : ViewModel() {
 
-    val browseController = DatesheetBrowseController(datesheetRepository, sessionRepository, departmentRepository, viewModelScope)
+    val controller = TeacherDatesheetController(datesheetRepository, assignmentsProvider, viewModelScope)
 
-    val viewer: StateFlow<DatesheetViewerContext> = userRepository.observeCurrentUserRole()
-        .map { role -> buildViewerContext(role) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DatesheetViewerContext(DatesheetViewerRole.TEACHER))
-
-    val allSlots: StateFlow<List<DatesheetSlot>> =
-        datesheetRepository.observeAllSlots().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-
-    val buildings: StateFlow<List<Building>> =
-        buildingRepository.observeActiveBuildings().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-
-    val rooms: StateFlow<List<Room>> =
-        roomRepository.observeActiveRooms().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-
-    private val _openDatesheetId = MutableStateFlow<String?>(null)
-    val openDatesheetId: StateFlow<String?> = _openDatesheetId.asStateFlow()
-
-    private val _editorController = MutableStateFlow<DatesheetEditorController?>(null)
-    val editorController: StateFlow<DatesheetEditorController?> = _editorController.asStateFlow()
-
-    fun openDatesheet(id: String?) {
-        _openDatesheetId.value = id
-        _editorController.value = id?.let {
-            DatesheetEditorController(it, datesheetRepository, sessionRepository, curriculumRepository, teacherRepository, buildingRepository, roomRepository, viewModelScope)
-        }
-    }
-
-    fun createDatesheet(sessionId: String, semester: Int, defaultStart: String?, defaultEnd: String?, defaultBuildingId: String?, defaultRoomId: String?, instructions: String?) {
-        viewModelScope.launch {
-            runCatching {
-                browseController.createDatesheet(sessionId, semester, defaultStart, defaultEnd, defaultBuildingId, defaultRoomId, instructions, sessionManager.accountKey.orEmpty())
-            }.onSuccess { id -> openDatesheet(id) }
-        }
-    }
-
-    // Datesheet management is admin-app-only now -- a teacher (even one with other delegated
-    // permissions) always gets a view-only DatesheetViewerContext.
-    private fun buildViewerContext(role: UserRole?): DatesheetViewerContext = when (role) {
-        is UserRole.Teacher -> DatesheetViewerContext(DatesheetViewerRole.TEACHER, identityKey = role.teacherId)
-        is UserRole.Admin -> DatesheetViewerContext(DatesheetViewerRole.ADMIN, canManage = true)
-        else -> DatesheetViewerContext(DatesheetViewerRole.TEACHER)
-    }
+    val identityKey: String? get() = sessionManager.accountKey
 }
