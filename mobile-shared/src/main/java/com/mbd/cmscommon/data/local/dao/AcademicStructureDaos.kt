@@ -194,9 +194,12 @@ interface SessionPeriodDao {
     @Query("SELECT * FROM session_periods WHERE sessionId = :sessionId AND isDeleted = 0")
     fun observeForSession(sessionId: String): Flow<List<SessionPeriodEntity>>
 
-    // A teacher teaches a period as its main teacher or as one of its co-teachers.
+    // A teacher teaches a period as its main teacher or as one of its co-teachers. :teacherId != ''
+    // guards the co-teacher LIKE below: padded as ',' || coTeacherIds || ',', a period with NO
+    // co-teachers becomes exactly ",," -- which a blank :teacherId's pattern ('%,,%') trivially
+    // matches, so every such period in the whole college would otherwise show up as this teacher's own.
     @Query(
-        "SELECT * FROM session_periods WHERE (teacherId = :teacherId OR (',' || coTeacherIds || ',') LIKE '%,' || :teacherId || ',%') " +
+        "SELECT * FROM session_periods WHERE :teacherId != '' AND (teacherId = :teacherId OR (',' || coTeacherIds || ',') LIKE '%,' || :teacherId || ',%') " +
             "AND isDeleted = 0 AND id = remotePeriodId",
     )
     fun observeForTeacher(teacherId: String): Flow<List<SessionPeriodEntity>>
