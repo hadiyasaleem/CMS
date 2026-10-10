@@ -15,6 +15,7 @@ import com.mbd.cmscommon.domain.model.DatesheetSlot
 import com.mbd.cmscommon.domain.model.DatesheetViewerContext
 import com.mbd.cmscommon.domain.model.DatesheetViewerRole
 import com.mbd.cmscommon.domain.model.Department
+import com.mbd.cmscommon.domain.model.DeptSemesterScope
 import com.mbd.cmscommon.domain.model.Room
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
 import com.mbd.cmscommon.domain.repository.BuildingRepository
@@ -81,8 +82,10 @@ class SessionDatesheetViewModel @Inject constructor(
                 .map { list -> list.firstOrNull { it.sessionId == sessionId } }
                 .filterNotNull()
                 .first()
-            browseController.selectDepartment(session.deptId)
-            browseController.selectStartYear(session.startYear)
+            // A single-shift session has only one tab, so pick it; a two-shift session opens on Morning.
+            browseController.setFilterScope(
+                DeptSemesterScope(session.deptId, session.currentSemester, session.shifts.minOrNull(), session.programType),
+            )
         }
     }
 
@@ -108,11 +111,7 @@ fun SessionDatesheetScreen(viewModel: SessionDatesheetViewModel = hiltViewModel(
     val departments by controller.departments.collectAsState()
     val sessions by controller.sessions.collectAsState()
     val datesheets by controller.datesheets.collectAsState()
-    val selectedDeptId by controller.selectedDeptId.collectAsState()
-    val selectedStartYear by controller.selectedStartYear.collectAsState()
-    val selectedShift by controller.selectedShift.collectAsState()
-    val sessionsInDepartment by controller.sessionsInDepartment.collectAsState()
-    val shiftsForSelection by controller.shiftsForSelection.collectAsState()
+    val filterScope by controller.filterScope.collectAsState()
     val resolvedSession by controller.resolvedSession.collectAsState()
     val browseError by controller.error.collectAsState()
     val allSlots by viewModel.allSlots.collectAsState()
@@ -133,15 +132,9 @@ fun SessionDatesheetScreen(viewModel: SessionDatesheetViewModel = hiltViewModel(
         sessions = sessions,
         datesheets = datesheets,
         allSlots = allSlots,
-        selectedDeptId = selectedDeptId,
-        selectedStartYear = selectedStartYear,
-        selectedShift = selectedShift,
-        sessionsInDepartment = sessionsInDepartment,
-        shiftsForSelection = shiftsForSelection,
+        filterScope = filterScope,
         resolvedSession = resolvedSession,
-        onSelectDepartment = controller::selectDepartment,
-        onSelectStartYear = controller::selectStartYear,
-        onSelectShift = controller::selectShift,
+        onFilterScope = controller::setFilterScope,
         buildings = buildings,
         rooms = rooms,
         loading = false,

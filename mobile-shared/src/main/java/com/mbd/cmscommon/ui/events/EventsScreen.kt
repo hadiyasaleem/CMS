@@ -45,7 +45,7 @@ fun EventsScreen(
         errorMessage = error,
         actionMessage = actionMessage,
         onRetry = controller::refresh,
-        onCreate = { event -> controller.createEvent(event, viewModel.accountKey) },
+        onCreate = { events -> controller.createEvent(events, viewModel.accountKey) },
         onDelete = controller::deleteEvent,
         modifier = modifier,
     )

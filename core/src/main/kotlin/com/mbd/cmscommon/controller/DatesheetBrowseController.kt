@@ -4,6 +4,7 @@ import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.Datesheet
 import com.mbd.cmscommon.domain.model.DatesheetDraft
 import com.mbd.cmscommon.domain.model.Department
+import com.mbd.cmscommon.domain.model.DeptSemesterScope
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.validationMessage
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
@@ -21,12 +22,12 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 /**
- * Cross-datesheet browsing: the department/intake-year/shift cascade (same shape as
- * MasterTimetableController). Grid views (grouped, filtered, calendar, semester) are all built
- * from [datesheets] in the UI layer. There is no manual semester picker -- a datesheet is always
- * created for whichever semester [resolvedSession] is currently in, the same way
+ * Cross-datesheet browsing: the shared Department/Semester/Shift/Program filter (same shape as
+ * MasterTimetableController's). Grid views (grouped, filtered, calendar, semester) are all built
+ * from [datesheets] in the UI layer. There is no manual semester picker for CREATING a datesheet --
+ * it is always created for whichever semester [resolvedSession] is currently in, the same way
  * SessionTimetableController derives subjects from the session's own currentSemester rather than
- * letting the caller pick one.
+ * letting the caller pick one; the filter's own "Semester" dropdown is what resolves which batch.
  */
 class DatesheetBrowseController(
     private val datesheetRepository: DatesheetRepository,
@@ -47,48 +48,21 @@ class DatesheetBrowseController(
     val datesheets: StateFlow<List<Datesheet>> =
         datesheetRepository.observeDatesheets().stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    private val _selectedDeptId = MutableStateFlow<String?>(null)
-    val selectedDeptId: StateFlow<String?> = _selectedDeptId.asStateFlow()
+    private val _filterScope = MutableStateFlow(DeptSemesterScope.ALL)
+    val filterScope: StateFlow<DeptSemesterScope> = _filterScope.asStateFlow()
 
-    private val _selectedStartYear = MutableStateFlow<Int?>(null)
-    val selectedStartYear: StateFlow<Int?> = _selectedStartYear.asStateFlow()
+    val availableSemesters: StateFlow<List<Int>> = sessions.map { it.availableSemesters() }
+        .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    private val _selectedShift = MutableStateFlow<Session?>(null)
-    val selectedShift: StateFlow<Session?> = _selectedShift.asStateFlow()
+    /** The one batch the filter resolves to -- only once department, semester and shift (and, if
+     * ambiguous, program type) narrow it down to exactly one; a datesheet is per shift, so shift is
+     * required here even though [DeptSemesterScope.resolveSession] itself doesn't demand it. */
+    val resolvedSession: StateFlow<AcademicSession?> = combine(sessions, _filterScope) { all, scope ->
+        if (scope.shift == null) null else scope.resolveSession(all)
+    }.stateIn(scope, SharingStarted.WhileSubscribed(5000), null)
 
-    val sessionsInDepartment: StateFlow<List<AcademicSession>> = combine(sessions, _selectedDeptId) { all, deptId ->
-        if (deptId == null) emptyList() else all.filter { it.deptId == deptId }
-    }.stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    val shiftsForSelection: StateFlow<List<Session>> = combine(sessionsInDepartment, _selectedStartYear) { inDept, year ->
-        if (year == null) emptyList() else inDept.filter { it.startYear == year }.flatMap { it.shifts }.distinct()
-    }.stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    val resolvedSession: StateFlow<AcademicSession?> =
-        combine(sessions, _selectedDeptId, _selectedStartYear, _selectedShift) { all, deptId, year, shift ->
-            if (deptId == null || year == null || shift == null) {
-                null
-            } else {
-                all.firstOrNull { it.deptId == deptId && it.startYear == year && it.runs(shift) }
-            }
-        }.stateIn(scope, SharingStarted.WhileSubscribed(5000), null)
-
-    fun selectDepartment(deptId: String?) {
-        _selectedDeptId.value = deptId
-        _selectedStartYear.value = null
-        _selectedShift.value = null
-    }
-
-    fun selectStartYear(year: Int?) {
-        _selectedStartYear.value = year
-        // A single-shift session has only one tab, so pick it; a two-shift session opens on Morning.
-        _selectedShift.value = year?.let { y ->
-            sessions.value.filter { it.deptId == _selectedDeptId.value && it.startYear == y }.flatMap { it.shifts }.distinct().minOrNull()
-        }
-    }
-
-    fun selectShift(shift: Session?) {
-        _selectedShift.value = shift
+    fun setFilterScope(scope: DeptSemesterScope) {
+        _filterScope.value = scope
     }
 
     fun refresh() = launch("refresh the datesheets") {
@@ -112,7 +86,7 @@ class DatesheetBrowseController(
         val session = sessions.value.firstOrNull { it.sessionId == sessionId }
         requireValid(session?.isActive == true) { "This session has graduated and can no longer have new datesheets created for it." }
         // Datesheets are per shift; default to the shift chosen in the browse filters.
-        val sheetShift = shift ?: _selectedShift.value?.takeIf { session?.runs(it) == true } ?: session?.shifts?.firstOrNull() ?: Session.MORNING
+        val sheetShift = shift ?: _filterScope.value.shift?.takeIf { session?.runs(it) == true } ?: session?.shifts?.firstOrNull() ?: Session.MORNING
         val draft = DatesheetDraft(sessionId, sheetShift, semester, defaultStartTime, defaultEndTime, defaultBuildingId, defaultRoomId, instructions, published = false)
         validationMessage(draft).orThrowValidation()
         return datesheetRepository.createDatesheet(draft, createdBy)

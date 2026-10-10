@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.DeptSemesterScope
+import com.mbd.cmscommon.domain.model.ProgramType
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.ShiftScope
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
@@ -78,11 +79,11 @@ fun ShiftScopeSelector(
 }
 
 /**
- * The Department / Semester / Shift filter bar for browse/list screens (vs. [ShiftScopeSelector]'s
- * Department -> Session -> Shift cascade, used where picking one exact academic batch is the point --
- * composing a notification's audience, creating a calendar event, a teacher's own class picker). Every
- * level is independent and defaults to "All ..."; a "Clear filters" action appears once any is chosen --
- * the same look and behaviour as the master timetable's own filter bar.
+ * The Department / Semester / Shift / Program filter bar for browse/list screens (vs.
+ * [ShiftScopeSelector]'s Department -> Session -> Shift cascade, used where picking one exact academic
+ * batch is the point -- a teacher's own class picker for marks entry). Every level is independent and
+ * defaults to "All ..."; a "Clear filters" action appears once any is chosen -- the same look and
+ * behaviour as the master timetable's own filter bar.
  */
 @Composable
 fun DeptSemesterScopeSelector(
@@ -95,11 +96,14 @@ fun DeptSemesterScopeSelector(
     /** False when the caller already renders its own "Clear filters" covering more than this scope
      * (e.g. also a teacher filter) -- avoids showing two clear actions at once. */
     showClearAction: Boolean = true,
+    /** Program types to offer; defaults to every one (a BS-only screen can narrow this). */
+    availableProgramTypes: List<ProgramType> = ProgramType.entries,
     trailingContent: @Composable RowScope.() -> Unit = {},
 ) {
     val deptOptions = departments.map { (id, name) -> CmsEntityOption(id, name) }
     val semesterOptions = availableSemesters.map { CmsEntityOption(it.toString(), "Semester $it") }
     val shiftOptions = Session.entries.map { CmsEntityOption(it.name, it.label) }
+    val programOptions = availableProgramTypes.map { CmsEntityOption(it.name, it.label) }
 
     Column(modifier.fillMaxWidth()) {
         if (label != null) {
@@ -124,6 +128,12 @@ fun DeptSemesterScopeSelector(
                 emptyLabel = "All shifts",
                 options = shiftOptions,
                 onSelected = { name -> onScopeChange(scope.copy(shift = name?.let { n -> Session.entries.firstOrNull { it.name == n } })) },
+            )
+            DropdownChip(
+                selectedLabel = programOptions.firstOrNull { it.id == scope.programType?.name }?.label,
+                emptyLabel = "All programs",
+                options = programOptions,
+                onSelected = { name -> onScopeChange(scope.copy(programType = name?.let { n -> ProgramType.entries.firstOrNull { it.name == n } })) },
             )
             trailingContent()
         }

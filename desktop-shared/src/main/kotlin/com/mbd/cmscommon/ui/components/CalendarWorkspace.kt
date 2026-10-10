@@ -6,8 +6,8 @@ import compose.icons.tablericons.ChevronRight
 import com.mbd.cmscommon.controller.availableSemesters
 import com.mbd.cmscommon.controller.inScope
 import com.mbd.cmscommon.controller.departmentScopeOptions
+import com.mbd.cmscommon.controller.resolveTargets
 import com.mbd.cmscommon.domain.model.DeptSemesterScope
-import com.mbd.cmscommon.domain.model.ShiftScope
 import com.mbd.cmscommon.domain.model.CalendarViewerRole
 import com.mbd.cmscommon.util.clockDisplay
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -89,7 +89,7 @@ fun CalendarWorkspace(
     errorMessage: String?,
     actionMessage: String?,
     onRetry: () -> Unit,
-    onCreate: (CalendarEvent) -> Unit,
+    onCreate: (List<CalendarEvent>) -> Unit,
     onDelete: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -169,7 +169,7 @@ fun CalendarWorkspace(
             sessions = sessions,
             busy = busy,
             onDismiss = { creatingEventDate = null },
-            onConfirm = { event -> onCreate(event); creatingEventDate = null; selectedDate = null },
+            onConfirm = { events -> onCreate(events); creatingEventDate = null; selectedDate = null },
         )
     }
 
@@ -374,13 +374,15 @@ private fun CreateCalendarEventDialog(
     sessions: List<AcademicSession>,
     busy: Boolean,
     onDismiss: () -> Unit,
-    onConfirm: (CalendarEvent) -> Unit,
+    onConfirm: (List<CalendarEvent>) -> Unit,
 ) {
     var title by remember { mutableStateOf("") }
     var type by remember { mutableStateOf("EVENT") }
     var audience by remember { mutableStateOf("ALL") }
-    // Department -> Session -> Shift target; none chosen is college-wide.
-    var target by remember { mutableStateOf(ShiftScope.ALL) }
+    // Department/Semester/Shift/Program target; none chosen is college-wide. Semester or program type
+    // narrows across many classes at once, so there's no single session that alone represents "every
+    // 3rd-semester class" -- one event per matching class is created instead.
+    var target by remember { mutableStateOf(DeptSemesterScope.ALL) }
     var startDate by remember { mutableStateOf(initialDate) }
     var endDate by remember { mutableStateOf("") }
     var startTime by remember { mutableStateOf("") }
@@ -388,7 +390,8 @@ private fun CreateCalendarEventDialog(
     var venue by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
 
-    val draft = CalendarEvent(
+    // A representative draft for validating/previewing the fields that don't vary by class.
+    val draftBase = CalendarEvent(
         id = "",
         title = title.trim(),
         eventType = type,
@@ -400,10 +403,14 @@ private fun CreateCalendarEventDialog(
         venue = venue.trim().ifBlank { null },
         audience = audience,
         deptId = target.deptId,
-        sessionId = target.sessionId,
         shift = target.shift,
     )
-    val error = validationMessage(draft)
+    val error = validationMessage(draftBase)
+    val events = if (target.semester != null || target.programType != null) {
+        target.resolveTargets(sessions).map { (session, shift) -> draftBase.copy(deptId = session.deptId, sessionId = session.sessionId, shift = shift) }
+    } else {
+        listOf(draftBase)
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -416,14 +423,21 @@ private fun CreateCalendarEventDialog(
                 Spacer(Modifier.height(10.dp))
                 DropdownField("Audience", audience, AUDIENCES, onSelect = { audience = it })
                 Spacer(Modifier.height(10.dp))
-                ShiftScopeSelector(target, departmentScopeOptions(departments), sessions, { target = it }, label = "ACADEMIC SCOPE")
+                DeptSemesterScopeSelector(
+                    target,
+                    departmentScopeOptions(departments),
+                    sessions.availableSemesters(),
+                    { target = it },
+                    label = "ACADEMIC SCOPE",
+                )
                 Spacer(Modifier.height(4.dp))
                 Text(
                     when {
                         target.isEmpty -> "Reaches the whole college."
-                        target.sessionId == null -> "Reaches every session and both shifts of this department."
-                        target.shift == null -> "Reaches both shifts of this session."
-                        else -> "Reaches only the ${target.shift!!.label} shift of this session."
+                        events.size > 1 -> "Reaches ${events.size} matching classes" + (target.shift?.let { " (${it.label} shift)" } ?: "") + "."
+                        target.semester == null && target.programType == null && target.shift == null -> "Reaches every session and both shifts of this department."
+                        target.semester == null && target.programType == null -> "Reaches the ${target.shift?.label} shift across this department."
+                        else -> "Reaches this one matching class" + (target.shift?.let { " (${it.label} shift)" } ?: "") + "."
                     },
                     color = ModMuted,
                     style = MaterialTheme.typography.bodySmall,
@@ -448,7 +462,7 @@ private fun CreateCalendarEventDialog(
             }
         }},
         confirmButton = {
-            TextButton(onClick = { onConfirm(draft) }, enabled = error == null && !busy) { Text(if (busy) "Saving" else "Add event") }
+            TextButton(onClick = { onConfirm(events) }, enabled = error == null && !busy && events.isNotEmpty()) { Text(if (busy) "Saving" else "Add event") }
         },
         dismissButton = {
             TextButton(onClick = onDismiss, enabled = !busy) { Text("Cancel") }

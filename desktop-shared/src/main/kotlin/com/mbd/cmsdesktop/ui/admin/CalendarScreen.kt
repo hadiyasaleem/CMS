@@ -44,7 +44,7 @@ fun CalendarScreen(
         errorMessage = errorMessage,
         actionMessage = actionMessage,
         onRetry = controller::refresh,
-        onCreate = controller::create,
+        onCreate = controller::createMany,
         onDelete = controller::delete,
     )
 }

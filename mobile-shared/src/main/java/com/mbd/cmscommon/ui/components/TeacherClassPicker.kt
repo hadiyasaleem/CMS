@@ -20,15 +20,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.mbd.cmscommon.controller.inScope
 import com.mbd.cmscommon.controller.scopeDepartments
-import com.mbd.cmscommon.controller.scopeSessions
-import com.mbd.cmscommon.domain.model.ShiftScope
+import com.mbd.cmscommon.controller.scopePrograms
+import com.mbd.cmscommon.controller.scopeSemesters
+import com.mbd.cmscommon.domain.model.DeptSemesterScope
 import com.mbd.cmscommon.teacher.ResolvedAssignment
 import com.mbd.cmscommon.ui.theme.CmsTextStyles
 import com.mbd.cmscommon.ui.theme.ModMuted
 
 /**
- * A teacher's class picker: the shared Department -> Session -> Shift filter over their own classes, then the
- * class itself. With nothing chosen every class is listed; each chosen level narrows the list.
+ * A teacher's class picker: the shared Department / Semester / Shift / Program filter over their own
+ * classes, then the class itself. With nothing chosen every class is listed; each chosen level narrows
+ * the list.
  */
 @Composable
 fun TeacherClassPicker(
@@ -41,17 +43,18 @@ fun TeacherClassPicker(
     onSelectAll: () -> Unit = {},
 ) {
     var expanded by remember { mutableStateOf(false) }
-    var scope by remember { mutableStateOf(ShiftScope.ALL) }
+    var scope by remember { mutableStateOf(DeptSemesterScope.ALL) }
     val visible = remember(assignments, scope) { assignments.inScope(scope) }
     Column(modifier.fillMaxWidth()) {
         Text("MY CLASSES", color = ModMuted, style = CmsTextStyles.eyebrow)
         Spacer(Modifier.height(6.dp))
-        ShiftScopeSelector(
+        DeptSemesterScopeSelector(
             scope = scope,
             departments = assignments.scopeDepartments(),
-            sessions = assignments.scopeSessions(),
+            availableSemesters = assignments.scopeSemesters(),
             onScopeChange = { scope = it },
             label = null,
+            availableProgramTypes = assignments.scopePrograms(),
         )
         Spacer(Modifier.height(8.dp))
         Box(Modifier.fillMaxWidth()) {

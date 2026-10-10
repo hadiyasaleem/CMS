@@ -8,10 +8,12 @@ import compose.icons.tablericons.Edit
 import com.mbd.cmscommon.util.userMessageLogged
 import com.mbd.cmscommon.util.FileReadErrors
 import com.mbd.cmscommon.ui.components.DialogScrollBody
+import com.mbd.cmscommon.controller.availableSemesters
 import com.mbd.cmscommon.controller.departmentScopeOptions
+import com.mbd.cmscommon.controller.resolveSession
 import com.mbd.cmscommon.controller.studentsForTab
-import com.mbd.cmscommon.domain.model.ShiftScope
-import com.mbd.cmscommon.ui.components.ShiftScopeSelector
+import com.mbd.cmscommon.domain.model.DeptSemesterScope
+import com.mbd.cmscommon.ui.components.DeptSemesterScopeSelector
 import com.mbd.cmscommon.export.toExportDocument
 import com.mbd.cmscommon.ui.components.ExportMenuButton
 import com.mbd.cmscommon.ui.components.TopBarActions
@@ -149,12 +151,14 @@ fun AttendanceRecordsScreen(
         sessionRepository.observeAllSessions().collect { sessions = it }
     }
 
-    // Department -> Session -> Shift via the shared selector; no shift means both shifts of the session.
-    var reportScope by selection::scope
-    val selectedSession = sessions.firstOrNull { it.sessionId == reportScope.sessionId }
-    val deptId = reportScope.deptId
+    // Department/current-semester/shift(/program type, if two share a dept+semester) resolves the
+    // batch; no shift means both shifts of it. "semester" below is separate -- which of that batch's
+    // OWN semesters (1..8) to view, since a batch now in semester 5 can still show semester 3 records.
+    var batchScope by selection::batchScope
+    val selectedSession = batchScope.resolveSession(sessions)
+    val deptId = batchScope.deptId
     val year = selectedSession?.startYear
-    val shift = reportScope.shift
+    val shift = batchScope.shift
     val sessionId = selectedSession?.sessionId
 
     // Reads the cached roster, attendance, term, and curriculum whenever the selected scope changes.
@@ -273,7 +277,7 @@ fun AttendanceRecordsScreen(
     }
 
     Column(Modifier.fillMaxWidth()) {
-        SectionHeader("Attendance Records", "Reporting", "Department → session → shift → semester")
+        SectionHeader("Attendance Records", "Reporting", "Find a batch by department/semester/shift, then pick which semester to view")
 
         Surface(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
@@ -299,13 +303,15 @@ fun AttendanceRecordsScreen(
                 }
 
                 if (expanded) {
-                    ShiftScopeSelector(
-                        scope = reportScope,
+                    DeptSemesterScopeSelector(
+                        scope = batchScope,
                         departments = departmentScopeOptions(departments),
-                        sessions = sessions,
+                        availableSemesters = sessions.availableSemesters(),
                         onScopeChange = { picked ->
-                            if (picked.sessionId != reportScope.sessionId) semester = null
-                            reportScope = picked
+                            // Only reset the "which semester to view" pick when it actually resolves
+                            // to a different batch -- not just because a filter level changed.
+                            if (picked.resolveSession(sessions)?.sessionId != selectedSession?.sessionId) semester = null
+                            batchScope = picked
                             course = null
                             full = emptyMap()
                             fullLoading = false
@@ -347,7 +353,7 @@ fun AttendanceRecordsScreen(
 
         when {
             sessionId == null || semester == null ->
-                EmptyState("Pick a department, session and semester. Choose a shift to narrow to one shift.")
+                EmptyState("Pick a department and current semester to find the batch (add program type if two share it), then choose which semester's records to view.")
 
             reportLoading ->
                 EmptyState("Loading attendance report…")

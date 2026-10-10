@@ -5,6 +5,7 @@ import com.mbd.cmscommon.util.CmsException
 import com.mbd.cmscommon.util.requireValid
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.Department
+import com.mbd.cmscommon.domain.model.DeptSemesterScope
 import com.mbd.cmscommon.domain.model.Notification
 import com.mbd.cmscommon.domain.model.NotificationTargetRole
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
@@ -150,41 +151,54 @@ class NotificationsController(
                 "The expiry date must be in the future."
             }
 
-            // Department -> Session -> Shift targeting: each level is optional and narrows the audience.
-            val sessionPicked = draft.sessionId?.let { id -> publishSessions.value.firstOrNull { it.sessionId == id } }
-            requireValid(draft.sessionId == null || sessionPicked != null) {
-                if (publisherKind == NotificationPublisherKind.TEACHER) "Choose one of your assigned sessions." else "Choose a valid academic session."
-            }
-            requireValid(draft.shift == null || sessionPicked != null) { "Choose a session before narrowing to a shift." }
-            requireValid(draft.shift == null || sessionPicked!!.runs(draft.shift)) { "This session does not run the ${draft.shift?.label} shift." }
-            val targetDepartment = sessionPicked?.deptId ?: draft.departmentId
-            requireValid(draft.departmentId == null || targetDepartment == draft.departmentId) {
-                "The session does not belong to the chosen department."
+            // Department/Semester/Shift/Program targeting: each level is optional and narrows the
+            // audience. Department+shift alone still resolve to one college/department-wide send, same
+            // as before; once semester or program type narrows it, there's no single session that
+            // alone represents "every 3rd-semester class", so it fans out into one send per match.
+            val target = DeptSemesterScope(draft.departmentId, draft.semester, draft.shift, draft.programType)
+            if (draft.departmentId != null) {
+                requireValid(departments.value.any { it.deptId == draft.departmentId }) { "Choose a valid department." }
             }
 
-            val targetRole = when (publisherKind) {
+            val targetRole: NotificationTargetRole
+            val targets: List<Pair<AcademicSession, Session>>
+            when (publisherKind) {
                 NotificationPublisherKind.ADMIN -> {
-                    requireValid(targetDepartment == null || draft.targetRole != NotificationTargetRole.ADMIN) {
+                    requireValid(target.isEmpty || draft.targetRole != NotificationTargetRole.ADMIN) {
                         "Admin notices are always college-wide."
                     }
-                    if (targetDepartment != null) {
-                        requireValid(departments.value.any { it.deptId == targetDepartment }) { "Choose a valid department." }
+                    targetRole = draft.targetRole
+                    targets = if (target.semester != null || target.programType != null) {
+                        target.resolveTargets(publishSessions.value).also {
+                            requireValid(it.isNotEmpty()) { "No classes match that filter." }
+                        }
+                    } else {
+                        emptyList()
                     }
-                    draft.targetRole
                 }
                 NotificationPublisherKind.TEACHER -> {
-                    requireValid(sessionPicked != null) { "Choose one of your assigned sessions." }
-                    requireValid(draft.shift == null || draft.shift in teachingShifts.value[sessionPicked!!.sessionId].orEmpty()) {
-                        "You don't teach the ${draft.shift?.label} shift of this session."
-                    }
-                    NotificationTargetRole.STUDENT
+                    targetRole = NotificationTargetRole.STUDENT
+                    targets = publishSessions.value
+                        .filter { it.isActive && target.matches(it) }
+                        .flatMap { session ->
+                            val taught = teachingShifts.value[session.sessionId].orEmpty()
+                            (if (target.shift != null) taught.filter { it == target.shift } else taught).map { session to it }
+                        }
+                    requireValid(targets.isNotEmpty()) { "Choose one of your assigned sessions." }
                 }
                 NotificationPublisherKind.NONE -> throw CmsException.Permission("Publishing is unavailable for this account.")
             }
 
-            repository.send(title, body, targetRole, sessionPicked?.sessionId, accountKey, draft.priority, targetDepartment, draft.expiresAt, draft.shift)
+            if (targets.isEmpty()) {
+                // College-wide or department-wide, exactly as before: one send, no specific session.
+                repository.send(title, body, targetRole, null, accountKey, draft.priority, target.deptId, draft.expiresAt, target.shift)
+            } else {
+                targets.forEach { (session, shift) ->
+                    repository.send(title, body, targetRole, session.sessionId, accountKey, draft.priority, session.deptId, draft.expiresAt, shift)
+                }
+            }
             repository.syncAuthoredByCurrentUser(accountKey)
-            _notice.value = "Notification sent to ${audienceLabel(targetRole, targetDepartment, sessionPicked?.sessionId, draft.shift)}."
+            _notice.value = "Notification sent to ${describeAudience(targetRole, target, targets.size)}."
         } catch (t: Throwable) {
             _composeError.value = t.userMessageLogged("Could not send this notification.")
         } finally {
@@ -240,24 +254,20 @@ class NotificationsController(
         }
     }
 
-    private fun audienceLabel(role: NotificationTargetRole, departmentId: String?, sessionId: String?, shift: Session?): String {
-        if (sessionId != null) {
-            val session = sessions.value.firstOrNull { it.sessionId == sessionId }
-            val shiftPart = shift?.let { " (${it.label} shift)" }.orEmpty()
-            return if (session != null) {
-                "the ${session.startYear}-${session.endYear} session$shiftPart"
-            } else {
-                sessionId + shiftPart
+    /** "the 2022-2026 session (Evening shift)" for a single match, "4 classes (Semester 3)" once the
+     * target fanned out to more than one, or the plain department/role label when it didn't narrow
+     * to any specific class at all. */
+    private fun describeAudience(role: NotificationTargetRole, target: DeptSemesterScope, matchCount: Int): String {
+        val scopeTitle = target.title(departments.value)
+        return when {
+            matchCount > 1 -> "$matchCount classes" + (scopeTitle?.let { " ($it)" } ?: "")
+            scopeTitle != null -> scopeTitle
+            else -> when (role) {
+                NotificationTargetRole.ALL -> "everyone"
+                NotificationTargetRole.ADMIN -> "Admins"
+                NotificationTargetRole.TEACHER -> "Teachers"
+                NotificationTargetRole.STUDENT -> "Students"
             }
-        }
-        if (departmentId != null) {
-            return departments.value.firstOrNull { it.deptId == departmentId }?.name ?: departmentId
-        }
-        return when (role) {
-            NotificationTargetRole.ALL -> "everyone"
-            NotificationTargetRole.ADMIN -> "Admins"
-            NotificationTargetRole.TEACHER -> "Teachers"
-            NotificationTargetRole.STUDENT -> "Students"
         }
     }
 }

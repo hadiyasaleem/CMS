@@ -41,16 +41,19 @@ class EventsController(
         }
     }
 
-    fun createEvent(event: CalendarEvent, createdBy: String) {
+    /** Adds one or more events in a single busy-guarded operation -- more than one once a calendar
+     * form's Department/Semester/Shift/Program audience narrows to several matching classes at once. */
+    fun createEvent(events: List<CalendarEvent>, createdBy: String) {
+        if (events.isEmpty()) return
         if (_busy.value) return
         _busy.value = true // set synchronously before launch so the guard actually blocks a double-tap
         launch("add the event") {
             clearError()
             _actionMessage.value = null
             try {
-                repo.createEvent(event, createdBy)
+                events.forEach { repo.createEvent(it, createdBy) }
                 _events.value = repo.getEvents()
-                _actionMessage.value = "Event added."
+                _actionMessage.value = if (events.size > 1) "${events.size} events added." else "Event added."
             } finally {
                 _busy.value = false
             }

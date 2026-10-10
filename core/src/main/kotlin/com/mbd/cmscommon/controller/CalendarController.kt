@@ -47,7 +47,14 @@ class CalendarController(
         }
     }
 
-    fun create(event: CalendarEvent) {
+    /**
+     * Adds one or more events in a single busy-guarded operation -- more than one once a calendar
+     * form's Department/Semester/Shift/Program audience narrows to several matching classes at once,
+     * rather than one exact session (there's no single session that alone represents "every 3rd-semester
+     * class"), so each resolved class gets its own event row.
+     */
+    fun createMany(events: List<CalendarEvent>) {
+        if (events.isEmpty()) return
         // Single-flight: set _busy synchronously before launch so a double-tap can't fire two inserts.
         if (_busy.value) return
         _busy.value = true
@@ -55,10 +62,12 @@ class CalendarController(
             clearError()
             _actionMessage.value = null
             try {
-                validationMessage(event).orThrowValidation()
-                repo.createEvent(event, createdBy)
+                events.forEach { event ->
+                    validationMessage(event).orThrowValidation()
+                    repo.createEvent(event, createdBy)
+                }
                 _events.value = calendarQueueSnapshot(repo.getEvents()).events
-                _actionMessage.value = "Event added to the college calendar."
+                _actionMessage.value = if (events.size > 1) "${events.size} events added to the college calendar." else "Event added to the college calendar."
             } finally {
                 _busy.value = false
             }

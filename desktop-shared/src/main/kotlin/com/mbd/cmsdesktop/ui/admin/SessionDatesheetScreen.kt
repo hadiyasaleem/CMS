@@ -11,6 +11,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import com.mbd.cmscommon.controller.DatesheetBrowseController
 import com.mbd.cmscommon.controller.DatesheetEditorController
+import com.mbd.cmscommon.domain.model.DeptSemesterScope
 import com.mbd.cmscommon.domain.model.DatesheetViewerContext
 import com.mbd.cmscommon.domain.model.DatesheetViewerRole
 import com.mbd.cmscommon.domain.model.Department
@@ -52,8 +53,10 @@ fun SessionDatesheetScreen(
             .map { list -> list.firstOrNull { it.sessionId == sessionId } }
             .filterNotNull()
             .first()
-        browseController.selectDepartment(session.deptId)
-        browseController.selectStartYear(session.startYear)
+        // A single-shift session has only one tab, so pick it; a two-shift session opens on Morning.
+        browseController.setFilterScope(
+            DeptSemesterScope(session.deptId, session.currentSemester, session.shifts.minOrNull(), session.programType),
+        )
     }
 
     var openDatesheetId by remember { mutableStateOf<String?>(null) }
@@ -66,11 +69,7 @@ fun SessionDatesheetScreen(
     val departments by browseController.departments.collectAsState()
     val sessions by browseController.sessions.collectAsState()
     val datesheets by browseController.datesheets.collectAsState()
-    val selectedDeptId by browseController.selectedDeptId.collectAsState()
-    val selectedStartYear by browseController.selectedStartYear.collectAsState()
-    val selectedShift by browseController.selectedShift.collectAsState()
-    val sessionsInDepartment by browseController.sessionsInDepartment.collectAsState()
-    val shiftsForSelection by browseController.shiftsForSelection.collectAsState()
+    val filterScope by browseController.filterScope.collectAsState()
     val resolvedSession by browseController.resolvedSession.collectAsState()
     val browseError by browseController.error.collectAsState()
     val allSlots by datesheetRepository.observeAllSlots().collectAsState(initial = emptyList())
@@ -89,15 +88,9 @@ fun SessionDatesheetScreen(
         sessions = sessions,
         datesheets = datesheets,
         allSlots = allSlots,
-        selectedDeptId = selectedDeptId,
-        selectedStartYear = selectedStartYear,
-        selectedShift = selectedShift,
-        sessionsInDepartment = sessionsInDepartment,
-        shiftsForSelection = shiftsForSelection,
+        filterScope = filterScope,
         resolvedSession = resolvedSession,
-        onSelectDepartment = browseController::selectDepartment,
-        onSelectStartYear = browseController::selectStartYear,
-        onSelectShift = browseController::selectShift,
+        onFilterScope = browseController::setFilterScope,
         buildings = buildings,
         rooms = rooms,
         loading = false,

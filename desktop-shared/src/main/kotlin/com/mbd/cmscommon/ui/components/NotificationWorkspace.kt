@@ -3,12 +3,10 @@ package com.mbd.cmscommon.ui.components
 import com.mbd.cmscommon.controller.NotificationPublisherKind
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.Session
-import com.mbd.cmscommon.domain.model.ShiftMode
 import com.mbd.cmscommon.controller.availableSemesters
 import com.mbd.cmscommon.controller.inScope
 import com.mbd.cmscommon.controller.departmentScopeOptions
 import com.mbd.cmscommon.domain.model.DeptSemesterScope
-import com.mbd.cmscommon.domain.model.ShiftScope
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -73,7 +71,6 @@ fun NotificationControllerWorkspace(controller: NotificationsController, modifie
     val allSent by controller.sent.collectAsState()
     val departments by controller.departments.collectAsState()
     val publishSessions by controller.publishSessions.collectAsState()
-    val teachingShifts by controller.teachingShifts.collectAsState()
     // Department -> Session -> Shift filter over each notice's audience (students are already scoped to theirs).
     var filterScope by remember { mutableStateOf(DeptSemesterScope.ALL) }
     val showScopeFilter = controller.viewerRole != NotificationTargetRole.STUDENT && publishSessions.isNotEmpty()
@@ -168,7 +165,7 @@ fun NotificationControllerWorkspace(controller: NotificationsController, modifie
             viewerRole = controller.viewerRole,
             teacherComposer = controller.publisherKind == NotificationPublisherKind.TEACHER,
             departments = departments,
-            sessions = teacherShiftSessions(publishSessions, teachingShifts),
+            sessions = publishSessions,
             busy = busyActionId == NotificationsController.SEND_ACTION,
             onDismiss = { showCompose = false },
             onSend = { draft -> controller.send(draft); showCompose = false },
@@ -239,8 +236,10 @@ private fun ComposeNotificationDialog(
     var body by remember { mutableStateOf("") }
     var targetRole by remember { mutableStateOf(NotificationTargetRole.ALL) }
     var priority by remember { mutableStateOf(NotificationPriority.NORMAL) }
-    // Department -> Session -> Shift target; every level is optional (college-wide when none is chosen).
-    var target by remember { mutableStateOf(ShiftScope.ALL) }
+    // Department/Semester/Shift/Program target; every level is optional (college-wide when none is
+    // chosen). Semester or program type narrows across many classes at once: the controller fans that
+    // out into one send per matching class, rather than requiring one exact session up front.
+    var target by remember { mutableStateOf(DeptSemesterScope.ALL) }
 
     val titleValid = title.trim().length in 3..120
     val bodyValid = body.trim().length in 5..2000
@@ -269,16 +268,31 @@ private fun ComposeNotificationDialog(
                     }
                     if (targetRole != NotificationTargetRole.ADMIN) {
                         Spacer(Modifier.height(10.dp))
-                        ShiftScopeSelector(target, departmentScopeOptions(departments), sessions, { target = it }, label = "REACHES")
+                        DeptSemesterScopeSelector(
+                            target,
+                            departmentScopeOptions(departments),
+                            sessions.availableSemesters(),
+                            { target = it },
+                            label = "REACHES",
+                            availableProgramTypes = sessions.map { it.programType }.distinct(),
+                        )
                         Spacer(Modifier.height(4.dp))
                         Text(audienceHint(target), color = ModMuted, style = MaterialTheme.typography.bodySmall)
                     }
                 } else {
                     Spacer(Modifier.height(10.dp))
-                    // Teachers notify students of the sessions (and shifts) they teach.
-                    ShiftScopeSelector(target, sessions.map { it.deptId to it.deptId.uppercase() }.distinct(), sessions, { target = it }, label = "YOUR CLASS")
+                    // Teachers notify students of the classes they teach; the dropdowns only offer
+                    // departments/semesters/programs from their own assigned sessions.
+                    DeptSemesterScopeSelector(
+                        target,
+                        sessions.map { it.deptId to it.deptId.uppercase() }.distinct(),
+                        sessions.availableSemesters(),
+                        { target = it },
+                        label = "YOUR CLASS",
+                        availableProgramTypes = sessions.map { it.programType }.distinct(),
+                    )
                     Spacer(Modifier.height(4.dp))
-                    Text(if (target.sessionId == null) "Choose one of your sessions." else audienceHint(target), color = ModMuted, style = MaterialTheme.typography.bodySmall)
+                    Text(audienceHint(target), color = ModMuted, style = MaterialTheme.typography.bodySmall)
                 }
                 Spacer(Modifier.height(10.dp))
                 Text("PRIORITY", color = ModMuted, style = CmsTextStyles.eyebrow)
@@ -296,33 +310,31 @@ private fun ComposeNotificationDialog(
         confirmButton = {
             TextButton(
                 onClick = {
+                    val applies = teacherAudience || targetRole != NotificationTargetRole.ADMIN
                     onSend(
                         NotificationDraft(
                             title = title,
                             body = body,
                             targetRole = if (teacherAudience) NotificationTargetRole.STUDENT else targetRole,
                             priority = priority,
-                            departmentId = target.deptId.takeIf { teacherAudience || targetRole != NotificationTargetRole.ADMIN },
-                            sessionId = target.sessionId.takeIf { teacherAudience || targetRole != NotificationTargetRole.ADMIN },
-                            shift = target.shift.takeIf { teacherAudience || targetRole != NotificationTargetRole.ADMIN },
+                            departmentId = target.deptId.takeIf { applies },
+                            semester = target.semester.takeIf { applies },
+                            programType = target.programType.takeIf { applies },
+                            shift = target.shift.takeIf { applies },
                         ),
                     )
                 },
-                enabled = titleValid && bodyValid && !busy && (!teacherAudience || target.sessionId != null),
+                enabled = titleValid && bodyValid && !busy,
             ) { Text(if (busy) "Sending..." else "Send notification") }
         },
         dismissButton = { TextButton(onClick = onDismiss, enabled = !busy) { Text("Cancel") } },
     )
 }
 
-/** "Reaches: IT 2022–2026, Evening shift" -- who a scoped notice or event is for. */
-private fun audienceHint(target: ShiftScope): String = when {
+/** "Reaches every matching class (Semester 3, Evening shift)" -- who a scoped notice or event is for. */
+private fun audienceHint(target: DeptSemesterScope): String = when {
     target.isEmpty -> "Reaches the whole college."
-    target.sessionId == null -> "Reaches every session and both shifts of this department."
-    target.shift == null -> "Reaches both shifts of this session."
-    else -> "Reaches only the ${target.shift?.label} shift of this session."
+    target.semester == null && target.programType == null ->
+        if (target.shift == null) "Reaches every session and both shifts of this department." else "Reaches the ${target.shift?.label} shift across this department."
+    else -> "Reaches every matching class" + (target.shift?.let { " (${it.label} shift)" } ?: " (both shifts it runs)") + "."
 }
-
-/** For a teacher, each session offers only the shifts they teach in it (an admin's map is empty: all shifts). */
-private fun teacherShiftSessions(sessions: List<AcademicSession>, teachingShifts: Map<String, Set<Session>>): List<AcademicSession> =
-    sessions.map { session -> ShiftMode.of(teachingShifts[session.sessionId].orEmpty())?.let { session.copy(shiftMode = it) } ?: session }

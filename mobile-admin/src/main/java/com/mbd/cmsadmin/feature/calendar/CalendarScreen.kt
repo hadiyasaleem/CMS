@@ -60,7 +60,7 @@ fun CalendarScreen(viewModel: CalendarViewModel = hiltViewModel()) {
         errorMessage = error,
         actionMessage = actionMessage,
         onRetry = viewModel.controller::refresh,
-        onCreate = viewModel.controller::create,
+        onCreate = viewModel.controller::createMany,
         onDelete = viewModel.controller::delete,
     )
 }

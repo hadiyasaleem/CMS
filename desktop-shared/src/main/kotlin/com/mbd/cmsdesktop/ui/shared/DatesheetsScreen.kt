@@ -64,11 +64,7 @@ fun DatesheetsScreen(
     val departments by browseController.departments.collectAsState()
     val sessions by browseController.sessions.collectAsState()
     val datesheets by browseController.datesheets.collectAsState()
-    val selectedDeptId by browseController.selectedDeptId.collectAsState()
-    val selectedStartYear by browseController.selectedStartYear.collectAsState()
-    val selectedShift by browseController.selectedShift.collectAsState()
-    val sessionsInDepartment by browseController.sessionsInDepartment.collectAsState()
-    val shiftsForSelection by browseController.shiftsForSelection.collectAsState()
+    val filterScope by browseController.filterScope.collectAsState()
     val resolvedSession by browseController.resolvedSession.collectAsState()
     val browseError by browseController.error.collectAsState()
     val allSlots by datesheetRepository.observeAllSlots().collectAsState(initial = emptyList())
@@ -87,15 +83,9 @@ fun DatesheetsScreen(
         sessions = sessions,
         datesheets = datesheets,
         allSlots = allSlots,
-        selectedDeptId = selectedDeptId,
-        selectedStartYear = selectedStartYear,
-        selectedShift = selectedShift,
-        sessionsInDepartment = sessionsInDepartment,
-        shiftsForSelection = shiftsForSelection,
+        filterScope = filterScope,
         resolvedSession = resolvedSession,
-        onSelectDepartment = browseController::selectDepartment,
-        onSelectStartYear = browseController::selectStartYear,
-        onSelectShift = browseController::selectShift,
+        onFilterScope = browseController::setFilterScope,
         buildings = buildings,
         rooms = rooms,
         loading = false,

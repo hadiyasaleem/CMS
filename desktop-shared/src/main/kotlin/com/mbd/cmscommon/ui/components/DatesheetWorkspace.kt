@@ -2,10 +2,9 @@ package com.mbd.cmscommon.ui.components
 
 import compose.icons.TablerIcons
 import compose.icons.tablericons.AlertTriangle
-import com.mbd.cmscommon.controller.cascadeScope
-import com.mbd.cmscommon.controller.toCascade
+import com.mbd.cmscommon.controller.availableSemesters
 import com.mbd.cmscommon.controller.departmentScopeOptions
-import com.mbd.cmscommon.domain.model.ShiftScope
+import com.mbd.cmscommon.domain.model.DeptSemesterScope
 import com.mbd.cmscommon.util.clockDisplay
 import com.mbd.cmscommon.util.isTimeRangeInvalid
 import com.mbd.cmscommon.export.ExportDocument
@@ -106,15 +105,9 @@ fun DatesheetWorkspace(
     sessions: List<AcademicSession>,
     datesheets: List<Datesheet>,
     allSlots: List<DatesheetSlot>,
-    selectedDeptId: String?,
-    selectedStartYear: Int?,
-    selectedShift: Session?,
-    sessionsInDepartment: List<AcademicSession>,
-    shiftsForSelection: List<Session>,
+    filterScope: DeptSemesterScope,
     resolvedSession: AcademicSession?,
-    onSelectDepartment: (String?) -> Unit,
-    onSelectStartYear: (Int?) -> Unit,
-    onSelectShift: (Session?) -> Unit,
+    onFilterScope: (DeptSemesterScope) -> Unit,
     buildings: List<Building>,
     rooms: List<Room> = emptyList(),
     loading: Boolean,
@@ -167,20 +160,14 @@ fun DatesheetWorkspace(
                     when (viewMode) {
                         DatesheetViewMode.FILTERED -> FilteredDatesheetView(
                             allSessions = sessions,
-                            sessionsInDepartment = sessionsInDepartment,
-                            shiftsForSelection = shiftsForSelection,
-                            selectedDeptId = selectedDeptId,
-                            selectedStartYear = selectedStartYear,
-                            selectedShift = selectedShift,
+                            filterScope = filterScope,
                             resolvedSession = resolvedSession,
                             datesheets = datesheets,
                             departments = departments,
                             buildings = buildings,
                             rooms = rooms,
                             busy = detailBusy,
-                            onSelectDepartment = onSelectDepartment,
-                            onSelectStartYear = onSelectStartYear,
-                            onSelectShift = onSelectShift,
+                            onFilterScope = onFilterScope,
                             onOpenDatesheet = { onOpenDatesheet(it) },
                             onCreateDatesheet = onCreateDatesheet,
                             lockedSessionId = lockedSessionId,
@@ -203,16 +190,10 @@ fun DatesheetWorkspace(
                             allSessions = sessions,
                             resolvedSession = resolvedSession,
                             departments = departments,
-                            sessionsInDepartment = sessionsInDepartment,
-                            shiftsForSelection = shiftsForSelection,
-                            selectedDeptId = selectedDeptId,
-                            selectedStartYear = selectedStartYear,
-                            selectedShift = selectedShift,
+                            filterScope = filterScope,
                             datesheets = datesheets,
                             slotsByDatesheet = slotsByDatesheet,
-                            onSelectDepartment = onSelectDepartment,
-                            onSelectStartYear = onSelectStartYear,
-                            onSelectShift = onSelectShift,
+                            onFilterScope = onFilterScope,
                             onOpenDatesheet = { onOpenDatesheet(it) },
                             onExport = onExport,
                         )
@@ -289,27 +270,18 @@ fun StudentDatesheetWorkspace(
 @Composable
 private fun DatesheetFilterRow(
     departments: List<Department>,
-    sessions: List<AcademicSession>,
-    selectedDeptId: String?,
-    selectedStartYear: Int?,
-    selectedShift: Session?,
-    onSelectDepartment: (String?) -> Unit,
-    onSelectStartYear: (Int?) -> Unit,
-    onSelectShift: (Session?) -> Unit,
+    availableSemesters: List<Int>,
+    filterScope: DeptSemesterScope,
+    onFilterScope: (DeptSemesterScope) -> Unit,
 ) {
-    // The shared Department -> Session -> Shift selector drives the department / intake-year / shift cascade.
-    // Picking a session opens its first shift (there is no combined grid); a chosen shift then replaces it.
-    val applyScope: (ShiftScope) -> Unit = { picked ->
-        val cascade = picked.toCascade(sessions)
-        onSelectDepartment(cascade.deptId)
-        onSelectStartYear(cascade.startYear)
-        cascade.shift?.let(onSelectShift)
-    }
-    ShiftScopeSelector(
-        scope = cascadeScope(selectedDeptId, selectedStartYear, selectedShift, sessions),
+    // Department+semester(+program type, when two program types share a department+semester) resolve
+    // to one batch, the same one-batch-per-department-per-semester-and-program assumption the master
+    // timetable relies on; a datesheet is per shift, so shift narrows which one is being viewed/created.
+    DeptSemesterScopeSelector(
+        scope = filterScope,
         departments = departmentScopeOptions(departments),
-        sessions = sessions,
-        onScopeChange = applyScope,
+        availableSemesters = availableSemesters,
+        onScopeChange = onFilterScope,
         label = null,
     )
 }
@@ -318,35 +290,30 @@ private fun DatesheetFilterRow(
 private fun FilteredDatesheetView(
     allSessions: List<AcademicSession>,
     departments: List<Department>,
-    sessionsInDepartment: List<AcademicSession>,
-    shiftsForSelection: List<Session>,
-    selectedDeptId: String?,
-    selectedStartYear: Int?,
-    selectedShift: Session?,
+    filterScope: DeptSemesterScope,
     resolvedSession: AcademicSession?,
     datesheets: List<Datesheet>,
     buildings: List<Building>,
     rooms: List<Room>,
     busy: Boolean,
-    onSelectDepartment: (String?) -> Unit,
-    onSelectStartYear: (Int?) -> Unit,
-    onSelectShift: (Session?) -> Unit,
+    onFilterScope: (DeptSemesterScope) -> Unit,
     onOpenDatesheet: (String) -> Unit,
     onCreateDatesheet: (String?, String?, String?, String?, String?) -> Unit,
     lockedSessionId: String? = null,
 ) {
     var showCreateDialog by remember { mutableStateOf(false) }
+    val selectedShift = filterScope.shift
 
     Column {
         if (lockedSessionId == null) {
-            DatesheetFilterRow(departments, allSessions, selectedDeptId, selectedStartYear, selectedShift, onSelectDepartment, onSelectStartYear, onSelectShift)
+            DatesheetFilterRow(departments, allSessions.availableSemesters(), filterScope, onFilterScope)
             Spacer(Modifier.height(12.dp))
         }
         // No manual semester picker -- a datesheet is always for whichever semester the session is
         // currently in, same as timetable periods and marks entry.
         when {
             resolvedSession == null -> {
-                Text("Choose a department, session, and shift to view or create a datesheet.", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
+                Text("Choose a department, semester, and shift to view or create a datesheet.", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
             }
             else -> {
                 val semester = resolvedSession.currentSemester
@@ -354,7 +321,7 @@ private fun FilteredDatesheetView(
                     // One datesheet per shift: Morning and Evening can have different dates and times.
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         resolvedSession.shifts.forEach { option ->
-                            CmsChip("${option.label} shift", selected = option == selectedShift, onClick = { onSelectShift(option) })
+                            CmsChip("${option.label} shift", selected = option == selectedShift, onClick = { onFilterScope(filterScope.copy(shift = option)) })
                         }
                     }
                     Spacer(Modifier.height(10.dp))
@@ -546,36 +513,31 @@ private fun SemesterDatesheetView(
     allSessions: List<AcademicSession>,
     resolvedSession: AcademicSession?,
     departments: List<Department>,
-    sessionsInDepartment: List<AcademicSession>,
-    shiftsForSelection: List<Session>,
-    selectedDeptId: String?,
-    selectedStartYear: Int?,
-    selectedShift: Session?,
+    filterScope: DeptSemesterScope,
     datesheets: List<Datesheet>,
     slotsByDatesheet: Map<String, List<DatesheetSlot>>,
-    onSelectDepartment: (String?) -> Unit,
-    onSelectStartYear: (Int?) -> Unit,
-    onSelectShift: (Session?) -> Unit,
+    onFilterScope: (DeptSemesterScope) -> Unit,
     onOpenDatesheet: (String) -> Unit,
     onExport: ((ExportDocument, ExportFormat) -> Unit)?,
 ) {
+    val selectedShift = filterScope.shift
     Column {
-        DatesheetFilterRow(departments, allSessions, selectedDeptId, selectedStartYear, selectedShift, onSelectDepartment, onSelectStartYear, onSelectShift)
+        DatesheetFilterRow(departments, allSessions.availableSemesters(), filterScope, onFilterScope)
         Spacer(Modifier.height(12.dp))
 
         if (resolvedSession == null) {
-            if (selectedDeptId == null) {
-                Text("Choose a department, session, and shift to view its semester grid.", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
+            if (filterScope.deptId == null && filterScope.semester == null) {
+                Text("Choose a department, semester, and shift to view its semester grid.", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
                 return@Column
             }
-            // A department without a fully resolved session -- show every matching session's own
-            // current-semester schedule as its own titled section instead of demanding a single pick.
-            val candidateSessions = sessionsInDepartment
-                .filter { selectedStartYear == null || it.startYear == selectedStartYear }
-                .filter { selectedShift == null || it.runs(selectedShift) }
+            // Department/semester (+ shift) don't yet narrow to exactly one batch -- show every
+            // matching session's own current-semester schedule as its own titled section instead of
+            // demanding a single pick.
+            val candidateSessions = allSessions
+                .filter { it.isActive && filterScope.matches(it) }
                 .sortedWith(compareByDescending<AcademicSession> { it.startYear }.thenBy { it.shiftMode.ordinal })
             if (candidateSessions.isEmpty()) {
-                Text("This department has no sessions yet.", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
+                Text("No sessions match these filters.", color = ModMuted, style = MaterialTheme.typography.bodyMedium)
                 return@Column
             }
             Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {

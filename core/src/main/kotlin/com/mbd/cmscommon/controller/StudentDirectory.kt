@@ -4,6 +4,7 @@ import com.mbd.cmscommon.domain.model.DeptSemesterScope
 import com.mbd.cmscommon.util.StudentIdCodec
 import com.mbd.cmscommon.domain.model.AcademicSession
 import com.mbd.cmscommon.domain.model.Department
+import com.mbd.cmscommon.domain.model.ProgramType
 import com.mbd.cmscommon.domain.model.Session
 import com.mbd.cmscommon.domain.model.StudentProfile
 import com.mbd.cmscommon.domain.repository.AcademicSessionRepository
@@ -46,16 +47,17 @@ data class StudentDirectoryQuery(
     val deptId: String? = null,
     val semester: Int? = null,
     val shift: Session? = null,
+    val programType: ProgramType? = null,
     val enrollmentStatus: String? = null,
     val account: StudentAccountFilter = StudentAccountFilter.ALL,
     val sort: StudentDirectorySort = StudentDirectorySort.ROLL,
     val page: Int = 0,
 ) {
-    /** The Department / Semester / Shift part of the query. */
-    val scope: DeptSemesterScope get() = DeptSemesterScope(deptId, semester, shift)
+    /** The Department / Semester / Shift / Program part of the query. */
+    val scope: DeptSemesterScope get() = DeptSemesterScope(deptId, semester, shift, programType)
 
     val hasFilters: Boolean
-        get() = search.isNotBlank() || deptId != null || semester != null || shift != null ||
+        get() = search.isNotBlank() || deptId != null || semester != null || shift != null || programType != null ||
             enrollmentStatus != null || account != StudentAccountFilter.ALL
 }
 
@@ -76,7 +78,7 @@ fun studentDirectoryPage(all: List<StudentDirectoryRow>, query: StudentDirectory
         val p = row.profile
         (search.isEmpty() || listOfNotNull(p.name, p.rollNumber, p.universityRollNo, p.registrationNo, p.linkedEmail, p.fatherName)
             .any { it.contains(search, ignoreCase = true) }) &&
-            query.scope.matches(row.session?.deptId ?: StudentIdCodec.deptIdOf(p.sessionId), row.session?.currentSemester, p.shift) &&
+            query.scope.matches(row.session?.deptId ?: StudentIdCodec.deptIdOf(p.sessionId), row.session?.currentSemester, p.shift, row.session?.programType) &&
             (query.enrollmentStatus == null || p.enrollmentStatus.equals(query.enrollmentStatus, ignoreCase = true)) &&
             when (query.account) {
                 StudentAccountFilter.ALL -> true
@@ -145,9 +147,9 @@ class StudentDirectoryController(
     fun setSemester(semester: Int?) = _query.update { it.copy(semester = semester, page = 0) }
     fun setShift(shift: Session?) = _query.update { it.copy(shift = shift, page = 0) }
 
-    /** Applies the shared Department / Semester / Shift filter in one step. */
+    /** Applies the shared Department / Semester / Shift / Program filter in one step. */
     fun setScope(scope: DeptSemesterScope) = _query.update {
-        it.copy(deptId = scope.deptId, semester = scope.semester, shift = scope.shift, page = 0)
+        it.copy(deptId = scope.deptId, semester = scope.semester, shift = scope.shift, programType = scope.programType, page = 0)
     }
     fun setEnrollmentStatus(status: String?) = _query.update { it.copy(enrollmentStatus = status, page = 0) }
     fun setAccount(account: StudentAccountFilter) = _query.update { it.copy(account = account, page = 0) }
