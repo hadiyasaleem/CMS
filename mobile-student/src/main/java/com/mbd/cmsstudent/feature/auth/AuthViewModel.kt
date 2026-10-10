@@ -38,7 +38,16 @@ class AuthViewModel @Inject constructor(
     }
     fun onPasswordChange(value: String) { _uiState.value = _uiState.value.copy(password = value, errorMessage = null) }
     fun onModeChange(registerMode: Boolean) {
-        _uiState.value = _uiState.value.copy(registerMode = registerMode, errorMessage = null, infoMessage = null, resetMessage = null, registerCooldownActive = false)
+        _uiState.value = _uiState.value.copy(
+            registerMode = registerMode, errorMessage = null, infoMessage = null, resetMessage = null, registerCooldownActive = false,
+            resetCodeStep = false, resetToken = "", resetNewPassword = "", resetConfirmPassword = "",
+        )
+    }
+    fun onResetTokenChange(value: String) { _uiState.value = _uiState.value.copy(resetToken = value, resetMessage = null) }
+    fun onResetNewPasswordChange(value: String) { _uiState.value = _uiState.value.copy(resetNewPassword = value, resetMessage = null) }
+    fun onResetConfirmPasswordChange(value: String) { _uiState.value = _uiState.value.copy(resetConfirmPassword = value, resetMessage = null) }
+    fun cancelPasswordReset() {
+        _uiState.value = _uiState.value.copy(resetCodeStep = false, resetToken = "", resetNewPassword = "", resetConfirmPassword = "", resetMessage = null)
     }
 
     fun submit() {
@@ -109,9 +118,39 @@ class AuthViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(resetSending = true, resetMessage = null)
             try {
                 sessionManager.sendPasswordReset(FieldValidators.normalizeEmail(email))
-                _uiState.value = _uiState.value.copy(resetSending = false, resetMessage = "Password reset email sent.", resetError = false)
+                _uiState.value = _uiState.value.copy(resetSending = false, resetCodeStep = true, resetMessage = null, resetError = false)
             } catch (t: Throwable) {
                 _uiState.value = _uiState.value.copy(resetSending = false, resetMessage = t.userMessageLogged("AuthViewModel.sendPasswordReset", "Couldn't send the password reset email to ${FieldValidators.normalizeEmail(email)}."), resetError = true)
+            }
+        }
+    }
+
+    fun confirmPasswordReset() {
+        val state = _uiState.value
+        val email = FieldValidators.normalizeEmail(state.email)
+        val validation = FieldValidators.passwordConfirmationError(state.resetNewPassword, state.resetConfirmPassword)
+            ?: FieldValidators.passwordError(state.resetNewPassword)
+            ?: if (state.resetToken.isBlank()) "Enter the code we emailed you." else null
+        if (validation != null) {
+            _uiState.value = state.copy(resetMessage = validation, resetError = true)
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(resetConfirming = true, resetMessage = null)
+            try {
+                sessionManager.confirmPasswordReset(email, state.resetToken, state.resetNewPassword)
+                // AppRootViewModel's newlyAuthenticatedAccountKey collector finishes sign-in from
+                // here, the same way it does for the email-verification deep link.
+                _uiState.value = _uiState.value.copy(
+                    resetConfirming = false, resetCodeStep = false, resetToken = "", resetNewPassword = "", resetConfirmPassword = "", resetMessage = null,
+                )
+            } catch (t: Throwable) {
+                _uiState.value = _uiState.value.copy(
+                    resetConfirming = false,
+                    resetMessage = t.userMessageLogged("AuthViewModel.confirmPasswordReset", "Couldn't reset your password. Check the code and try again."),
+                    resetError = true,
+                )
             }
         }
     }

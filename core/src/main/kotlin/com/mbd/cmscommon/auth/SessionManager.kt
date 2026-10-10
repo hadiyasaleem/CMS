@@ -4,6 +4,7 @@ import com.mbd.cmscommon.util.CmsException
 import com.mbd.cmscommon.util.LogContext
 import com.mbd.cmscommon.util.cmsExceptionHandler
 import io.github.jan.supabase.auth.Auth
+import io.github.jan.supabase.auth.OtpType
 import io.github.jan.supabase.auth.exception.AuthRestException
 import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.auth.status.SessionStatus
@@ -83,6 +84,18 @@ class SessionManager @Inject constructor(
 
     suspend fun sendPasswordReset(email: String) {
         auth.resetPasswordForEmail(email.normalizeEmail())
+    }
+
+    /**
+     * Completes a password reset: verifies the 6-digit [token] emailed by [sendPasswordReset] and,
+     * once verified, sets [newPassword]. Verifying the token itself establishes a genuinely new
+     * session (the user wasn't signed in before this -- that's the whole point of a reset), so
+     * unlike [changePassword] this deliberately does NOT touch [quietUntil]: callers that watch
+     * [newlyAuthenticatedAccountKey] should see it and finish signing the user in.
+     */
+    suspend fun confirmPasswordReset(email: String, token: String, newPassword: String) {
+        auth.verifyEmailOtp(type = OtpType.Email.RECOVERY, email = email.normalizeEmail(), token = token.trim())
+        auth.updateUser { password = newPassword }
     }
 
     /**

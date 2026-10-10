@@ -37,6 +37,11 @@ fun StudentAuthScreen(
         resetMessage = controller.resetMessage,
         resetError = controller.resetError,
         registerCooldownActive = controller.registerCooldownActive,
+        resetCodeStep = controller.resetCodeStep,
+        resetToken = controller.resetToken,
+        resetNewPassword = controller.resetNewPassword,
+        resetConfirmPassword = controller.resetConfirmPassword,
+        resetConfirming = controller.resetConfirming,
     )
     val actions = StudentAuthActions(
         onEmailChange = controller::updateEmail,
@@ -44,6 +49,11 @@ fun StudentAuthScreen(
         onModeChange = controller::updateRegisterMode,
         onSubmit = { controller.submit(onResolved) },
         onPasswordReset = controller::sendPasswordReset,
+        onResetTokenChange = controller::updateResetToken,
+        onResetNewPasswordChange = controller::updateResetNewPassword,
+        onResetConfirmPasswordChange = controller::updateResetConfirmPassword,
+        onConfirmPasswordReset = { controller.confirmPasswordReset(onResolved) },
+        onCancelPasswordReset = controller::cancelPasswordReset,
     )
     StudentAuthWorkspace(state = state, actions = actions)
 }

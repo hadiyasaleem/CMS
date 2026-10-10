@@ -51,6 +51,16 @@ class StudentAuthController(
         private set
     var registerCooldownActive by mutableStateOf(false)
         private set
+    var resetCodeStep by mutableStateOf(false)
+        private set
+    var resetToken by mutableStateOf("")
+        private set
+    var resetNewPassword by mutableStateOf("")
+        private set
+    var resetConfirmPassword by mutableStateOf("")
+        private set
+    var resetConfirming by mutableStateOf(false)
+        private set
 
     private val prefs: Preferences = Preferences.userRoot().node("com/mbd/cms/studentauth")
 
@@ -67,6 +77,18 @@ class StudentAuthController(
         infoMessage = null
         resetMessage = null
         registerCooldownActive = isOnRegisterCooldown(email.normalizeEmail())
+        cancelPasswordReset()
+    }
+
+    fun updateResetToken(value: String) { resetToken = value; resetMessage = null }
+    fun updateResetNewPassword(value: String) { resetNewPassword = value; resetMessage = null }
+    fun updateResetConfirmPassword(value: String) { resetConfirmPassword = value; resetMessage = null }
+    fun cancelPasswordReset() {
+        resetCodeStep = false
+        resetToken = ""
+        resetNewPassword = ""
+        resetConfirmPassword = ""
+        resetMessage = null
     }
 
     fun updateRegisterMode(value: Boolean) {
@@ -157,13 +179,51 @@ class StudentAuthController(
             resetMessage = null
             try {
                 sessionManager.sendPasswordReset(email)
-                resetMessage = "Password reset email sent."
+                resetCodeStep = true
+                resetMessage = null
                 resetError = false
             } catch (t: Throwable) {
                 resetMessage = t.userMessageLogged("StudentAuthController.sendPasswordReset", "Couldn't send the password reset email to ${email.trim()}.")
                 resetError = true
             } finally {
                 resetSending = false
+            }
+        }
+    }
+
+    /** Verifies the emailed code, sets the new password, and (unlike mobile, which has a reactive
+     * hook for a session landing with no call site of its own) resolves the role explicitly here,
+     * the same way [submit]'s sign-in branch does. */
+    fun confirmPasswordReset(onResolved: (UserRole) -> Unit) {
+        val validation = FieldValidators.passwordConfirmationError(resetNewPassword, resetConfirmPassword)
+            ?: FieldValidators.passwordError(resetNewPassword)
+            ?: if (resetToken.isBlank()) "Enter the code we emailed you." else null
+        if (validation != null) {
+            resetMessage = validation
+            resetError = true
+            return
+        }
+        val normalizedEmail = email.normalizeEmail()
+        scope.launch {
+            resetConfirming = true
+            resetMessage = null
+            try {
+                sessionManager.confirmPasswordReset(normalizedEmail, resetToken, resetNewPassword)
+                val accountKey = sessionManager.accountKey
+                    ?: throw CmsException.Auth("The code was verified, but this account has no email address on record. Contact the college administrator.")
+                val role = userRepository.resolveRole(accountKey)
+                if (role !is UserRole.LinkedStudent && role !is UserRole.UnlinkedStudent) {
+                    sessionManager.signOut()
+                    throw CmsException.Auth("This account is not a Student account.")
+                }
+                userRepository.touchLastLogin(accountKey)
+                cancelPasswordReset()
+                onResolved(role)
+            } catch (t: Throwable) {
+                resetMessage = t.userMessageLogged("StudentAuthController.confirmPasswordReset", "Couldn't reset your password. Check the code and try again.")
+                resetError = true
+            } finally {
+                resetConfirming = false
             }
         }
     }

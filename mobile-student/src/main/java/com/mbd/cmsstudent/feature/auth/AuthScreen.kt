@@ -31,6 +31,11 @@ fun AuthScreen(onLoginSuccess: () -> Unit, viewModel: AuthViewModel = hiltViewMo
                 onModeChange = viewModel::onModeChange,
                 onSubmit = viewModel::submit,
                 onPasswordReset = viewModel::sendPasswordReset,
+                onResetTokenChange = viewModel::onResetTokenChange,
+                onResetNewPasswordChange = viewModel::onResetNewPasswordChange,
+                onResetConfirmPasswordChange = viewModel::onResetConfirmPasswordChange,
+                onConfirmPasswordReset = viewModel::confirmPasswordReset,
+                onCancelPasswordReset = viewModel::cancelPasswordReset,
             ),
         )
     }
