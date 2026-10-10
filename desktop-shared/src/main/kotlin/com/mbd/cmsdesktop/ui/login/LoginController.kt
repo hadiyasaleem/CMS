@@ -36,6 +36,13 @@ class LoginController(
         private set
     var loading by mutableStateOf(false)
         private set
+    var resetCodeStep by mutableStateOf(false)
+        private set
+    var resetToken by mutableStateOf("")
+    var resetNewPassword by mutableStateOf("")
+    var resetConfirmPassword by mutableStateOf("")
+    var resetConfirming by mutableStateOf(false)
+        private set
 
     fun submit(isAccepted: (UserRole) -> Boolean, wrongRoleMessage: String, onResolved: (UserRole) -> Unit) {
         val validation = FieldValidators.emailError(email) ?: if (password.isEmpty()) "Password is required." else null
@@ -80,11 +87,54 @@ class LoginController(
             errorMessage = null
             try {
                 sessionManager.sendPasswordReset(email.trim())
-                resetMessage = "Password reset email sent."
+                resetCodeStep = true
             } catch (t: Throwable) {
                 errorMessage = t.userMessageLogged("LoginController.sendPasswordReset", "Couldn't send the password reset email to ${email.trim()}.")
             } finally {
                 resetLoading = false
+            }
+        }
+    }
+
+    fun cancelPasswordReset() {
+        resetCodeStep = false
+        resetToken = ""
+        resetNewPassword = ""
+        resetConfirmPassword = ""
+        resetMessage = null
+    }
+
+    /** Verifies the emailed code, sets the new password, then resolves the role and finishes sign-in
+     * the same way [submit] does. */
+    fun confirmPasswordReset(isAccepted: (UserRole) -> Boolean, wrongRoleMessage: String, onResolved: (UserRole) -> Unit) {
+        val validation = FieldValidators.passwordConfirmationError(resetNewPassword, resetConfirmPassword)
+            ?: FieldValidators.passwordError(resetNewPassword)
+            ?: if (resetToken.isBlank()) "Enter the code we emailed you." else null
+        if (validation != null) {
+            resetMessage = validation
+            return
+        }
+        val normalizedEmail = email.normalizeEmail()
+        scope.launch {
+            resetConfirming = true
+            resetMessage = null
+            try {
+                sessionManager.confirmPasswordReset(normalizedEmail, resetToken, resetNewPassword)
+                val accountKey = sessionManager.accountKey
+                    ?: throw CmsException.Auth("The code was verified, but this account has no email address on record. Contact the college administrator.")
+                val role = userRepository.resolveRole(accountKey)
+                if (isAccepted(role)) {
+                    userRepository.touchLastLogin(accountKey)
+                    cancelPasswordReset()
+                    onResolved(role)
+                } else {
+                    sessionManager.signOut()
+                    resetMessage = wrongRoleMessage
+                }
+            } catch (t: Throwable) {
+                resetMessage = t.userMessageLogged("LoginController.confirmPasswordReset", "Couldn't reset your password. Check the code and try again.")
+            } finally {
+                resetConfirming = false
             }
         }
     }

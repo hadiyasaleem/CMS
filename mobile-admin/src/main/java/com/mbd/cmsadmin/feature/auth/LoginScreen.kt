@@ -9,6 +9,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.mbd.cmscommon.ui.auth.ResetPasswordScreen
 import com.mbd.cmscommon.ui.auth.RoleLoginScreen
 import com.mbd.cmscommon.ui.theme.CmsTheme
 
@@ -24,20 +25,33 @@ fun LoginScreen(
             .background(CmsTheme.colors.ink)
             .statusBarsPadding(),
     ) {
-        RoleLoginScreen(
-            uiState = uiState,
-            onEmailChange = viewModel::onEmailChange,
-            onPasswordChange = viewModel::onPasswordChange,
-            onSubmit = viewModel::submit,
-            onSendPasswordReset = { viewModel.sendPasswordReset { } },
-            onLoginSuccess = onLoginSuccess,
-            portalEyebrow = "Security Portal",
-            screenTitle = "Admin login",
-            brandDescription = "Central console — enrolment, faculty, attendance, examinations & records.",
-            systemLabel = "GGC-MBD - ADMIN PORTAL",
-            emailLabel = "Email Address",
-            emailPlaceholder = "admin@ggcmbd.edu.pk",
-            footerText = "Admin accounts are created by another administrator. Self-registration isn't available.",
-        )
+        if (uiState.resetCodeStep) {
+            ResetPasswordScreen(
+                uiState = uiState,
+                onResetTokenChange = viewModel::onResetTokenChange,
+                onResetNewPasswordChange = viewModel::onResetNewPasswordChange,
+                onResetConfirmPasswordChange = viewModel::onResetConfirmPasswordChange,
+                onConfirmPasswordReset = viewModel::confirmPasswordReset,
+                onCancelPasswordReset = viewModel::cancelPasswordReset,
+                onLoginSuccess = onLoginSuccess,
+                systemLabel = "GGC-MBD - ADMIN PORTAL",
+            )
+        } else {
+            RoleLoginScreen(
+                uiState = uiState,
+                onEmailChange = viewModel::onEmailChange,
+                onPasswordChange = viewModel::onPasswordChange,
+                onSubmit = viewModel::submit,
+                onSendPasswordReset = { viewModel.sendPasswordReset { } },
+                onLoginSuccess = onLoginSuccess,
+                portalEyebrow = "Security Portal",
+                screenTitle = "Admin login",
+                brandDescription = "Central console — enrolment, faculty, attendance, examinations & records.",
+                systemLabel = "GGC-MBD - ADMIN PORTAL",
+                emailLabel = "Email Address",
+                emailPlaceholder = "admin@ggcmbd.edu.pk",
+                footerText = "Admin accounts are created by another administrator. Self-registration isn't available.",
+            )
+        }
     }
 }
